@@ -99,7 +99,7 @@ public class GraphTransition {
 				} else {
 					setInputTransitionEffect("Not Set"); // TODO: Do not hard code this
 				}
-				setSbmlSignString(input.getSign().toString());
+				//setSbmlSignString(input.getSign().toString());
 				isInputSet = true;
 			}
 			// don't do an else if here, as we could have the same species as start and end node ? (Do we?)
