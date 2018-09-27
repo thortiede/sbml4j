@@ -1,6 +1,7 @@
 package org.tts.controller;
 
 import java.io.IOException;
+import java.io.File;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -47,6 +48,48 @@ public class PersistSBMLRestController {
 
 	}
 	
+	
+	@RequestMapping(value = "/sbmlfolder", method = RequestMethod.GET)
+	public int persistSBMLFolder(@RequestParam(value="name") String name) {
+		System.out.print("reading dir ");
+		String directory = name;
+		System.out.println(directory);
+
+		File folder = new File(directory);
+		File[] listOfFiles = folder.listFiles();
+		int cnt = 0;
+		for (File file : listOfFiles) {
+		    if (file.isFile()) {
+		    	System.out.println("Processing File: " + file.getAbsolutePath());	    	
+		 
+		    	try {
+		    		SBMLReader reader = new SBMLReader();
+		    		SBMLDocument doc;
+		    		
+		    		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/non-metabolic/hsa/";
+		    		//String filepath = directory + name;
+		    		//System.out.println(filepath);
+		    		
+	    			GraphModel graphModel;
+	    			doc = reader.readSBML(file.getAbsolutePath());
+	    			Model model = doc.getModel();
+	    			graphModel = persistSBMLModel(model);
+	    			if (graphModel != null) {
+	    				cnt = cnt + 1;
+	    			}
+		    	} catch (XMLStreamException e) {
+	    			// TODO Auto-generated catch block
+	    			e.printStackTrace();
+	    		} catch (IOException e) {
+	    			// TODO Auto-generated catch block
+	    			e.printStackTrace();
+	    		}
+	    		
+		    	
+		    }
+		}
+		return cnt;
+	}
 	
 	@RequestMapping(value = "/sbmlfile", method = RequestMethod.GET)
 	public GraphModel persistSBML(@RequestParam(value="name") String name) {
