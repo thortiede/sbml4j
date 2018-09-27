@@ -104,6 +104,7 @@ public class GraphModel {
 		// TODO Auto-generated constructor stub
 	}
 
+	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
 	public GraphModel(Model model) {
 		// Set model fields
 		setModelName(model.getName());
