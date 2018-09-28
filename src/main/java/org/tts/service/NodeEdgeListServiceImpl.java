@@ -49,7 +49,7 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 						System.out.println("transName is null");
 						allThere = false;
 					} else {
-						System.out.println("Transition Name: " + transition.getSbmlNameString());
+						//System.out.println("Transition Name: " + transition.getSbmlNameString());
 						// do a reload to get the qualSpecies in the transistion
 						//transition = transistionRepository.getBySbmlIdString(transition.getSbmlNameString());
 					}
@@ -64,9 +64,9 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 					}
 					
 					if(allThere) {
-						System.out.println("Adding Entry: " + transition.getQualSpeciesOneSbmlNameString() + ", " +  
+						/*System.out.println("Adding Entry: " + transition.getQualSpeciesOneSbmlNameString() + ", " +  
 													transition.getQualSpeciesTwoSbmlNameString()+ ", " + 
-													transition.getSbmlNameString() );
+													transition.getSbmlNameString() );*/
 						
 						nodeEdgeList.addListEntry(	transition.getQualSpeciesOneSbmlNameString(), 
 													transition.getQualSpeciesTwoSbmlNameString(),
