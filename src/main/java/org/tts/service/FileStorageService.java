@@ -9,12 +9,14 @@ import java.nio.file.StandardCopyOption;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.Exception.FileStorageException;
 import org.tts.Exception.MyFileNotFoundException;
+import org.tts.model.SifFile;
 import org.tts.property.FileStorageProperties;
 
 @Service
@@ -66,5 +68,9 @@ public class FileStorageService {
         } catch (MalformedURLException ex) {
             throw new MyFileNotFoundException("File not found " + fileName, ex);
         }
+    }
+    
+    public Resource getSifAsResource(SifFile sifFile) {
+    	return new ByteArrayResource(sifFile.toString().getBytes(), sifFile.getFilename());
     }
 }
