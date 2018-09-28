@@ -3,9 +3,11 @@ package org.tts.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodeEdgeList {
+import org.springframework.hateoas.ResourceSupport;
+
+public class NodeEdgeList extends ResourceSupport {
 	
-	private Long id = null;
+	private Long listId = null;
 	
 	private String name = null;
 	
@@ -23,14 +25,14 @@ public class NodeEdgeList {
 
 
 
-	public Long getId() {
-		return id;
+	public Long getListId() {
+		return listId;
 	}
 
 
 
-	public void setId(Long id) {
-		this.id = id;
+	public void setListId(Long id) {
+		this.listId = id;
 	}
 
 
