@@ -8,4 +8,6 @@ public interface ReactionService {
 	
 	GraphReaction getBySbmlIdString(String sbmlIdString);
 	
+	GraphReaction getBySbmlNameString(String sbmlNameString);
+
 }
