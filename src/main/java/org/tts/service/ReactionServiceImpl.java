@@ -25,4 +25,9 @@ public class ReactionServiceImpl implements ReactionService {
 		return reactionRepository.getBySbmlIdString(sbmlIdString);
 	}
 
+	@Override
+	public GraphReaction getBySbmlNameString(String sbmlNameString) {
+		return reactionRepository.getBySbmlNameString(sbmlNameString);
+	}
+
 }

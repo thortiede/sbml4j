@@ -1,6 +1,8 @@
 package org.tts.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -14,11 +16,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.tts.model.GraphReaction;
+import org.tts.model.GraphSpecies;
 import org.tts.model.NodeEdgeList;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
 import org.tts.service.NodeEdgeListService;
+import org.tts.service.ReactionService;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 
@@ -28,18 +34,23 @@ public class BasicRestController {
 	private NodeEdgeListService nodeEdgeListService;
 	
 	private FileStorageService fileStorageService;
-	
+	private ReactionService reactionService;
 	
 	private FileService fileService;
 	
 	
 	@Autowired
-	public BasicRestController(NodeEdgeListService nodeEdgeListService, FileStorageService fileStorageService,
-			FileService fileService) {
+	public BasicRestController(
+			NodeEdgeListService nodeEdgeListService, 
+			FileStorageService fileStorageService,
+			FileService fileService,
+			ReactionService reactionService) 
+	{
 		super();
 		this.nodeEdgeListService = nodeEdgeListService;
 		this.fileStorageService = fileStorageService;
 		this.fileService = fileService;
+		this.reactionService = reactionService;
 	}
 
 	@RequestMapping(value = "/fullnet", method=RequestMethod.GET)
@@ -76,5 +87,32 @@ public class BasicRestController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
-	
+
+	@RequestMapping(value = "/reaction")
+	public ResponseEntity<List<List<String>>> retrieveReaction(@RequestParam(value="name") String reactionname, @RequestParam(value="depth") String depth){
+		GraphReaction entryReaction = reactionService.getBySbmlNameString(reactionname);
+		//Long entryId = entryReaction.getId();
+		if(entryReaction==null) return new ResponseEntity<List<List<String>>>(new ArrayList<List<String>>(), HttpStatus.NOT_FOUND);
+		List<String> reaction = new ArrayList<String>();
+		reaction.add(entryReaction.getSbmlNameString());
+		List<GraphSpecies> entryProducts = entryReaction.getProducts();
+		List<GraphSpecies> entryReactants = entryReaction.getReactants();
+		List<String> reactants = new ArrayList<String>();
+		List<String> products = new ArrayList<String>();
+		
+		for (GraphSpecies prod : entryProducts) {
+			products.add(prod.getSbmlNameString());
+		}
+		for (GraphSpecies react : entryReactants) {
+			reactants.add(react.getSbmlNameString());
+		}
+		List<List<String>> reactionList = new ArrayList<List<String>>();
+		reactionList.add(reactants);
+		reactionList.add(reaction);
+		reactionList.add(products);
+		return new ResponseEntity<List<List<String>>>(reactionList, HttpStatus.OK);
+		
+		
+		
+	}
 }
