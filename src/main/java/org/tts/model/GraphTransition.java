@@ -62,7 +62,8 @@ public class GraphTransition extends GraphSBase {
 	 * @param outputIndex The index of the Output in listOfOutputs that should be the EndNode of this Transition
 	 * @param listGraphQualitiativeSpecies The List of qualitative Species that the models knows
 	 */
-	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies) {
+	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies, GraphModel model) {
+		setModel(model);
 		Input input = transition.getListOfInputs().get(inputIndex);
 		Output output = transition.getListOfOutputs().get(outputIndex);
 		/** 

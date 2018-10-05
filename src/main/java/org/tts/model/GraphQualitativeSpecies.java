@@ -54,10 +54,11 @@ public class GraphQualitativeSpecies extends GraphSBase{
 		
 	}
 	
-	public GraphQualitativeSpecies(QualitativeSpecies qualitativeSpecies, GraphCompartment _compartment) {
+	public GraphQualitativeSpecies(QualitativeSpecies qualitativeSpecies, GraphCompartment _compartment, GraphModel model) {
 		
 		// Set Attributes
 		// TODO: Use setters
+		setModel(model);
 		sbmlIdString = qualitativeSpecies.getId();
 		sbmlNameString = qualitativeSpecies.getName();
 		name = sbmlNameString;

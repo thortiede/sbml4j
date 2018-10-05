@@ -1,6 +1,7 @@
 package org.tts.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.io.File;
 
 import javax.xml.stream.XMLStreamException;
@@ -120,7 +121,11 @@ public class PersistSBMLRestController {
 	}
 	public GraphModel persistSBMLModel(Model model) { // TODO: Add back in: , SBOLink sboLink) {
 		GraphModel graphModel = new GraphModel(model);
-		
+		GraphModel existingModel = modelService.getByModelName(graphModel.getModelName());
+		boolean modelExists = false;
+		if (existingModel != null) {
+			modelExists = true;
+		}
 		// take the model and check if elements from it already exist.
 		// If so, update them (yes or no?) and use them in the model (set the id and version of that entity before persisting)
 		// Compartments
@@ -129,6 +134,14 @@ public class PersistSBMLRestController {
 			if (existingCompartment != null) { // TODO: Do more checks to ensure it is the same compartment
 				comp.setId(existingCompartment.getId());
 				comp.setVersion(existingCompartment.getVersion());
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToCompartment : existingCompartment.getModels())
+					{
+						comp.setModel(modelConnectedToCompartment);
+					}
+				}
+					
 			}
 			//compartmentService.saveOrUpdate(comp);
 		}
@@ -136,9 +149,17 @@ public class PersistSBMLRestController {
 		// Species
 		for (GraphSpecies species : graphModel.getListSpecies()) {
 			GraphSpecies existingSpecies = speciesService.getBySbmlIdString(species.getSbmlIdString());
-			if (existingSpecies != null) { // TODO: Do more checks to ensure it is the same compartment
+			if (existingSpecies != null) { // TODO: Do more checks to ensure it is the same species
 				species.setId(existingSpecies.getId());
 				species.setVersion(existingSpecies.getVersion());
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToSpecies : existingSpecies.getModels())
+					{
+						species.setModel(modelConnectedToSpecies);
+						
+					}
+				}
 			}
 		}
 		
@@ -148,6 +169,14 @@ public class PersistSBMLRestController {
 			if (existingReaction != null) {
 				reaction.setId(existingReaction.getId());
 				reaction.setVersion(existingReaction.getVersion());
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToReaction : existingReaction.getModels())
+					{
+						reaction.setModel(modelConnectedToReaction);
+						
+					}
+				}
 			}
 		}
 		
@@ -159,12 +188,21 @@ public class PersistSBMLRestController {
 			// TODO: Use SBOLink again
 			//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
 			transition.setSbmlNameString(transition.getSbmlSBOTerm()); // might work for now, TODO CHANGE TO SOMETHING BETTER
-			/*GraphTransition existingTransition = transitionService.getBySbmlIdString(transition.getSbmlIdString());
+			GraphTransition existingTransition = transitionService.getBySbmlIdString(transition.getSbmlIdString());
 			if (existingTransition != null) {
 				transition.setId(existingTransition.getId());
 				transition.setVersion(existingTransition.getVersion());
-				transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
-			}*/
+				//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToTransition : existingTransition.getModels())
+					{
+						transition.setModel(modelConnectedToTransition);
+						
+					}
+				}
+			}
+			
 		}
 		
 		
@@ -175,6 +213,14 @@ public class PersistSBMLRestController {
 			if (existingQualSpecies != null) {
 				qualSpecies.setId(existingQualSpecies.getId());
 				qualSpecies.setVersion(existingQualSpecies.getVersion());
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToQualSpecies : existingQualSpecies.getModels())
+					{
+						qualSpecies.setModel(modelConnectedToQualSpecies);
+						
+					}
+				}
 			}
 		}
 		

@@ -19,31 +19,14 @@ import org.tts.repository.TransitionRepository;
 public class ModelServiceImpl implements ModelService {
 
 	ModelRepository modelRepository;
-	CompartmentRepository compartmentRepository;
-	SpeciesRepository speciesRepository;
-	QualitativeSpeciesRepository qualitativeSpeciesRepository;
-	TransitionRepository transitionRepository;
-	ReactionRepository reactionRepository;
-	SBaseRepository sBaseRepository;
+	
 	
 	@Autowired
 	public ModelServiceImpl(
-			ModelRepository modelRepository,
-			CompartmentRepository compartmentRepository,
-			SpeciesRepository speciesRepository,
-			QualitativeSpeciesRepository qualitativeSpeciesRepository,
-			TransitionRepository transitionRepository,
-			ReactionRepository reactionRepository,
-			SBaseRepository sBaseRepository) 
+			ModelRepository modelRepository) 
 	{
 		super();
 		this.modelRepository = modelRepository;
-		this.compartmentRepository = compartmentRepository;
-		this.speciesRepository = speciesRepository;
-		this.qualitativeSpeciesRepository = qualitativeSpeciesRepository;
-		this.transitionRepository = transitionRepository;
-		this.reactionRepository = reactionRepository;
-		this.sBaseRepository = sBaseRepository;
 	}
 
 	@Override
@@ -54,38 +37,17 @@ public class ModelServiceImpl implements ModelService {
 			newModel.setId(modelInDb.getId());
 			newModel.setVersion(modelInDb.getVersion());
 		}
-		for(GraphSBase entity : newModel.getListCompartment())
-		{
-			matchEntitiesToDb(entity);
-		}
-		for(GraphSBase entity : newModel.getListSpecies())
-		{
-			matchEntitiesToDb(entity);
-		}
-		for(GraphSBase entity : newModel.getListQualSpecies())
-		{
-			matchEntitiesToDb(entity);
-		}
-		for(GraphSBase entity : newModel.getListTransition())
-		{
-			matchEntitiesToDb(entity);
-		}
-		for(GraphSBase entity : newModel.getListReaction())
-		{
-			matchEntitiesToDb(entity);
-		}
+
 		
 		return modelRepository.save(newModel, 10);
 	}
-	
-	private void matchEntitiesToDb(GraphSBase entity) {
-		GraphSBase entityInDb = sBaseRepository.getBySbmlIdString(entity.getSbmlIdString());
-		if (entityInDb != null) 
-		{
-			entity.setId(entityInDb.getId());
-			entity.setVersion(entityInDb.getVersion());
-		}
+
+	@Override
+	public GraphModel getByModelName(String modelName) {
+		return modelRepository.getByModelName(modelName);
 	}
+	
+	
 	
 
 }

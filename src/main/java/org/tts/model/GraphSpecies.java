@@ -34,9 +34,7 @@ public class GraphSpecies extends GraphSBase{
 	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
 	private GraphCompartment compartment;
 	
-	@JsonIgnore
-	@Relationship(type = "IN_MODEL", direction = Relationship.OUTGOING)
-	private List<GraphModel> modelList;
+	
 	
 	
 //	@Relationship(type = "isReactant", direction = Relationship.OUTGOING)
@@ -145,20 +143,7 @@ public class GraphSpecies extends GraphSBase{
 		this.compartment = compartment;
 	}
 
-	public List<GraphModel> getModels() {
-		return modelList;
-	}
-
-	public void setModel(GraphModel model) {
-		if(modelList == null) {
-			modelList = new ArrayList<GraphModel>();
-		}
-		if(!modelList.contains(model))
-		{
-			this.modelList.add(model);
 	
-		}
-	}
 /*
 	public GraphReaction getGraphReactionReactant() {
 		return graphReactionReactant;

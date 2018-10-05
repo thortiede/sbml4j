@@ -53,8 +53,9 @@ public class GraphReaction extends GraphSBase {
 	
 	public GraphReaction() {}
 	
-	public GraphReaction(Reaction reaction, GraphCompartment _compartment, List<GraphSpecies> listGraphSpecies) {
+	public GraphReaction(Reaction reaction, GraphCompartment _compartment, List<GraphSpecies> listGraphSpecies, GraphModel model) {
 		// <reaction compartment="default" fast="false" id="rnR00678" metaid="meta_rnR00678" name="rn:R00678" reversible="false" sboTerm="SBO:0000176">
+		setModel(model);
 	   setSbmlCompartmentString(reaction.getCompartment());
 	   setCompartment(_compartment);
 	   setSbmlIdString(reaction.getId());

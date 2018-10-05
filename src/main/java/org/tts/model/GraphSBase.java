@@ -1,9 +1,15 @@
 package org.tts.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Version;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
 public class GraphSBase {
@@ -18,6 +24,11 @@ public class GraphSBase {
 	
 	protected String sbmlNameString;
 
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.OUTGOING)
+	protected List<GraphModel> modelList;
+	
+	
 	public GraphSBase() {
 		super();
 		// TODO Auto-generated constructor stub
@@ -54,6 +65,19 @@ public class GraphSBase {
 	public void setSbmlNameString(String sbmlNameString) {
 		this.sbmlNameString = sbmlNameString;
 	}
+	public List<GraphModel> getModels() {
+		return modelList;
+	}
+
+	public void setModel(GraphModel model) {
+		if(modelList == null) {
+			modelList = new ArrayList<GraphModel>();
+		}
+		if(!modelList.contains(model))
+		{
+			this.modelList.add(model);
 	
+		}
+	}
 	
 }
