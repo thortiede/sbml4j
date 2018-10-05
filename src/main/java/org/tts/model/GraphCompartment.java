@@ -42,16 +42,15 @@ public class GraphCompartment extends GraphSBase {
 	private List<GraphReaction> graphReactionsInThisCompartment;
 	
 	
-	@JsonIgnore
-	@Relationship(type = "hasCompartment", direction = Relationship.INCOMING)
-	private GraphModel model;
+	
 	
 	public GraphCompartment() {
 		
 	}
 
 	// Constructor to create a GraphCompartment Element from a jsbml Compartment instance
-	public GraphCompartment(Compartment compartment) {
+	public GraphCompartment(Compartment compartment, GraphModel model) {
+		setModel(model);
 		speciesInThisCompartment = new ArrayList<GraphSpecies>();
 		// fill the Compartment here with the fields from the jsbml compartment
 		//   <compartment constant="true" id="default" name="default" sboTerm="SBO:0000410" size="1" spatialDimensions="3" />

@@ -75,11 +75,11 @@ public class GraphModel {
 	
 	
 	// List of all compartments of the model
-	@Relationship(type = "hasCompartment", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphCompartment>				listCompartment;
 	
 	// List of all Constraints of the model
-	@Relationship(type = "hasConstraint", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphConstraint>            listConstraint;
 	
 	// List of all Species of the model
@@ -87,15 +87,15 @@ public class GraphModel {
 	private List<GraphSpecies>				listSpecies;
 	
 	// List of all Reactions of the model
-	@Relationship(type = "hasReaction", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphReaction>              listReaction;
 	
 	// List of Relations / Transitions from the qual-Extension
-	@Relationship(type = "hasTransition", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphTransition>		 	listTransition;
 
 	// List of Qualitative Species from the qual-Extension
-	@Relationship(type = "hasQualSpecies", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> listQualSpecies;
 	
 	
@@ -188,7 +188,7 @@ public class GraphModel {
 	private List<GraphCompartment> createCompartmentList(ListOf<Compartment> listOfCompartments) {
 		List<GraphCompartment> theList = new ArrayList<GraphCompartment>();
 		for (Compartment compartment : listOfCompartments) {
-			theList.add(new GraphCompartment(compartment));
+			theList.add(new GraphCompartment(compartment, this));
 		}
 		return theList;
 	}
@@ -228,7 +228,7 @@ public class GraphModel {
 				//System.out.println("QualSpecies has compartment: " +  qualSpecies.getCompartment());
 				if (listCompartment.get(i).getSbmlIdString().equals(qualSpecies.getCompartment())) {
 					//System.out.println("Yes Compartments are identical");
-					theList.add(new GraphQualitativeSpecies(qualSpecies, listCompartment.get(i)));
+					theList.add(new GraphQualitativeSpecies(qualSpecies, listCompartment.get(i), this));
 				}
 			}
 			
@@ -244,7 +244,7 @@ public class GraphModel {
 		for (Reaction reaction : listOfReactions) {
 			for (int i = 0; i != listCompartment.size(); i++) {
 				if (listCompartment.get(i).getSbmlIdString().equals(reaction.getCompartment())) {
-					theList.add(new GraphReaction(reaction, listCompartment.get(i), listSpecies));
+					theList.add(new GraphReaction(reaction, listCompartment.get(i), listSpecies, this));
 				}
 			}
 		}
@@ -274,7 +274,7 @@ public class GraphModel {
 				 * 
 				 */
 				//System.out.println("Adding Transition");
-				theList.add(new GraphTransition(transition, 0, 0, 0, listQualSpecies));
+				theList.add(new GraphTransition(transition, 0, 0, 0, listQualSpecies, this));
 			}
 			/** 
 			if(transition.getInputCount() > 0 ) {
