@@ -5,4 +5,6 @@ import org.tts.model.GraphModel;
 
 public interface ModelRepository extends Neo4jRepository<GraphModel, Long> {
 
+	public GraphModel getByModelName(String modelName);
+	
 }

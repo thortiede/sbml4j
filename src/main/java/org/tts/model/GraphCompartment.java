@@ -13,15 +13,8 @@ import org.sbml.jsbml.Compartment;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphCompartment {
+public class GraphCompartment extends GraphSBase {
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
-	
-	private String sbmlIdString;
 	
 	private boolean sbmlConstant;
 	
@@ -70,29 +63,6 @@ public class GraphCompartment {
 		setSbmlSpatialDimensions(compartment.getSpatialDimensions());
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
 
 	public boolean isSbmlConstant() {
 		return sbmlConstant;

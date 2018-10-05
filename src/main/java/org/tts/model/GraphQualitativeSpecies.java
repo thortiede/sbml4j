@@ -16,21 +16,12 @@ import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphQualitativeSpecies {
+public class GraphQualitativeSpecies extends GraphSBase{
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
 	
 	// a name for the webviewer of neo4j
 	private String name;
 	
-	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
 	
 	private String sbmlCompartmentString;
 	
@@ -100,18 +91,7 @@ public class GraphQualitativeSpecies {
 		}
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
+	
 	public String getName() {
 		return name;
 	}
@@ -134,26 +114,6 @@ public class GraphQualitativeSpecies {
 
 	public void setSpecies(GraphSpecies species) {
 		this.species = species;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
 	}
 
 	public String getSbmlCompartmentString() {

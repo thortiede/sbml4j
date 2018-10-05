@@ -19,17 +19,8 @@ import org.sbml.jsbml.SpeciesReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphReaction {
+public class GraphReaction extends GraphSBase {
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
-	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
 
 	private Map<String, List<String>> cvTermMap;
 	
@@ -139,38 +130,6 @@ public class GraphReaction {
 		
 		//TODO: kineticLaw
 		
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
 	}
 
 	public Map<String, List<String>> getCvTermMap() {

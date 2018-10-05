@@ -83,7 +83,7 @@ public class GraphModel {
 	private List<GraphConstraint>            listConstraint;
 	
 	// List of all Species of the model
-	@Relationship(type = "hasSpecies", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphSpecies>				listSpecies;
 	
 	// List of all Reactions of the model
@@ -208,7 +208,9 @@ public class GraphModel {
 		for (Species species : listOfSpecies) {
 			for (int i = 0; i != listCompartment.size(); i++) {
 				if (listCompartment.get(i).getSbmlIdString().equals(species.getCompartment())) {
-					theList.add(new GraphSpecies(species, listCompartment.get(i)));
+					// does the species already exist?
+					
+					theList.add(new GraphSpecies(species, listCompartment.get(i), this));
 				}
 			}
 		}
