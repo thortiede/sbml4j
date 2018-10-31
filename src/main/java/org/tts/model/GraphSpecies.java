@@ -31,7 +31,7 @@ public class GraphSpecies extends GraphSBase{
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
 	
 	

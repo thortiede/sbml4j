@@ -39,7 +39,7 @@ public class ModelServiceImpl implements ModelService {
 		}
 
 		
-		return modelRepository.save(newModel, 10);
+		return modelRepository.save(newModel);
 	}
 
 	@Override

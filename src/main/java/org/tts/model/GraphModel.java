@@ -124,6 +124,10 @@ public class GraphModel {
 		listConstraint = createConstraintList(model.getListOfConstraints());
 		listSpecies = createSpeciesList(model.getListOfSpecies());
 		listReaction = createReactionList(model.getListOfReactions());
+		
+		/**
+		 * Start of Extension 'Qualitative Model'
+		 */
 		listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
 		List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
 		System.out.println("Number of qualSpec " + tmpListGS.size());

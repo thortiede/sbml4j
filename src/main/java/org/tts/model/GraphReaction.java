@@ -27,13 +27,9 @@ public class GraphReaction extends GraphSBase {
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
 
-	@JsonIgnore
-	@Relationship(type = "hasReaction", direction = Relationship.INCOMING)
-	private GraphModel model;
-	
 	private String sbmlMetaIdString;
 	
 	boolean sbmlReversible;
@@ -56,7 +52,7 @@ public class GraphReaction extends GraphSBase {
 	public GraphReaction(Reaction reaction, GraphCompartment _compartment, List<GraphSpecies> listGraphSpecies, GraphModel model) {
 		// <reaction compartment="default" fast="false" id="rnR00678" metaid="meta_rnR00678" name="rn:R00678" reversible="false" sboTerm="SBO:0000176">
 		setModel(model);
-	   setSbmlCompartmentString(reaction.getCompartment());
+		setSbmlCompartmentString(reaction.getCompartment());
 	   setCompartment(_compartment);
 	   setSbmlIdString(reaction.getId());
 	   setSbmlMetaIdString(reaction.getMetaId());

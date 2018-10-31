@@ -26,12 +26,8 @@ public class GraphQualitativeSpecies extends GraphSBase{
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
-	
-	@JsonIgnore
-	@Relationship(type = "hasQualSpecies", direction = Relationship.INCOMING)
-	private GraphModel model;
 	
 	@Relationship(type = "IS_SPECIES", direction = Relationship.OUTGOING)
 	private GraphSpecies species;
@@ -101,14 +97,7 @@ public class GraphQualitativeSpecies extends GraphSBase{
 		this.name = name;
 	}
 
-	public GraphModel getModel() {
-		return model;
-	}
-
-	public void setModel(GraphModel model) {
-		this.model = model;
-	}
-
+	
 	public GraphSpecies getSpecies() {
 		return species;
 	}

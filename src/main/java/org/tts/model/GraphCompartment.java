@@ -31,14 +31,14 @@ public class GraphCompartment extends GraphSBase {
 	//private Double sbmlSpatialDimensions;
 	
 	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphSpecies> speciesInThisCompartment;
 	
 	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> qualSpeciesInThisCompartment;
 	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphReaction> graphReactionsInThisCompartment;
 	
 	
