@@ -131,7 +131,7 @@ public class GraphModel {
 		listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
 		List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
 		System.out.println("Number of qualSpec " + tmpListGS.size());
-		boolean qual = false;
+		boolean qual = false;	
 		if ( this.getListQualSpecies().size() > 0) qual = true;
 		// now we can fill the lists in 
 		// 1. compartment
