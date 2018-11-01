@@ -143,7 +143,7 @@ public class PersistSBMLRestController {
 		// take the model and check if elements from it already exist.
 		// If so, update them (yes or no?) and use them in the model (set the id and version of that entity before persisting)
 		// Compartments
-		for (GraphSBase comp : graphModel.getListCompartment()) {
+		for (GraphCompartment comp : graphModel.getListCompartment()) {
 			GraphCompartment existingCompartment = compartmentService.getBySbmlIdString(comp.getSbmlIdString());
 			if (existingCompartment != null) { // TODO: Do more checks to ensure it is the same compartment
 				comp.setId(existingCompartment.getId());
@@ -165,7 +165,7 @@ public class PersistSBMLRestController {
 		
 		start = Instant.now();
 		// Species
-		for (GraphSBase species : graphModel.getListSpecies()) {
+		for (GraphSpecies species : graphModel.getListSpecies()) {
 			GraphSpecies existingSpecies = speciesService.getBySbmlIdString(species.getSbmlIdString());
 			if (existingSpecies != null) { // TODO: Do more checks to ensure it is the same species
 				species.setId(existingSpecies.getId());
@@ -185,7 +185,7 @@ public class PersistSBMLRestController {
 		durationList.add(Duration.between(start, end).toMillis());
 		start = Instant.now();
 		// QualitativeSpecies
-		for (GraphSBase qualSpecies : graphModel.getListQualSpecies()) {
+		for (GraphQualitativeSpecies qualSpecies : graphModel.getListQualSpecies()) {
 			GraphQualitativeSpecies existingQualSpecies = qualitativeSpeciesService.getBySbmlIdString(qualSpecies.getSbmlIdString());
 			if (existingQualSpecies != null) {
 				qualSpecies.setId(existingQualSpecies.getId());
@@ -207,7 +207,7 @@ public class PersistSBMLRestController {
 		// Transitions
 		// a. Translate sbo terms and add them to the attributes (?)
 		//Map<String, List<String>> cvTermMap = new HashMap<String, List<String>>();
-		for (GraphSBase transition : graphModel.getListTransition()) {
+		for (GraphTransition transition : graphModel.getListTransition()) {
 			// setName
 			// TODO: Use SBOLink again
 			//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
@@ -235,7 +235,7 @@ public class PersistSBMLRestController {
 		start = Instant.now();		
 		
 		// Reactions
-		for (GraphSBase reaction : graphModel.getListReaction()) {
+		for (GraphReaction reaction : graphModel.getListReaction()) {
 			GraphReaction existingReaction = reactionService.getBySbmlIdString(reaction.getSbmlIdString());
 			if (existingReaction != null) {
 				reaction.setId(existingReaction.getId());
