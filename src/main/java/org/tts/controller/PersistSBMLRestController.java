@@ -22,7 +22,6 @@ import org.tts.model.GraphCompartment;
 import org.tts.model.GraphModel;
 import org.tts.model.GraphQualitativeSpecies;
 import org.tts.model.GraphReaction;
-import org.tts.model.GraphSBase;
 import org.tts.model.GraphSpecies;
 import org.tts.model.GraphTransition;
 import org.tts.service.CompartmentService;
@@ -57,9 +56,15 @@ public class PersistSBMLRestController {
 	
 	@RequestMapping(value = "/sbmlfolder", method = RequestMethod.GET)
 	public int persistSBMLFolder(@RequestParam(value="name") String name) {
+		boolean createQual = false;
 		System.out.print("reading dir ");
 		String directory = name;
 		System.out.println(directory);
+		if(directory.contains("non-metabolic")) {
+			createQual = false;
+		} else {
+			createQual = true;
+		}
 
 		File folder = new File(directory);
 		File[] listOfFiles = folder.listFiles();
@@ -79,7 +84,7 @@ public class PersistSBMLRestController {
 	    			GraphModel graphModel;
 	    			doc = reader.readSBML(file.getAbsolutePath());
 	    			Model model = doc.getModel();
-	    			graphModel = persistSBMLModel(model);
+	    			graphModel = persistSBMLModel(model, createQual);
 	    			if (graphModel != null) {
 	    				cnt = cnt + 1;
 	    			}
@@ -109,7 +114,7 @@ public class PersistSBMLRestController {
 			GraphModel graphModel;
 			doc = reader.readSBML(filepath);
 			Model model = doc.getModel();
-			graphModel = persistSBMLModel(model);
+			graphModel = persistSBMLModel(model, true);
 			if (graphModel != null) {
 				return graphModel;
 			}
@@ -124,12 +129,19 @@ public class PersistSBMLRestController {
 		
 
 	}
-	public GraphModel persistSBMLModel(Model model) { // TODO: Add back in: , SBOLink sboLink) {
+	public GraphModel persistSBMLModel(Model model, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
 		
+		// Need somthing to hold the Timings each run
 		List<Long> durationList = new ArrayList<Long>();
-			
+		
+		/**
+		 * The Model itself as new model.
+		 * This creates all the java instances for the entities in the model
+		 * 
+		 */
+		
 		Instant start = Instant.now();
-		GraphModel graphModel = new GraphModel(model);
+		GraphModel graphModel = new GraphModel(model, createQual);
 		GraphModel existingModel = modelService.getByModelName(graphModel.getModelName());
 		boolean modelExists = false;
 		if (existingModel != null) {
@@ -137,8 +149,14 @@ public class PersistSBMLRestController {
 			System.out.println("Model exists");
 		}
 		Instant end = Instant.now();
-		
 		durationList.add(Duration.between(start, end).toMillis());
+		
+		/**
+		 * Look at the compartment of the new model
+		 * Is it already existing by sbmlIdString?
+		 * if so, update this one with any information you might have
+		 * otherwise, create it
+		 */
 		start = Instant.now();
 		// take the model and check if elements from it already exist.
 		// If so, update them (yes or no?) and use them in the model (set the id and version of that entity before persisting)
@@ -160,9 +178,14 @@ public class PersistSBMLRestController {
 			//compartmentService.saveOrUpdate(comp);
 		}
 		 end = Instant.now();
+		durationList.add(Duration.between(start, end).toMillis());
 		
-		 durationList.add(Duration.between(start, end).toMillis());
-		
+		/**
+		 * Look at the species of the new model
+		 * Is it already existing by sbmlIdString?
+		 * if so, update this one with any information you might have
+		 * otherwise, create it
+		 */
 		start = Instant.now();
 		// Species
 		for (GraphSpecies species : graphModel.getListSpecies()) {
@@ -181,57 +204,81 @@ public class PersistSBMLRestController {
 			}
 		}
 		end = Instant.now();
-		
 		durationList.add(Duration.between(start, end).toMillis());
+		
+		/**
+		 * Look at the QualitativeSpecies of the new model
+		 * only if @param createQual is true (that is if we have a non metabolic model which uses these
+		 * Is it already existing by sbmlIdString?
+		 * if so, update this one with any information you might have
+		 * otherwise, create it
+		 */
 		start = Instant.now();
-		// QualitativeSpecies
-		for (GraphQualitativeSpecies qualSpecies : graphModel.getListQualSpecies()) {
-			GraphQualitativeSpecies existingQualSpecies = qualitativeSpeciesService.getBySbmlIdString(qualSpecies.getSbmlIdString());
-			if (existingQualSpecies != null) {
-				qualSpecies.setId(existingQualSpecies.getId());
-				qualSpecies.setVersion(existingQualSpecies.getVersion());
-				if(!modelExists)
-				{
-					for (GraphModel modelConnectedToQualSpecies : existingQualSpecies.getModels())
+		
+		if(createQual) {
+			// QualitativeSpecies
+			for (GraphQualitativeSpecies qualSpecies : graphModel.getListQualSpecies()) {
+				GraphQualitativeSpecies existingQualSpecies = qualitativeSpeciesService.getBySbmlIdString(qualSpecies.getSbmlIdString());
+				if (existingQualSpecies != null) {
+					qualSpecies.setId(existingQualSpecies.getId());
+					qualSpecies.setVersion(existingQualSpecies.getVersion());
+					if(!modelExists)
 					{
-						qualSpecies.setModel(modelConnectedToQualSpecies);
-						
+						for (GraphModel modelConnectedToQualSpecies : existingQualSpecies.getModels())
+						{
+							qualSpecies.setModel(modelConnectedToQualSpecies);
+							
+						}
 					}
 				}
 			}
 		}
 		end = Instant.now();
-		
 		durationList.add(Duration.between(start, end).toMillis());
+		
+		/**
+		 * Look at the Transitions of the new model
+		 * only if @param createQual is true (that is if we have a non metabolic model which uses these
+		 * Is it already existing by sbmlIdString?
+		 * if so, update this one with any information you might have
+		 * otherwise, create it
+		 */
 		start = Instant.now();
 		// Transitions
 		// a. Translate sbo terms and add them to the attributes (?)
 		//Map<String, List<String>> cvTermMap = new HashMap<String, List<String>>();
-		for (GraphTransition transition : graphModel.getListTransition()) {
-			// setName
-			// TODO: Use SBOLink again
-			//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
-			// Next line will not work when using GraphSBase as type in the loop..
-			//transition.setSbmlNameString(transition.getSbmlSBOTerm()); // might work for now, TODO CHANGE TO SOMETHING BETTER
-			GraphTransition existingTransition = transitionService.getBySbmlIdString(transition.getSbmlIdString());
-			if (existingTransition != null) {
-				transition.setId(existingTransition.getId());
-				transition.setVersion(existingTransition.getVersion());
+		if(createQual) {
+			for (GraphTransition transition : graphModel.getListTransition()) {
+				// setName
+				// TODO: Use SBOLink again
 				//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
-				if(!modelExists)
-				{
-					for (GraphModel modelConnectedToTransition : existingTransition.getModels())
+				// Next line will not work when using GraphSBase as type in the loop..
+				//transition.setSbmlNameString(transition.getSbmlSBOTerm()); // might work for now, TODO CHANGE TO SOMETHING BETTER
+				GraphTransition existingTransition = transitionService.getBySbmlIdString(transition.getSbmlIdString());
+				if (existingTransition != null) {
+					transition.setId(existingTransition.getId());
+					transition.setVersion(existingTransition.getVersion());
+					//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
+					if(!modelExists)
 					{
-						transition.setModel(modelConnectedToTransition);
-						
+						for (GraphModel modelConnectedToTransition : existingTransition.getModels())
+						{
+							transition.setModel(modelConnectedToTransition);
+							
+						}
 					}
-				}
+				}	
 			}
-			
 		}
 		end = Instant.now();
-		
 		durationList.add(Duration.between(start, end).toMillis());
+		
+		/**
+		 * Look at the QualitativeSpecies of the new model
+		 * Is it already existing by sbmlIdString?
+		 * if so, update this one with any information you might have
+		 * otherwise, create it
+		 */
 		start = Instant.now();		
 		
 		// Reactions
@@ -263,6 +310,7 @@ public class PersistSBMLRestController {
 		} catch (Exception e) {
 			System.out.println("Exception persisting Model " + graphModel.getModelName());
 			e.printStackTrace();
+	
 			return graphModel;
 		}
 		

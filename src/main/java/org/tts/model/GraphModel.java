@@ -35,6 +35,9 @@ public class GraphModel {
 	@Transient
 	public static final String QUAL_NS = QualConstants.namespaceURI;
 	
+	@Transient
+	boolean createQual;
+	
 	// Direct Fields of the SBML Model Class
 	
 	private String 						modelName;
@@ -100,12 +103,12 @@ public class GraphModel {
 	
 	
 	
-	public GraphModel() {
-		// TODO Auto-generated constructor stub
-	}
+	public GraphModel() {}
+
 
 	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
-	public GraphModel(Model model) {
+	public GraphModel(Model model, boolean createQual) {
+		this.createQual = createQual;
 		// Set model fields
 		setModelName(model.getName());
 		// TODO: Check if model exists
@@ -128,28 +131,29 @@ public class GraphModel {
 		/**
 		 * Start of Extension 'Qualitative Model'
 		 */
-		listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
-		List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
-		System.out.println("Number of qualSpec " + tmpListGS.size());
-		boolean qual = false;	
-		if ( this.getListQualSpecies().size() > 0) qual = true;
-		// now we can fill the lists in 
-		// 1. compartment
-		updateCompartments();
-		/*for(GraphCompartment compartment : listCompartment) {
-			System.out.println("Compartment " + compartment.getSbmlIdString() + " has " + compartment.getSpeciesInThisCompartment().size() + " species");
-		}*/
-		
-		// 2. GraphSpecies
-		//updateReactantsAndProducts();
-		
-		listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
-		
-		if(qual) {
-			connectQualSpecies();
+		if(createQual) {
+			listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
+			List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
+			System.out.println("Number of qualSpec " + tmpListGS.size());
+			boolean qual = false;	
+			if ( this.getListQualSpecies().size() > 0) qual = true;
+			// now we can fill the lists in 
+			// 1. compartment
+			updateCompartments();
+			/*for(GraphCompartment compartment : listCompartment) {
+				System.out.println("Compartment " + compartment.getSbmlIdString() + " has " + compartment.getSpeciesInThisCompartment().size() + " species");
+			}*/
+			
+			// 2. GraphSpecies
+			//updateReactantsAndProducts();
+			
+			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
+			
+			if(qual) {
+				connectQualSpecies();
+			}
 		}
 	}
-
 	
 
 	private void connectQualSpecies() {
