@@ -122,7 +122,7 @@ public class GraphModel {
 		setVolumeUnitsID(model.getVolumeUnits());
 		
 		// populate the lists of the GraphModel
-		// if those items already exist, update them with new proerties (part of new model, additional cvterms?)
+		// if those items already exist, update them with new properties (part of new model, additional cvterms?)
 		listCompartment = createCompartmentList(model.getListOfCompartments());
 		listConstraint = createConstraintList(model.getListOfConstraints());
 		listSpecies = createSpeciesList(model.getListOfSpecies());
