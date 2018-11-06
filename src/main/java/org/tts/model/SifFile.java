@@ -3,9 +3,9 @@ package org.tts.model;
 import java.util.ArrayList;
 import java.util.List;
 
-//import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.ResourceSupport;
 
-public class SifFile { //extends ResourceSupport {
+public class SifFile extends ResourceSupport {
 	
 	private Long fileId = null;
 	
