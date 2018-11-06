@@ -311,7 +311,7 @@ public class PersistSBMLRestController {
 			System.out.println("Exception persisting Model " + graphModel.getModelName());
 			e.printStackTrace();
 	
-			return graphModel;
+			//return graphModel;
 		}
 		
 		end = Instant.now();

@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.hateoas.Link;
+//import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,7 +26,7 @@ import org.tts.service.ReactionService;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
+//import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 
 @RestController
 public class BasicRestController {
@@ -58,8 +58,8 @@ public class BasicRestController {
 		
 		NodeEdgeList fullnet = nodeEdgeListService.getFullNet();
 		// create a link to self and add to payload
-		Link selfLink = linkTo(methodOn(BasicRestController.class).fullnet()).withSelfRel();
-		fullnet.add(selfLink);
+		//Link selfLink = linkTo(methodOn(BasicRestController.class).fullnet()).withSelfRel();
+		//fullnet.add(selfLink);
 		
 		return new ResponseEntity<NodeEdgeList>(fullnet, HttpStatus.OK);
 		
