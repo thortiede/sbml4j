@@ -13,6 +13,8 @@ import javax.xml.stream.XMLStreamException;
 import org.sbml.jsbml.Model;
 import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBMLReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -43,6 +45,7 @@ public class PersistSBMLRestController {
 	private final ReactionService reactionService;
 	private final TransitionService transitionService;
 	
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	public PersistSBMLRestController(ModelService modelService, SpeciesService speciesService, CompartmentService compartmentService, ReactionService reactionService, QualitativeSpeciesService qualitativeSpeciesService, TransitionService transitionService) {
@@ -149,8 +152,10 @@ public class PersistSBMLRestController {
 		if (existingModel != null) {
 			modelExists = true;
 			System.out.println("Model exists");
-			graphModel.setId(existingModel.getId());
-			graphModel.setVersion(existingModel.getVersion());
+			// already doing this in the ModelService.
+			// TODO: Which Location makes more sense?
+			//graphModel.setId(existingModel.getId());
+			//graphModel.setVersion(existingModel.getVersion());
 		}
 		Instant end = Instant.now();
 		durationList.add(Duration.between(start, end).toMillis());
@@ -306,8 +311,8 @@ public class PersistSBMLRestController {
 		
 		durationList.add(Duration.between(start, end).toMillis());
 		start = Instant.now();		
-		
-		
+		logger.debug(graphModel.toString());
+		//graphModel.toString()
 		// then persist the model
 		try {
 			modelService.saveOrUpdate(graphModel);
