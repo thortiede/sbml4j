@@ -31,6 +31,8 @@ import org.tts.service.ReactionService;
 import org.tts.service.SpeciesService;
 import org.tts.service.TransitionService;
 
+import org.neo4j.ogm.exception.OptimisticLockingException;
+
 @RestController
 public class PersistSBMLRestController {
 
@@ -147,6 +149,8 @@ public class PersistSBMLRestController {
 		if (existingModel != null) {
 			modelExists = true;
 			System.out.println("Model exists");
+			graphModel.setId(existingModel.getId());
+			graphModel.setVersion(existingModel.getVersion());
 		}
 		Instant end = Instant.now();
 		durationList.add(Duration.between(start, end).toMillis());
@@ -307,9 +311,10 @@ public class PersistSBMLRestController {
 		// then persist the model
 		try {
 			modelService.saveOrUpdate(graphModel);
-		} catch (Exception e) {
+		} catch (OptimisticLockingException e) {
 			System.out.println("Exception persisting Model " + graphModel.getModelName());
 			e.printStackTrace();
+			// TODO: Still need to rollback the db transaction here
 	
 			//return graphModel;
 		}
