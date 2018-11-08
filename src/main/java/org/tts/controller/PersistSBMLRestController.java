@@ -62,7 +62,7 @@ public class PersistSBMLRestController {
 	@RequestMapping(value = "/sbmlfolder", method = RequestMethod.GET)
 	public int persistSBMLFolder(@RequestParam(value="name") String name) {
 		boolean createQual = false;
-		System.out.print("reading dir ");
+		logger.debug("reading dir ");
 		String directory = name;
 		System.out.println(directory);
 		if(directory.contains("non-metabolic")) {
@@ -74,13 +74,17 @@ public class PersistSBMLRestController {
 		File folder = new File(directory);
 		File[] listOfFiles = folder.listFiles();
 		int cnt = 0;
+		// TODO: This should be outside the for loop, or not?
+		// I moved them here, lets what happens #reminder
+		SBMLReader reader = new SBMLReader();
+		SBMLDocument doc = null;
 		for (File file : listOfFiles) {
 		    if (file.isFile()) {
-		    	System.out.println("Processing File: " + file.getAbsolutePath());	    	
+		    	logger.info("Processing File: " + file.getAbsolutePath());	    	
 		 
 		    	try {
-		    		SBMLReader reader = new SBMLReader();
-		    		SBMLDocument doc;
+		    		
+		    		
 		    		
 		    		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/non-metabolic/hsa/";
 		    		//String filepath = directory + name;
@@ -99,7 +103,9 @@ public class PersistSBMLRestController {
 	    		} catch (IOException e) {
 	    			// TODO Auto-generated catch block
 	    			e.printStackTrace();
-	    		}
+	    		} finally {
+					logger.info("finished persisting model " + doc.getModel().getName());
+				}
 	    		
 		    	
 		    }
@@ -153,7 +159,7 @@ public class PersistSBMLRestController {
 			modelExists = true;
 			System.out.println("Model exists");
 			// already doing this in the ModelService.
-			// TODO: Which Location makes more sense?
+			// TODO: Which Location makes more sense? #reminder
 			//graphModel.setId(existingModel.getId());
 			//graphModel.setVersion(existingModel.getVersion());
 		}
@@ -204,7 +210,8 @@ public class PersistSBMLRestController {
 				species.setVersion(existingSpecies.getVersion());
 				if(!modelExists)
 				{
-					for (GraphModel modelConnectedToSpecies : existingSpecies.getModels()) // TODO: Check if it has models first (it will not if previous load was interrupted)
+					logger.debug("Checking models of Species: " + existingSpecies.getName() + " with sbmlId " + existingSpecies.getSbmlIdString() + " and used " + species.getSbmlIdString() + " as inital match");
+					for (GraphModel modelConnectedToSpecies : existingSpecies.getModels()) // TODO: Check if it has models first (it might not if previous load was interrupted)
 					{
 						species.setModel(modelConnectedToSpecies);
 						
@@ -315,12 +322,46 @@ public class PersistSBMLRestController {
 		//graphModel.toString()
 		// then persist the model
 		try {
-			modelService.saveOrUpdate(graphModel);
+			for (GraphCompartment compartment : graphModel.getListCompartment()) {
+				GraphCompartment tmp = compartmentService.saveOrUpdate(compartment);
+				if (tmp.getVersion() != compartment.getVersion()) {
+					logger.warn("Compartment " + compartment.getSbmlNameString() + ", " + compartment.getId() + " has different Version");
+				}
+			}
+			/*for (GraphSpecies species : graphModel.getListSpecies()) {
+				GraphSpecies tmp = speciesService.saveOrUpdate(species);
+				if (tmp.getVersion() != species.getVersion()) {
+					logger.warn("species " + species.getSbmlNameString() + ", " + species.getId() + " has different Version");
+				}
+			}*/
+			for (GraphReaction reaction : graphModel.getListReaction()) {
+				GraphReaction tmp = reactionService.saveOrUpdate(reaction);
+				if (tmp.getVersion() != reaction.getVersion()) {
+					logger.warn("reaction " + reaction.getSbmlNameString() + ", " + reaction.getId() + " has different Version");
+				}
+			}
+			if(createQual) {
+			/*	for (GraphQualitativeSpecies qualitativeSpecies : graphModel.getListQualSpecies()) { // TODO: Method should be: getListQualitativeSpecies for naming standards
+					GraphQualitativeSpecies tmp = qualitativeSpeciesService.saveOrUpdate(qualitativeSpecies);
+					if (tmp.getVersion() != qualitativeSpecies.getVersion()) {
+						logger.warn("qualitativeSpecies " + qualitativeSpecies.getSbmlNameString() + ", " + qualitativeSpecies.getId() + " has different Version");
+					}
+				}*/
+				for (GraphTransition transition : graphModel.getListTransition()) {
+					GraphTransition tmp = transitionService.saveOrUpdate(transition);
+					if (tmp.getVersion() != transition.getVersion()) {
+						logger.warn("transition " + transition.getSbmlNameString() + ", " + transition.getId() + " has different Version");
+					}
+				}
+			}
+			
+			//modelService.saveOrUpdate(graphModel);
 		} catch (OptimisticLockingException e) {
-			System.out.println("Exception persisting Model " + graphModel.getModelName());
+			logger.warn("Exception persisting Model " + graphModel.getModelName());
 			e.printStackTrace();
 			// TODO: Still need to rollback the db transaction here
-	
+			// Figure out which type of Transaction the api uses to know if rollback occours
+			// Might think about reloding the db-state and retry persisting the model.
 			//return graphModel;
 		}
 		
@@ -331,13 +372,13 @@ public class PersistSBMLRestController {
 		// Now output the times
 		// Order of durations:
 		// Model, compartment, species, reaction, transition qualSpec, persisting
-		System.out.println("Model took " + durationList.get(0));
-		System.out.println("compartment took " + durationList.get(1));
-		System.out.println("species took " + durationList.get(2));
-		System.out.println("reaction took " + durationList.get(3));
-		System.out.println("transition took " + durationList.get(4));
-		System.out.println("qualSpec took " + durationList.get(5));
-		System.out.println("Persisting took " + durationList.get(6));
+		logger.debug("Model took " + durationList.get(0));
+		logger.debug("compartment took " + durationList.get(1));
+		logger.debug("species took " + durationList.get(2));
+		logger.debug("reaction took " + durationList.get(3));
+		logger.debug("transition took " + durationList.get(4));
+		logger.debug("qualSpec took " + durationList.get(5));
+		logger.info("Persisting took " + durationList.get(6));
 		
 		
 		return graphModel;
