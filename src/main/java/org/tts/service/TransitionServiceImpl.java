@@ -17,7 +17,7 @@ public class TransitionServiceImpl implements TransitionService {
 
 	@Override
 	public GraphTransition saveOrUpdate(GraphTransition newTransition) {
-		return transitionRepository.save(newTransition); // TODO: Do I need a Depth here?
+		return transitionRepository.save(newTransition, 2); // TODO: Do I need a Depth here?
 	}
 
 	@Override

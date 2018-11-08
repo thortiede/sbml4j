@@ -3,11 +3,8 @@ package org.tts.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.neo4j.ogm.annotation.GeneratedValue;
-import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
-import org.neo4j.ogm.annotation.Version;
 import org.sbml.jsbml.Compartment;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,14 +27,15 @@ public class GraphCompartment extends GraphSBase {
 	
 	//private Double sbmlSpatialDimensions;
 	
-	
+	@JsonIgnore
 	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphSpecies> speciesInThisCompartment;
 	
-	
+	@JsonIgnore
 	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> qualSpeciesInThisCompartment;
 	
+	@JsonIgnore
 	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphReaction> graphReactionsInThisCompartment;
 	

@@ -16,6 +16,7 @@ import org.sbml.jsbml.SBMLReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -64,11 +65,11 @@ public class PersistSBMLRestController {
 		boolean createQual = false;
 		logger.debug("reading dir ");
 		String directory = name;
-		System.out.println(directory);
+		logger.info(directory);
 		if(directory.contains("non-metabolic")) {
-			createQual = false;
-		} else {
 			createQual = true;
+		} else {
+			createQual = false;
 		}
 
 		File folder = new File(directory);
@@ -78,9 +79,13 @@ public class PersistSBMLRestController {
 		// I moved them here, lets what happens #reminder
 		SBMLReader reader = new SBMLReader();
 		SBMLDocument doc = null;
+		int numFiles = listOfFiles.length;
+		int curFileNum = 0;
+		logger.info("Begin Processing " + numFiles + "files/models");
 		for (File file : listOfFiles) {
 		    if (file.isFile()) {
-		    	logger.info("Processing File: " + file.getAbsolutePath());	    	
+		    	curFileNum += 1;
+		    	logger.info("Processing File: " + file.getAbsolutePath() + "(" + curFileNum + "/" + numFiles + ")");	    	
 		 
 		    	try {
 		    		
@@ -88,7 +93,7 @@ public class PersistSBMLRestController {
 		    		
 		    		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/non-metabolic/hsa/";
 		    		//String filepath = directory + name;
-		    		//System.out.println(filepath);
+		    		//logger.info("Filepath is :" filepath);
 		    		
 	    			GraphModel graphModel;
 	    			doc = reader.readSBML(file.getAbsolutePath());
@@ -110,6 +115,7 @@ public class PersistSBMLRestController {
 		    	
 		    }
 		}
+		logger.info("Finished Processing " + cnt + " models.");
 		return cnt;
 	}
 	
@@ -118,9 +124,9 @@ public class PersistSBMLRestController {
 		SBMLReader reader = new SBMLReader();
 		SBMLDocument doc;
 		
-		String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/non-metabolic/hsa/";
+		String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/metabolic/testing/hsa/";
 		String filepath = localDir + name;
-		System.out.println(filepath);
+		logger.info("Filepath is" + filepath);
 		try {
 			GraphModel graphModel;
 			doc = reader.readSBML(filepath);
@@ -157,11 +163,13 @@ public class PersistSBMLRestController {
 		boolean modelExists = false;
 		if (existingModel != null) {
 			modelExists = true;
-			System.out.println("Model exists");
+			logger.info("Model exists");
 			// already doing this in the ModelService.
-			// TODO: Which Location makes more sense? #reminder
-			//graphModel.setId(existingModel.getId());
-			//graphModel.setVersion(existingModel.getVersion());
+			// We need to do this here, to ensure from the beginning that we work on the same model, as it needs to be unique..
+			// Do we need to reset it then in the modelService (which we do not call at the moment, thats why we had that collision after
+			// introducing the constraint on modelName)
+			graphModel.setId(existingModel.getId());
+			graphModel.setVersion(existingModel.getVersion());
 		}
 		Instant end = Instant.now();
 		durationList.add(Duration.between(start, end).toMillis());
@@ -322,37 +330,13 @@ public class PersistSBMLRestController {
 		//graphModel.toString()
 		// then persist the model
 		try {
-			for (GraphCompartment compartment : graphModel.getListCompartment()) {
-				GraphCompartment tmp = compartmentService.saveOrUpdate(compartment);
-				if (tmp.getVersion() != compartment.getVersion()) {
-					logger.warn("Compartment " + compartment.getSbmlNameString() + ", " + compartment.getId() + " has different Version");
-				}
-			}
-			/*for (GraphSpecies species : graphModel.getListSpecies()) {
-				GraphSpecies tmp = speciesService.saveOrUpdate(species);
-				if (tmp.getVersion() != species.getVersion()) {
-					logger.warn("species " + species.getSbmlNameString() + ", " + species.getId() + " has different Version");
-				}
-			}*/
-			for (GraphReaction reaction : graphModel.getListReaction()) {
-				GraphReaction tmp = reactionService.saveOrUpdate(reaction);
-				if (tmp.getVersion() != reaction.getVersion()) {
-					logger.warn("reaction " + reaction.getSbmlNameString() + ", " + reaction.getId() + " has different Version");
-				}
-			}
+			persistGraphCompartmentList(graphModel);
+			persistGraphSpeciesList(graphModel);
+			persistGraphReactionList(graphModel);
+			
 			if(createQual) {
-			/*	for (GraphQualitativeSpecies qualitativeSpecies : graphModel.getListQualSpecies()) { // TODO: Method should be: getListQualitativeSpecies for naming standards
-					GraphQualitativeSpecies tmp = qualitativeSpeciesService.saveOrUpdate(qualitativeSpecies);
-					if (tmp.getVersion() != qualitativeSpecies.getVersion()) {
-						logger.warn("qualitativeSpecies " + qualitativeSpecies.getSbmlNameString() + ", " + qualitativeSpecies.getId() + " has different Version");
-					}
-				}*/
-				for (GraphTransition transition : graphModel.getListTransition()) {
-					GraphTransition tmp = transitionService.saveOrUpdate(transition);
-					if (tmp.getVersion() != transition.getVersion()) {
-						logger.warn("transition " + transition.getSbmlNameString() + ", " + transition.getId() + " has different Version");
-					}
-				}
+				persistQualitativeSpeciesList(graphModel);
+				persistGraphTransitionList(graphModel);
 			}
 			
 			//modelService.saveOrUpdate(graphModel);
@@ -383,6 +367,66 @@ public class PersistSBMLRestController {
 		
 		return graphModel;
 		
+	}
+
+	
+	private void persistQualitativeSpeciesList(GraphModel graphModel) {
+		for (GraphQualitativeSpecies qualitativeSpecies : graphModel.getListQualSpecies()) { // TODO: Method should be: getListQualitativeSpecies for naming standards
+			persistQualitativeSpecies(qualitativeSpecies);
+		}
+	}
+
+	@Transactional
+	private GraphQualitativeSpecies persistQualitativeSpecies(GraphQualitativeSpecies qualitativeSpecies) {
+		return qualitativeSpeciesService.saveOrUpdate(qualitativeSpecies);
+	}
+
+	
+	private void persistGraphSpeciesList(GraphModel graphModel) {
+		for (GraphSpecies species : graphModel.getListSpecies()) {
+			persistGraphSpecies(species);
+		}
+	}
+
+	@Transactional
+	private GraphSpecies persistGraphSpecies(GraphSpecies species) {
+		return speciesService.saveOrUpdate(species);
+	}
+
+
+	private void persistGraphCompartmentList(GraphModel graphModel) {
+		for (GraphCompartment compartment : graphModel.getListCompartment()) {
+			persistGraphCompartment(compartment);
+		}
+	}
+
+	@Transactional
+	private GraphCompartment persistGraphCompartment(GraphCompartment compartment) {
+		return compartmentService.saveOrUpdate(compartment);
+	}
+
+
+	private void persistGraphTransitionList(GraphModel graphModel) {
+		for (GraphTransition transition : graphModel.getListTransition()) {
+			persistGraphTransition(transition);
+		}
+	}
+
+	@Transactional
+	private GraphTransition persistGraphTransition(GraphTransition transition) {
+		return transitionService.saveOrUpdate(transition);
+	}
+
+	private void persistGraphReactionList(GraphModel graphModel) {
+		for (GraphReaction reaction : graphModel.getListReaction()) {
+			persistGraphReaction(reaction);
+		}
+	}
+
+
+	@Transactional
+	private GraphReaction persistGraphReaction(GraphReaction reaction) {
+		return reactionService.saveOrUpdate(reaction);
 	}
 
 }

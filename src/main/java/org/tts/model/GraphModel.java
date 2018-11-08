@@ -20,6 +20,8 @@ import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @NodeEntity
 public class GraphModel {
 
@@ -78,26 +80,32 @@ public class GraphModel {
 	
 	
 	// List of all compartments of the model
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphCompartment>				listCompartment;
 	
 	// List of all Constraints of the model
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphConstraint>            listConstraint;
 	
 	// List of all Species of the model
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphSpecies>				listSpecies;
 	
 	// List of all Reactions of the model
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphReaction>              listReaction;
 	
 	// List of Relations / Transitions from the qual-Extension
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphTransition>		 	listTransition;
 
 	// List of Qualitative Species from the qual-Extension
+	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> listQualSpecies;
 	
@@ -134,25 +142,33 @@ public class GraphModel {
 		if(createQual) {
 			listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
 			List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
-			System.out.println("Number of qualSpec " + tmpListGS.size());
+			//System.out.println("Number of qualSpec " + tmpListGS.size());
 			boolean qual = false;	
 			if ( this.getListQualSpecies().size() > 0) qual = true;
-			// now we can fill the lists in 
-			// 1. compartment
-			updateCompartments();
+			if(qual) {
+				connectQualSpecies();
+			}
+			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
+
+
+		}
+			
 			/*for(GraphCompartment compartment : listCompartment) {
 				System.out.println("Compartment " + compartment.getSbmlIdString() + " has " + compartment.getSpeciesInThisCompartment().size() + " species");
 			}*/
 			
-			// 2. GraphSpecies
-			//updateReactantsAndProducts();
-			
-			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
-			
-			if(qual) {
-				connectQualSpecies();
-			}
-		}
+		/**
+		 * not sure if I need to updateCompartments and ReactantsAndProducts
+		 * as I reversed some of the relationships, and moved some stuff into GraphSBase
+		 */
+
+		// 1. compartment
+		updateCompartments();
+		// 2. GraphSpecies
+		//updateReactantsAndProducts();
+		
+
+		
 	}
 	
 
@@ -161,7 +177,7 @@ public class GraphModel {
 			for (GraphSpecies spec : listSpecies) {
 				if (qualSpec.getSbmlNameString().equals(spec.getSbmlNameString())) {
 					//System.out.println("Found matching species");
-					qualSpec.setSpecies(spec);
+					qualSpec.setSpecies(spec); 
 				}
 			}
 		}

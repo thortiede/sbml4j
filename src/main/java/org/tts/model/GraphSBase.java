@@ -9,7 +9,8 @@ import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Version;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 
 @NodeEntity
 public class GraphSBase {
@@ -24,7 +25,6 @@ public class GraphSBase {
 	
 	protected String sbmlNameString;
 
-	@JsonIgnore
 	@Relationship(type = "IN_MODEL", direction = Relationship.OUTGOING)
 	protected List<GraphModel> modelList;
 	
