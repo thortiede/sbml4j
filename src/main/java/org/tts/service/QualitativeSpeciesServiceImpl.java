@@ -17,8 +17,8 @@ public class QualitativeSpeciesServiceImpl implements QualitativeSpeciesService 
 	}
 
 	@Override
-	public GraphQualitativeSpecies saveOrUpdate(GraphQualitativeSpecies newSpecies) {
-		return qualitativeSpeciesRepository.save(newSpecies, 1);	}
+	public GraphQualitativeSpecies saveOrUpdate(GraphQualitativeSpecies newQualitativeSpecies) {
+		return qualitativeSpeciesRepository.save(newQualitativeSpecies, 1);	}
 
 	@Override
 	public GraphQualitativeSpecies getBySbmlIdString(String sbmlIdString) {
