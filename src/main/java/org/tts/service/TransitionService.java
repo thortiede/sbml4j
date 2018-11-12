@@ -4,7 +4,7 @@ import org.tts.model.GraphTransition;
 
 public interface TransitionService {
 
-	GraphTransition saveOrUpdate(GraphTransition newSpecies);
+	GraphTransition saveOrUpdate(GraphTransition newTransition);
 	
 	GraphTransition getBySbmlIdString(String sbmlIdString);
 	
