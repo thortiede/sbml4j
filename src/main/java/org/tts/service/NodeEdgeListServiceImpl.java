@@ -69,7 +69,7 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 						
 						nodeEdgeList.addListEntry(	transition.getQualSpeciesOneSbmlNameString(), 
 													transition.getQualSpeciesTwoSbmlNameString(),
-													transition.getSbmlNameString());
+													transition.getSbmlSBOTerm());
 					}
 				}
 			}
