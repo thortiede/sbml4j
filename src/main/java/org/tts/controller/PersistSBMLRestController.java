@@ -65,7 +65,7 @@ public class PersistSBMLRestController {
 		boolean createQual = false;
 		logger.debug("reading dir ");
 		String directory = name;
-		logger.info(directory);
+		logger.debug(directory);
 		if(directory.contains("non-metabolic")) {
 			createQual = true;
 		} else {
@@ -83,7 +83,7 @@ public class PersistSBMLRestController {
 		int curFileNum = 0;
 		logger.info("Begin Processing " + numFiles + " files/models");
 		for (File file : listOfFiles) {
-		    if (file.isFile()) {
+		    if (file.isFile() && !file.getName().equals(".DS_Store")) {
 		    	curFileNum += 1;
 		    	logger.info("Processing File: " + file.getAbsolutePath() + "(" + curFileNum + "/" + numFiles + ")");	    	
 		 
@@ -370,13 +370,13 @@ public class PersistSBMLRestController {
 		// then persist the model
 		List<GraphCompartment> listBeforeUpdate = graphModel.getListCompartment();
 		if(listBeforeUpdate.size() > 0) {
-			logger.info("Compartment " + listBeforeUpdate.get(0).getSbmlIdString() + " has id " + listBeforeUpdate.get(0).getId() + " and version " + listBeforeUpdate.get(0).getVersion());
+			logger.debug("Compartment " + listBeforeUpdate.get(0).getSbmlIdString() + " has id " + listBeforeUpdate.get(0).getId() + " and version " + listBeforeUpdate.get(0).getVersion());
 		}
 		graphModel.setListCompartment(compartmentService.updateCompartmentList(graphModel.getListCompartment()));
 		List<GraphCompartment> listAfterUpdate = graphModel.getListCompartment();
 			
 		if(listAfterUpdate.size() > 0) {
-			logger.info("Compartment " + listAfterUpdate.get(0).getSbmlIdString() + " has id " + listAfterUpdate.get(0).getId() + " and version " + listAfterUpdate.get(0).getVersion());
+			logger.debug("Compartment " + listAfterUpdate.get(0).getSbmlIdString() + " has id " + listAfterUpdate.get(0).getId() + " and version " + listAfterUpdate.get(0).getVersion());
 		}
 		
 		graphModel.setListSpecies(speciesService.updateSpeciesList(graphModel.getListSpecies()));
@@ -389,14 +389,14 @@ public class PersistSBMLRestController {
 			List<GraphTransition> transitionListBeforeUpdate = graphModel.getListTransition();
 			if(transitionListBeforeUpdate.size() > 0) {
 				for (GraphTransition transition : transitionListBeforeUpdate) {
-					logger.info("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " before");
+					logger.debug("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " before");
 				}
 			}
 			graphModel.setListTransition(transitionService.updateTransitionList(graphModel.getListTransition()));
 			List<GraphTransition> transitionListAfterUpdate = graphModel.getListTransition();
 			if(transitionListAfterUpdate.size() > 0) {
 				for (GraphTransition transition : transitionListAfterUpdate) {
-					logger.info("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " after");
+					logger.debug("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " after");
 				}
 			}
 		}
