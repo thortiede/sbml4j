@@ -7,23 +7,26 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.GraphModel;
-import org.tts.model.GraphReaction;
 import org.tts.model.GraphTransition;
 import org.tts.model.NodeEdgeList;
 import org.tts.repository.ModelRepository;
 import org.tts.repository.TransitionRepository;
+import uk.ac.ebi.sbo.ws.client.SBOLink;
+
 
 @Service
 public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 
 	private ModelRepository modelRepository;
 	private TransitionRepository transistionRepository;
+	private SBOLink sbolink;
 	
 	
 	@Autowired
 	public NodeEdgeListServiceImpl(ModelRepository modelRepository, TransitionRepository transistionRepository) {
 		this.modelRepository = modelRepository;
 		this.transistionRepository = transistionRepository;
+		this.sbolink = new SBOLink();
 	}
 	
 	
@@ -44,8 +47,8 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 					boolean allThere = true;
 					
 					
-					if(transition.getSbmlNameString() == null) {
-						System.out.println("transName is null");
+					if(transition.getSbmlSBOTerm() == null) {
+						System.out.println("SBOTerm is null");
 						allThere = false;
 					} else {
 						//System.out.println("Transition Name: " + transition.getSbmlNameString());
@@ -69,7 +72,7 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 						
 						nodeEdgeList.addListEntry(	transition.getQualSpeciesOneSbmlNameString(), 
 													transition.getQualSpeciesTwoSbmlNameString(),
-													transition.getSbmlSBOTerm());
+													translateSBOTerm(transition.getSbmlSBOTerm()));
 					}
 				}
 			}
@@ -82,6 +85,13 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 		// TODO
 		
 		return nodeEdgeList;
+	}
+
+
+	private String translateSBOTerm(String sbmlSBOTerm) {
+		if (sbmlSBOTerm.equals("")) return "not determined, no SBO Link";
+		// Do translation using SBOLink here
+		else return sbolink.getTerm(sbmlSBOTerm).getName();
 	}
 
 }
