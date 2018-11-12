@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphCompartment;
 import org.tts.repository.CompartmentRepository;
 
@@ -20,7 +21,7 @@ public class CompartmentServiceImpl implements CompartmentService {
 		this.compartmentRepository = compartmentRepository;
 	}
 
-	@Override
+	@Transactional
 	public GraphCompartment saveOrUpdate(GraphCompartment newCompartment) {
 		return compartmentRepository.save(newCompartment, 1);
 	}

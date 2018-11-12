@@ -2,6 +2,7 @@ package org.tts.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphReaction;
 import org.tts.repository.ReactionRepository;
 
@@ -15,9 +16,9 @@ public class ReactionServiceImpl implements ReactionService {
 		this.reactionRepository = reactionRepository;
 	}
 
-	@Override
+	@Transactional
 	public GraphReaction saveOrUpdate(GraphReaction newReaction) {
-		return reactionRepository.save(newReaction, 1);
+		return reactionRepository.save(newReaction, 1); // TODO: Which depth here? Does this cause optimistic locking execption?
 	}
 
 	@Override

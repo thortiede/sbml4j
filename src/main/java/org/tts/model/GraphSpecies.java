@@ -32,7 +32,7 @@ public class GraphSpecies extends GraphSBase{
 	
 	@JsonIgnore
 	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
-	private GraphCompartment compartment;
+	private GraphCompartment compartment; // should this also be a list? TODO
 	
 	
 	

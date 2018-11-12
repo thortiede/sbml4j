@@ -2,6 +2,7 @@ package org.tts.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphTransition;
 import org.tts.repository.TransitionRepository;
 
@@ -15,9 +16,9 @@ public class TransitionServiceImpl implements TransitionService {
 		this.transitionRepository = transitionRepository;
 	}
 
-	@Override
+	@Transactional
 	public GraphTransition saveOrUpdate(GraphTransition newTransition) {
-		return transitionRepository.save(newTransition, 2); // TODO: Do I need a Depth here?
+		return transitionRepository.save(newTransition, 2); // TODO: Which depth here? Does this cause optimistic locking execption?
 	}
 
 	@Override

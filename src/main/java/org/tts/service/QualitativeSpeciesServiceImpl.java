@@ -2,6 +2,7 @@ package org.tts.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphQualitativeSpecies;
 import org.tts.repository.QualitativeSpeciesRepository;
 
@@ -16,7 +17,7 @@ public class QualitativeSpeciesServiceImpl implements QualitativeSpeciesService 
 		this.qualitativeSpeciesRepository = qualitativeSpeciesRepository;
 	}
 
-	@Override
+	@Transactional
 	public GraphQualitativeSpecies saveOrUpdate(GraphQualitativeSpecies newQualitativeSpecies) {
 		return qualitativeSpeciesRepository.save(newQualitativeSpecies, 1);	}
 

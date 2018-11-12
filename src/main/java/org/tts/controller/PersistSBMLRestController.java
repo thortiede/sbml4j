@@ -148,42 +148,44 @@ public class PersistSBMLRestController {
 	}
 	public GraphModel persistSBMLModel(Model model, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
 		
-		// Need somthing to hold the Timings each run
-		List<Long> durationList = new ArrayList<Long>();
-		
-		/**
-		 * The Model itself as new model.
-		 * This creates all the java instances for the entities in the model
-		 * 
-		 */
-		
-		Instant start = Instant.now();
-		GraphModel graphModel = new GraphModel(model, createQual);
-		GraphModel existingModel = modelService.getByModelName(graphModel.getModelName());
 		boolean modelExists = false;
+		
+		
+		// Time the individual steps
+		List<Long> durationList = new ArrayList<Long>();
+		Instant start = Instant.now();
+		String newModelNameString = model.getName();
+		GraphModel existingModel = modelService.getByModelName(newModelNameString);
 		if (existingModel != null) {
 			modelExists = true;
-			logger.info("Model exists");
-			// already doing this in the ModelService.
-			// We need to do this here, to ensure from the beginning that we work on the same model, as it needs to be unique..
-			// Do we need to reset it then in the modelService (which we do not call at the moment, thats why we had that collision after
-			// introducing the constraint on modelName)
+			logger.info("Model with Name " + newModelNameString + " already exists");
+		}
+		
+		// TODO: Evaluate how we can compare the two models without creating the new one.
+		// 		 and then possibly only create the new / changed entities.
+		
+		// for now create the model whether it already exists or not.
+		GraphModel graphModel = new GraphModel(model, createQual);
+				
+		if (modelExists) {
+			// set id and version of the model-entity to ensure it will be updated and not duplicated
+			/*already doing this in the ModelService.
+			We need to do this here, to ensure from the beginning that we work on the same model, as it needs to be unique..
+			Do we need to reset it then in the modelService (which we do not call at the moment, thats why we had that collision after
+			introducing the constraint on modelName)*/
 			graphModel.setId(existingModel.getId());
 			graphModel.setVersion(existingModel.getVersion());
 		}
-		Instant end = Instant.now();
-		durationList.add(Duration.between(start, end).toMillis());
+		Instant end = Instant.now(); // creation of the model
+		durationList.add(Duration.between(start, end).toMillis()); //[0]
 		
 		/**
-		 * Look at the compartment of the new model
-		 * Is it already existing by sbmlIdString?
-		 * if so, update this one with any information you might have
+		 * Look at the compartments of the new model
+		 * Are they already existing by sbmlIdString?
+		 * if so, update them with any new information you might have
 		 * otherwise, create it
 		 */
 		start = Instant.now();
-		// take the model and check if elements from it already exist.
-		// If so, update them (yes or no?) and use them in the model (set the id and version of that entity before persisting)
-		// Compartments
 		for (GraphCompartment comp : graphModel.getListCompartment()) {
 			GraphCompartment existingCompartment = compartmentService.getBySbmlIdString(comp.getSbmlIdString());
 			if (existingCompartment != null) { // TODO: Do more checks to ensure it is the same compartment
@@ -193,21 +195,24 @@ public class PersistSBMLRestController {
 				{
 					for (GraphModel modelConnectedToCompartment : existingCompartment.getModels())
 					{
-						comp.setModel(modelConnectedToCompartment);
+						if(!modelConnectedToCompartment.getModelName().equals(graphModel.getModelName()))
+						{
+							comp.setModel(modelConnectedToCompartment);
+						}
 					}
 				}
 					
 			}
-			//compartmentService.saveOrUpdate(comp);
+			compartmentService.saveOrUpdate(comp);
 		}
-		 end = Instant.now();
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // compartment
+		durationList.add(Duration.between(start, end).toMillis()); //[1]
 		
 		/**
 		 * Look at the species of the new model
-		 * Is it already existing by sbmlIdString?
-		 * if so, update this one with any information you might have
-		 * otherwise, create it
+		 * Are they already existing by sbmlIdString?
+		 * if so, update them with any new information you might have
+		 * otherwise, create them
 		 */
 		start = Instant.now();
 		// Species
@@ -221,14 +226,18 @@ public class PersistSBMLRestController {
 					logger.debug("Checking models of Species: " + existingSpecies.getName() + " with sbmlId " + existingSpecies.getSbmlIdString() + " and used " + species.getSbmlIdString() + " as inital match");
 					for (GraphModel modelConnectedToSpecies : existingSpecies.getModels()) // TODO: Check if it has models first (it might not if previous load was interrupted)
 					{
-						species.setModel(modelConnectedToSpecies);
+						if(!modelConnectedToSpecies.getModelName().equals(graphModel.getModelName()))
+						{
+							species.setModel(modelConnectedToSpecies);
+						}
 						
 					}
 				}
 			}
+			speciesService.saveOrUpdate(species);
 		}
-		end = Instant.now();
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // species
+		durationList.add(Duration.between(start, end).toMillis()); //[2]
 		
 		/**
 		 * Look at the QualitativeSpecies of the new model
@@ -250,15 +259,19 @@ public class PersistSBMLRestController {
 					{
 						for (GraphModel modelConnectedToQualSpecies : existingQualSpecies.getModels())
 						{
-							qualSpecies.setModel(modelConnectedToQualSpecies);
+							if(!modelConnectedToQualSpecies.getModelName().equals(graphModel.getModelName()))
+							{
+								qualSpecies.setModel(modelConnectedToQualSpecies);
+							}
 							
 						}
 					}
 				}
+				qualitativeSpeciesService.saveOrUpdate(qualSpecies);
 			}
 		}
-		end = Instant.now();
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // Qualitative Species
+		durationList.add(Duration.between(start, end).toMillis()); //[3]
 		
 		/**
 		 * Look at the Transitions of the new model
@@ -287,15 +300,18 @@ public class PersistSBMLRestController {
 					{
 						for (GraphModel modelConnectedToTransition : existingTransition.getModels())
 						{
-							transition.setModel(modelConnectedToTransition);
-							
+							if(modelConnectedToTransition.getModelName().equals(graphModel.getModelName()))
+							{
+								transition.setModel(modelConnectedToTransition);
+							}
 						}
 					}
-				}	
+				}
+				transitionService.saveOrUpdate(transition);
 			}
 		}
-		end = Instant.now();
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // Transitions 
+		durationList.add(Duration.between(start, end).toMillis()); //[4]
 		
 		/**
 		 * Look at the QualitativeSpecies of the new model
@@ -315,31 +331,24 @@ public class PersistSBMLRestController {
 				{
 					for (GraphModel modelConnectedToReaction : existingReaction.getModels())
 					{
-						reaction.setModel(modelConnectedToReaction);
-						
+						if(!modelConnectedToReaction.getModelName().equals(graphModel.getModelName()))
+						{
+							reaction.setModel(modelConnectedToReaction);
+						}
 					}
 				}
 			}
+			reactionService.saveOrUpdate(reaction);
 		}
 	
-		end = Instant.now();
-		
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // reactions
+		durationList.add(Duration.between(start, end).toMillis()); // [5]
 		start = Instant.now();		
 		logger.debug(graphModel.toString());
 		//graphModel.toString()
 		// then persist the model
 		try {
-			persistGraphCompartmentList(graphModel);
-			persistGraphSpeciesList(graphModel);
-			persistGraphReactionList(graphModel);
-			
-			if(createQual) {
-				persistQualitativeSpeciesList(graphModel);
-				persistGraphTransitionList(graphModel);
-			}
-			
-			//modelService.saveOrUpdate(graphModel);
+			modelService.saveOrUpdate(graphModel);
 		} catch (OptimisticLockingException e) {
 			logger.warn("Exception persisting Model " + graphModel.getModelName());
 			e.printStackTrace();
@@ -349,84 +358,22 @@ public class PersistSBMLRestController {
 			//return graphModel;
 		}
 		
-		end = Instant.now();
-		
-		durationList.add(Duration.between(start, end).toMillis());
+		end = Instant.now(); // graphModel
+		durationList.add(Duration.between(start, end).toMillis()); //[6]
 	
 		// Now output the times
 		// Order of durations:
 		// Model, compartment, species, reaction, transition qualSpec, persisting
-		logger.debug("Model took " + durationList.get(0));
-		logger.debug("compartment took " + durationList.get(1));
-		logger.debug("species took " + durationList.get(2));
-		logger.debug("reaction took " + durationList.get(3));
-		logger.debug("transition took " + durationList.get(4));
-		logger.debug("qualSpec took " + durationList.get(5));
-		logger.info("Persisting took " + durationList.get(6));
+		logger.debug("Model creation took " + durationList.get(0));
+		logger.debug("compartment persistence took " + durationList.get(1));
+		logger.debug("species persistence took " + durationList.get(2));
+		logger.debug("qualSpecies persistence took " + durationList.get(3));
+		logger.debug("transition persistence took " + durationList.get(4));
+		logger.debug("reaction persistence took " + durationList.get(5));
+		logger.info("GraphModel persistence took " + durationList.get(6));
 		
 		
 		return graphModel;
 		
 	}
-
-	
-	private void persistQualitativeSpeciesList(GraphModel graphModel) {
-		for (GraphQualitativeSpecies qualitativeSpecies : graphModel.getListQualSpecies()) { // TODO: Method should be: getListQualitativeSpecies for naming standards
-			persistQualitativeSpecies(qualitativeSpecies);
-		}
-	}
-
-	@Transactional
-	private GraphQualitativeSpecies persistQualitativeSpecies(GraphQualitativeSpecies qualitativeSpecies) {
-		return qualitativeSpeciesService.saveOrUpdate(qualitativeSpecies);
-	}
-
-	
-	private void persistGraphSpeciesList(GraphModel graphModel) {
-		for (GraphSpecies species : graphModel.getListSpecies()) {
-			persistGraphSpecies(species);
-		}
-	}
-
-	@Transactional
-	private GraphSpecies persistGraphSpecies(GraphSpecies species) {
-		return speciesService.saveOrUpdate(species);
-	}
-
-
-	private void persistGraphCompartmentList(GraphModel graphModel) {
-		for (GraphCompartment compartment : graphModel.getListCompartment()) {
-			persistGraphCompartment(compartment);
-		}
-	}
-
-	@Transactional
-	private GraphCompartment persistGraphCompartment(GraphCompartment compartment) {
-		return compartmentService.saveOrUpdate(compartment);
-	}
-
-
-	private void persistGraphTransitionList(GraphModel graphModel) {
-		for (GraphTransition transition : graphModel.getListTransition()) {
-			persistGraphTransition(transition);
-		}
-	}
-
-	@Transactional
-	private GraphTransition persistGraphTransition(GraphTransition transition) {
-		return transitionService.saveOrUpdate(transition);
-	}
-
-	private void persistGraphReactionList(GraphModel graphModel) {
-		for (GraphReaction reaction : graphModel.getListReaction()) {
-			persistGraphReaction(reaction);
-		}
-	}
-
-
-	@Transactional
-	private GraphReaction persistGraphReaction(GraphReaction reaction) {
-		return reactionService.saveOrUpdate(reaction);
-	}
-
 }
