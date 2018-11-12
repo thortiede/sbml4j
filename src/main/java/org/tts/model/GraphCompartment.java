@@ -3,25 +3,15 @@ package org.tts.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.neo4j.ogm.annotation.GeneratedValue;
-import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
-import org.neo4j.ogm.annotation.Version;
 import org.sbml.jsbml.Compartment;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphCompartment {
+public class GraphCompartment extends GraphSBase {
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
-	
-	private String sbmlIdString;
 	
 	private boolean sbmlConstant;
 	
@@ -37,28 +27,28 @@ public class GraphCompartment {
 	
 	//private Double sbmlSpatialDimensions;
 	
-	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphSpecies> speciesInThisCompartment;
 	
-	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> qualSpeciesInThisCompartment;
 	
-	@Relationship(type = "inCompartment", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.INCOMING)
 	private List<GraphReaction> graphReactionsInThisCompartment;
 	
 	
-	@JsonIgnore
-	@Relationship(type = "hasCompartment", direction = Relationship.INCOMING)
-	private GraphModel model;
+	
 	
 	public GraphCompartment() {
 		
 	}
 
 	// Constructor to create a GraphCompartment Element from a jsbml Compartment instance
-	public GraphCompartment(Compartment compartment) {
+	public GraphCompartment(Compartment compartment, GraphModel model) {
+		setModel(model);
 		speciesInThisCompartment = new ArrayList<GraphSpecies>();
 		// fill the Compartment here with the fields from the jsbml compartment
 		//   <compartment constant="true" id="default" name="default" sboTerm="SBO:0000410" size="1" spatialDimensions="3" />
@@ -70,29 +60,6 @@ public class GraphCompartment {
 		setSbmlSpatialDimensions(compartment.getSpatialDimensions());
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
 
 	public boolean isSbmlConstant() {
 		return sbmlConstant;

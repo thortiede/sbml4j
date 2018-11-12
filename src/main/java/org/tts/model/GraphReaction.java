@@ -19,30 +19,17 @@ import org.sbml.jsbml.SpeciesReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphReaction {
+public class GraphReaction extends GraphSBase {
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
-	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
 
 	private Map<String, List<String>> cvTermMap;
 	
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
 
-	@JsonIgnore
-	@Relationship(type = "hasReaction", direction = Relationship.INCOMING)
-	private GraphModel model;
-	
 	private String sbmlMetaIdString;
 	
 	boolean sbmlReversible;
@@ -62,9 +49,10 @@ public class GraphReaction {
 	
 	public GraphReaction() {}
 	
-	public GraphReaction(Reaction reaction, GraphCompartment _compartment, List<GraphSpecies> listGraphSpecies) {
+	public GraphReaction(Reaction reaction, GraphCompartment _compartment, List<GraphSpecies> listGraphSpecies, GraphModel model) {
 		// <reaction compartment="default" fast="false" id="rnR00678" metaid="meta_rnR00678" name="rn:R00678" reversible="false" sboTerm="SBO:0000176">
-	   setSbmlCompartmentString(reaction.getCompartment());
+		setModel(model);
+		setSbmlCompartmentString(reaction.getCompartment());
 	   setCompartment(_compartment);
 	   setSbmlIdString(reaction.getId());
 	   setSbmlMetaIdString(reaction.getMetaId());
@@ -139,38 +127,6 @@ public class GraphReaction {
 		
 		//TODO: kineticLaw
 		
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
 	}
 
 	public Map<String, List<String>> getCvTermMap() {

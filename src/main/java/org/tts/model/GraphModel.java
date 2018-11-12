@@ -20,6 +20,8 @@ import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @NodeEntity
 public class GraphModel {
 
@@ -34,6 +36,9 @@ public class GraphModel {
 	
 	@Transient
 	public static final String QUAL_NS = QualConstants.namespaceURI;
+	
+	@Transient
+	boolean createQual;
 	
 	// Direct Fields of the SBML Model Class
 	
@@ -75,37 +80,43 @@ public class GraphModel {
 	
 	
 	// List of all compartments of the model
-	@Relationship(type = "hasCompartment", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphCompartment>				listCompartment;
 	
 	// List of all Constraints of the model
-	@Relationship(type = "hasConstraint", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphConstraint>            listConstraint;
 	
 	// List of all Species of the model
-	@Relationship(type = "hasSpecies", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphSpecies>				listSpecies;
 	
 	// List of all Reactions of the model
-	@Relationship(type = "hasReaction", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphReaction>              listReaction;
 	
 	// List of Relations / Transitions from the qual-Extension
-	@Relationship(type = "hasTransition", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphTransition>		 	listTransition;
 
 	// List of Qualitative Species from the qual-Extension
-	@Relationship(type = "hasQualSpecies", direction = Relationship.OUTGOING)
+	@JsonIgnore
+	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> listQualSpecies;
 	
 	
 	
-	public GraphModel() {
-		// TODO Auto-generated constructor stub
-	}
+	public GraphModel() {}
+
 
 	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
-	public GraphModel(Model model) {
+	public GraphModel(Model model, boolean createQual) {
+		this.createQual = createQual;
 		// Set model fields
 		setModelName(model.getName());
 		// TODO: Check if model exists
@@ -119,33 +130,46 @@ public class GraphModel {
 		setVolumeUnitsID(model.getVolumeUnits());
 		
 		// populate the lists of the GraphModel
-		// if those items already exist, update them with new proerties (part of new model, additional cvterms?)
+		// if those items already exist, update them with new properties (part of new model, additional cvterms?)
 		listCompartment = createCompartmentList(model.getListOfCompartments());
 		listConstraint = createConstraintList(model.getListOfConstraints());
 		listSpecies = createSpeciesList(model.getListOfSpecies());
 		listReaction = createReactionList(model.getListOfReactions());
-		listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
-		List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
-		System.out.println("Number of qualSpec " + tmpListGS.size());
-		boolean qual = false;
-		if ( this.getListQualSpecies().size() > 0) qual = true;
-		// now we can fill the lists in 
+		
+		/**
+		 * Start of Extension 'Qualitative Model'
+		 */
+		if(createQual) {
+			listQualSpecies = createQualSpeciesList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfQualitativeSpecies());
+			List<GraphQualitativeSpecies> tmpListGS = this.getListQualSpecies();
+			//System.out.println("Number of qualSpec " + tmpListGS.size());
+			boolean qual = false;	
+			if ( this.getListQualSpecies().size() > 0) qual = true;
+			if(qual) {
+				connectQualSpecies();
+			}
+			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
+
+
+		}
+			
+			/*for(GraphCompartment compartment : listCompartment) {
+				System.out.println("Compartment " + compartment.getSbmlIdString() + " has " + compartment.getSpeciesInThisCompartment().size() + " species");
+			}*/
+			
+		/**
+		 * not sure if I need to updateCompartments and ReactantsAndProducts
+		 * as I reversed some of the relationships, and moved some stuff into GraphSBase
+		 */
+
 		// 1. compartment
 		updateCompartments();
-		/*for(GraphCompartment compartment : listCompartment) {
-			System.out.println("Compartment " + compartment.getSbmlIdString() + " has " + compartment.getSpeciesInThisCompartment().size() + " species");
-		}*/
-		
 		// 2. GraphSpecies
 		//updateReactantsAndProducts();
 		
-		listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
-		
-		if(qual) {
-			connectQualSpecies();
-		}
-	}
 
+		
+	}
 	
 
 	private void connectQualSpecies() {
@@ -153,7 +177,7 @@ public class GraphModel {
 			for (GraphSpecies spec : listSpecies) {
 				if (qualSpec.getSbmlNameString().equals(spec.getSbmlNameString())) {
 					//System.out.println("Found matching species");
-					qualSpec.setSpecies(spec);
+					qualSpec.setSpecies(spec); 
 				}
 			}
 		}
@@ -188,7 +212,7 @@ public class GraphModel {
 	private List<GraphCompartment> createCompartmentList(ListOf<Compartment> listOfCompartments) {
 		List<GraphCompartment> theList = new ArrayList<GraphCompartment>();
 		for (Compartment compartment : listOfCompartments) {
-			theList.add(new GraphCompartment(compartment));
+			theList.add(new GraphCompartment(compartment, this));
 		}
 		return theList;
 	}
@@ -208,7 +232,9 @@ public class GraphModel {
 		for (Species species : listOfSpecies) {
 			for (int i = 0; i != listCompartment.size(); i++) {
 				if (listCompartment.get(i).getSbmlIdString().equals(species.getCompartment())) {
-					theList.add(new GraphSpecies(species, listCompartment.get(i)));
+					// does the species already exist?
+					
+					theList.add(new GraphSpecies(species, listCompartment.get(i), this));
 				}
 			}
 		}
@@ -226,7 +252,7 @@ public class GraphModel {
 				//System.out.println("QualSpecies has compartment: " +  qualSpecies.getCompartment());
 				if (listCompartment.get(i).getSbmlIdString().equals(qualSpecies.getCompartment())) {
 					//System.out.println("Yes Compartments are identical");
-					theList.add(new GraphQualitativeSpecies(qualSpecies, listCompartment.get(i)));
+					theList.add(new GraphQualitativeSpecies(qualSpecies, listCompartment.get(i), this));
 				}
 			}
 			
@@ -242,7 +268,7 @@ public class GraphModel {
 		for (Reaction reaction : listOfReactions) {
 			for (int i = 0; i != listCompartment.size(); i++) {
 				if (listCompartment.get(i).getSbmlIdString().equals(reaction.getCompartment())) {
-					theList.add(new GraphReaction(reaction, listCompartment.get(i), listSpecies));
+					theList.add(new GraphReaction(reaction, listCompartment.get(i), listSpecies, this));
 				}
 			}
 		}
@@ -272,7 +298,7 @@ public class GraphModel {
 				 * 
 				 */
 				//System.out.println("Adding Transition");
-				theList.add(new GraphTransition(transition, 0, 0, 0, listQualSpecies));
+				theList.add(new GraphTransition(transition, 0, 0, 0, listQualSpecies, this));
 			}
 			/** 
 			if(transition.getInputCount() > 0 ) {

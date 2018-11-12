@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphCompartment;
 import org.tts.repository.CompartmentRepository;
 
@@ -20,9 +21,9 @@ public class CompartmentServiceImpl implements CompartmentService {
 		this.compartmentRepository = compartmentRepository;
 	}
 
-	@Override
-	public GraphCompartment saveOrUpdate(GraphCompartment newCompartment) {
-		return compartmentRepository.save(newCompartment, 1);
+	@Transactional
+	public GraphCompartment saveOrUpdate(GraphCompartment newCompartment, int depth) {
+		return compartmentRepository.save(newCompartment, depth);
 	}
 
 	@Override
@@ -48,6 +49,18 @@ public class CompartmentServiceImpl implements CompartmentService {
 	@Override
 	public GraphCompartment getBySbmlIdString(String sbmlIdString) {
 		return compartmentRepository.getBySbmlIdString(sbmlIdString);
+	}
+
+	@Override
+	public List<GraphCompartment> updateCompartmentList(List<GraphCompartment> listCompartment) {
+		for (GraphCompartment newCompartment : listCompartment) {
+			GraphCompartment existingCompartment = getBySbmlIdString(newCompartment.getSbmlIdString());
+			if(existingCompartment != null) {
+				newCompartment.setId(existingCompartment.getId());
+				newCompartment.setVersion(existingCompartment.getVersion());
+			}
+		}
+		return listCompartment;
 	}
 
 }

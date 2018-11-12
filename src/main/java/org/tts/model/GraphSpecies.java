@@ -18,33 +18,23 @@ import org.sbml.jsbml.Species;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphSpecies {
+public class GraphSpecies extends GraphSBase{
 
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
 	
 	// a name for the webviewer of neo4j
 	private String name;
 	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
 	
 	private Map<String, List<String>> cvTermMap;
 	
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
-	private GraphCompartment compartment;
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
+	private GraphCompartment compartment; // should this also be a list? TODO
 	
-	@JsonIgnore
-	@Relationship(type = "hasSpecies", direction = Relationship.INCOMING)
-	private GraphModel model;
+	
 	
 	
 //	@Relationship(type = "isReactant", direction = Relationship.OUTGOING)
@@ -75,9 +65,9 @@ public class GraphSpecies {
 	
 	public GraphSpecies() {}
 	
-	public GraphSpecies(Species species, GraphCompartment _compartment) {
+	public GraphSpecies(Species species, GraphCompartment _compartment, GraphModel model) {
 		// <species boundaryCondition="false" compartment="default" constant="false" hasOnlySubstanceUnits="false" id="OGDH" initialAmount="1" metaid="meta_OGDH" name="OGDH" sboTerm="SBO:0000252">
-	      
+	    setModel(model);
 		setCompartment(_compartment);
 		setSbmlCompartmentString(species.getCompartment());
 		setSbmlIdString(species.getId());
@@ -120,21 +110,6 @@ public class GraphSpecies {
 		}
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
 
 	public String getName() {
 		return name;
@@ -168,13 +143,7 @@ public class GraphSpecies {
 		this.compartment = compartment;
 	}
 
-	public GraphModel getModel() {
-		return model;
-	}
-
-	public void setModel(GraphModel model) {
-		this.model = model;
-	}
+	
 /*
 	public GraphReaction getGraphReactionReactant() {
 		return graphReactionReactant;
@@ -192,21 +161,6 @@ public class GraphSpecies {
 		this.graphReactionProduct = graphReactionProduct;
 	}
 */
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
-	}
 
 	/*public boolean isSbmlBoundaryCondition() {
 		return sbmlBoundaryCondition;

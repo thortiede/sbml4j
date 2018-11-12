@@ -1,4 +1,4 @@
-package org.tts;
+/*package org.tts;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,3 +14,4 @@ public class Sbml4jApplicationTests {
 	}
 
 }
+*/

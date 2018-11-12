@@ -2,26 +2,43 @@ package org.tts.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.GraphModel;
 import org.tts.repository.ModelRepository;
-import org.tts.repository.SpeciesRepository;
 
 @Service
 public class ModelServiceImpl implements ModelService {
 
 	ModelRepository modelRepository;
-	//SpeciesRepository speciesRepository;
+	
 	
 	@Autowired
-	public ModelServiceImpl(ModelRepository modelRepository) { //, SpeciesRepository speciesRepository
+	public ModelServiceImpl(
+			ModelRepository modelRepository) 
+	{
+		super();
 		this.modelRepository = modelRepository;
-		//this.speciesRepository = speciesRepository;
+	}
+
+	@Transactional
+	public GraphModel saveOrUpdate(GraphModel newModel) {
+		
+		GraphModel modelInDb = modelRepository.getByModelName(newModel.getModelName());
+		if (modelInDb != null) {
+			newModel.setId(modelInDb.getId());
+			newModel.setVersion(modelInDb.getVersion());
+		}
+
+		
+		return modelRepository.save(newModel);
 	}
 
 	@Override
-	public GraphModel saveOrUpdate(GraphModel newModel) {
-		
-		return modelRepository.save(newModel, 5);
+	public GraphModel getByModelName(String modelName) {
+		return modelRepository.getByModelName(modelName);
 	}
+	
+	
+	
 
 }

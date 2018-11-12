@@ -16,31 +16,18 @@ import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class GraphQualitativeSpecies {
+public class GraphQualitativeSpecies extends GraphSBase{
 
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
 	
 	// a name for the webviewer of neo4j
 	private String name;
 	
 	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
-	
 	private String sbmlCompartmentString;
 	
 	@JsonIgnore
-	@Relationship(type = "inCompartment", direction = Relationship.INCOMING)
+	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
-	
-	@JsonIgnore
-	@Relationship(type = "hasQualSpecies", direction = Relationship.INCOMING)
-	private GraphModel model;
 	
 	@Relationship(type = "IS_SPECIES", direction = Relationship.OUTGOING)
 	private GraphSpecies species;
@@ -63,10 +50,11 @@ public class GraphQualitativeSpecies {
 		
 	}
 	
-	public GraphQualitativeSpecies(QualitativeSpecies qualitativeSpecies, GraphCompartment _compartment) {
+	public GraphQualitativeSpecies(QualitativeSpecies qualitativeSpecies, GraphCompartment _compartment, GraphModel model) {
 		
 		// Set Attributes
 		// TODO: Use setters
+		setModel(model);
 		sbmlIdString = qualitativeSpecies.getId();
 		sbmlNameString = qualitativeSpecies.getName();
 		name = sbmlNameString;
@@ -100,18 +88,7 @@ public class GraphQualitativeSpecies {
 		}
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
+	
 	public String getName() {
 		return name;
 	}
@@ -120,40 +97,13 @@ public class GraphQualitativeSpecies {
 		this.name = name;
 	}
 
-	public GraphModel getModel() {
-		return model;
-	}
-
-	public void setModel(GraphModel model) {
-		this.model = model;
-	}
-
+	
 	public GraphSpecies getSpecies() {
 		return species;
 	}
 
 	public void setSpecies(GraphSpecies species) {
 		this.species = species;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
 	}
 
 	public String getSbmlCompartmentString() {

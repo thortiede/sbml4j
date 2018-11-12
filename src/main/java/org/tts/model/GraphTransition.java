@@ -24,16 +24,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 @NodeEntity
-public class GraphTransition {
+public class GraphTransition extends GraphSBase {
 
-	// ID for the Neo4j Database
-	
-	@Id @GeneratedValue
-	private Long id = null;
-
-	@Version
-	private Long version;
-	
 	private String name;
 	
 	@Relationship(type="SPECIES_ONE_OF_RELATION", direction = Relationship.OUTGOING)
@@ -49,11 +41,9 @@ public class GraphTransition {
 	private String qualSpeciesTwoSbmlNameString;
 	private String outputTransitionEffect;
 	
-	private String sbmlIdString;
-	
-	private String sbmlNameString;
-
 	private String sbmlSignString;
+	
+	private String metaid;
 	
 	private String sbmlSBOTerm;
 	
@@ -74,7 +64,9 @@ public class GraphTransition {
 	 * @param outputIndex The index of the Output in listOfOutputs that should be the EndNode of this Transition
 	 * @param listGraphQualitiativeSpecies The List of qualitative Species that the models knows
 	 */
-	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies) {
+	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies, GraphModel model) {
+		setModel(model);
+		setMetaid(transition.getMetaId());
 		Input input = transition.getListOfInputs().get(inputIndex);
 		Output output = transition.getListOfOutputs().get(outputIndex);
 		/** 
@@ -150,22 +142,7 @@ public class GraphTransition {
 		
 	}
 
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
+	
 	public GraphQualitativeSpecies getQualSpeciesOne() {
 		return qualSpeciesOne;
 	}
@@ -196,22 +173,6 @@ public class GraphTransition {
 
 	public void setOutputTransitionEffect(String outputTransitionEffect) {
 		this.outputTransitionEffect = outputTransitionEffect;
-	}
-
-	public String getSbmlIdString() {
-		return sbmlIdString;
-	}
-
-	public void setSbmlIdString(String sbmlIdString) {
-		this.sbmlIdString = sbmlIdString;
-	}
-
-	public String getSbmlNameString() {
-		return sbmlNameString;
-	}
-
-	public void setSbmlNameString(String sbmlNameString) {
-		this.sbmlNameString = sbmlNameString;
 	}
 
 	public String getSbmlSignString() {
@@ -284,6 +245,14 @@ public class GraphTransition {
 
 	public void setQualSpeciesTwoSbmlNameString(String qualSpeciesTwoSbmlNameString) {
 		this.qualSpeciesTwoSbmlNameString = qualSpeciesTwoSbmlNameString;
+	}
+
+	public String getMetaid() {
+		return metaid;
+	}
+
+	public void setMetaid(String metaid) {
+		this.metaid = metaid;
 	}
 
 	
