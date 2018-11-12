@@ -4,7 +4,7 @@ import org.tts.model.GraphReaction;
 
 public interface ReactionService {
 
-	GraphReaction saveOrUpdate(GraphReaction newSpecies);
+	GraphReaction saveOrUpdate(GraphReaction newReaction);
 	
 	GraphReaction getBySbmlIdString(String sbmlIdString);
 	
