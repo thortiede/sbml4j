@@ -6,7 +6,7 @@ import org.tts.model.GraphCompartment;
 
 public interface CompartmentService {
 
-	GraphCompartment saveOrUpdate(GraphCompartment newCompartment);
+	GraphCompartment saveOrUpdate(GraphCompartment newCompartment, int depth);
 	
 	List<GraphCompartment> listAll();
 	
@@ -15,6 +15,8 @@ public interface CompartmentService {
 	GraphCompartment getBySbmlName(String sbmlName);
 	
 	GraphCompartment getBySbmlIdString(String sbmlIdString);
+
+	List<GraphCompartment> updateCompartmentList(List<GraphCompartment> listCompartment);
 	
 	
 	

@@ -81,7 +81,7 @@ public class PersistSBMLRestController {
 		SBMLDocument doc = null;
 		int numFiles = listOfFiles.length;
 		int curFileNum = 0;
-		logger.info("Begin Processing " + numFiles + "files/models");
+		logger.info("Begin Processing " + numFiles + " files/models");
 		for (File file : listOfFiles) {
 		    if (file.isFile()) {
 		    	curFileNum += 1;
@@ -108,6 +108,9 @@ public class PersistSBMLRestController {
 	    		} catch (IOException e) {
 	    			// TODO Auto-generated catch block
 	    			e.printStackTrace();
+	    		} catch (Exception e) {
+	    			// TODO Auto-generated catch block
+	    			e.printStackTrace();
 	    		} finally {
 					logger.info("finished persisting model " + doc.getModel().getName());
 				}
@@ -124,8 +127,8 @@ public class PersistSBMLRestController {
 		SBMLReader reader = new SBMLReader();
 		SBMLDocument doc;
 		
-		String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/metabolic/testing/hsa/";
-		String filepath = localDir + name;
+		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/metabolic/testing/hsa/";
+		String filepath = name;
 		logger.info("Filepath is" + filepath);
 		try {
 			GraphModel graphModel;
@@ -178,7 +181,7 @@ public class PersistSBMLRestController {
 		}
 		Instant end = Instant.now(); // creation of the model
 		durationList.add(Duration.between(start, end).toMillis()); //[0]
-		
+		logger.debug("Created GraphModel");
 		/**
 		 * Look at the compartments of the new model
 		 * Are they already existing by sbmlIdString?
@@ -203,11 +206,12 @@ public class PersistSBMLRestController {
 				}
 					
 			}
-			compartmentService.saveOrUpdate(comp);
+			logger.debug("Persisting compartment " + comp.getSbmlIdString());
+			compartmentService.saveOrUpdate(comp, 0);
 		}
 		end = Instant.now(); // compartment
 		durationList.add(Duration.between(start, end).toMillis()); //[1]
-		
+		logger.debug("Created compartments");
 		/**
 		 * Look at the species of the new model
 		 * Are they already existing by sbmlIdString?
@@ -217,7 +221,7 @@ public class PersistSBMLRestController {
 		start = Instant.now();
 		// Species
 		for (GraphSpecies species : graphModel.getListSpecies()) {
-			GraphSpecies existingSpecies = speciesService.getBySbmlIdString(species.getSbmlIdString());
+			/*GraphSpecies existingSpecies = speciesService.getBySbmlIdString(species.getSbmlIdString());
 			if (existingSpecies != null) { // TODO: Do more checks to ensure it is the same species
 				species.setId(existingSpecies.getId());
 				species.setVersion(existingSpecies.getVersion());
@@ -233,12 +237,15 @@ public class PersistSBMLRestController {
 						
 					}
 				}
-			}
+			}*/
+			logger.debug("Persisting species " + species.getSbmlIdString() + " ...");
 			speciesService.saveOrUpdate(species);
+			logger.debug("Persisting species " + species.getSbmlIdString() + " DONE");
+			
 		}
 		end = Instant.now(); // species
 		durationList.add(Duration.between(start, end).toMillis()); //[2]
-		
+		logger.debug("Created species");
 		/**
 		 * Look at the QualitativeSpecies of the new model
 		 * only if @param createQual is true (that is if we have a non metabolic model which uses these
@@ -272,7 +279,7 @@ public class PersistSBMLRestController {
 		}
 		end = Instant.now(); // Qualitative Species
 		durationList.add(Duration.between(start, end).toMillis()); //[3]
-		
+		logger.debug("Created qualtiative species");
 		/**
 		 * Look at the Transitions of the new model
 		 * only if @param createQual is true (that is if we have a non metabolic model which uses these
@@ -291,7 +298,7 @@ public class PersistSBMLRestController {
 				//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
 				// Next line will not work when using GraphSBase as type in the loop..
 				//transition.setSbmlNameString(transition.getSbmlSBOTerm()); // might work for now, TODO CHANGE TO SOMETHING BETTER
-				GraphTransition existingTransition = transitionService.getBySbmlIdString(transition.getSbmlIdString());
+				GraphTransition existingTransition = transitionService.getByMetaid(transition.getMetaid());
 				if (existingTransition != null) {
 					transition.setId(existingTransition.getId());
 					transition.setVersion(existingTransition.getVersion());
@@ -312,7 +319,7 @@ public class PersistSBMLRestController {
 		}
 		end = Instant.now(); // Transitions 
 		durationList.add(Duration.between(start, end).toMillis()); //[4]
-		
+		logger.debug("Created Transitions");
 		/**
 		 * Look at the QualitativeSpecies of the new model
 		 * Is it already existing by sbmlIdString?
@@ -340,13 +347,13 @@ public class PersistSBMLRestController {
 			}
 			reactionService.saveOrUpdate(reaction);
 		}
-	
+		logger.debug("Created reactions");
 		end = Instant.now(); // reactions
 		durationList.add(Duration.between(start, end).toMillis()); // [5]
 		start = Instant.now();		
 		logger.debug(graphModel.toString());
 		//graphModel.toString()
-		// then persist the model
+		/*// then persist the model
 		try {
 			modelService.saveOrUpdate(graphModel);
 		} catch (OptimisticLockingException e) {
@@ -357,7 +364,69 @@ public class PersistSBMLRestController {
 			// Might think about reloding the db-state and retry persisting the model.
 			//return graphModel;
 		}
+		*/
 		
+		// lets try to get all the ids and versions and update them in the model.
+		// then persist the model
+		List<GraphCompartment> listBeforeUpdate = graphModel.getListCompartment();
+		if(listBeforeUpdate.size() > 0) {
+			logger.info("Compartment " + listBeforeUpdate.get(0).getSbmlIdString() + " has id " + listBeforeUpdate.get(0).getId() + " and version " + listBeforeUpdate.get(0).getVersion());
+		}
+		graphModel.setListCompartment(compartmentService.updateCompartmentList(graphModel.getListCompartment()));
+		List<GraphCompartment> listAfterUpdate = graphModel.getListCompartment();
+			
+		if(listAfterUpdate.size() > 0) {
+			logger.info("Compartment " + listAfterUpdate.get(0).getSbmlIdString() + " has id " + listAfterUpdate.get(0).getId() + " and version " + listAfterUpdate.get(0).getVersion());
+		}
+		
+		graphModel.setListSpecies(speciesService.updateSpeciesList(graphModel.getListSpecies()));
+		
+		graphModel.setListReaction(reactionService.updateReactionList(graphModel.getListReaction()));
+		
+		if(createQual) {
+			graphModel.setListQualSpecies(qualitativeSpeciesService.updateQualitativeSpeciesList(graphModel.getListQualSpecies()));
+			
+			List<GraphTransition> transitionListBeforeUpdate = graphModel.getListTransition();
+			if(transitionListBeforeUpdate.size() > 0) {
+				for (GraphTransition transition : transitionListBeforeUpdate) {
+					logger.info("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " before");
+				}
+			}
+			graphModel.setListTransition(transitionService.updateTransitionList(graphModel.getListTransition()));
+			List<GraphTransition> transitionListAfterUpdate = graphModel.getListTransition();
+			if(transitionListAfterUpdate.size() > 0) {
+				for (GraphTransition transition : transitionListAfterUpdate) {
+					logger.info("Transition " + transition.getMetaid() + " has id " + transition.getId() + " and version " + transition.getVersion() + " after");
+				}
+			}
+		}
+		
+		/*
+		 * This still results in OptimisticLockingException
+		 * Check GraphQualitativeSpecies which has reference to species.. might also need new id
+		 * Did not change a thing...
+		 */
+		//modelService.saveOrUpdate(graphModel);
+		for (GraphCompartment comp : graphModel.getListCompartment()) {
+			GraphCompartment existingCompartment = compartmentService.getBySbmlIdString(comp.getSbmlIdString());
+			if (existingCompartment != null) { // TODO: Do more checks to ensure it is the same compartment
+				comp.setId(existingCompartment.getId());
+				comp.setVersion(existingCompartment.getVersion());
+				if(!modelExists)
+				{
+					for (GraphModel modelConnectedToCompartment : existingCompartment.getModels())
+					{
+						if(!modelConnectedToCompartment.getModelName().equals(graphModel.getModelName()))
+						{
+							comp.setModel(modelConnectedToCompartment);
+						}
+					}
+				}
+					
+			}
+			logger.debug("Persisting compartment (2nd run)" + comp.getSbmlIdString());
+			compartmentService.saveOrUpdate(comp, 1);
+		}
 		end = Instant.now(); // graphModel
 		durationList.add(Duration.between(start, end).toMillis()); //[6]
 	
@@ -370,7 +439,7 @@ public class PersistSBMLRestController {
 		logger.debug("qualSpecies persistence took " + durationList.get(3));
 		logger.debug("transition persistence took " + durationList.get(4));
 		logger.debug("reaction persistence took " + durationList.get(5));
-		logger.info("GraphModel persistence took " + durationList.get(6));
+		logger.debug("GraphModel persistence took " + durationList.get(6));
 		
 		
 		return graphModel;

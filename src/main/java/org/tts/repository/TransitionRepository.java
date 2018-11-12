@@ -4,6 +4,8 @@ import org.tts.model.GraphTransition;
 
 public interface TransitionRepository extends Neo4jRepository<GraphTransition, Long> {
 
-	GraphTransition getBySbmlIdString(String sbmlIdString);
+	//GraphTransition getBySbmlIdString(String sbmlIdString);
 
+	GraphTransition getByMetaid(String metaId);
+	
 }

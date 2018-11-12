@@ -43,6 +43,8 @@ public class GraphTransition extends GraphSBase {
 	
 	private String sbmlSignString;
 	
+	private String metaid;
+	
 	private String sbmlSBOTerm;
 	
 	//List<GraphTransitionInput> listGraphTransitionInput;
@@ -64,6 +66,7 @@ public class GraphTransition extends GraphSBase {
 	 */
 	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies, GraphModel model) {
 		setModel(model);
+		setMetaid(transition.getMetaId());
 		Input input = transition.getListOfInputs().get(inputIndex);
 		Output output = transition.getListOfOutputs().get(outputIndex);
 		/** 
@@ -242,6 +245,14 @@ public class GraphTransition extends GraphSBase {
 
 	public void setQualSpeciesTwoSbmlNameString(String qualSpeciesTwoSbmlNameString) {
 		this.qualSpeciesTwoSbmlNameString = qualSpeciesTwoSbmlNameString;
+	}
+
+	public String getMetaid() {
+		return metaid;
+	}
+
+	public void setMetaid(String metaid) {
+		this.metaid = metaid;
 	}
 
 	
