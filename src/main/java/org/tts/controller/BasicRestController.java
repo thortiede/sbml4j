@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.Link;
@@ -37,6 +39,7 @@ public class BasicRestController {
 	private ReactionService reactionService;
 	
 	private FileService fileService;
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
 	@Autowired
@@ -55,8 +58,9 @@ public class BasicRestController {
 
 	@RequestMapping(value = "/fullnet", method=RequestMethod.GET)
 	public ResponseEntity<NodeEdgeList> fullnet() {
-		
+		logger.info("Requesting Full Network of Transitions");
 		NodeEdgeList fullnet = nodeEdgeListService.getFullNet();
+		logger.info("Fetched NodeEdgeList");
 		// create a link to self and add to payload
 		Link selfLink = linkTo(methodOn(BasicRestController.class).fullnet()).withSelfRel();
 		fullnet.add(selfLink);
@@ -72,9 +76,10 @@ public class BasicRestController {
 		
 		// for testing, generate fullnet as sif and output
 		
-		
+		logger.info("Requesting sifNet");
         //Resource resource = fileStorageService.loadFileAsResource(fileName);
         Resource resource = fileStorageService.getSifAsResource(fileService.getFullNet());
+        logger.info("Fetched sifResource");
         // Try to determine file's content type
         String contentType = null;
       
