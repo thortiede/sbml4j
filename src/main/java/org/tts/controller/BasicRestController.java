@@ -18,11 +18,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.tts.model.GraphModel;
 import org.tts.model.GraphReaction;
 import org.tts.model.GraphSpecies;
 import org.tts.model.NodeEdgeList;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
+import org.tts.service.ModelService;
 import org.tts.service.NodeEdgeListService;
 import org.tts.service.ReactionService;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -37,6 +39,8 @@ public class BasicRestController {
 	
 	private FileStorageService fileStorageService;
 	private ReactionService reactionService;
+	private ModelService modelService;
+	
 	
 	private FileService fileService;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -47,13 +51,15 @@ public class BasicRestController {
 			NodeEdgeListService nodeEdgeListService, 
 			FileStorageService fileStorageService,
 			FileService fileService,
-			ReactionService reactionService) 
+			ReactionService reactionService,
+			ModelService modelService) 
 	{
 		super();
 		this.nodeEdgeListService = nodeEdgeListService;
 		this.fileStorageService = fileStorageService;
 		this.fileService = fileService;
 		this.reactionService = reactionService;
+		this.modelService = modelService;
 	}
 
 	@RequestMapping(value = "/fullnet", method=RequestMethod.GET)
@@ -120,4 +126,23 @@ public class BasicRestController {
 		
 		
 	}
+	
+	@RequestMapping(value="/models")
+	public ResponseEntity<List<GraphModel>> getAllModels(@RequestParam(value="search", defaultValue="") String searchString) {
+	
+		String contentType = "application/json";
+		
+		List<GraphModel> searchResult = modelService.search(searchString);
+		
+		if(searchResult != null) {
+			return ResponseEntity.ok()
+					.contentType(MediaType.parseMediaType(contentType))
+					.body(searchResult);
+		} else {
+			return ResponseEntity.ok()
+					.contentType(MediaType.parseMediaType(contentType))
+					.body(new ArrayList<GraphModel>());
+		}
+	}
+	
 }
