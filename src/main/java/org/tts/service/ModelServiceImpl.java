@@ -1,5 +1,8 @@
 package org.tts.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +39,29 @@ public class ModelServiceImpl implements ModelService {
 	@Override
 	public GraphModel getByModelName(String modelName) {
 		return modelRepository.getByModelName(modelName);
+	}
+
+	@Override
+	public List<GraphModel> search(String searchString) {
+		Iterable<GraphModel> allModelNodes = modelRepository.findAll(0);
+		List<GraphModel> returnModels = new ArrayList<GraphModel>();
+		if(searchString.equals("")) {
+			// no search string, return all models found
+			allModelNodes.forEach(returnModels::add);
+		} else {
+			allModelNodes.forEach(model -> {
+					if(model.getModelName().contains(searchString)) {
+						returnModels.add(model);
+					}
+				});
+		}
+		if(returnModels.size() > 0) {
+			return returnModels;
+		} else {
+			return null;
+		}
+
+		
 	}
 	
 	
