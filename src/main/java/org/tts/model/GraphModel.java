@@ -77,7 +77,8 @@ public class GraphModel {
 	 */
 	private String                        volumeUnitsID;
 	
-	
+	private int numNodes;
+	private int numEdges;
 	
 	// List of all compartments of the model
 	@JsonIgnore
@@ -134,7 +135,9 @@ public class GraphModel {
 		listCompartment = createCompartmentList(model.getListOfCompartments());
 		listConstraint = createConstraintList(model.getListOfConstraints());
 		listSpecies = createSpeciesList(model.getListOfSpecies());
+		setNumNodes(listSpecies.size());
 		listReaction = createReactionList(model.getListOfReactions());
+		setNumEdges(listReaction.size());
 		
 		/**
 		 * Start of Extension 'Qualitative Model'
@@ -148,8 +151,9 @@ public class GraphModel {
 			if(qual) {
 				connectQualSpecies();
 			}
+			setNumNodes(listQualSpecies.size());
 			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
-
+			setNumEdges(listTransition.size());
 
 		}
 			
@@ -457,6 +461,26 @@ public class GraphModel {
 
 	public void setListQualSpecies(List<GraphQualitativeSpecies> listQualSpecies) {
 		this.listQualSpecies = listQualSpecies;
+	}
+
+
+	public int getNumNodes() {
+		return numNodes;
+	}
+
+
+	public void setNumNodes(int numNodes) {
+		this.numNodes = numNodes;
+	}
+
+
+	public int getNumEdges() {
+		return numEdges;
+	}
+
+
+	public void setNumEdges(int numEdges) {
+		this.numEdges = numEdges;
 	}
 
 	
