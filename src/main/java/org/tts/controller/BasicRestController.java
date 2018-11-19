@@ -22,6 +22,8 @@ import org.tts.model.GraphModel;
 import org.tts.model.GraphReaction;
 import org.tts.model.GraphSpecies;
 import org.tts.model.NodeEdgeList;
+import org.tts.model.ReturnModelEntry;
+import org.tts.model.ReturnModelOverviewEntry;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
 import org.tts.service.ModelService;
@@ -128,21 +130,49 @@ public class BasicRestController {
 	}
 	
 	@RequestMapping(value="/models")
-	public ResponseEntity<List<GraphModel>> getAllModels(@RequestParam(value="search", defaultValue="") String searchString) {
+	public ResponseEntity<List<ReturnModelOverviewEntry>> getAllModels(@RequestParam(value="search", defaultValue="") String searchString) {
 	
 		String contentType = "application/json";
 		
 		List<GraphModel> searchResult = modelService.search(searchString);
+		List<ReturnModelOverviewEntry> returnList = new ArrayList<ReturnModelOverviewEntry>();
 		
 		if(searchResult != null) {
+			searchResult.forEach(model -> {
+				ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(model);
+				rmoe.add(linkTo(methodOn(BasicRestController.class).getModelById(rmoe.getModelId().toString())).withSelfRel());
+				returnList.add(rmoe);
+			});
 			return ResponseEntity.ok()
 					.contentType(MediaType.parseMediaType(contentType))
-					.body(searchResult);
+					.body(returnList);
 		} else {
 			return ResponseEntity.ok()
 					.contentType(MediaType.parseMediaType(contentType))
-					.body(new ArrayList<GraphModel>());
+					.body(new ArrayList<ReturnModelOverviewEntry>());
 		}
 	}
+	
+	@RequestMapping(value="/model/{modelId}")
+	public ResponseEntity<GraphModel> getModelById(@PathVariable String modelId) {
+		String contentType = "application/json";
+		
+		ReturnModelEntry returnModelEntry = new ReturnModelEntry(modelService.getById(Long.valueOf(modelId)));
+		if (returnModelEntry.getModel() != null) {
+			// add selfLink
+			Link selfLink = linkTo(methodOn(BasicRestController.class).getModelById(returnModelEntry.getModelId().toString())).withSelfRel();
+			returnModelEntry.add(selfLink);
+		}
+		GraphModel model = modelService.getById(Long.valueOf(modelId));
+		if(model == null) {
+			return ResponseEntity.notFound().build();
+		} else {
+			return ResponseEntity.ok()
+					.contentType(MediaType.parseMediaType(contentType))
+					.body(model);
+		}
+	}
+	
+	
 	
 }
