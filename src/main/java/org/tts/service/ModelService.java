@@ -11,4 +11,6 @@ public interface ModelService {
 	GraphModel getByModelName(String modelName);
 
 	List<GraphModel> search(String searchString);
+
+	GraphModel getById(Long id);
 }

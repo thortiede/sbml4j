@@ -63,6 +63,11 @@ public class ModelServiceImpl implements ModelService {
 
 		
 	}
+
+	@Override
+	public GraphModel getById(Long id) {
+		return modelRepository.findById(id).orElse(null);
+	}
 	
 	
 	
