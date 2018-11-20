@@ -68,6 +68,13 @@ public class ModelServiceImpl implements ModelService {
 	public GraphModel getById(Long id) {
 		return modelRepository.findById(id).orElse(null);
 	}
+
+	@Override
+	public List<GraphModel> findAll() {
+		List<GraphModel> allModels = new ArrayList<GraphModel>();
+		modelRepository.findAll(1).forEach(allModels::add);
+		return allModels;
+	}
 	
 	
 	

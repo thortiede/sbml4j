@@ -13,4 +13,7 @@ public interface ModelService {
 	List<GraphModel> search(String searchString);
 
 	GraphModel getById(Long id);
+	
+	List<GraphModel> findAll();
+	
 }
