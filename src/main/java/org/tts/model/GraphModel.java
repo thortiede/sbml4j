@@ -117,6 +117,7 @@ public class GraphModel {
 
 	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
 	public GraphModel(Model model, boolean createQual) {
+	
 		this.createQual = createQual;
 		// Set model fields
 		setModelName(model.getName());
@@ -135,9 +136,9 @@ public class GraphModel {
 		listCompartment = createCompartmentList(model.getListOfCompartments());
 		listConstraint = createConstraintList(model.getListOfConstraints());
 		listSpecies = createSpeciesList(model.getListOfSpecies());
-		setNumNodes(listSpecies.size());
+		setNumNodes(listSpecies.size()); // might be able to use model.getNumSpecies here, do not know if it is filled in JSBML
 		listReaction = createReactionList(model.getListOfReactions());
-		setNumEdges(listReaction.size());
+		setNumEdges(listReaction.size()); // might be able to use model.getNumReaction here, do not know if it is filled in JSBML
 		
 		/**
 		 * Start of Extension 'Qualitative Model'
