@@ -3,6 +3,10 @@ package org.tts.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import java.io.File;
 
 import java.time.Duration;
@@ -16,6 +20,8 @@ import org.sbml.jsbml.SBMLReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,6 +33,7 @@ import org.tts.model.GraphQualitativeSpecies;
 import org.tts.model.GraphReaction;
 import org.tts.model.GraphSpecies;
 import org.tts.model.GraphTransition;
+import org.tts.model.ReturnModelOverviewEntry;
 import org.tts.service.CompartmentService;
 import org.tts.service.ModelService;
 import org.tts.service.QualitativeSpeciesService;
@@ -134,7 +141,14 @@ public class PersistSBMLRestController {
 			GraphModel graphModel;
 			doc = reader.readSBML(filepath);
 			Model model = doc.getModel();
-			graphModel = persistSBMLModel(model, true);
+			if(filepath.contains("non-metabolic")) {
+				graphModel = persistSBMLModel(model, true);
+				logger.debug("Creating non-metabolic model");
+			}
+			else {
+				graphModel = persistSBMLModel(model, false);
+				logger.debug("Creating metabolic model");
+			}
 			if (graphModel != null) {
 				return graphModel;
 			}
@@ -445,4 +459,99 @@ public class PersistSBMLRestController {
 		return graphModel;
 		
 	}
+	
+	@RequestMapping(value="/updateModels")
+	public ResponseEntity<List<ReturnModelOverviewEntry>> updateModels()  {
+		
+		String contentType = "application/json";
+		
+		List<ReturnModelOverviewEntry> returnListRmoe = new ArrayList<ReturnModelOverviewEntry>();
+		
+		List<GraphModel> allModels = modelService.findAll();
+		allModels.forEach(model -> { 
+			if(model.getListQualSpecies() != null && model.getListQualSpecies().size() > 0) {
+				model.setNumNodes(model.getListQualSpecies().size());
+				logger.info("Setting Number of Nodes (QualSpecies) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListQualSpecies().size());
+			} else if(model.getListSpecies() != null && model.getListSpecies().size() > 0){
+				model.setNumNodes(model.getListSpecies().size());
+				logger.info("Setting Number of Nodes (Species) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListSpecies().size());
+			} else {
+				logger.warn("Model " + model.getModelName() + " (id=" + model.getId() + ") has no nodes!");
+			}
+			
+			if(model.getListTransition() != null && model.getListTransition().size() > 0) {
+				model.setNumEdges(model.getListTransition().size());
+				model.setQualitativeModel(true);
+				logger.info("Setting Number of Edges (transition) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListTransition().size());
+			} else if(model.getListReaction() != null && model.getListReaction().size() > 0){
+				model.setNumEdges(model.getListReaction().size());
+				model.setQualitativeModel(false);
+				logger.info("Setting Number of Edges (reaction) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListReaction().size());
+			} else {
+				logger.warn("Model " + model.getModelName() + " (id=" + model.getId() + ") has no Edges!");
+			}
+			// save
+			modelService.saveOrUpdate(model);
+			ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(modelService.getById(model.getId()));
+			rmoe.add(linkTo(methodOn(BasicRestController.class)
+					.getModelById(rmoe.getModelId().toString())
+				)
+				.withSelfRel()
+			);
+			returnListRmoe.add(rmoe);
+		});
+		
+		return ResponseEntity.ok()
+				.contentType(MediaType.parseMediaType(contentType))
+				.body(returnListRmoe);
+		
+	}
+	@RequestMapping(value="/testUpdateModels")
+	public ResponseEntity<List<ReturnModelOverviewEntry>> testUpdateModels() {
+		
+		String contentType = "application/json";
+		
+		List<ReturnModelOverviewEntry> returnListRmoe = new ArrayList<ReturnModelOverviewEntry>();
+		
+		List<GraphModel> allModels = modelService.findAll();
+		allModels.forEach(model -> { 
+			if(model.getListQualSpecies() != null && model.getListQualSpecies().size() > 0) {
+				//model.setNumNodes(model.getListQualSpecies().size());
+				logger.info("Setting Number of Nodes (QualSpecies) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListQualSpecies().size());
+			} else if(model.getListSpecies() != null && model.getListSpecies().size() > 0){
+				//model.setNumNodes(model.getListSpecies().size());
+				logger.info("Setting Number of Nodes (Species) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListSpecies().size());
+			} else {
+				logger.warn("Model " + model.getModelName() + " (id=" + model.getId() + ") has no nodes!");
+			}
+			
+			if(model.getListTransition() != null && model.getListTransition().size() > 0) {
+				//model.setNumEdges(model.getListTransition().size());
+				//model.setQualitativeModel(true);
+				logger.info("Setting Number of Edges (transition) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListTransition().size());
+			} else if(model.getListReaction() != null && model.getListReaction().size() > 0){
+				//model.setNumEdges(model.getListReaction().size());
+				//model.setQualitativeModel(false);
+				logger.info("Setting Number of Edges (reaction) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListReaction().size());
+			} else {
+				logger.warn("Model " + model.getModelName() + " (id=" + model.getId() + ") has no Edges!");
+			}
+			// save
+			//modelService.saveOrUpdate(model);
+			ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(modelService.getById(model.getId()));
+			rmoe.add(linkTo(methodOn(BasicRestController.class)
+					.getModelById(rmoe.getModelId().toString())
+				)
+				.withSelfRel()
+			);
+			returnListRmoe.add(rmoe);
+		});
+		
+		return ResponseEntity.ok()
+				.contentType(MediaType.parseMediaType(contentType))
+				.body(returnListRmoe);
+		
+	}
+	
+	
 }
