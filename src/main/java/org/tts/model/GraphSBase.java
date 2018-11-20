@@ -25,7 +25,7 @@ public class GraphSBase {
 	
 	protected String sbmlNameString;
 
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.OUTGOING)
 	protected List<GraphModel> modelList;
 	
@@ -66,6 +66,7 @@ public class GraphSBase {
 	public void setSbmlNameString(String sbmlNameString) {
 		this.sbmlNameString = sbmlNameString;
 	}
+	@JsonIgnore
 	public List<GraphModel> getModels() {
 		return modelList;
 	}

@@ -81,32 +81,32 @@ public class GraphModel {
 	private int numEdges;
 	
 	// List of all compartments of the model
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphCompartment>				listCompartment;
 	
 	// List of all Constraints of the model
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphConstraint>            listConstraint;
 	
 	// List of all Species of the model
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphSpecies>				listSpecies;
 	
 	// List of all Reactions of the model
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphReaction>              listReaction;
 	
 	// List of Relations / Transitions from the qual-Extension
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphTransition>		 	listTransition;
 
 	// List of Qualitative Species from the qual-Extension
-	@JsonIgnore
+	
 	@Relationship(type = "IN_MODEL", direction = Relationship.INCOMING)
 	private List<GraphQualitativeSpecies> listQualSpecies;
 	
@@ -414,7 +414,7 @@ public class GraphModel {
 	public void setVolumeUnitsID(String volumeUnitsID) {
 		this.volumeUnitsID = volumeUnitsID;
 	}
-
+	
 	public List<GraphCompartment> getListCompartment() {
 		return listCompartment;
 	}
@@ -422,7 +422,7 @@ public class GraphModel {
 	public void setListCompartment(List<GraphCompartment> listCompartment) {
 		this.listCompartment = listCompartment;
 	}
-
+	
 	public List<GraphConstraint> getListConstraint() {
 		return listConstraint;
 	}
@@ -430,7 +430,7 @@ public class GraphModel {
 	public void setListConstraint(List<GraphConstraint> listConstraint) {
 		this.listConstraint = listConstraint;
 	}
-
+	
 	public List<GraphSpecies> getListSpecies() {
 		return listSpecies;
 	}
@@ -438,7 +438,7 @@ public class GraphModel {
 	public void setListSpecies(List<GraphSpecies> listSpecies) {
 		this.listSpecies = listSpecies;
 	}
-
+	
 	public List<GraphReaction> getListReaction() {
 		return listReaction;
 	}
@@ -446,7 +446,7 @@ public class GraphModel {
 	public void setListReaction(List<GraphReaction> listReaction) {
 		this.listReaction = listReaction;
 	}
-
+	
 	public List<GraphTransition> getListTransition() {
 		return listTransition;
 	}
@@ -454,7 +454,7 @@ public class GraphModel {
 	public void setListTransition(List<GraphTransition> listTransition) {
 		this.listTransition = listTransition;
 	}
-
+	
 	public List<GraphQualitativeSpecies> getListQualSpecies() {
 		return listQualSpecies;
 	}
