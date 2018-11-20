@@ -140,7 +140,11 @@ public class BasicRestController {
 		if(searchResult != null) {
 			searchResult.forEach(model -> {
 				ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(model);
-				rmoe.add(linkTo(methodOn(BasicRestController.class).getModelById(rmoe.getModelId().toString())).withSelfRel());
+				rmoe.add(linkTo(methodOn(BasicRestController.class)
+									.getModelById(rmoe.getModelId().toString())
+								)
+								.withSelfRel()
+						);
 				returnList.add(rmoe);
 			});
 			return ResponseEntity.ok()
