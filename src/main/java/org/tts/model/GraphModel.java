@@ -40,6 +40,8 @@ public class GraphModel {
 	@Transient
 	boolean createQual;
 	
+	private boolean isQualitativeModel;
+	
 	// Direct Fields of the SBML Model Class
 	
 	private String 						modelName;
@@ -482,6 +484,16 @@ public class GraphModel {
 
 	public void setNumEdges(int numEdges) {
 		this.numEdges = numEdges;
+	}
+
+
+	public boolean isQualitativeModel() {
+		return isQualitativeModel;
+	}
+
+
+	public void setQualitativeModel(boolean isQualitativeModel) {
+		this.isQualitativeModel = isQualitativeModel;
 	}
 
 	
