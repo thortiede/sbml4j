@@ -469,6 +469,7 @@ public class PersistSBMLRestController {
 		
 		List<GraphModel> allModels = modelService.findAll();
 		allModels.forEach(model -> { 
+			logger.info("Updating Model " + model.getModelName());
 			if(model.getListQualSpecies() != null && model.getListQualSpecies().size() > 0) {
 				model.setNumNodes(model.getListQualSpecies().size());
 				logger.info("Setting Number of Nodes (QualSpecies) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListQualSpecies().size());
@@ -492,6 +493,7 @@ public class PersistSBMLRestController {
 			}
 			// save
 			modelService.saveOrUpdate(model);
+			logger.info("Finished updating Model " + model.getModelName());
 			ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(modelService.getById(model.getId()));
 			rmoe.add(linkTo(methodOn(BasicRestController.class)
 					.getModelById(rmoe.getModelId().toString())
@@ -512,9 +514,10 @@ public class PersistSBMLRestController {
 		String contentType = "application/json";
 		
 		List<ReturnModelOverviewEntry> returnListRmoe = new ArrayList<ReturnModelOverviewEntry>();
-		
+		logger.info("Updating Models (test only, db not affected)");
 		List<GraphModel> allModels = modelService.findAll();
 		allModels.forEach(model -> { 
+			logger.info("Updating (test only, db not affeced) Model " + model.getModelName());
 			if(model.getListQualSpecies() != null && model.getListQualSpecies().size() > 0) {
 				//model.setNumNodes(model.getListQualSpecies().size());
 				logger.info("Setting Number of Nodes (QualSpecies) for model " + model.getModelName() + " (id=" + model.getId() + ") to " + model.getListQualSpecies().size());
@@ -538,6 +541,7 @@ public class PersistSBMLRestController {
 			}
 			// save
 			//modelService.saveOrUpdate(model);
+			logger.info("Finished updating (test only, db not affeced) Model " + model.getModelName());
 			ReturnModelOverviewEntry rmoe = new ReturnModelOverviewEntry(modelService.getById(model.getId()));
 			rmoe.add(linkTo(methodOn(BasicRestController.class)
 					.getModelById(rmoe.getModelId().toString())
