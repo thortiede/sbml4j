@@ -30,12 +30,22 @@ public class FileServiceImpl implements FileService {
 
 
 
-	private SifFile convertToSif(NodeEdgeList fullNet) {
+	private SifFile convertToSif(NodeEdgeList nodeEdgeList) {
 		SifFile ret = new SifFile();
-		for (NodeNodeEdge nne : fullNet.getNodeNodeEdgeList()) {
+		for (NodeNodeEdge nne : nodeEdgeList.getNodeNodeEdgeList()) {
 			ret.addSifEntry(nne.getNode1(), nne.getEdge(), nne.getNode2());
 		}
 		return ret;
+	}
+
+
+
+	@Override
+	public SifFile getMetabolicNetwork() {
+		
+		return convertToSif(nodeEdgeListService.getMetabolicNet());
+		
+		
 	}
 
 }
