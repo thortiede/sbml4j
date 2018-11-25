@@ -32,10 +32,14 @@ public class ReactionServiceImpl implements ReactionService {
 	public GraphReaction getBySbmlIdString(String sbmlIdString) {
 		return reactionRepository.getBySbmlIdString(sbmlIdString);
 	}
-
 	@Override
 	public GraphReaction getBySbmlNameString(String sbmlNameString) {
-		return reactionRepository.getBySbmlNameString(sbmlNameString);
+		return getBySbmlNameString(sbmlNameString, 1);
+	}
+	
+	@Override
+	public GraphReaction getBySbmlNameString(String sbmlNameString, int depth) {
+		return reactionRepository.getBySbmlNameString(sbmlNameString, depth);
 	}
 
 	@Override
@@ -95,5 +99,7 @@ public class ReactionServiceImpl implements ReactionService {
 		}
 		return newReactionList;
 	}
+
+	
 
 }

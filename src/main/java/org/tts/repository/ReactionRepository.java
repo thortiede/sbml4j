@@ -7,5 +7,7 @@ public interface ReactionRepository extends Neo4jRepository<GraphReaction, Long>
 	GraphReaction getBySbmlIdString(String sbmlIdString);
 
 	GraphReaction getBySbmlNameString(String sbmlNameString);
+	
+	GraphReaction getBySbmlNameString(String sbmlNameString, int depth);
 
 }
