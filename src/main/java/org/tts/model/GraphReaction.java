@@ -26,7 +26,7 @@ public class GraphReaction extends GraphSBase {
 	
 	private String sbmlCompartmentString;
 	
-	@JsonIgnore
+	
 	@Relationship(type = "IN_COMPARTMENT", direction = Relationship.OUTGOING)
 	private GraphCompartment compartment;
 
@@ -38,11 +38,11 @@ public class GraphReaction extends GraphSBase {
 
 	private String sbmlNotesString;
 	
-	@JsonIgnore
+	
 	@Relationship(type = "isReactant", direction = Relationship.INCOMING)
 	private List<GraphSpecies> reactants;
 	
-	@JsonIgnore
+	
 	@Relationship(type = "isProduct", direction = Relationship.INCOMING)
 	private List<GraphSpecies> products;
 	
@@ -145,6 +145,7 @@ public class GraphReaction extends GraphSBase {
 		this.sbmlCompartmentString = sbmlCompartmentString;
 	}
 
+	@JsonIgnore
 	public GraphCompartment getCompartment() {
 		return compartment;
 	}
@@ -184,7 +185,7 @@ public class GraphReaction extends GraphSBase {
 	public void setSbmlNotesString(String sbmlNotesString) {
 		this.sbmlNotesString = sbmlNotesString;
 	}
-
+	//@JsonIgnore
 	public List<GraphSpecies> getReactants() {
 		return reactants;
 	}
@@ -192,7 +193,7 @@ public class GraphReaction extends GraphSBase {
 	public void setReactants(List<GraphSpecies> reactants) {
 		this.reactants = reactants;
 	}
-
+	//@JsonIgnore
 	public List<GraphSpecies> getProducts() {
 		return products;
 	}
