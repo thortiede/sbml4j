@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.GraphModel;
+import org.tts.model.GraphReaction;
 import org.tts.model.GraphTransition;
 import org.tts.model.NodeEdgeList;
 import org.tts.repository.ModelRepository;
+import org.tts.repository.ReactionRepository;
 import org.tts.repository.TransitionRepository;
 import uk.ac.ebi.sbo.ws.client.SBOLink;
 
@@ -21,14 +23,16 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 
 	private ModelRepository modelRepository;
 	private TransitionRepository transitionRepository;
+	private ReactionRepository reactionRepository;
 	private SBOLink sbolink;
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
-	public NodeEdgeListServiceImpl(ModelRepository modelRepository, TransitionRepository transistionRepository) {
+	public NodeEdgeListServiceImpl(ModelRepository modelRepository, TransitionRepository transistionRepository, ReactionRepository reactionRepository) {
 		this.modelRepository = modelRepository;
 		this.transitionRepository = transistionRepository;
+		this.reactionRepository = reactionRepository;
 		this.sbolink = new SBOLink();
 	}
 	
@@ -82,6 +86,21 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 		if (sbmlSBOTerm.equals("")) return "not determined, no SBO Link";
 		// Do translation using SBOLink here
 		else return sbolink.getTerm(sbmlSBOTerm).getName();
+	}
+
+
+	@Override
+	public NodeEdgeList getMetabolicNet() {
+		List<GraphReaction> reactionList = new ArrayList<>();
+		NodeEdgeList nodeEdgeList = new NodeEdgeList();
+		reactionRepository.findAll().forEach(reactionList::add);
+		
+		for (GraphReaction reaction : reactionList) {
+			reaction.getSbmlNameString();
+		}
+		
+
+		return null;
 	}
 
 }
