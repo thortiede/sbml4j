@@ -2,7 +2,9 @@ package org.tts.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.tts.model.GraphModel;
 import org.tts.model.GraphReaction;
 import org.tts.model.GraphSpecies;
+import org.tts.model.GraphTransition;
 import org.tts.model.NodeEdgeList;
 import org.tts.model.ReturnModelEntry;
 import org.tts.model.ReturnModelOverviewEntry;
@@ -29,6 +32,10 @@ import org.tts.service.FileStorageService;
 import org.tts.service.ModelService;
 import org.tts.service.NodeEdgeListService;
 import org.tts.service.ReactionService;
+import org.tts.service.TransitionService;
+
+import uk.ac.ebi.sbo.ws.client.SBOLink;
+
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -41,10 +48,14 @@ public class BasicRestController {
 	
 	private FileStorageService fileStorageService;
 	private ReactionService reactionService;
+	private TransitionService transitionService;
 	private ModelService modelService;
 	
 	
 	private FileService fileService;
+	
+	private SBOLink sboLink;
+	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
@@ -54,6 +65,7 @@ public class BasicRestController {
 			FileStorageService fileStorageService,
 			FileService fileService,
 			ReactionService reactionService,
+			TransitionService transitionService,
 			ModelService modelService) 
 	{
 		super();
@@ -61,7 +73,9 @@ public class BasicRestController {
 		this.fileStorageService = fileStorageService;
 		this.fileService = fileService;
 		this.reactionService = reactionService;
+		this.transitionService = transitionService;
 		this.modelService = modelService;
+		this.sboLink = new SBOLink();
 	}
 
 	@RequestMapping(value = "/fullnet", method=RequestMethod.GET)
@@ -102,32 +116,124 @@ public class BasicRestController {
     }
 
 	@RequestMapping(value = "/reaction")
-	public ResponseEntity<List<List<String>>> retrieveReaction(@RequestParam(value="name") String reactionname, @RequestParam(value="depth") String depth){
+	public ResponseEntity<GraphReaction> getReaction(@RequestParam(value="name") String reactionName) {
+		return new ResponseEntity<GraphReaction>(reactionService.getBySbmlNameString(reactionName, 2), HttpStatus.OK);
+	}
+	
+	
+	@RequestMapping(value = "/reactionSimple")
+	public ResponseEntity<Map<String, Map<String, List<String>>>> getReactionSimple(@RequestParam(value="name") String reactionname, @RequestParam(value="depth", defaultValue = "1") String depth){
 		GraphReaction entryReaction = reactionService.getBySbmlNameString(reactionname);
+		logger.info("Retrieved Reaction");
 		//Long entryId = entryReaction.getId();
-		if(entryReaction==null) return new ResponseEntity<List<List<String>>>(new ArrayList<List<String>>(), HttpStatus.NOT_FOUND);
-		List<String> reaction = new ArrayList<String>();
-		reaction.add(entryReaction.getSbmlNameString());
+		if(entryReaction==null) return new ResponseEntity<Map<String, Map<String, List<String>>>>(new HashMap<String, Map<String, List<String>>>(), HttpStatus.NOT_FOUND);
+		Map<String, List<String>> reaction = new HashMap<String, List<String>>();
+		String notesString = entryReaction.getSbmlNotesString();
+		List<String> notesList = new ArrayList<String>();
+		notesList.add(notesString);
+		List<String> reactionNameList = new ArrayList<String>();
+		reactionNameList.add(reactionname);
+		reactionNameList.add(entryReaction.getSbmlNameString());
+		reaction.put("ReactionName", reactionNameList);
+		reaction.put("Occurs In", grepOccursIn(notesString));
+
+		List<String> modelList = new ArrayList<String>();
+				
+		List<GraphModel> models = entryReaction.getModels();
+		for (GraphModel model : models) {
+			modelList.add(model.getModelName());
+		}
+		reaction.put("Models it is part of", modelList);
+		
+		logger.info("Occurs In done.");
+		reaction.put("Notes", notesList);
 		List<GraphSpecies> entryProducts = entryReaction.getProducts();
 		List<GraphSpecies> entryReactants = entryReaction.getReactants();
-		List<String> reactants = new ArrayList<String>();
-		List<String> products = new ArrayList<String>();
+		Map<String, List<String>> reactants = new HashMap<String, List<String>>();
+		Map<String, List<String>> products = new HashMap<String, List<String>>();
 		
+		List<String> reactantList = new ArrayList<String>();
+		List<String> productList =  new ArrayList<String>();
+		int i = 1;
 		for (GraphSpecies prod : entryProducts) {
-			products.add(prod.getSbmlNameString());
+			productList.add(prod.getSbmlNameString());
+			
+			i+=1;
 		}
+		logger.info("products done.");
+		products.put("Products", productList);
+		i = 1;
 		for (GraphSpecies react : entryReactants) {
-			reactants.add(react.getSbmlNameString());
+			reactantList.add(react.getSbmlNameString());
+			
+			i+=1;
 		}
-		List<List<String>> reactionList = new ArrayList<List<String>>();
-		reactionList.add(reactants);
-		reactionList.add(reaction);
-		reactionList.add(products);
-		return new ResponseEntity<List<List<String>>>(reactionList, HttpStatus.OK);
+		logger.info("reactants done.");
+		reactants.put("Reactants",reactantList);
+		
+		Map<String, Map<String, List<String>>> reactionMap = new HashMap<String, Map<String, List<String>>>();
+		reactionMap.put("reactants", reactants);
+		reactionMap.put("reaction", reaction);
+		reactionMap.put("products", products);
+		return new ResponseEntity<Map<String, Map<String, List<String>>>>(reactionMap, HttpStatus.OK);
 		
 		
 		
 	}
+	
+	private List<String> grepOccursIn(String notesString) {;
+		List<String> occursInStrings = new ArrayList<>();
+		int occursInIndex = notesString.indexOf("Occurs in:");
+		if (occursInIndex != -1) {
+			int liIndex = 0;
+			int liCloseIndex = 0;
+			int startIndex = occursInIndex;
+			while (startIndex != -1) {
+				liIndex = notesString.indexOf("<li>", startIndex);
+				// if we onlu have this one html list in the notesString this is fine
+				// if not, we get the next list here as well.
+				// so we should check, whether that occurs List is closed in between with </ul>
+				if(liIndex != -1) {
+					liCloseIndex = notesString.indexOf("</li>", liIndex);
+					// Found one Pathway it occurs in
+					if (liCloseIndex != -1) {
+						occursInStrings.add(notesString.substring(liIndex + 4, liCloseIndex));
+						startIndex = liCloseIndex;
+					}
+				} else {
+					startIndex = -1;
+				}
+			}
+		}
+		return occursInStrings;
+	}
+
+	@RequestMapping(value="/transition")
+	public ResponseEntity<GraphTransition> getTransition(@RequestParam(value="metaId") String transitionMetaId) {
+		return new ResponseEntity<GraphTransition>(transitionService.getByMetaid(transitionMetaId), HttpStatus.OK);
+	}
+	@RequestMapping(value="/transitionSimple")
+	public ResponseEntity<Map<String, String>> getTransitionSimple(@RequestParam(value="metaId") String transitionMetaId) {
+		
+		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
+		
+		Map<String, String> transitionSimple = new HashMap<String, String>();
+		transitionSimple.put("metaId", transitionMetaId);
+		transitionSimple.put("QualSpeciesOne", transition.getQualSpeciesOneSbmlNameString());
+		transitionSimple.put("QualSpeciesTwo", transition.getQualSpeciesTwoSbmlNameString());
+		transitionSimple.put("SBO-Term", transition.getSbmlSBOTerm());
+		transitionSimple.put("Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+		
+		
+		
+		
+		return new ResponseEntity<Map<String, String>>(transitionSimple, HttpStatus.OK);
+	}
+	
+	
+	
+	
+	
 	
 	@RequestMapping(value="/models")
 	public ResponseEntity<List<ReturnModelOverviewEntry>> getAllModels(@RequestParam(value="search", defaultValue="") String searchString) {
@@ -158,7 +264,7 @@ public class BasicRestController {
 	}
 	
 	@RequestMapping(value="/model/{modelId}")
-	public ResponseEntity<GraphModel> getModelById(@PathVariable String modelId) {
+	public ResponseEntity<ReturnModelEntry> getModelById(@PathVariable String modelId) {
 		String contentType = "application/json";
 		
 		ReturnModelEntry returnModelEntry = new ReturnModelEntry(modelService.getById(Long.valueOf(modelId)));
@@ -166,14 +272,11 @@ public class BasicRestController {
 			// add selfLink
 			Link selfLink = linkTo(methodOn(BasicRestController.class).getModelById(returnModelEntry.getModelId().toString())).withSelfRel();
 			returnModelEntry.add(selfLink);
-		}
-		GraphModel model = modelService.getById(Long.valueOf(modelId));
-		if(model == null) {
-			return ResponseEntity.notFound().build();
-		} else {
 			return ResponseEntity.ok()
 					.contentType(MediaType.parseMediaType(contentType))
-					.body(model);
+					.body(returnModelEntry);
+		} else {
+				return ResponseEntity.notFound().build();
 		}
 	}
 	
