@@ -118,7 +118,9 @@ public class GraphTransition extends GraphSBase {
 		setSbmlSBOTerm(transition.getSBOTermID());
 		// CVTerms
 		cvTermMap = new HashMap<String, List<String>>();
-		for(CVTerm cvterm : transition.getCVTerms()) {
+		
+		for(CVTerm cvterm : transition.getAnnotation().getListOfCVTerms()) { // we might need to use transition.getAnnotation().getListOfCVTerms() here, as the cvterms are 
+														// defined in the annotation of a transition element.
 			// check if key already present
 			if(cvTermMap.containsKey(cvterm.toString())){
 				// already present
