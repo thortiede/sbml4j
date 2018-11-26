@@ -223,6 +223,11 @@ public class BasicRestController {
 		transitionSimple.put("QualSpeciesTwo", transition.getQualSpeciesTwoSbmlNameString());
 		transitionSimple.put("SBO-Term", transition.getSbmlSBOTerm());
 		transitionSimple.put("Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+		//List<String> modelNameList = new ArrayList<String>();
+		int i = 1;
+		for(GraphModel model : transition.getModels()) {
+			transitionSimple.put(i + "_In Pathway",model.getModelName());
+		}
 		
 		
 		
