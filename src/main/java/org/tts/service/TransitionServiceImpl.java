@@ -64,4 +64,11 @@ public class TransitionServiceImpl implements TransitionService {
 		return newTransitionList;
 	}
 
+	@Override
+	public List<GraphTransition> findAll() {
+		List<GraphTransition> allTransitions = new ArrayList<GraphTransition>();
+		transitionRepository.findAll().forEach(allTransitions::add);
+		return allTransitions;
+	}
+
 }
