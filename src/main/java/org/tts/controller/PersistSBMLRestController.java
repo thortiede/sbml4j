@@ -105,7 +105,7 @@ public class PersistSBMLRestController {
 	    			GraphModel graphModel;
 	    			doc = reader.readSBML(file.getAbsolutePath());
 	    			Model model = doc.getModel();
-	    			graphModel = persistSBMLModel(model, createQual);
+	    			graphModel = persistSBMLModel(model, file.getName(), createQual);
 	    			if (graphModel != null) {
 	    				cnt = cnt + 1;
 	    			}
@@ -137,16 +137,18 @@ public class PersistSBMLRestController {
 		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/metabolic/testing/hsa/";
 		String filepath = name;
 		logger.info("Filepath is" + filepath);
+		File f = new File(filepath);
+		String fileName = f.getName();
 		try {
 			GraphModel graphModel;
 			doc = reader.readSBML(filepath);
 			Model model = doc.getModel();
 			if(filepath.contains("non-metabolic")) {
-				graphModel = persistSBMLModel(model, true);
+				graphModel = persistSBMLModel(model, fileName, true);
 				logger.debug("Creating non-metabolic model");
 			}
 			else {
-				graphModel = persistSBMLModel(model, false);
+				graphModel = persistSBMLModel(model, fileName, false);
 				logger.debug("Creating metabolic model");
 			}
 			if (graphModel != null) {
@@ -163,7 +165,7 @@ public class PersistSBMLRestController {
 		
 
 	}
-	public GraphModel persistSBMLModel(Model model, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
+	public GraphModel persistSBMLModel(Model model, String fileName, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
 		
 		boolean modelExists = false;
 		
@@ -182,7 +184,7 @@ public class PersistSBMLRestController {
 		// 		 and then possibly only create the new / changed entities.
 		
 		// for now create the model whether it already exists or not.
-		GraphModel graphModel = new GraphModel(model, createQual);
+		GraphModel graphModel = new GraphModel(model, fileName, createQual);
 				
 		if (modelExists) {
 			// set id and version of the model-entity to ensure it will be updated and not duplicated

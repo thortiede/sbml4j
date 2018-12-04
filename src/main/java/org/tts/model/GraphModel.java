@@ -46,6 +46,7 @@ public class GraphModel {
 	
 	private String 						modelName;
 	
+	private String 						modelOriginalFileName;
 	
 	/**
 	 * Represents the 'areaUnits' XML attribute of a model element.
@@ -118,12 +119,14 @@ public class GraphModel {
 
 
 	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
-	public GraphModel(Model model, boolean createQual) {
+	public GraphModel(Model model, String fileName, boolean createQual) {
 	
 		this.createQual = createQual;
 		// Set model fields
 		setModelName(model.getName());
-		// TODO: Check if model exists
+		// TODO: Check if model exists - not doing it here, it is being done in the service
+		
+		setModelOriginalFileName(fileName);
 		
 		setAreaUnitsID(model.getAreaUnits()); // TODO: If Level == 2 this will hold UnitDefinition.AREA, need to account for that if we want to support SBML Level2
 		setConversionFactorID(model.getConversionFactor());
@@ -357,6 +360,16 @@ public class GraphModel {
 	public String getModelName() {
 		return modelName;
 	}
+
+	public String getModelOriginalFileName() {
+		return modelOriginalFileName;
+	}
+
+
+	public void setModelOriginalFileName(String modelOriginalFileName) {
+		this.modelOriginalFileName = modelOriginalFileName;
+	}
+
 
 	public void setModelName(String modelName) {
 		this.modelName = modelName;
