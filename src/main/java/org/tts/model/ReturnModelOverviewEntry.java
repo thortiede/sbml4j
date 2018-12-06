@@ -5,6 +5,7 @@ import org.springframework.hateoas.ResourceSupport;
 public class ReturnModelOverviewEntry extends ResourceSupport {
 
 	private String modelName;
+	private String modelOriginalFileName;
 	private Long modelId;
 	private int numNodes;
 	private int numEdges;
@@ -15,6 +16,7 @@ public class ReturnModelOverviewEntry extends ResourceSupport {
 			this.modelName = model.getModelName();
 			this.numNodes = model.getNumNodes();
 			this.numEdges = model.getNumEdges();
+			this.modelOriginalFileName = model.getModelOriginalFileName();
 			// TODO: Need to account for non-metabolic networks as well
 			// So, a model needs to know whether it is metabolic or not
 		}
@@ -44,6 +46,16 @@ public class ReturnModelOverviewEntry extends ResourceSupport {
 	}
 	public void setNumEdges(int numEdges) {
 		this.numEdges = numEdges;
+	}
+
+
+	public String getModelOriginalFileName() {
+		return modelOriginalFileName;
+	}
+
+
+	public void setModelOriginalFileName(String modelOriginalFileName) {
+		this.modelOriginalFileName = modelOriginalFileName;
 	}
 	
 	
