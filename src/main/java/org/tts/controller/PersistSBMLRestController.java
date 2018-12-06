@@ -68,7 +68,7 @@ public class PersistSBMLRestController {
 	
 	
 	@RequestMapping(value = "/sbmlfolder", method = RequestMethod.GET)
-	public int persistSBMLFolder(@RequestParam(value="name") String name) {
+	public int persistSBMLFolder(@RequestParam(value="name") String name, @RequestParam(value="organism") String organism) {
 		boolean createQual = false;
 		logger.debug("reading dir ");
 		String directory = name;
@@ -103,9 +103,9 @@ public class PersistSBMLRestController {
 		    		//logger.info("Filepath is :" filepath);
 		    		
 	    			GraphModel graphModel;
-	    			doc = reader.readSBML(file.getAbsolutePath());
+	    			doc = reader.readSBML(file.getAbsolutePath());// this can be changed to the static call to SBMLReader
 	    			Model model = doc.getModel();
-	    			graphModel = persistSBMLModel(model, file.getName(), createQual);
+	    			graphModel = persistSBMLModel(model, file.getName(), organism, createQual);
 	    			if (graphModel != null) {
 	    				cnt = cnt + 1;
 	    			}
@@ -130,8 +130,8 @@ public class PersistSBMLRestController {
 	}
 	
 	@RequestMapping(value = "/sbmlfile", method = RequestMethod.GET)
-	public GraphModel persistSBML(@RequestParam(value="name") String name) {
-		SBMLReader reader = new SBMLReader();
+	public GraphModel persistSBML(@RequestParam(value="name") String name, @RequestParam(value="organism") String organism) {
+		SBMLReader reader = new SBMLReader(); // this can be changed to the static call to SBMLReader
 		SBMLDocument doc;
 		
 		//String localDir = "/Users/ttiede/Documents/workspace_aug2018/testdata/sbml4j/sbml/metabolic/testing/hsa/";
@@ -144,11 +144,11 @@ public class PersistSBMLRestController {
 			doc = reader.readSBML(filepath);
 			Model model = doc.getModel();
 			if(filepath.contains("non-metabolic")) {
-				graphModel = persistSBMLModel(model, fileName, true);
+				graphModel = persistSBMLModel(model, fileName, organism, true);
 				logger.debug("Creating non-metabolic model");
 			}
 			else {
-				graphModel = persistSBMLModel(model, fileName, false);
+				graphModel = persistSBMLModel(model, fileName, organism, false);
 				logger.debug("Creating metabolic model");
 			}
 			if (graphModel != null) {
@@ -165,7 +165,7 @@ public class PersistSBMLRestController {
 		
 
 	}
-	public GraphModel persistSBMLModel(Model model, String fileName, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
+	public GraphModel persistSBMLModel(Model model, String fileName, String organism, boolean createQual) { // TODO: Add back in: , SBOLink sboLink) {
 		
 		boolean modelExists = false;
 		
@@ -184,7 +184,7 @@ public class PersistSBMLRestController {
 		// 		 and then possibly only create the new / changed entities.
 		
 		// for now create the model whether it already exists or not.
-		GraphModel graphModel = new GraphModel(model, fileName, createQual);
+		GraphModel graphModel = new GraphModel(model, fileName, organism, createQual);
 				
 		if (modelExists) {
 			// set id and version of the model-entity to ensure it will be updated and not duplicated

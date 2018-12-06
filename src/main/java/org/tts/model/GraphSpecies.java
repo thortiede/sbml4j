@@ -68,6 +68,8 @@ public class GraphSpecies extends GraphSBase{
 	public GraphSpecies(Species species, GraphCompartment _compartment, GraphModel model) {
 		// <species boundaryCondition="false" compartment="default" constant="false" hasOnlySubstanceUnits="false" id="OGDH" initialAmount="1" metaid="meta_OGDH" name="OGDH" sboTerm="SBO:0000252">
 	    setModel(model);
+	    setOrganism(model.getOrganism());
+		setOrganismTaxonomyId(model.getOrganismTaxonomyId());
 		setCompartment(_compartment);
 		setSbmlCompartmentString(species.getCompartment());
 		setSbmlIdString(species.getId());

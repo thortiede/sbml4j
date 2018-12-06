@@ -55,6 +55,8 @@ public class GraphQualitativeSpecies extends GraphSBase{
 		// Set Attributes
 		// TODO: Use setters
 		setModel(model);
+		setOrganism(model.getOrganism());
+		setOrganismTaxonomyId(model.getOrganismTaxonomyId());
 		sbmlIdString = qualitativeSpecies.getId();
 		sbmlNameString = qualitativeSpecies.getName();
 		name = sbmlNameString;

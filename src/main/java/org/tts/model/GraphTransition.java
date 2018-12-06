@@ -66,6 +66,8 @@ public class GraphTransition extends GraphSBase {
 	 */
 	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies, GraphModel model) {
 		setModel(model);
+		setOrganism(model.getOrganism());
+		setOrganismTaxonomyId(model.getOrganismTaxonomyId());
 		setMetaid(transition.getMetaId());
 		Input input = transition.getListOfInputs().get(inputIndex);
 		Output output = transition.getListOfOutputs().get(outputIndex);

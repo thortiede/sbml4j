@@ -49,6 +49,8 @@ public class GraphCompartment extends GraphSBase {
 	// Constructor to create a GraphCompartment Element from a jsbml Compartment instance
 	public GraphCompartment(Compartment compartment, GraphModel model) {
 		setModel(model);
+		setOrganism(model.getOrganism());
+		setOrganismTaxonomyId(model.getOrganismTaxonomyId());
 		speciesInThisCompartment = new ArrayList<GraphSpecies>();
 		// fill the Compartment here with the fields from the jsbml compartment
 		//   <compartment constant="true" id="default" name="default" sboTerm="SBO:0000410" size="1" spatialDimensions="3" />

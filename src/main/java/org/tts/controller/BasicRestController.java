@@ -212,30 +212,47 @@ public class BasicRestController {
 	public ResponseEntity<GraphTransition> getTransition(@RequestParam(value="metaId") String transitionMetaId) {
 		return new ResponseEntity<GraphTransition>(transitionService.getByMetaid(transitionMetaId), HttpStatus.OK);
 	}
+	
 	@RequestMapping(value="/transitionSimple")
 	public ResponseEntity<Map<String, String>> getTransitionSimple(@RequestParam(value="metaId") String transitionMetaId) {
 		
 		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
 		
+		
+		return new ResponseEntity<Map<String, String>>(simplifyTransition(transition), HttpStatus.OK);
+	}
+	
+	private Map<String, String> simplifyTransition(GraphTransition transition) {
 		Map<String, String> transitionSimple = new HashMap<String, String>();
-		transitionSimple.put("metaId", transitionMetaId);
+		transitionSimple.put("metaId", transition.getMetaid());
 		transitionSimple.put("QualSpeciesOne", transition.getQualSpeciesOneSbmlNameString());
 		transitionSimple.put("QualSpeciesTwo", transition.getQualSpeciesTwoSbmlNameString());
 		transitionSimple.put("SBO-Term", transition.getSbmlSBOTerm());
-		transitionSimple.put("Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+		if(transition.getSbmlSBOTerm() != null) {
+			if(sboLink.getTerm(transition.getSbmlSBOTerm()) != null) {
+				transitionSimple.put("SBO-Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+			} else {
+				transitionSimple.put("SBO-Translated-Not", transition.getSbmlSBOTerm());
+			}
+		}
 		//List<String> modelNameList = new ArrayList<String>();
 		int i = 1;
 		for(GraphModel model : transition.getModels()) {
 			transitionSimple.put(i + "_In Pathway",model.getModelName());
 		}
+		return transitionSimple;
 		
-		
-		
-		
-		return new ResponseEntity<Map<String, String>>(transitionSimple, HttpStatus.OK);
 	}
 	
-	
+	@RequestMapping(value="/regulatoryNetwork")
+	public ResponseEntity<List<Map<String, String>>> getRegulatoryNetwork() {
+		List<GraphTransition> allTransitions = transitionService.findAll();
+		List<Map<String, String>> allTransitionSimple = new ArrayList<Map<String, String>>();
+		for (GraphTransition transition : allTransitions) {
+			allTransitionSimple.add(simplifyTransition(transition));
+		}
+		return new ResponseEntity<List<Map<String, String>>>(allTransitionSimple, HttpStatus.OK);
+	}
 	
 	
 	
