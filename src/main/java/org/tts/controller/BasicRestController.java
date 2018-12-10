@@ -208,18 +208,38 @@ public class BasicRestController {
 		return occursInStrings;
 	}
 
+	
+	@RequestMapping(value="/transitions")
+	public ResponseEntity<List<GraphTransition>> getTransitions(@RequestParam(value="search", defaultValue = "") String searchString) {
+		List<GraphTransition> transitions = transitionService.findAll();
+		if (transitions != null && transitions.size() > 0) {
+			return new ResponseEntity<List<GraphTransition>>(transitions, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<List<GraphTransition>>(HttpStatus.NOT_FOUND);
+		}
+		
+	}
+	
 	@RequestMapping(value="/transition")
 	public ResponseEntity<GraphTransition> getTransition(@RequestParam(value="metaId") String transitionMetaId) {
-		return new ResponseEntity<GraphTransition>(transitionService.getByMetaid(transitionMetaId), HttpStatus.OK);
+		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
+		if(transition != null) {
+			return new ResponseEntity<GraphTransition>(transition, HttpStatus.OK);
+		}
+		else {
+			return new ResponseEntity<GraphTransition>(HttpStatus.NOT_FOUND);
+		}
 	}
 	
 	@RequestMapping(value="/transitionSimple")
 	public ResponseEntity<Map<String, String>> getTransitionSimple(@RequestParam(value="metaId") String transitionMetaId) {
 		
 		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
-		
-		
-		return new ResponseEntity<Map<String, String>>(simplifyTransition(transition), HttpStatus.OK);
+		if(transition != null) {
+			return new ResponseEntity<Map<String, String>>(simplifyTransition(transition), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Map<String, String>>(HttpStatus.NOT_FOUND);
+		}
 	}
 	
 	private Map<String, String> simplifyTransition(GraphTransition transition) {
@@ -301,7 +321,6 @@ public class BasicRestController {
 				return ResponseEntity.notFound().build();
 		}
 	}
-	
 	
 	
 }
