@@ -121,8 +121,8 @@ public class GraphTransition extends GraphSBase {
 		// CVTerms
 		cvTermMap = new HashMap<String, List<String>>();
 		
-		for(CVTerm cvterm : transition.getAnnotation().getListOfCVTerms()) { // we might need to use transition.getAnnotation().getListOfCVTerms() here, as the cvterms are 
-														// defined in the annotation of a transition element.
+		for(CVTerm cvterm : transition.getCVTerms()) { //getAnnotation().getListOfCVTerms()) { // we might need to use transition.getAnnotation().getListOfCVTerms() here, as the cvterms are 
+														// defined in the annotation of a transition element. . It appears that getting the CV Terms directly dies work. No need to go through the annotations
 			// check if key already present
 			if(cvTermMap.containsKey(cvterm.toString())){
 				// already present
