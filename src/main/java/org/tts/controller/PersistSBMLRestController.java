@@ -73,7 +73,7 @@ public class PersistSBMLRestController {
 		logger.debug("reading dir ");
 		String directory = name;
 		logger.debug(directory);
-		if(directory.contains("non-metabolic")) {
+		if(directory.contains("non-metabolic")) { // TODO: this should extracted from the model itself, see FileController on how to.
 			createQual = true;
 		} else {
 			createQual = false;
