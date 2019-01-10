@@ -91,7 +91,11 @@ public class FileController {
 		File[] listOfFiles = folder.listFiles();
 		List<FileInfoObject> folderInfo = new ArrayList<>();
 		for (File file : listOfFiles) {
-			folderInfo.add(getFileInfoObject(file.getAbsolutePath()));
+			if(file.getName().contains(".xml")) {
+				folderInfo.add(getFileInfoObject(file.getAbsolutePath()));
+			} else {
+				logger.info("Unknown File: " + file.getName());
+			}
 		}
 		return folderInfo;
 	}
@@ -107,6 +111,9 @@ public class FileController {
 			fileInfo.setNumReactions(model.getListOfReactions().size());
 			Map<String, SBasePlugin> extensionPackages = model.getExtensionPackages();
 			
+			
+			
+			
 			Set<String> keys = extensionPackages.keySet();
 			for (String key : keys) 
 			{
@@ -121,6 +128,17 @@ public class FileController {
 				
 				fileInfo.setNumQualSpecies(qualModelPlugin.getNumQualitativeSpecies());
 				fileInfo.setNumTransitions(qualModelPlugin.getNumTransitions());
+				
+				if(qualModelPlugin.getListOfTransitions().size() > 0) {
+					if(qualModelPlugin.getTransition(0).getAnnotation() != null) {
+						fileInfo.setNumTransitionAnnotationCVTerms(qualModelPlugin.getTransition(0).getAnnotation().getCVTermCount());
+					}
+					if(qualModelPlugin.getTransition(0).getCVTerms() != null) {
+						fileInfo.setNumTransitonCVTerms(qualModelPlugin.getTransition(0).getCVTermCount());
+					}
+				}
+				
+				
 			} else {	
 				logger.info("Non-qualitative Model");
 				fileInfo.setQualitativeModel(false);

@@ -10,6 +10,10 @@ public class FileInfoObject {
 	int numQualSpecies;
 	int numTransitions;
 	
+	int numTransitionAnnotationCVTerms;
+	int numTransitonCVTerms;
+	
+	
 	public FileInfoObject(String fileName) {
 		this.fileName = fileName;
 	}
@@ -67,6 +71,22 @@ public class FileInfoObject {
 
 	public void setQualitativeModel(boolean isQualitativeModel) {
 		this.isQualitativeModel = isQualitativeModel;
+	}
+
+	public int getNumTransitionAnnotationCVTerms() {
+		return numTransitionAnnotationCVTerms;
+	}
+
+	public void setNumTransitionAnnotationCVTerms(int numTransitionAnnotationCVTerms) {
+		this.numTransitionAnnotationCVTerms = numTransitionAnnotationCVTerms;
+	}
+
+	public int getNumTransitonCVTerms() {
+		return numTransitonCVTerms;
+	}
+
+	public void setNumTransitonCVTerms(int numTransitonCVTerms) {
+		this.numTransitonCVTerms = numTransitonCVTerms;
 	}
 	
 	
