@@ -210,10 +210,23 @@ public class BasicRestController {
 
 	
 	@RequestMapping(value="/transitions")
-	public ResponseEntity<List<GraphTransition>> getTransitions(@RequestParam(value="search", defaultValue = "") String searchString) {
+	public ResponseEntity<List<GraphTransition>> getTransitions(@RequestParam(value="search", defaultValue = "") String searchString, @RequestParam(value="option", defaultValue = "all") String option) {
 		List<GraphTransition> transitions = transitionService.findAll();
 		if (transitions != null && transitions.size() > 0) {
-			return new ResponseEntity<List<GraphTransition>>(transitions, HttpStatus.OK);
+			if(option.equals("unique")) { // not working
+				List<GraphTransition> uniqueTransitionTypes = new ArrayList<GraphTransition>();
+				List<String[]> isArrays = new ArrayList<String[]>();
+				for(GraphTransition transition : transitions) {
+					if (!isArrays.contains(transition.getBqbIs())) { // this compares the array, which is a different one but with same entries, still different
+						isArrays.add(transition.getBqbIs());
+						uniqueTransitionTypes.add(transition);
+					}
+				}
+				return new ResponseEntity<List<GraphTransition>>(uniqueTransitionTypes, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<List<GraphTransition>>(transitions, HttpStatus.OK);
+			}
+			
 		} else {
 			return new ResponseEntity<List<GraphTransition>>(HttpStatus.NOT_FOUND);
 		}
