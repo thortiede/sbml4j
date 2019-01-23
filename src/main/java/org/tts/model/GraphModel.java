@@ -35,7 +35,7 @@ public class GraphModel {
 	
 	
 	@Transient
-	public static final String QUAL_NS = QualConstants.namespaceURI;
+	public static final String QUAL_NS = QualConstants.namespaceURI; // TODO: change this to the short handle that does not change on version change
 	
 	@Transient
 	boolean createQual;
@@ -173,7 +173,10 @@ public class GraphModel {
 			setNumNodes(listQualSpecies.size());
 			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
 			setNumEdges(listTransition.size());
+			setQualitativeModel(true);
 
+		} else {
+			setQualitativeModel(false);
 		}
 			
 			/*for(GraphCompartment compartment : listCompartment) {
