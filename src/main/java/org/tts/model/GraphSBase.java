@@ -24,7 +24,10 @@ public class GraphSBase {
 	protected String sbmlIdString;
 	
 	protected String sbmlNameString;
+	
+	protected String organism;
 
+	protected int organismTaxonomyId;
 	
 	@Relationship(type = "IN_MODEL", direction = Relationship.OUTGOING)
 	protected List<GraphModel> modelList;
@@ -80,6 +83,22 @@ public class GraphSBase {
 			this.modelList.add(model);
 	
 		}
+	}
+
+	public String getOrganism() {
+		return organism;
+	}
+
+	public void setOrganism(String organism) {
+		this.organism = organism;
+	}
+
+	public int getOrganismTaxonomyId() {
+		return organismTaxonomyId;
+	}
+
+	public void setOrganismTaxonomyId(int organismTaxonomyId) {
+		this.organismTaxonomyId = organismTaxonomyId;
 	}
 	
 }

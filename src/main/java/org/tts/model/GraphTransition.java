@@ -14,6 +14,7 @@ import org.neo4j.ogm.annotation.Relationship;
 
 import org.neo4j.ogm.annotation.Version;
 import org.sbml.jsbml.CVTerm;
+import org.sbml.jsbml.CVTerm.Qualifier;
 import org.sbml.jsbml.ext.qual.FunctionTerm;
 import org.sbml.jsbml.ext.qual.Input;
 import org.sbml.jsbml.ext.qual.Output;
@@ -53,6 +54,9 @@ public class GraphTransition extends GraphSBase {
 
 	private Map<String, List<String>> cvTermMap;
 	
+	private String[] bqbIs;
+	private String[] bqbIsDescribedBy;
+	
 	
 	public GraphTransition() {}
 	
@@ -66,6 +70,8 @@ public class GraphTransition extends GraphSBase {
 	 */
 	public GraphTransition(Transition transition, int inputIndex, int outputIndex, int functionTermIndex, List<GraphQualitativeSpecies> listGraphQualitiativeSpecies, GraphModel model) {
 		setModel(model);
+		setOrganism(model.getOrganism());
+		setOrganismTaxonomyId(model.getOrganismTaxonomyId());
 		setMetaid(transition.getMetaId());
 		Input input = transition.getListOfInputs().get(inputIndex);
 		Output output = transition.getListOfOutputs().get(outputIndex);
@@ -119,25 +125,42 @@ public class GraphTransition extends GraphSBase {
 		// CVTerms
 		cvTermMap = new HashMap<String, List<String>>();
 		
-		for(CVTerm cvterm : transition.getAnnotation().getListOfCVTerms()) { // we might need to use transition.getAnnotation().getListOfCVTerms() here, as the cvterms are 
-														// defined in the annotation of a transition element.
+		for(CVTerm cvterm : transition.getCVTerms()) { //getAnnotation().getListOfCVTerms()) { // we might need to use transition.getAnnotation().getListOfCVTerms() here, as the cvterms are 
+														// defined in the annotation of a transition element. . It appears that getting the CV Terms directly dies work. No need to go through the annotations
+			
 			// check if key already present
-			if(cvTermMap.containsKey(cvterm.toString())){
+			if(cvTermMap.containsKey(cvterm.getQualifier().toString())){
 				// already present
-				List<String> valueList = cvTermMap.get(cvterm.toString());
+				List<String> valueList = cvTermMap.get(cvterm.getQualifier().toString());
 				for(int i = 0; i!= cvterm.getResourceCount(); i++) {
 					
 					valueList.add(cvterm.getResource(i));
 				}
-				cvTermMap.replace(cvterm.toString(), valueList);
+				cvTermMap.replace(cvterm.getQualifier().toString(), valueList);
 			} else {
 				// not present
 				List<String> valueList = new ArrayList<String>();
 				for(int i = 0; i!= cvterm.getResourceCount(); i++) {
 					valueList.add(cvterm.getResource(i));
 				}
-				cvTermMap.put(cvterm.toString(), valueList);
+				cvTermMap.put(cvterm.getQualifier().toString(), valueList);
 			}
+		}
+		
+		// now put the needed cvterms in the appropriate arrays to allow them to be persisted
+		if(cvTermMap.containsKey(Qualifier.BQB_IS.toString())) {
+			String[] localBqbIs = new String[cvTermMap.get(Qualifier.BQB_IS.toString()).size()];
+			for(int i = 0; i != localBqbIs.length; i++) {
+				localBqbIs[i] = cvTermMap.get(Qualifier.BQB_IS.toString()).get(i);
+			}
+			setBqbIs(localBqbIs);
+		}
+		if(cvTermMap.containsKey(Qualifier.BQB_IS_DESCRIBED_BY.toString())) {
+			String[] localBqbIsDescribedBy = new String[cvTermMap.get(Qualifier.BQB_IS_DESCRIBED_BY.toString()).size()];
+			for(int i = 0; i != localBqbIsDescribedBy.length; i++) {
+				localBqbIsDescribedBy[i] = cvTermMap.get(Qualifier.BQB_IS_DESCRIBED_BY.toString()).get(i);
+			}
+			setBqbIsDescribedBy(localBqbIsDescribedBy);
 		}
 		
 		
@@ -255,6 +278,22 @@ public class GraphTransition extends GraphSBase {
 
 	public void setMetaid(String metaid) {
 		this.metaid = metaid;
+	}
+
+	public String[] getBqbIs() {
+		return bqbIs;
+	}
+
+	public void setBqbIs(String[] bqbIs) {
+		this.bqbIs = bqbIs;
+	}
+
+	public String[] getBqbIsDescribedBy() {
+		return bqbIsDescribedBy;
+	}
+
+	public void setBqbIsDescribedBy(String[] bqbIsDescribedBy) {
+		this.bqbIsDescribedBy = bqbIsDescribedBy;
 	}
 
 	

@@ -208,36 +208,113 @@ public class BasicRestController {
 		return occursInStrings;
 	}
 
+	
+	@RequestMapping(value="/transitions")
+	public ResponseEntity<List<GraphTransition>> getTransitions(@RequestParam(value="search", defaultValue = "") String searchString, @RequestParam(value="option", defaultValue = "all") String option) {
+		List<GraphTransition> transitions = transitionService.findAll();
+		if (transitions != null && transitions.size() > 0) {
+			if(option.equals("unique")) { // not working
+				List<GraphTransition> uniqueTransitionTypes = new ArrayList<GraphTransition>();
+				List<String> sboStrings = new ArrayList<String>();
+				for(GraphTransition transition : transitions) {
+					if (!sboStrings.contains(transition.getSbmlSBOTerm())) { // this compares the array, which is a different one but with same entries, still different
+						sboStrings.add(transition.getSbmlSBOTerm());
+						uniqueTransitionTypes.add(transition);
+					}
+				}
+				return new ResponseEntity<List<GraphTransition>>(uniqueTransitionTypes, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<List<GraphTransition>>(transitions, HttpStatus.OK);
+			}
+			
+		} else {
+			return new ResponseEntity<List<GraphTransition>>(HttpStatus.NOT_FOUND);
+		}
+		
+	}
+	
 	@RequestMapping(value="/transition")
 	public ResponseEntity<GraphTransition> getTransition(@RequestParam(value="metaId") String transitionMetaId) {
-		return new ResponseEntity<GraphTransition>(transitionService.getByMetaid(transitionMetaId), HttpStatus.OK);
+		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
+		if(transition != null) {
+			return new ResponseEntity<GraphTransition>(transition, HttpStatus.OK);
+		}
+		else {
+			return new ResponseEntity<GraphTransition>(HttpStatus.NOT_FOUND);
+		}
 	}
+	
 	@RequestMapping(value="/transitionSimple")
 	public ResponseEntity<Map<String, String>> getTransitionSimple(@RequestParam(value="metaId") String transitionMetaId) {
 		
 		GraphTransition transition = transitionService.getByMetaid(transitionMetaId);
-		
+		if(transition != null) {
+			return new ResponseEntity<Map<String, String>>(simplifyTransition(transition), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Map<String, String>>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	private Map<String, String> simplifyTransition(GraphTransition transition) {
 		Map<String, String> transitionSimple = new HashMap<String, String>();
-		transitionSimple.put("metaId", transitionMetaId);
+		transitionSimple.put("metaId", transition.getMetaid());
 		transitionSimple.put("QualSpeciesOne", transition.getQualSpeciesOneSbmlNameString());
 		transitionSimple.put("QualSpeciesTwo", transition.getQualSpeciesTwoSbmlNameString());
 		transitionSimple.put("SBO-Term", transition.getSbmlSBOTerm());
-		transitionSimple.put("Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+		if(transition.getSbmlSBOTerm() != null) {
+			if(sboLink.getTerm(transition.getSbmlSBOTerm()) != null) {
+				transitionSimple.put("SBO-Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+			} else {
+				transitionSimple.put("SBO-Translated-Not", transition.getSbmlSBOTerm());
+			}
+		}
 		//List<String> modelNameList = new ArrayList<String>();
 		int i = 1;
 		for(GraphModel model : transition.getModels()) {
 			transitionSimple.put(i + "_In Pathway",model.getModelName());
 		}
+		return transitionSimple;
 		
-		
-		
-		
-		return new ResponseEntity<Map<String, String>>(transitionSimple, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value="/regulatoryNetwork")
+	public ResponseEntity<List<Map<String, String>>> getRegulatoryNetwork() {
+		List<GraphTransition> allTransitions = transitionService.findAll();
+		List<Map<String, String>> allTransitionSimple = new ArrayList<Map<String, String>>();
+		for (GraphTransition transition : allTransitions) {
+			allTransitionSimple.add(simplifyTransition(transition));
+		}
+		return new ResponseEntity<List<Map<String, String>>>(allTransitionSimple, HttpStatus.OK);
+	}
 	
-	
-	
+	@RequestMapping(value="/transitionTypes")
+	public ResponseEntity<Map<String, String>> getTransitionTypesRaw() {
+		Map<String, String> types = new HashMap<String, String>();
+		List<GraphTransition> transitions = transitionService.findAll();
+		if (transitions != null && transitions.size() > 0) {
+			String sboTerm;
+			String translated = "";
+			for(GraphTransition transition : transitions) {
+				//logger.debug("Working on transition " + transition.getMetaid());
+				try {
+					sboTerm = transition.getSbmlSBOTerm();
+					if (!types.containsKey(sboTerm)) {
+						logger.debug("Translating new key " + sboTerm);
+						translated = sboLink.getTerm(transition.getSbmlSBOTerm()).getName();
+					}
+				} catch (NullPointerException e) {
+					sboTerm = "Empty Term";
+					translated = transition.getMetaid().toString();
+				}
+				if (!types.containsKey(sboTerm)) { 
+					types.put(sboTerm, translated);
+				}
+			}
+			return new ResponseEntity<Map<String, String>>(types, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Map<String, String>>(HttpStatus.NOT_FOUND);
+		}
+	}
 	
 	
 	@RequestMapping(value="/models")
@@ -284,7 +361,6 @@ public class BasicRestController {
 				return ResponseEntity.notFound().build();
 		}
 	}
-	
 	
 	
 }

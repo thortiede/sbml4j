@@ -35,7 +35,7 @@ public class GraphModel {
 	
 	
 	@Transient
-	public static final String QUAL_NS = QualConstants.namespaceURI;
+	public static final String QUAL_NS = QualConstants.namespaceURI; // TODO: change this to the short handle that does not change on version change
 	
 	@Transient
 	boolean createQual;
@@ -46,6 +46,11 @@ public class GraphModel {
 	
 	private String 						modelName;
 	
+	private String 						modelOriginalFileName;
+	
+	private String						organism;
+	
+	private int							organismTaxonomyId;
 	
 	/**
 	 * Represents the 'areaUnits' XML attribute of a model element.
@@ -118,12 +123,23 @@ public class GraphModel {
 
 
 	// TODO: I want to store the filename of the file, I need some provenance information (Issue # 1)
-	public GraphModel(Model model, boolean createQual) {
+	public GraphModel(Model model, String fileName, String organism, boolean createQual) {
 	
 		this.createQual = createQual;
 		// Set model fields
 		setModelName(model.getName());
-		// TODO: Check if model exists
+		// TODO: Check if model exists - not doing it here, it is being done in the service
+		
+		setModelOriginalFileName(fileName);
+		setOrganism(organism);
+		
+		// at the moment, we only load homo sapiens
+		// we can thus simply set organismTaxonomyId to 9606 (https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=9606)
+		// when we want to load more organisms, we need to query the service to get the appropriate id (not sure how and which service to query at this point)
+		if (organism.equals("hsa") || organism.equals("Homo sapiens")) {
+			setOrganismTaxonomyId(9606);
+		}
+		
 		
 		setAreaUnitsID(model.getAreaUnits()); // TODO: If Level == 2 this will hold UnitDefinition.AREA, need to account for that if we want to support SBML Level2
 		setConversionFactorID(model.getConversionFactor());
@@ -157,7 +173,10 @@ public class GraphModel {
 			setNumNodes(listQualSpecies.size());
 			listTransition = createTransitionList(((QualModelPlugin) model.getExtension(QUAL_NS)).getListOfTransitions());
 			setNumEdges(listTransition.size());
+			setQualitativeModel(true);
 
+		} else {
+			setQualitativeModel(false);
 		}
 			
 			/*for(GraphCompartment compartment : listCompartment) {
@@ -358,6 +377,16 @@ public class GraphModel {
 		return modelName;
 	}
 
+	public String getModelOriginalFileName() {
+		return modelOriginalFileName;
+	}
+
+
+	public void setModelOriginalFileName(String modelOriginalFileName) {
+		this.modelOriginalFileName = modelOriginalFileName;
+	}
+
+
 	public void setModelName(String modelName) {
 		this.modelName = modelName;
 	}
@@ -494,6 +523,26 @@ public class GraphModel {
 
 	public void setQualitativeModel(boolean isQualitativeModel) {
 		this.isQualitativeModel = isQualitativeModel;
+	}
+
+
+	public String getOrganism() {
+		return organism;
+	}
+
+
+	public void setOrganism(String organism) {
+		this.organism = organism;
+	}
+
+
+	public int getOrganismTaxonomyId() {
+		return organismTaxonomyId;
+	}
+
+
+	public void setOrganismTaxonomyId(int organismTaxonomyId) {
+		this.organismTaxonomyId = organismTaxonomyId;
 	}
 
 	

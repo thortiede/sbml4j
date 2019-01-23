@@ -11,5 +11,7 @@ public interface TransitionService {
 	GraphTransition getByMetaid(String metaid);
 
 	List<GraphTransition> updateTransitionList(List<GraphTransition> listTransition);
+
+	List<GraphTransition> findAll();
 	
 }

@@ -5,6 +5,12 @@ import org.springframework.hateoas.ResourceSupport;
 public class ReturnModelEntry extends ResourceSupport {
 
 	private String modelName;
+
+	private Long modelId;
+	
+	private GraphModel model;
+	
+	
 	public ReturnModelEntry(GraphModel model) {
 		if(model != null) {
 			this.model = model;
@@ -37,9 +43,6 @@ public class ReturnModelEntry extends ResourceSupport {
 		this.model = model;
 	}
 
-	private Long modelId;
-	
-	private GraphModel model;
 	
 	
 }
