@@ -215,10 +215,10 @@ public class BasicRestController {
 		if (transitions != null && transitions.size() > 0) {
 			if(option.equals("unique")) { // not working
 				List<GraphTransition> uniqueTransitionTypes = new ArrayList<GraphTransition>();
-				List<String[]> isArrays = new ArrayList<String[]>();
+				List<String> sboStrings = new ArrayList<String>();
 				for(GraphTransition transition : transitions) {
-					if (!isArrays.contains(transition.getBqbIs())) { // this compares the array, which is a different one but with same entries, still different
-						isArrays.add(transition.getBqbIs());
+					if (!sboStrings.contains(transition.getSbmlSBOTerm())) { // this compares the array, which is a different one but with same entries, still different
+						sboStrings.add(transition.getSbmlSBOTerm());
 						uniqueTransitionTypes.add(transition);
 					}
 				}
@@ -287,7 +287,34 @@ public class BasicRestController {
 		return new ResponseEntity<List<Map<String, String>>>(allTransitionSimple, HttpStatus.OK);
 	}
 	
-	
+	@RequestMapping(value="/transitionTypes")
+	public ResponseEntity<Map<String, String>> getTransitionTypesRaw() {
+		Map<String, String> types = new HashMap<String, String>();
+		List<GraphTransition> transitions = transitionService.findAll();
+		if (transitions != null && transitions.size() > 0) {
+			String sboTerm;
+			String translated = "";
+			for(GraphTransition transition : transitions) {
+				//logger.debug("Working on transition " + transition.getMetaid());
+				try {
+					sboTerm = transition.getSbmlSBOTerm();
+					if (!types.containsKey(sboTerm)) {
+						logger.debug("Translating new key " + sboTerm);
+						translated = sboLink.getTerm(transition.getSbmlSBOTerm()).getName();
+					}
+				} catch (NullPointerException e) {
+					sboTerm = "Empty Term";
+					translated = transition.getMetaid().toString();
+				}
+				if (!types.containsKey(sboTerm)) { 
+					types.put(sboTerm, translated);
+				}
+			}
+			return new ResponseEntity<Map<String, String>>(types, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<Map<String, String>>(HttpStatus.NOT_FOUND);
+		}
+	}
 	
 	
 	@RequestMapping(value="/models")
