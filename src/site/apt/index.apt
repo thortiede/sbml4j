@@ -1,0 +1,10 @@
+  ------
+  This is the documentation index for SBML4j
+  ------
+  Thorsten Tiede
+  ------
+  Date
+  
+Introduction
+ Currently I am experimenting with documenting my project using the apache-maven-plugin.
+ This text is written in the <<<APT>>> format.
