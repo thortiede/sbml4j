@@ -48,9 +48,19 @@ public class GraphTransition extends GraphSBase {
 	
 	private String sbmlSBOTerm;
 	
+	private String transitionIdString;
+	
 	//List<GraphTransitionInput> listGraphTransitionInput;
 	//List<GraphTransitionOutput> listGraphTransitionOutput;
 	//List<GraphTransitonFunctionTerm> listGraphTransitionFunctionTerm;
+
+	public String getTransitionIdString() {
+		return transitionIdString;
+	}
+
+	public void setTransitionIdString(String transitionIdString) {
+		this.transitionIdString = transitionIdString;
+	}
 
 	private Map<String, List<String>> cvTermMap;
 	
@@ -122,6 +132,9 @@ public class GraphTransition extends GraphSBase {
 		setSbmlIdString(transition.getId());
 		setSbmlNameString(transition.getName());
 		setSbmlSBOTerm(transition.getSBOTermID());
+		setTransitionIdString(this.qualSpeciesOne.getSbmlNameString() + "-" + this.getSbmlSBOTerm() + "-" + this.qualSpeciesTwo.getSbmlNameString());
+		
+		
 		// CVTerms
 		cvTermMap = new HashMap<String, List<String>>();
 		
