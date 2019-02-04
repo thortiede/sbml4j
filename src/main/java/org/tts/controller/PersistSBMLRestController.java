@@ -314,7 +314,8 @@ public class PersistSBMLRestController {
 				//transition.setName(sboLink.getTerm(transition.getSbmlSBOTerm()).getName()); // TODO: Do not just overwrite this here
 				// Next line will not work when using GraphSBase as type in the loop..
 				//transition.setSbmlNameString(transition.getSbmlSBOTerm()); // might work for now, TODO CHANGE TO SOMETHING BETTER
-				GraphTransition existingTransition = transitionService.getByMetaid(transition.getMetaid());
+				//GraphTransition existingTransition = transitionService.getByMetaid(transition.getMetaid());
+				GraphTransition existingTransition = transitionService.getByTransitionIdString(transition.getTransitionIdString());
 				if (existingTransition != null) {
 					transition.setId(existingTransition.getId());
 					transition.setVersion(existingTransition.getVersion());

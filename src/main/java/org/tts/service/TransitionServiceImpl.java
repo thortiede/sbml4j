@@ -71,4 +71,9 @@ public class TransitionServiceImpl implements TransitionService {
 		return allTransitions;
 	}
 
+	@Override
+	public GraphTransition getByTransitionIdString(String transitionIdString) {
+		return transitionRepository.getByTransitionIdString(transitionIdString);
+	}
+
 }
