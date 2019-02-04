@@ -7,5 +7,7 @@ public interface TransitionRepository extends Neo4jRepository<GraphTransition, L
 	//GraphTransition getBySbmlIdString(String sbmlIdString);
 
 	GraphTransition getByMetaid(String metaId);
+
+	GraphTransition getByTransitionIdString(String transitionIdString);
 	
 }

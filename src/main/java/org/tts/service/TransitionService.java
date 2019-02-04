@@ -13,5 +13,7 @@ public interface TransitionService {
 	List<GraphTransition> updateTransitionList(List<GraphTransition> listTransition);
 
 	List<GraphTransition> findAll();
+
+	GraphTransition getByTransitionIdString(String transitionIdString);
 	
 }
