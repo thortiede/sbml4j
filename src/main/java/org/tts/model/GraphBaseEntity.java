@@ -20,13 +20,13 @@ public class GraphBaseEntity {
 	 * The unique identifier of every entity in this application
 	 * Entities shall reference other entities only by this UUID
 	 */
-	private UUID entityUUID;
+	private String entityUUID;
 
-	public UUID getEntityUUID() {
+	public String getEntityUUID() {
 		return entityUUID;
 	}
 
-	public void setEntityUUID(UUID entityUUID) {
+	public void setEntityUUID(String entityUUID) {
 		this.entityUUID = entityUUID;
 	}
 	
