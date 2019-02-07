@@ -1,7 +1,11 @@
 package org.tts.model;
 
-public class SBMLConstraint extends SBMLSBaseEntity {
+import java.util.List;
 
+import org.neo4j.ogm.annotation.Relationship;
+
+public class SBMLKineticLaw extends SBMLSBaseEntity {
+	
 	/**
 	 * In SBML the KineticLaw element can have up to one Math element
 	 * which consists of a MathML structured content.
@@ -11,7 +15,8 @@ public class SBMLConstraint extends SBMLSBaseEntity {
 	 */
 	private String math;
 	
-	private String message;
+	@Relationship(type = "HAS", direction = Relationship.OUTGOING)
+	private List<SBMLLocalParameter> localParameters;
 
 	public String getMath() {
 		return math;
@@ -21,12 +26,12 @@ public class SBMLConstraint extends SBMLSBaseEntity {
 		this.math = math;
 	}
 
-	public String getMessage() {
-		return message;
+	public List<SBMLLocalParameter> getLocalParameters() {
+		return localParameters;
 	}
 
-	public void setMessage(String message) {
-		this.message = message;
+	public void setLocalParameters(List<SBMLLocalParameter> localParameters) {
+		this.localParameters = localParameters;
 	}
 	
 }
