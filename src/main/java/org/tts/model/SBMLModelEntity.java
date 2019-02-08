@@ -6,6 +6,12 @@ import org.neo4j.ogm.annotation.Relationship;
 
 public class SBMLModelEntity extends SBMLSBaseEntity {
 
+	/**
+	 * The following String fields are actually links
+	 * to SBMLUnitDefintion Entities
+	 * Those would need to be created beforehand
+	 * Be sure to then also link them on creation of the model.
+	 */
 	private String substanceUnits;
 
 	private String timeUnits;
@@ -18,6 +24,11 @@ public class SBMLModelEntity extends SBMLSBaseEntity {
 	
 	private String extentUnits;
 	
+	/**
+	 * conversionFactor references a Paramter object
+	 * It is a globally set conversion factor for all
+	 * species that do not define their own conversion factor
+	 */
 	private String conversionFactor;
 	
 	@Relationship(type = "CONTAINS", direction = Relationship.INCOMING)
