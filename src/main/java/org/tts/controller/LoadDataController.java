@@ -47,28 +47,30 @@ public class LoadDataController {
 			return new ResponseEntity<String>("Cannot read file", HttpStatus.BAD_REQUEST);
 		}
 		// is Content Type xml?
-		if(fileCheckService.isContentXML(file)) {
+		if(!fileCheckService.isContentXML(file)) {
 			return new ResponseEntity<String>("File ContentType is not application/xml", HttpStatus.BAD_REQUEST);
 		}
+		
+		
 		// Make contents available in File Resource
-		File f = new File(StringUtils.cleanPath(file.getOriginalFilename()));
+		/*File f = new File(StringUtils.cleanPath(file.getOriginalFilename()));
 		try {
 			f = fileStorageService.convertToFile(file, f);
 		} catch (IllegalStateException | IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return new ResponseEntity<String>("File cannot be converted to File Object", HttpStatus.BAD_REQUEST);
-		}
+		}*/
 		// then also store the file
-		String storedFileName = fileStorageService.storeFile(file);
-		logger.info("Stored file " + file.getOriginalFilename() + " as " + storedFileName);
+		/*String storedFileName = fileStorageService.storeFile(file);
+		logger.info("Stored file " + file.getOriginalFilename() + " as " + storedFileName);*/
 		
 		// now build our databaseEntities from the model in the file
 		// might need to divide this into multiple steps
 		Model sbmlModel = null;
 		
 		try {
-			sbmlModel =  sbmlService.extractSBMLModel(f);
+			sbmlModel =  sbmlService.extractSBMLModel(file);
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
