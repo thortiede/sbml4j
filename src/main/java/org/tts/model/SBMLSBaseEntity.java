@@ -13,7 +13,7 @@ import org.tts.Exception.SBML4jAddExtensionException;
 @NodeEntity(label="SBase")
 public class SBMLSBaseEntity extends GraphBaseEntity {
 
-	private String sbaseId;
+	private String sBaseId;
 	
 	private String sBaseName;
 	
@@ -57,11 +57,11 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	}
 
 	public String getSbaseId() {
-		return sbaseId;
+		return sBaseId;
 	}
 
 	public void setSbaseId(String sbaseId) {
-		this.sbaseId = sbaseId;
+		this.sBaseId = sbaseId;
 	}
 
 	public String getsBaseName() {
