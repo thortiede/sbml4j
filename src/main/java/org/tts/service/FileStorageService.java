@@ -1,5 +1,6 @@
 package org.tts.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -36,6 +37,19 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * This converts the multipartFile to a standard java.io.File object for further use
+     * @param multipartFile
+     * @param file
+     * @return file The file it created from the contents of multipartFile
+     * @throws IllegalStateException
+     * @throws IOException
+     */
+    public File convertToFile(MultipartFile multipartFile, File file) throws IllegalStateException, IOException {
+    	multipartFile.transferTo(file);
+    	return file;
+    }
+    
     public String storeFile(MultipartFile file) {
         // Normalize file name
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
