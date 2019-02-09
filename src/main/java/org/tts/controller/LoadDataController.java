@@ -2,6 +2,7 @@ package org.tts.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileStorageService;
+import org.tts.service.SBMLPersistenceService;
 import org.tts.service.SBMLService;
 
 @RestController
@@ -29,15 +31,17 @@ public class LoadDataController {
 	FileCheckService fileCheckService;
 	FileStorageService fileStorageService;
 	SBMLService sbmlService;
+	SBMLPersistenceService sbmlPersistenceService;
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
-	public LoadDataController(FileStorageService fileStorageService, FileCheckService fileCheckService, SBMLService sbmlService) {
+	public LoadDataController(FileStorageService fileStorageService, FileCheckService fileCheckService, SBMLService sbmlService, SBMLPersistenceService sbmlPersistenceService) {
 		super();
 		this.fileStorageService = fileStorageService;
 		this.fileCheckService = fileCheckService;
 		this.sbmlService = sbmlService;
+		this.sbmlPersistenceService = sbmlPersistenceService;
 	}
 	
 	@RequestMapping(value = "/uploadSBML", method=RequestMethod.POST)
@@ -84,6 +88,7 @@ public class LoadDataController {
 			return new ResponseEntity<String>("Could not extract an sbmlModel", HttpStatus.BAD_REQUEST);
 		}
 		Map<String, Iterable<SBMLSBaseEntity>> allEntities = sbmlService.extractSBMLEntities(sbmlModel);
+		Iterable<SBMLSBaseEntity> persistedEntities = sbmlPersistenceService.saveAll(allEntities);
 		
 		
 		return new ResponseEntity<String>("All good so far", HttpStatus.OK);
