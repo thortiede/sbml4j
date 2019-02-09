@@ -16,7 +16,7 @@ public class SBMLCompartmentalizedSBaseEntity extends SBMLSBaseEntity {
 	@Relationship(type = "CONTAINS", direction = Relationship.INCOMING)
 	private SBMLCompartment compartment;
 	
-	private boolean compartmentRequired;
+	private boolean compartmentMandatory;
 
 	public SBMLCompartment getCompartment() {
 		return compartment;
@@ -26,12 +26,12 @@ public class SBMLCompartmentalizedSBaseEntity extends SBMLSBaseEntity {
 		this.compartment = compartment;
 	}
 
-	public boolean isCompartmentRequired() {
-		return compartmentRequired;
+	public boolean isCompartmentMandatory() {
+		return compartmentMandatory;
 	}
 
-	public void setCompartmentRequired(boolean compartmentRequired) {
-		this.compartmentRequired = compartmentRequired;
+	public void setCompartmentMandatory(boolean compartmentMandatory) {
+		this.compartmentMandatory = compartmentMandatory;
 	}
 	
 }
