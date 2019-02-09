@@ -25,6 +25,10 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 	
 	private boolean constant;
 	
+	/**
+	 * Units references a unitDefinition object
+	 * Once we build those, we need to change this to a Relationship
+	 */
 	private String units;
 	
 	@Relationship(type = "CONTAINS", direction = Relationship.OUTGOING)
