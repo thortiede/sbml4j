@@ -22,6 +22,22 @@ public class SBMLSBaseExtensionQual extends SBMLSBaseEntity implements SBMLSBase
 	
 	private boolean required = false;
 	 
+	public List<SBMLQualSpecies> getSbmlQualSpecies() {
+		return sbmlQualSpecies;
+	}
+
+	public void setSbmlQualSpecies(List<SBMLQualSpecies> sbmlQualSpecies) {
+		this.sbmlQualSpecies = sbmlQualSpecies;
+	}
+
+	public List<SBMLQualTransition> getSbmlQualTransitions() {
+		return sbmlQualTransitions;
+	}
+
+	public void setSbmlQualTransitions(List<SBMLQualTransition> sbmlQualTransitions) {
+		this.sbmlQualTransitions = sbmlQualTransitions;
+	}
+
 	@Override
 	public boolean extendsModel() {
 		return true;
