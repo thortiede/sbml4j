@@ -8,7 +8,11 @@ import java.util.Map;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Relationship;
+import org.neo4j.ogm.annotation.Transient;
+import org.sbml.jsbml.CVTerm;
 import org.tts.Exception.SBML4jAddExtensionException;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity(label="SBase")
 public class SBMLSBaseEntity extends GraphBaseEntity {
@@ -23,16 +27,46 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	
 	private String sBaseNotes;
 	
-	@Properties
-	private Map<String, String> sBaseAnnotation = new HashMap<>();
+	@Transient
+	private List<CVTerm> cvTermList;
 	
 	@Relationship(type="IN_MODEL", direction = Relationship.OUTGOING)
 	private List<SBMLModelEntity> models = new ArrayList<>();
 	
 	@Relationship(type="HAS", direction = Relationship.OUTGOING)
 	private List<SBMLSBaseExtension> extensions;
-		
 	
+	@Relationship(type = "BQ", direction = Relationship.OUTGOING)
+	private List<ExternalResourceEntity> externalResources;
+	
+	
+	public List<ExternalResourceEntity> getExternalResources() {
+		return externalResources;
+	}
+
+	public void setExternalResources(List<ExternalResourceEntity> externalResources) {
+		this.externalResources = externalResources;
+	}
+	
+	public boolean addExternalResource(ExternalResourceEntity newExternalResource) {
+		if (externalResources == null) {
+			externalResources = new ArrayList<>();
+		}
+		if (externalResources.contains(newExternalResource))
+		{ 
+			return true;
+		} else {
+			try {
+				this.externalResources.add(newExternalResource);
+				return true;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+	}
+	
+
 	public SBMLSBaseExtension getExtension(String nameOrURI) {
 		for (SBMLSBaseExtension plugin : this.extensions) {
 			if (plugin.getShortLabel().equals(nameOrURI) || plugin.getNamespaceURI().equals(nameOrURI)) {
@@ -56,12 +90,12 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 		}
 	}
 
-	public String getSbaseId() {
+	public String getSBaseId() {
 		return sBaseId;
 	}
 
-	public void setSbaseId(String sbaseId) {
-		this.sBaseId = sbaseId;
+	public void setSBaseId(String sBaseId) {
+		this.sBaseId = sBaseId;
 	}
 
 	public String getsBaseName() {
@@ -94,6 +128,15 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 
 	public void setsBaseNotes(String sBaseNotes) {
 		this.sBaseNotes = sBaseNotes;
+	}
+	
+	@JsonIgnore
+	public List<CVTerm> getCvTermList() {
+		return cvTermList;
+	}
+
+	public void setCvTermList(List<CVTerm> cvTermList) {
+		this.cvTermList = cvTermList;
 	}
 
 	public List<SBMLModelEntity> getModels() {
