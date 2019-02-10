@@ -57,7 +57,7 @@ public class GraphBaseEntityTestController {
 												@RequestParam(value = "sbaseName") String sBaseName) {
 		SBMLSBaseEntity newEntity = new SBMLSBaseEntity();
 		newEntity.setEntityUUID(UUID.randomUUID().toString());
-		newEntity.setSbaseId(sBaseId);
+		newEntity.setSBaseId(sBaseId);
 		newEntity.setsBaseName(sBaseName);
 		return graphBaseEntityService.persistEntity(newEntity);
 	}
