@@ -1,22 +1,58 @@
 package org.tts.model;
 
 
-public interface SBMLSBaseExtension {
+public class SBMLSBaseExtension extends SBMLSBaseEntity {
 
-	// should be moved/altered to fit into SBMLModelExtension
-	public boolean extendsModel();
+	private boolean extendsModel;
 	
-	// should be moved/altered to fit into SBMLDocumentExtension  
-	public boolean extendsSBML();
+	private boolean extendsSBML;
 	
-	public boolean isRequired();
+	private String shortLabel;
 	
-	public String getShortLabel();
+	private String namespaceURI;
 	
-	public void setShortLabel(String shortLabel);
+	private boolean required;
+
+	public boolean isExtendsModel() {
+		return extendsModel;
+	}
+
+	public void setExtendsModel(boolean extendsModel) {
+		this.extendsModel = extendsModel;
+	}
+
+	public boolean isExtendsSBML() {
+		return extendsSBML;
+	}
+
+	public void setExtendsSBML(boolean extendsSBML) {
+		this.extendsSBML = extendsSBML;
+	}
+
+	public String getShortLabel() {
+		return shortLabel;
+	}
+
+	public void setShortLabel(String shortLabel) {
+		this.shortLabel = shortLabel;
+	}
+
+	public String getNamespaceURI() {
+		return namespaceURI;
+	}
+
+	public void setNamespaceURI(String namespaceURI) {
+		this.namespaceURI = namespaceURI;
+	}
+
+	public boolean isRequired() {
+		return required;
+	}
+
+	public void setRequired(boolean required) {
+		this.required = required;
+	}
 	
-	public String getNamespaceURI();
 	
-	public void setNamespaceURI(String namespaceURI);
 	
 }
