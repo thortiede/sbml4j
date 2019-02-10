@@ -2,6 +2,7 @@ package org.tts.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.GraphBaseEntity;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileStorageService;
@@ -45,14 +47,20 @@ public class LoadDataController {
 	}
 	
 	@RequestMapping(value = "/uploadSBML", method=RequestMethod.POST)
-	public ResponseEntity<String> uploadSBML(@RequestParam("file") MultipartFile file) {
+	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
 		// can we access the files name and ContentType?
+		List<GraphBaseEntity> returnList = new ArrayList<>();
+		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
 		if(!fileCheckService.isFileReadable(file)) {
-			return new ResponseEntity<String>("Cannot read file", HttpStatus.BAD_REQUEST);
+			defaultReturnEntity.setEntityUUID("Cannot read file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		// is Content Type xml?
 		if(!fileCheckService.isContentXML(file)) {
-			return new ResponseEntity<String>("File ContentType is not application/xml", HttpStatus.BAD_REQUEST);
+			defaultReturnEntity.setEntityUUID("File ContentType is not application/xml");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		
 		
@@ -78,20 +86,63 @@ public class LoadDataController {
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return new ResponseEntity<String>("XMLStreamException while extracting SBMLModel from file", HttpStatus.BAD_REQUEST);
+			defaultReturnEntity.setEntityUUID("XMLStreamException while extracting SBMLModel from file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return new ResponseEntity<String>("IOException while extracting SBMLModel from file", HttpStatus.BAD_REQUEST);
+			defaultReturnEntity.setEntityUUID("IOException while extracting SBMLModel from file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		if(sbmlModel == null) {
-			return new ResponseEntity<String>("Could not extract an sbmlModel", HttpStatus.BAD_REQUEST);
+			defaultReturnEntity.setEntityUUID("Could not extract an sbmlModel");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		Map<String, Iterable<SBMLSBaseEntity>> allEntities = sbmlService.extractSBMLEntities(sbmlModel);
-		Iterable<SBMLSBaseEntity> persistedEntities = sbmlPersistenceService.saveAll(allEntities);
+		// now we need to go through all elements that have CVTerms
+		// and create the externalResourceNodes
+		// as well as the relationshipEntities connecting them together
+		Map<String, Iterable<Object>> allEntitiesWithExternalResources = sbmlService.extractAndConnectExternalResources(allEntities);
+		
+		/*
+		 * 	allEntitiesAsObjectsWithExternalResources.put("SBMLModelEntity", modelWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("SBMLDocumentEntity", sbmlDocumentWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("SBMLSBaseExtension", sbmlSBaseExtensionWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("ExternalResourceEntity", externalResources);
+		allEntitiesAsObjectsWithExternalResources.put("BiologicalQualifier", biologicalModifierRelationships);
+		 */
+		List<GraphBaseEntity> allPersistedEntites = new ArrayList<>();
+		for (String key : allEntitiesWithExternalResources.keySet()) {
+			switch (key) {
+			case "BiologicalQualifier":
+				break;
+
+			default:
+				for (Object o : allEntitiesWithExternalResources.get(key)) {
+					GraphBaseEntity savedEntity = sbmlPersistenceService.save((GraphBaseEntity) o);
+					if(savedEntity != null) {
+						allPersistedEntites.add(savedEntity);
+					}
+				}
+				break;
+			}
+		}
+		for (Object o : allEntitiesWithExternalResources.get("BiologicalQualifier")) {
+			GraphBaseEntity savedRelationship = sbmlPersistenceService.save((GraphBaseEntity) o);
+			if(savedRelationship != null) {
+				allPersistedEntites.add(savedRelationship);
+			}
+		}
 		
 		
-		return new ResponseEntity<String>("All good so far", HttpStatus.OK);
+		//Map<String, Iterable<GraphBaseEntity>> allEntitiesWithDbIds = sbmlPersistenceService.findExisting(allEntities);
+		//Iterable<SBMLSBaseEntity> persistedEntities = sbmlPersistenceService.saveAll(allEntities);
+		
+		
+		return new ResponseEntity<List<GraphBaseEntity>>((List<GraphBaseEntity>) allPersistedEntites, HttpStatus.OK);
 	}
 	
 	
