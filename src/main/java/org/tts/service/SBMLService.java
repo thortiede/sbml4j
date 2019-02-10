@@ -19,4 +19,7 @@ public interface SBMLService {
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException;
 	
 	public Map<String, Iterable<SBMLSBaseEntity>> extractSBMLEntities(Model model);
+
+	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
+			Map<String, Iterable<SBMLSBaseEntity>> allEntities);
 }

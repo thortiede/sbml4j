@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.sbml.jsbml.CVTerm;
 import org.sbml.jsbml.Compartment;
 import org.sbml.jsbml.CompartmentalizedSBase;
 import org.sbml.jsbml.ListOf;
@@ -27,16 +28,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.BiomodelsQualifier;
+import org.tts.model.ExternalResourceEntity;
 import org.tts.model.SBMLCompartment;
 import org.tts.model.SBMLCompartmentalizedSBaseEntity;
 import org.tts.model.SBMLDocumentEntity;
 import org.tts.model.SBMLModelEntity;
 import org.tts.model.SBMLQualInput;
+import org.tts.model.SBMLQualModelExtension;
 import org.tts.model.SBMLQualOutput;
 import org.tts.model.SBMLQualSpecies;
 import org.tts.model.SBMLQualTransition;
 import org.tts.model.SBMLSBaseEntity;
-import org.tts.model.SBMLSBaseExtensionQual;
+import org.tts.model.SBMLSBaseExtension;
 
 @Service
 public class SBMLServiceImpl implements SBMLService {
@@ -119,7 +123,7 @@ public class SBMLServiceImpl implements SBMLService {
 
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLSBaseEntity  compartment: sbmlCompartmentList) {
-			compartmentLookupMap.put(compartment.getSbaseId(), (SBMLCompartment) compartment);
+			compartmentLookupMap.put(compartment.getSBaseId(), (SBMLCompartment) compartment);
 		}
 		/**
 		 * Extension qual can be checked here and appropriate elements created
@@ -131,16 +135,17 @@ public class SBMLServiceImpl implements SBMLService {
 			switch (key) {
 			case "qual":
 				QualModelPlugin qualModelPlugin = (QualModelPlugin) modelExtensions.get(key);
-				SBMLSBaseExtensionQual sbmlSBaseExtensionQual = new SBMLSBaseExtensionQual();
+				SBMLQualModelExtension sbmlSBaseExtensionQual = new SBMLQualModelExtension();
 				sbmlSBaseExtensionQual.setEntityUUID(UUID.randomUUID().toString());
 				sbmlSBaseExtensionQual.setShortLabel(qualModelPlugin.getPackageName());
 				sbmlSBaseExtensionQual.setNamespaceURI(qualModelPlugin.getElementNamespace());
+				sbmlSBaseExtensionQual.setRequired(false);
 				sbmlSBaseExtensionQual.setParentModel(sbmlModelEntity);
 				
 				List<SBMLQualSpecies> sbmlQualSpeciesList = convertQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
 				Map<String, SBMLQualSpecies> qualSpeciesLookupMap = new HashMap<>();
 				for (SBMLQualSpecies qualSpecies : sbmlQualSpeciesList) {
-					qualSpeciesLookupMap.put(qualSpecies.getSbaseId(), qualSpecies);
+					qualSpeciesLookupMap.put(qualSpecies.getSBaseId(), qualSpecies);
 				}
 				List<SBMLQualTransition> sbmlQualTransitionList = convertQualTransition(qualModelPlugin.getListOfTransitions(), qualSpeciesLookupMap);
 				logger.debug("Created QualSpecies and Transitions");
@@ -164,6 +169,90 @@ public class SBMLServiceImpl implements SBMLService {
 		return allModelEntities;
 	}
 
+	@Override
+	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
+			Map<String, Iterable<SBMLSBaseEntity>> entityMap) {
+		List<Object> qualSpeciesWithExternalResources = new ArrayList<>();
+		List<Object> externalResources = new ArrayList<>();
+		List<Object> biologicalModifierRelationships = new ArrayList<>();
+		List<Object> qualTransitionsWithExternalResources = new ArrayList<>();
+		List<Object> modelWithExternalResources = new ArrayList<>();
+		List<Object> sbmlDocumentWithExternalResources = new ArrayList<>();
+		List<Object> sbmlSBaseExtensionWithExternalResources = new ArrayList<>();
+		
+		for (String key : entityMap.keySet()) {
+			switch (key) {
+			case "SBMLSBaseExtension":
+				for (SBMLSBaseEntity extension : entityMap.get(key)) {
+					SBMLSBaseExtension sBaseExtension = (SBMLSBaseExtension) extension;
+					switch (sBaseExtension.getShortLabel()) {
+					case "qual":
+						SBMLQualModelExtension sbmlQualModelExtension = (SBMLQualModelExtension) sBaseExtension;
+						for(SBMLQualSpecies qualSpecies : sbmlQualModelExtension.getSbmlQualSpecies()) {
+							if (qualSpecies.getCvTermList() != null && qualSpecies.getCvTermList().size() > 0) {
+								for (CVTerm cvTerm : qualSpecies.getCvTermList()) {
+									//createExternalResources(cvTerm, qualSpecies);
+									for (String resource : cvTerm.getResources()) {
+										ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
+										newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+										newExternalResourceEntity.setUri(resource);
+										newExternalResourceEntity.setRelatedSBMLSBaseEntity(qualSpecies);
+										BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
+										newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+										newBiomodelsQualifier.setType(cvTerm.getQualifierType());
+										newBiomodelsQualifier.setQualifier(cvTerm.getQualifier());
+										newBiomodelsQualifier.setStartNode(qualSpecies);
+										newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
+										externalResources.add(newExternalResourceEntity);
+										biologicalModifierRelationships.add(newBiomodelsQualifier);
+										qualSpecies.addExternalResource(newExternalResourceEntity);
+									}
+								}
+								qualSpeciesWithExternalResources.add(qualSpecies);
+							}
+						}
+						List<SBMLQualTransition> newTransitions = sbmlQualModelExtension.getSbmlQualTransitions();
+						for (SBMLQualTransition transition : newTransitions) {
+							// for now, we add them back in to see if above works before implementing this for transitions
+							// or rather extract it into method to be used here as well.
+							qualTransitionsWithExternalResources.add(transition);
+						}
+						break;
+
+					default:
+						break;
+					}
+					sbmlSBaseExtensionWithExternalResources.add(sBaseExtension); // no resources added so far
+				}
+				
+				break;
+
+			case "SBMLDocumentEntity":
+				for (SBMLSBaseEntity documentEntity : entityMap.get(key)) {
+					sbmlDocumentWithExternalResources.add(documentEntity); // no resources added so far
+				}
+				break;
+			case "SBMLModelEntity":
+				for (SBMLSBaseEntity modelEntity : entityMap.get(key)) {
+					modelWithExternalResources.add(modelEntity); // no resources added so far
+				}
+				break;
+			
+			default:
+				break;
+			}
+		}
+		
+		Map<String, Iterable<Object>> allEntitiesAsObjectsWithExternalResources = new HashMap<>();
+		allEntitiesAsObjectsWithExternalResources.put("SBMLModelEntity", modelWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("SBMLDocumentEntity", sbmlDocumentWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("SBMLSBaseExtension", sbmlSBaseExtensionWithExternalResources);
+		allEntitiesAsObjectsWithExternalResources.put("ExternalResourceEntity", externalResources);
+		allEntitiesAsObjectsWithExternalResources.put("BiologicalQualifier", biologicalModifierRelationships);
+		
+		return allEntitiesAsObjectsWithExternalResources;
+	}
+	
 	private List<SBMLQualTransition> convertQualTransition(ListOf<Transition> listOfTransitions,
 			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
 		List<SBMLQualTransition> sbmlQualTransitionList = new ArrayList<>();
@@ -296,7 +385,7 @@ public class SBMLServiceImpl implements SBMLService {
 
 	private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
-		target.setSbaseId(source.getId());
+		target.setSBaseId(source.getId());
 		target.setsBaseName(source.getName());
 		try {
 			target.setsBaseNotes(source.getNotesString());
@@ -307,7 +396,12 @@ public class SBMLServiceImpl implements SBMLService {
 		}
 		target.setsBaseMetaId(source.getMetaId());
 		target.setsBaseSboTerm(source.getSBOTermID());
+		if(source.getNumCVTerms() > 0) {
+			target.setCvTermList(source.getCVTerms());
+		}
 		
 	}
+
+	
 
 }
