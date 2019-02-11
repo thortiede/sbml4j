@@ -37,18 +37,18 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	private List<SBMLSBaseExtension> extensions;
 	
 	@Relationship(type = "BQ", direction = Relationship.OUTGOING)
-	private List<ExternalResourceEntity> externalResources;
+	private List<BiomodelsQualifier> externalResources;
 	
 	
-	public List<ExternalResourceEntity> getExternalResources() {
+	public List<BiomodelsQualifier> getExternalResources() {
 		return externalResources;
 	}
 
-	public void setExternalResources(List<ExternalResourceEntity> externalResources) {
+	public void setExternalResources(List<BiomodelsQualifier> externalResources) {
 		this.externalResources = externalResources;
 	}
 	
-	public boolean addExternalResource(ExternalResourceEntity newExternalResource) {
+	public boolean addExternalResource(BiomodelsQualifier newExternalResource) {
 		if (externalResources == null) {
 			externalResources = new ArrayList<>();
 		}
