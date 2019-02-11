@@ -17,7 +17,7 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 	private String shortIdentifierFromUri;
 	
 	@Relationship(type = "BQ", direction = Relationship.INCOMING)
-	private SBMLSBaseEntity relatedSBMLSBaseEntity;
+	private BiomodelsQualifier relatedSBMLSBaseEntity;
 
 	public String getUri() {
 		return uri;
@@ -52,11 +52,11 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 	}
 
 	@JsonIgnore
-	public SBMLSBaseEntity getRelatedSBMLSBaseEntity() {
+	public BiomodelsQualifier getRelatedSBMLSBaseEntity() {
 		return relatedSBMLSBaseEntity;
 	}
 
-	public void setRelatedSBMLSBaseEntity(SBMLSBaseEntity relatedSBMLSBaseEntity) {
+	public void setRelatedSBMLSBaseEntity(BiomodelsQualifier relatedSBMLSBaseEntity) {
 		this.relatedSBMLSBaseEntity = relatedSBMLSBaseEntity;
 	}
 }
