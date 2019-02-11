@@ -196,16 +196,17 @@ public class SBMLServiceImpl implements SBMLService {
 										ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
 										newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
 										newExternalResourceEntity.setUri(resource);
-										newExternalResourceEntity.setRelatedSBMLSBaseEntity(qualSpecies);
+										
 										BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
 										newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
 										newBiomodelsQualifier.setType(cvTerm.getQualifierType());
 										newBiomodelsQualifier.setQualifier(cvTerm.getQualifier());
 										newBiomodelsQualifier.setStartNode(qualSpecies);
 										newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
+										newExternalResourceEntity.setRelatedSBMLSBaseEntity(newBiomodelsQualifier);
 										externalResources.add(newExternalResourceEntity);
 										biologicalModifierRelationships.add(newBiomodelsQualifier);
-										qualSpecies.addExternalResource(newExternalResourceEntity);
+										qualSpecies.addExternalResource(newBiomodelsQualifier);
 									}
 								}
 								qualSpeciesWithExternalResources.add(qualSpecies);
