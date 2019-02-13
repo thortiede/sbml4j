@@ -13,7 +13,7 @@ import org.neo4j.ogm.annotation.Relationship;
  */
 public class SBMLCompartmentalizedSBaseEntity extends SBMLSBaseEntity {
 
-	@Relationship(type = "CONTAINS", direction = Relationship.INCOMING)
+	@Relationship(type = "CONTAINED_IN", direction = Relationship.OUTGOING)
 	private SBMLCompartment compartment;
 	
 	private boolean compartmentMandatory;
