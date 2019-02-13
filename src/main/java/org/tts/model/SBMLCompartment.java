@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Class SBMLCompartment
  * Modeled after the Compartment class from the SBML Standard level-3 version-2
@@ -31,7 +33,7 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 	 */
 	private String units;
 	
-	@Relationship(type = "CONTAINS", direction = Relationship.OUTGOING)
+	@Relationship(type = "CONTAINED_IN", direction = Relationship.INCOMING)
 	private List<SBMLCompartmentalizedSBaseEntity> entitiesInCompartment;
 
 	public double getSpatialDimensions() {
@@ -66,6 +68,7 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 		this.units = units;
 	}
 
+	@JsonIgnore
 	public List<SBMLCompartmentalizedSBaseEntity> getEntitiesInCompartment() {
 		return entitiesInCompartment;
 	}
