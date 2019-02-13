@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.GraphBaseEntity;
+import org.tts.model.SBMLDocumentEntity;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileStorageService;
@@ -46,8 +47,8 @@ public class LoadDataController {
 		this.sbmlPersistenceService = sbmlPersistenceService;
 	}
 	
-	@RequestMapping(value = "/uploadSBML", method=RequestMethod.POST)
-	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
+	@RequestMapping(value = "/uploadSBMLDepr", method=RequestMethod.POST)
+	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLDepr(@RequestParam("file") MultipartFile file) {
 		// can we access the files name and ContentType?
 		List<GraphBaseEntity> returnList = new ArrayList<>();
 		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
@@ -102,6 +103,12 @@ public class LoadDataController {
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		Map<String, Iterable<SBMLSBaseEntity>> allEntities = sbmlService.extractSBMLEntities(sbmlModel);
+		if (allEntities == null) {
+			// something went wrong. abort
+			defaultReturnEntity.setEntityUUID("Could not extract SBML Entities from model");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
 		// now we need to go through all elements that have CVTerms
 		// and create the externalResourceNodes
 		// as well as the relationshipEntities connecting them together
@@ -119,12 +126,28 @@ public class LoadDataController {
 			switch (key) {
 			case "BiologicalQualifier":
 				break;
-
-			default:
+			case "SBMLSBaseExtension":
 				for (Object o : allEntitiesWithExternalResources.get(key)) {
 					GraphBaseEntity savedEntity = sbmlPersistenceService.save((GraphBaseEntity) o);
 					if(savedEntity != null) {
 						allPersistedEntites.add(savedEntity);
+					}
+				}
+			default:
+				if(false) {
+					for (Object o : allEntitiesWithExternalResources.get(key)) {
+						GraphBaseEntity currentEntity = (GraphBaseEntity) o;
+						if(!sbmlPersistenceService.checkIfExists(currentEntity)) {
+							/*GraphBaseEntity existingGraphBaseEntity = sbmlPersistenceService.getByEntityUUID(currentEntity.getEntityUUID());
+							currentEntity.setId(existingGraphBaseEntity.getId());
+							currentEntity.setVersion(existingGraphBaseEntity.getVersion());
+							currentEntity.setEntityUUID(existingGraphBaseEntity.getEntityUUID());*/
+							logger.info("It exists");
+						}
+						GraphBaseEntity savedEntity = sbmlPersistenceService.save((GraphBaseEntity) o);
+						if(savedEntity != null) {
+							allPersistedEntites.add(savedEntity);
+						}
 					}
 				}
 				break;
@@ -146,6 +169,51 @@ public class LoadDataController {
 	}
 	
 	
-	
+	@RequestMapping(value = "/uploadSBML", method=RequestMethod.POST)
+	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
+		// can we access the files name and ContentType?
+		List<GraphBaseEntity> returnList = new ArrayList<>();
+		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
+		if(!fileCheckService.isFileReadable(file)) {
+			defaultReturnEntity.setEntityUUID("Cannot read file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
+		// is Content Type xml?
+		if(!fileCheckService.isContentXML(file)) {
+			defaultReturnEntity.setEntityUUID("File ContentType is not application/xml");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
+		Model sbmlModel = null;
+		try {
+			sbmlModel =  sbmlService.extractSBMLModel(file);
+		} catch (XMLStreamException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			defaultReturnEntity.setEntityUUID("XMLStreamException while extracting SBMLModel from file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			defaultReturnEntity.setEntityUUID("IOException while extracting SBMLModel from file");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
+		if(sbmlModel == null) {
+			defaultReturnEntity.setEntityUUID("Could not extract an sbmlModel");
+			returnList.add(defaultReturnEntity);
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
+		
+		List<GraphBaseEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, file.getOriginalFilename());
+		
+		//SBMLDocumentEntity sbmlDocumentEntity = sbmlService.getSBMLDocument(sbmlModel, file.getOriginalFilename());
+		
+		
+		
+		return new ResponseEntity<List<GraphBaseEntity>>(resultSet, HttpStatus.OK);
+	}
 	
 }
