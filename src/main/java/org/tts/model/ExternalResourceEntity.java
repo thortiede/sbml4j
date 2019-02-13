@@ -1,5 +1,8 @@
 package org.tts.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
@@ -17,7 +20,7 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 	private String shortIdentifierFromUri;
 	
 	@Relationship(type = "BQ", direction = Relationship.INCOMING)
-	private BiomodelsQualifier relatedSBMLSBaseEntity;
+	private List<BiomodelsQualifier> relatedSBMLSBaseEntities;
 
 	public String getUri() {
 		return uri;
@@ -52,11 +55,28 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 	}
 
 	@JsonIgnore
-	public BiomodelsQualifier getRelatedSBMLSBaseEntity() {
-		return relatedSBMLSBaseEntity;
+	public List<BiomodelsQualifier> getRelatedSBMLSBaseEntities() {
+		return relatedSBMLSBaseEntities;
 	}
 
-	public void setRelatedSBMLSBaseEntity(BiomodelsQualifier relatedSBMLSBaseEntity) {
-		this.relatedSBMLSBaseEntity = relatedSBMLSBaseEntity;
+	public void setRelatedSBMLSBaseEntities(List<BiomodelsQualifier> relatedSBMLSBaseEntities) {
+		this.relatedSBMLSBaseEntities = relatedSBMLSBaseEntities;
 	}
+	
+	public void addRelatedSBMLSBaseEntity(BiomodelsQualifier relatedSBMLSBaseEntity) {
+		if (this.relatedSBMLSBaseEntities == null) {
+			this.relatedSBMLSBaseEntities = new ArrayList<>();
+		}
+		this.relatedSBMLSBaseEntities.add(relatedSBMLSBaseEntity);
+	}
+	public void addRelatedSBMLSBaseEntities(List<BiomodelsQualifier> relatedSBMLSBaseEntities) {
+		if (this.relatedSBMLSBaseEntities == null) {
+			this.relatedSBMLSBaseEntities = new ArrayList<>();
+		}
+		for(BiomodelsQualifier relatedSBMLSBaseEntity : relatedSBMLSBaseEntities) {
+			this.relatedSBMLSBaseEntities.add(relatedSBMLSBaseEntity);
+		}
+		
+	}
+	
 }
