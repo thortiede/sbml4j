@@ -26,14 +26,18 @@ import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.BiomodelsQualifier;
 import org.tts.model.ExternalResourceEntity;
+import org.tts.model.GraphBaseEntity;
 import org.tts.model.SBMLCompartment;
 import org.tts.model.SBMLCompartmentalizedSBaseEntity;
 import org.tts.model.SBMLDocumentEntity;
 import org.tts.model.SBMLModelEntity;
+import org.tts.model.SBMLModelExtension;
 import org.tts.model.SBMLQualInput;
 import org.tts.model.SBMLQualModelExtension;
 import org.tts.model.SBMLQualOutput;
@@ -41,9 +45,34 @@ import org.tts.model.SBMLQualSpecies;
 import org.tts.model.SBMLQualTransition;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.model.SBMLSBaseExtension;
+import org.tts.repository.BiomodelsQualifierRepository;
+import org.tts.repository.ExternalResourceEntityRepository;
+import org.tts.repository.GraphBaseEntityRepository;
+import org.tts.repository.SBMLCompartmentalizedSBaseEntityRepository;
+import org.tts.repository.SBMLSBaseEntityRepository;
 
 @Service
 public class SBMLServiceImpl implements SBMLService {
+
+	GraphBaseEntityRepository graphBaseRepository;
+	SBMLSBaseEntityRepository sbmlSBaseEntityRepository;
+	SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository;
+	ExternalResourceEntityRepository externalResourceEntityRepository;
+	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	@Autowired
+	public SBMLServiceImpl(	GraphBaseEntityRepository graphBaseRepository, 
+							SBMLSBaseEntityRepository sbmlSBaseEntityRepository,
+							ExternalResourceEntityRepository externalResourceEntityRepository,
+							BiomodelsQualifierRepository biomodelsQualifierRepository,
+							SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository) {
+		super();
+		this.graphBaseRepository = graphBaseRepository;
+		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
+		this.externalResourceEntityRepository = externalResourceEntityRepository;
+		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
+		this.sbmlCompartmentalizedSBaseEntityRepository = sbmlCompartmentalizedSBaseEntityRepository;
+	}
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -66,6 +95,133 @@ public class SBMLServiceImpl implements SBMLService {
 		return doc.getModel();
 		
 	}
+
+	
+	@Override
+	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
+		
+		
+		SBMLDocumentEntity sbmlDocument = getSBMLDocument(model, filename);
+		// first Units, Parameters, initialAssignments, rules, constraints, events
+		// then Species and reactions
+		
+		// they all need to be linked in the model, before the model can get linked itself
+		SBMLModelEntity sbmlModelEntity = getSBMLModelEntity(model, sbmlDocument);
+		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
+		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
+		for (SBMLCompartment compartment : sbmlCompartmentList) {
+			compartmentLookupMap.put(compartment.getSBaseId(), compartment);
+		}
+		
+		// build the extensions to link them
+		// TODO: extract document extensions
+		
+		// extract model Extensions
+		List<SBMLModelExtension> sBaseExtensionList = getModelExtensions(model, compartmentLookupMap);
+		
+		
+		
+		// Fill list which compartmentalizedEntities are in each compartment
+		// set parentModel of all ModelExtensions after Model is finished
+		// set model property of SBMLDocumentEntity after model is finished
+		// set parentDocument of all DocumentExtensions after document is finsied
+		
+		return null;
+	}
+	
+	private List<SBMLModelExtension> getModelExtensions(Model model, Map<String, SBMLCompartment> compartmentLookupMap) {
+		logger.debug("extracting extensions");
+		Map<String, SBasePlugin> modelExtensions = model.getExtensionPackages();
+		List<SBMLModelExtension> sbmlModelExtensionList = new ArrayList<>();
+		for (String key : modelExtensions.keySet()) {
+			switch (key) {
+			case "qual":
+				QualModelPlugin qualModelPlugin = (QualModelPlugin) modelExtensions.get(key);
+				// should I check here, whether an qualModelPlugin to the parentModel already exists?
+				SBMLQualModelExtension sbmlSBaseExtensionQual = new SBMLQualModelExtension();
+				sbmlSBaseExtensionQual.setEntityUUID(UUID.randomUUID().toString());
+				sbmlSBaseExtensionQual.setShortLabel(qualModelPlugin.getPackageName());
+				sbmlSBaseExtensionQual.setNamespaceURI(qualModelPlugin.getElementNamespace());
+				sbmlSBaseExtensionQual.setRequired(false);
+				//sbmlSBaseExtensionQual.setParentModel(sbmlModelEntity);
+				
+				List<SBMLQualSpecies> sbmlQualSpeciesList = convertQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
+				Map<String, SBMLQualSpecies> qualSpeciesLookupMap = new HashMap<>();
+				for (SBMLQualSpecies qualSpecies : sbmlQualSpeciesList) {
+					qualSpeciesLookupMap.put(qualSpecies.getSBaseId(), qualSpecies);
+				}
+				List<SBMLQualTransition> sbmlQualTransitionList = convertQualTransition(qualModelPlugin.getListOfTransitions(), qualSpeciesLookupMap);
+				logger.debug("Created QualSpecies and Transitions");
+				sbmlSBaseExtensionQual.setSbmlQualSpecies(sbmlQualSpeciesList);
+				sbmlSBaseExtensionQual.setSbmlQualTransitions(sbmlQualTransitionList);
+				//sbmlExtensionList.add(sbmlSBaseExtensionQual);
+				break;
+
+			default:
+				break;
+			}
+		}
+	
+		return null;
+	}
+
+	private SBMLModelEntity getSBMLModelEntity(Model model, SBMLDocumentEntity sbmlDocument) {
+		SBMLModelEntity sbmlModelEntity = new SBMLModelEntity();
+		setSbaseProperties(model, sbmlModelEntity);
+		setModelProperties(model, sbmlDocument, sbmlModelEntity);
+		return sbmlModelEntity;
+	}
+	
+	private SBMLDocumentEntity getSBMLDocument(Model model, String filename) {
+		SBMLDocumentEntity sbmlDocument = new SBMLDocumentEntity();
+		setSbaseProperties(model.getSBMLDocument(), sbmlDocument);
+		setSBMLDocumentProperties(model.getSBMLDocument(), sbmlDocument, filename);
+		return sbmlDocument;
+	}
+	
+	private List<SBMLCompartment> getCompartmentList(Model model) {
+		List<SBMLCompartment> sbmlCompartmentList = new ArrayList<>();
+		for(Compartment compartment : model.getListOfCompartments()) {
+			SBMLCompartment sbmlCompartment = new SBMLCompartment();
+			// check if a compartment with that name (and those settings does already exist)
+			//spatialDimensions, size, constant, sBaseName, sBaseId
+			try {
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				if (existingCompartment != null 
+						&& existingCompartment.getsBaseName().equals(compartment.getName())
+						&& existingCompartment.getSize() == compartment.getSize()
+						&& existingCompartment.getSpatialDimensions() == compartment.getSpatialDimensions()
+						&& existingCompartment.isConstant() == compartment.getConstant() ) {
+					// they are obviously the same, so take the one already persisted
+					sbmlCompartment = existingCompartment;
+					sbmlCompartmentList.add(sbmlCompartment);
+					// other cases would be, that the name and Id are the same, but are actually different compartments
+					// with different properties.
+					// then append the name of the new compartment with a number (or something) and link all entities in this
+					// model to that new one.
+					// This means that further down, when looking up compartment, we can no longer match by sbaseId directly
+					// but also need a mapping info from the original sbasid (that all entities in jsbml will reference)
+					// to the newly given name.
+					// but for now, as kegg only has one default compartment and it's the only time we load more than one model
+					// we keep it like that.
+				} else {
+					setSbaseProperties(compartment, sbmlCompartment);
+					setCompartmentProperties(compartment, sbmlCompartment);
+					sbmlCompartmentList.add(sbmlCompartment);
+				}
+			} catch (ClassCastException e) {	
+				e.printStackTrace();
+				logger.info("Entity with sBaseId " + compartment.getId() + " is not of type SBMLCompartment! Aborting...");
+				return null; // need to find better error handling way..
+			} catch (IncorrectResultSizeDataAccessException e) {
+				e.printStackTrace();
+				logger.info("Entity with sBaseId " + compartment.getId() + " was found multiple times");
+				return null; // need to find better error handling way..
+			}
+		}
+		return sbmlCompartmentList;
+	}
+	
 
 	@Override
 	public Map<String, Iterable<SBMLSBaseEntity>> extractSBMLEntities(Model model) {
@@ -116,13 +272,45 @@ public class SBMLServiceImpl implements SBMLService {
 		for(Compartment compartment : model.getListOfCompartments()) {
 
 			SBMLCompartment sbmlCompartment = new SBMLCompartment();
-			setSbaseProperties(compartment, sbmlCompartment);
-			setCompartmentProperties(compartment, sbmlCompartment);
-			sbmlCompartmentList.add(sbmlCompartment);
+			// check if a compartment with that name (and those settings does already exist)
+			//spatialDimensions, size, constant, sBaseName, sBaseId
+			try {
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				if (existingCompartment != null 
+						&& existingCompartment.getsBaseName().equals(compartment.getName())
+						&& existingCompartment.getSize() == compartment.getSize()
+						&& existingCompartment.getSpatialDimensions() == compartment.getSpatialDimensions()
+						&& existingCompartment.isConstant() == compartment.getConstant() ) {
+					// they are obviously the same, so take the one already persisted
+					sbmlCompartment = existingCompartment;
+					sbmlCompartmentList.add(sbmlCompartment);
+					// other cases would be, that the name and Id are the same, but are actually different compartments
+					// with different properties.
+					// then append the name of the new compartment with a number (or something) and link all entities in this
+					// model to that new one.
+					// This means that further down, when looking up compartment, we can no longer match by sbaseId directly
+					// but also need a mapping info from the original sbasid (that all entities in jsbml will reference)
+					// to the newly given name.
+					// but for now, as kegg only has one default compartment and it's the only time we load more than one model
+					// we keep it like that.
+				} else {
+					setSbaseProperties(compartment, sbmlCompartment);
+					setCompartmentProperties(compartment, sbmlCompartment);
+					sbmlCompartmentList.add(sbmlCompartment);
+				}
+			} catch (ClassCastException e) {	
+				e.printStackTrace();
+				logger.info("Entity with sBaseId " + compartment.getId() + " is not of type SBMLCompartment! Aborting...");
+				return null; // need to find better error handling way..
+			} catch (IncorrectResultSizeDataAccessException e) {
+				e.printStackTrace();
+				logger.info("Entity with sBaseId " + compartment.getId() + " was found multiple times");
+				return null; // need to find better error handling way..
+			}
 		}
 
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
-		for (SBMLSBaseEntity  compartment: sbmlCompartmentList) {
+		for (SBMLSBaseEntity  compartment : sbmlCompartmentList) {
 			compartmentLookupMap.put(compartment.getSBaseId(), (SBMLCompartment) compartment);
 		}
 		/**
@@ -163,9 +351,7 @@ public class SBMLServiceImpl implements SBMLService {
 		List<SBMLSBaseEntity> sbmlModelList = new ArrayList<>();
 		sbmlModelList.add(sbmlModelEntity);
 		allModelEntities.put("SBMLModelEntity", sbmlModelList);
-		
-		
-		
+
 		return allModelEntities;
 	}
 
@@ -174,6 +360,7 @@ public class SBMLServiceImpl implements SBMLService {
 			Map<String, Iterable<SBMLSBaseEntity>> entityMap) {
 		List<Object> qualSpeciesWithExternalResources = new ArrayList<>();
 		List<Object> externalResources = new ArrayList<>();
+		Map<String, ExternalResourceEntity> externalResourceEntityLookupMap = new HashMap<>();
 		List<Object> biologicalModifierRelationships = new ArrayList<>();
 		List<Object> qualTransitionsWithExternalResources = new ArrayList<>();
 		List<Object> modelWithExternalResources = new ArrayList<>();
@@ -189,26 +376,81 @@ public class SBMLServiceImpl implements SBMLService {
 					case "qual":
 						SBMLQualModelExtension sbmlQualModelExtension = (SBMLQualModelExtension) sBaseExtension;
 						for(SBMLQualSpecies qualSpecies : sbmlQualModelExtension.getSbmlQualSpecies()) {
+							SBMLQualSpecies existingQualSpecies = (SBMLQualSpecies) sbmlCompartmentalizedSBaseEntityRepository.findBySBaseId(qualSpecies.getSBaseId(), 2);
+							if(existingQualSpecies != null) {
+								// for now we do it the old way and only check for this attribute. might add more complex check later
+								qualSpecies.setId(existingQualSpecies.getId());
+								qualSpecies.setVersion(existingQualSpecies.getVersion());
+								qualSpecies.setEntityUUID(existingQualSpecies.getEntityUUID());
+							}
 							if (qualSpecies.getCvTermList() != null && qualSpecies.getCvTermList().size() > 0) {
 								for (CVTerm cvTerm : qualSpecies.getCvTermList()) {
 									//createExternalResources(cvTerm, qualSpecies);
 									for (String resource : cvTerm.getResources()) {
-										ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
-										newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
-										newExternalResourceEntity.setUri(resource);
+										boolean existsExternalResourceEntity = false;
+										ExternalResourceEntity newExternalResourceEntity;
+										ExternalResourceEntity existingExternalResourceEntity = externalResourceEntityLookupMap.get(resource);
+										if(existingExternalResourceEntity != null) {
+											newExternalResourceEntity = existingExternalResourceEntity;
+											existsExternalResourceEntity = true;
+										} else {	
+											existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
+											if(existingExternalResourceEntity != null) {
+												newExternalResourceEntity = existingExternalResourceEntity;
+												existsExternalResourceEntity = true;
+											} else {
+												newExternalResourceEntity = new ExternalResourceEntity();
+												newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+												newExternalResourceEntity.setUri(resource);
+											}
+										}
+										BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();;
+										if (existsExternalResourceEntity) {
+											boolean isSetNewBQ = false;
 										
-										BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
-										newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+											List<BiomodelsQualifier> existingBiomodelsQualifierList = this.biomodelsQualifierRepository.findByTypeAndQualifier(cvTerm.getQualifierType(), cvTerm.getQualifier());
+											if (existingBiomodelsQualifierList != null && !existingBiomodelsQualifierList.isEmpty() ) {
+												for (BiomodelsQualifier bq : existingBiomodelsQualifierList) {
+													if(!isSetNewBQ && bq.getEndNode().getUri().equals(newExternalResourceEntity.getUri())
+																	&& bq.getStartNode().equals(qualSpecies)) {
+														// this is the same biomodelsQualifier that points to the same resource
+														newBiomodelsQualifier.setEntityUUID(bq.getEntityUUID());
+														newBiomodelsQualifier.setId(bq.getId());
+														newBiomodelsQualifier.setVersion(bq.getVersion());
+														isSetNewBQ = true;
+													}
+												}
+												if(!isSetNewBQ) {
+													
+													newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+													
+												}
+											} else {
+												// The externalResourceEntity does already exist
+												// it therefore also has a biomodelsQualifierRelation to it, which is of a different type or qualifier
+												// we thus need to and can create it new one
+												
+												newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+												
+											}
+										} else {
+											
+											newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+											
+										}
 										newBiomodelsQualifier.setType(cvTerm.getQualifierType());
 										newBiomodelsQualifier.setQualifier(cvTerm.getQualifier());
 										newBiomodelsQualifier.setStartNode(qualSpecies);
 										newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
-										newExternalResourceEntity.setRelatedSBMLSBaseEntity(newBiomodelsQualifier);
+										
+										newExternalResourceEntity.addRelatedSBMLSBaseEntity(newBiomodelsQualifier);
 										externalResources.add(newExternalResourceEntity);
+										externalResourceEntityLookupMap.put(newExternalResourceEntity.getUri(), newExternalResourceEntity);
 										biologicalModifierRelationships.add(newBiomodelsQualifier);
 										qualSpecies.addExternalResource(newBiomodelsQualifier);
 									}
 								}
+								
 								qualSpeciesWithExternalResources.add(qualSpecies);
 							}
 						}
@@ -293,7 +535,6 @@ public class SBMLServiceImpl implements SBMLService {
 		} else {
 			logger.debug("WARING: Output QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
 		}
-		
 	}
 
 	private List<SBMLQualInput> convertQualInputList(ListOf<Input> listOfInputs,
@@ -305,7 +546,6 @@ public class SBMLServiceImpl implements SBMLService {
 			setInputProperties(input, loopSBMLQualInput, qualSpeciesLookupMap);
 			sbmlQualInputList.add(loopSBMLQualInput);
 		}
-		
 		return sbmlQualInputList;
 	}
 
@@ -319,7 +559,6 @@ public class SBMLServiceImpl implements SBMLService {
 		} else {
 			logger.debug("WARING: Input QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
 		}
-		
 	}
 
 	private void setCompartmentProperties(Compartment source, SBMLCompartment target) {
@@ -327,7 +566,6 @@ public class SBMLServiceImpl implements SBMLService {
 		target.setSize(source.getSize());
 		target.setConstant(source.getConstant());
 		target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
-		// also link to contained species here (or probably later)
 	}
 
 	private List<SBMLQualSpecies> convertQualSpecies(ListOf<QualitativeSpecies> listOfQualitativeSpecies, Map<String, SBMLCompartment> compartmentLookupMap) {
@@ -342,6 +580,8 @@ public class SBMLServiceImpl implements SBMLService {
 		return sbmlQualSpeciesList;
 	}
 
+
+
 	private void setCompartmentalizedSbaseProperties(CompartmentalizedSBase source, SBMLCompartmentalizedSBaseEntity target, Map<String, SBMLCompartment> compartmentLookupMap) {
 		target.setCompartmentMandatory(source.isCompartmentMandatory());
 		if(compartmentLookupMap.containsKey(source.getCompartment())) {
@@ -349,8 +589,6 @@ public class SBMLServiceImpl implements SBMLService {
 		} else {
 			logger.debug("No matching compartment found for compartment " + source.getCompartment() + " in " + source.getName());
 		}
-		
-		
 	}
 
 	private void setQualSpeciesProperties(QualitativeSpecies source, SBMLQualSpecies target) {
@@ -383,7 +621,7 @@ public class SBMLServiceImpl implements SBMLService {
 		sbmlModelEntity.setConversionFactor(model.getConversionFactor());
 		sbmlModelEntity.setEnclosingSBMLEntity(sbmlDocument);
 	}
-
+	
 	private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
 		target.setSBaseId(source.getId());
@@ -401,6 +639,14 @@ public class SBMLServiceImpl implements SBMLService {
 			target.setCvTermList(source.getCVTerms());
 		}
 		
+	}
+
+	private void setSBMLDocumentProperties(SBMLDocument source, SBMLDocumentEntity target,
+			String filename) {
+		target.setSbmlFileName(filename);
+		target.setSbmlLevel(source.getLevel());
+		target.setSbmlVersion(source.getVersion());
+		target.setSbmlXmlNamespace(source.getNamespace());
 	}
 
 	

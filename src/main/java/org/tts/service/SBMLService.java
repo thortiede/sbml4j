@@ -2,12 +2,15 @@ package org.tts.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.GraphBaseEntity;
+import org.tts.model.SBMLDocumentEntity;
 import org.tts.model.SBMLSBaseEntity;
 
 public interface SBMLService {
@@ -22,4 +25,6 @@ public interface SBMLService {
 
 	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
 			Map<String, Iterable<SBMLSBaseEntity>> allEntities);
+	
+	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
 }
