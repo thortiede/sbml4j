@@ -36,7 +36,7 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	@Relationship(type="HAS", direction = Relationship.OUTGOING)
 	private List<SBMLSBaseExtension> extensions;
 	
-	@Relationship(type = "BQ", direction = Relationship.OUTGOING)
+	/*@Relationship(type = "BQ", direction = Relationship.OUTGOING)
 	private List<BiomodelsQualifier> externalResources;
 	
 	
@@ -65,7 +65,7 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 			}
 		}
 	}
-	
+	*/
 
 	public SBMLSBaseExtension getExtension(String nameOrURI) {
 		for (SBMLSBaseExtension plugin : this.extensions) {
