@@ -222,7 +222,7 @@ public class SBMLServiceImpl implements SBMLService {
 		return sbmlCompartmentList;
 	}
 	
-
+	@Deprecated
 	@Override
 	public Map<String, Iterable<SBMLSBaseEntity>> extractSBMLEntities(Model model) {
 		
@@ -355,6 +355,7 @@ public class SBMLServiceImpl implements SBMLService {
 		return allModelEntities;
 	}
 
+	@Deprecated
 	@Override
 	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
 			Map<String, Iterable<SBMLSBaseEntity>> entityMap) {
@@ -447,7 +448,7 @@ public class SBMLServiceImpl implements SBMLService {
 										externalResources.add(newExternalResourceEntity);
 										externalResourceEntityLookupMap.put(newExternalResourceEntity.getUri(), newExternalResourceEntity);
 										biologicalModifierRelationships.add(newBiomodelsQualifier);
-										qualSpecies.addExternalResource(newBiomodelsQualifier);
+										//qualSpecies.addExternalResource(newBiomodelsQualifier);
 									}
 								}
 								
