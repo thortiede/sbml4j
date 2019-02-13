@@ -33,9 +33,6 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 	 */
 	private String units;
 	
-	@Relationship(type = "CONTAINED_IN", direction = Relationship.INCOMING)
-	private List<SBMLCompartmentalizedSBaseEntity> entitiesInCompartment;
-
 	public double getSpatialDimensions() {
 		return spatialDimensions;
 	}
@@ -66,16 +63,5 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 
 	public void setUnits(String units) {
 		this.units = units;
-	}
-
-	@JsonIgnore
-	public List<SBMLCompartmentalizedSBaseEntity> getEntitiesInCompartment() {
-		return entitiesInCompartment;
-	}
-
-	public void setEntitiesInCompartment(List<SBMLCompartmentalizedSBaseEntity> entitiesInCompartment) {
-		this.entitiesInCompartment = entitiesInCompartment;
-	}
-	
-	
+	}	
 }
