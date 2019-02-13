@@ -11,6 +11,10 @@ public interface SBMLPersistenceService {
 
 	public GraphBaseEntity save(GraphBaseEntity o);
 
+	public boolean checkIfExists(GraphBaseEntity o);
+
+	public GraphBaseEntity getByEntityUUID(String entityUUID);
+
 
 	//public Map<String, Iterable<SBMLSBaseEntity>> findExisting(Map<String, Iterable<SBMLSBaseEntity>> allEntities);
 	
