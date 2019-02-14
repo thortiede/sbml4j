@@ -267,16 +267,12 @@ public class SBMLServiceImpl implements SBMLService {
 
 		QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
 		HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
+		
 		Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
 		Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
-		
-		
-		
-		
-		 List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
+		List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
 		
 		List<GraphBaseEntity> returnList= new ArrayList<>();
-		
 		persistedSBMLSpecies.forEach(species->{
 			returnList.add(species);
 		});
@@ -318,7 +314,6 @@ public class SBMLServiceImpl implements SBMLService {
 				logger.debug("Species is null");
 			}
 			
-			
 			SBMLSimpleTransition existingSimpleTransition = this.sbmlSimpleTransitionRepository.getByTransitionId(newTransitionId, 2);
 			String inputName = null;
 			String outputName = null;
@@ -359,9 +354,7 @@ public class SBMLServiceImpl implements SBMLService {
 		target.setInitialConcentration(source.getInitialConcentration());
 		target.setBoundaryCondition(source.getBoundaryCondition());
 		target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
-		target.setConstant(source.isConstant());
-		
-		
+		target.setConstant(source.isConstant());	
 	}
 
 	@Override
