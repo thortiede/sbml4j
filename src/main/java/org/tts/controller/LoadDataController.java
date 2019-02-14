@@ -27,7 +27,7 @@ import org.tts.service.FileCheckService;
 import org.tts.service.FileStorageService;
 import org.tts.service.SBMLPersistenceService;
 import org.tts.service.SBMLService;
-
+import org.sbml.jsbml.ext.qual.QualModelPlugin;
 @RestController
 public class LoadDataController {
 
@@ -46,6 +46,25 @@ public class LoadDataController {
 		this.sbmlService = sbmlService;
 		this.sbmlPersistenceService = sbmlPersistenceService;
 	}
+	
+	@RequestMapping(value="uploadSBMLSimple", method=RequestMethod.POST)
+	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLSimple(@RequestParam("file") MultipartFile file) {
+		List<GraphBaseEntity> returnList = new ArrayList<>();
+		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
+		Model jsbmlModel = null;
+		try {
+			jsbmlModel = sbmlService.extractSBMLModel(file);
+			List<GraphBaseEntity> persistedEntities = sbmlService.persistFastSimple(jsbmlModel);
+			return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
+		} catch (XMLStreamException | IOException e) {
+			defaultReturnEntity.setEntityUUID("Fuck you, this did not work");
+			returnList.add(defaultReturnEntity);
+			e.printStackTrace();
+			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
 	
 	@RequestMapping(value = "/uploadSBMLDepr", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLDepr(@RequestParam("file") MultipartFile file) {
