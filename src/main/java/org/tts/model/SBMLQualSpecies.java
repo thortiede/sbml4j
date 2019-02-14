@@ -1,5 +1,7 @@
 package org.tts.model;
 
+import org.neo4j.ogm.annotation.Relationship;
+
 public class SBMLQualSpecies extends SBMLCompartmentalizedSBaseEntity {
 
 	/**
@@ -17,6 +19,18 @@ public class SBMLQualSpecies extends SBMLCompartmentalizedSBaseEntity {
 	 */
 	private int maxLevel;
 	
+	@Relationship(type = "IS")
+	private SBMLSpecies correspondingSpecies;
+	
+	
+	public SBMLSpecies getCorrespondingSpecies() {
+		return correspondingSpecies;
+	}
+
+	public void setCorrespondingSpecies(SBMLSpecies correspondingSpecies) {
+		this.correspondingSpecies = correspondingSpecies;
+	}
+
 	public boolean isConstant() {
 		return constant;
 	}
