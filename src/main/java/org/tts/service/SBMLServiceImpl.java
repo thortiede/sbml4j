@@ -248,6 +248,10 @@ public class SBMLServiceImpl implements SBMLService {
 			}
 		}
 		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
+		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
+			Map<String, String> emptySBaseIdMap = new HashMap<>();
+			helperQualSpeciesReturn.setsBaseIdMap(emptySBaseIdMap);
+		}
 		return helperQualSpeciesReturn;
 	}
 	
