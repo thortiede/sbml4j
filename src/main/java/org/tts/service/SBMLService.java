@@ -27,4 +27,6 @@ public interface SBMLService {
 			Map<String, Iterable<SBMLSBaseEntity>> allEntities);
 	
 	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
+
+	public List<GraphBaseEntity> persistFastSimple(Model model);
 }
