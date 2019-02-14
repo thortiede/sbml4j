@@ -18,12 +18,14 @@ import org.sbml.jsbml.Model;
 import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBMLReader;
 import org.sbml.jsbml.SBase;
+import org.sbml.jsbml.Species;
 import org.sbml.jsbml.ext.SBasePlugin;
 import org.sbml.jsbml.ext.qual.Input;
 import org.sbml.jsbml.ext.qual.Output;
 import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
+import org.sbml.jsbml.xml.XMLNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.BiomodelsQualifier;
 import org.tts.model.ExternalResourceEntity;
 import org.tts.model.GraphBaseEntity;
+import org.tts.model.HelperQualSpeciesReturn;
 import org.tts.model.SBMLCompartment;
 import org.tts.model.SBMLCompartmentalizedSBaseEntity;
 import org.tts.model.SBMLDocumentEntity;
@@ -42,14 +45,20 @@ import org.tts.model.SBMLQualInput;
 import org.tts.model.SBMLQualModelExtension;
 import org.tts.model.SBMLQualOutput;
 import org.tts.model.SBMLQualSpecies;
+import org.tts.model.SBMLQualSpeciesGroup;
 import org.tts.model.SBMLQualTransition;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.model.SBMLSBaseExtension;
+import org.tts.model.SBMLSimpleTransition;
+import org.tts.model.SBMLSpecies;
+import org.tts.model.SBMLSpeciesGroup;
 import org.tts.repository.BiomodelsQualifierRepository;
 import org.tts.repository.ExternalResourceEntityRepository;
 import org.tts.repository.GraphBaseEntityRepository;
 import org.tts.repository.SBMLCompartmentalizedSBaseEntityRepository;
+import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
+import org.tts.repository.SBMLSimpleTransitionRepository;
 
 @Service
 public class SBMLServiceImpl implements SBMLService {
@@ -59,19 +68,28 @@ public class SBMLServiceImpl implements SBMLService {
 	SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository;
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
+	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
+	SBMLSpeciesRepository sbmlSpeciesRepository;
 	
 	@Autowired
 	public SBMLServiceImpl(	GraphBaseEntityRepository graphBaseRepository, 
 							SBMLSBaseEntityRepository sbmlSBaseEntityRepository,
 							ExternalResourceEntityRepository externalResourceEntityRepository,
 							BiomodelsQualifierRepository biomodelsQualifierRepository,
-							SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository) {
+							SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository,
+							SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
+							SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
+							SBMLSpeciesRepository sbmlSpeciesRepository) {
 		super();
 		this.graphBaseRepository = graphBaseRepository;
 		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
 		this.externalResourceEntityRepository = externalResourceEntityRepository;
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 		this.sbmlCompartmentalizedSBaseEntityRepository = sbmlCompartmentalizedSBaseEntityRepository;
+		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
+		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
+		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 	}
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -96,7 +114,252 @@ public class SBMLServiceImpl implements SBMLService {
 		
 	}
 
+	private List<SBMLSpecies> buildAndPersistSBMLSpecies(ListOf<Species> speciesListOf, Map<String, SBMLCompartment> compartmentLookupMap) {
+		List<SBMLSpecies> speciesList = new ArrayList<>();
+		List<Species> groupSpeciesList = new ArrayList<>();
+		for (Species species : speciesListOf) {
+			if(species.getName().equals("Group")) {
+				logger.debug("found group");
+				groupSpeciesList.add(species);
+			} else {
+				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBySBaseName(species.getName());
+				if(existingSpecies != null) {
+					speciesList.add(existingSpecies);
+				} else {
+					SBMLSpecies newSpecies = new SBMLSpecies();
+					setSbaseProperties(species, newSpecies);
+					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
+					setSpeciesProperties(species, newSpecies);
+					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies);
+					speciesList.add(persistedNewSpecies);
+				}
+			}
+		}
+		// now build the groups nodes
+		for (Species species : groupSpeciesList) {
+			SBMLSpeciesGroup newSBMLSpeciesGroup = new SBMLSpeciesGroup();
+			List<String> groupMemberSymbols = new ArrayList<>();
+			XMLNode ulNode = species.getNotes().getChildElement("body", "http://www.w3.org/1999/xhtml").getChildElement("p", null).getChildElement("ul", null);
+			for (int i = 0; i != ulNode.getChildCount(); i++) {
+				if(ulNode.getChild(i).getChildCount() > 0) {
+					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
+						String chars = ulNode.getChild(i).getChild(j).getCharacters();
+						logger.info(chars);
+						groupMemberSymbols.add(chars);
+					}
+				}
+			}
+			setSbaseProperties(species, newSBMLSpeciesGroup);
+			//setCompartmentalizedSbaseProperties(species, newSBMLSpeciesGroup, compartmentLookupMap);
+			setSpeciesProperties(species, newSBMLSpeciesGroup);
+			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
+			for (String symbol : groupMemberSymbols) {
+				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBySBaseName(symbol);
+				newSBMLSpeciesGroup.addSpeciesToGroup(existingSpecies);
+				speciesSbaseName += "_";
+				speciesSbaseName += symbol;
+			}
+			SBMLSpeciesGroup existingSBMLSpeciesGroup = (SBMLSpeciesGroup) sbmlSpeciesRepository.findBySBaseName(speciesSbaseName);
+			if (existingSBMLSpeciesGroup != null) {
+				speciesList.add(existingSBMLSpeciesGroup);
+			} else {
+				newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
+				newSBMLSpeciesGroup.setSBaseId(speciesSbaseName);
+				newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
+				SBMLSpecies persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup);
+				speciesList.add(persistedNewSpeciesGroup);
+			}
+		}
+		return speciesList;
+	}
 	
+	private HelperQualSpeciesReturn buildAndPersistSBMLQualSpecies(ListOf<QualitativeSpecies> qualSpeciesListOf, Map<String, SBMLCompartment> compartmentLookupMap) {
+		HelperQualSpeciesReturn helperQualSpeciesReturn = new HelperQualSpeciesReturn();
+		Map<String, SBMLQualSpecies> qualSpeciesMap = new HashMap<>();
+		List<QualitativeSpecies> groupQualSpeciesList = new ArrayList<>();
+		for (QualitativeSpecies qualSpecies : qualSpeciesListOf) {
+			if(qualSpecies.getName().equals("Group")) {
+				logger.debug("found qual Species group");
+				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
+			} else {
+				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(qualSpecies.getName());
+				if (existingSpecies != null) {
+					if(!qualSpeciesMap.containsKey(existingSpecies.getSBaseId())) {
+						qualSpeciesMap.put(existingSpecies.getSBaseId(), existingSpecies);
+					}	
+					if(!qualSpecies.getId().substring(5).equals(qualSpecies.getName())) {
+						// possibly this is the case when we have an entity duplicated in sbml, but deduplicate it here
+						// transitions might reference this duplicate entity and need to be pointed to the original one
+						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies.getSBaseId());
+					}
+					
+				} else {
+					SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
+					setSbaseProperties(qualSpecies, newQualSpecies);
+					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
+					setQualSpeciesProperties(qualSpecies, newQualSpecies);
+					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
+					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies);
+					qualSpeciesMap.put(persistedNewQualSpecies.getSBaseId(), persistedNewQualSpecies);
+				}
+			}
+		}
+		// now build the group nodes
+		for (QualitativeSpecies qualSpecies : groupQualSpeciesList) {
+			if (qualSpecies.getId().equals("qual_Group_4")) {
+				logger.debug("Group 4");
+			}
+			SBMLQualSpeciesGroup newSBMLQualSpeciesGroup = new SBMLQualSpeciesGroup();
+			List<String> groupMemberSymbols = new ArrayList<>();
+			XMLNode ulNode = qualSpecies.getNotes().getChildElement("body", "http://www.w3.org/1999/xhtml").getChildElement("p", null).getChildElement("ul", null);
+			for (int i = 0; i != ulNode.getChildCount(); i++) {
+				if(ulNode.getChild(i).getChildCount() > 0) {
+					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
+						String chars = ulNode.getChild(i).getChild(j).getCharacters();
+						logger.info(chars);
+						groupMemberSymbols.add(chars);
+					}
+				}
+			}
+			setSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup);
+			//setCompartmentalizedSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup, compartmentLookupMap);
+			setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
+			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
+			for (String symbol : groupMemberSymbols) {
+				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(symbol);
+				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(existingQualSpecies);
+				qualSpeciesSbaseName += "_";
+				qualSpeciesSbaseName += symbol;
+			}
+			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBySBaseName(qualSpeciesSbaseName);
+			if (existingSBMLQualSpeciesGroup != null) {
+				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getSBaseId())) {
+					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getSBaseId(), existingSBMLQualSpeciesGroup);
+				}
+				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+			} else {
+				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
+				newSBMLQualSpeciesGroup.setSBaseId(qualSpeciesSbaseName);
+				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
+				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpeciesSbaseName));
+				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup);
+				qualSpeciesMap.put(persistedNewQualSpecies.getSBaseId(), persistedNewQualSpecies);
+			}
+		}
+		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
+		return helperQualSpeciesReturn;
+	}
+	
+	@Override
+	public List<GraphBaseEntity> persistFastSimple(Model model) {
+		// compartment
+		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
+		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
+		for (SBMLCompartment compartment : sbmlCompartmentList) {
+			compartmentLookupMap.put(compartment.getSBaseId(), compartment);
+		}
+		List<SBMLSpecies> persistedSBMLSpecies = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap);
+
+		QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
+		HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
+		Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
+		Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
+		
+		
+		
+		
+		 List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
+		
+		List<GraphBaseEntity> returnList= new ArrayList<>();
+		
+		persistedSBMLSpecies.forEach(species->{
+			returnList.add(species);
+		});
+		persistedQualSpeciesList.forEach((k, qualSpecies)-> {
+			returnList.add(qualSpecies);
+		});
+		persistedTransitionList.forEach(transition-> {
+			returnList.add(transition);
+		});
+		return returnList;
+	}
+
+	private List<SBMLSimpleTransition> buildAndPersistTransitions(Map<String, String> qualSBaseLookupMap,
+			 ListOf<Transition> transitionListOf) {
+		List<SBMLSimpleTransition> transitionList = new ArrayList<>();
+		for (Transition transition : transitionListOf) {
+			SBMLQualSpecies tmp = null;
+			String newTransitionId = "";
+			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
+				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
+			} else {
+				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
+			}
+			if(tmp == null) {
+				logger.debug("What is going on?");
+			}
+			newTransitionId += tmp.getsBaseName();
+			newTransitionId += "-";
+			newTransitionId += transition.getSBOTermID();
+			newTransitionId += "-";
+			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
+				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
+			} else {
+				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+			}
+			if (tmp != null) {
+				newTransitionId += (tmp).getsBaseName();
+			} else {
+				logger.debug("Species is null");
+			}
+			
+			
+			SBMLSimpleTransition existingSimpleTransition = this.sbmlSimpleTransitionRepository.getByTransitionId(newTransitionId, 2);
+			String inputName = null;
+			String outputName = null;
+			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
+				inputName = qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies());
+			} else {
+				inputName = transition.getListOfInputs().get(0).getQualitativeSpecies();
+			}
+			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
+				outputName = qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+			} else {
+				outputName = transition.getListOfOutputs().get(0).getQualitativeSpecies();
+			}
+			if(existingSimpleTransition != null ) {
+				if(existingSimpleTransition.getInputSpecies() == null || existingSimpleTransition.getOutputSpecies() == null) {
+					logger.debug("How?");
+				}
+				if(existingSimpleTransition.getInputSpecies().getsBaseName().equals(inputName) &&
+						existingSimpleTransition.getOutputSpecies().getsBaseName().equals(outputName)) {
+					transitionList.add(existingSimpleTransition);
+				}
+			} else {
+				SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
+				setSbaseProperties(transition, newSimpleTransition);
+				newSimpleTransition.setTransitionId(newTransitionId);
+				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(inputName));
+				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(outputName));
+				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition);
+				transitionList.add(persistedNewSimpleTransition);
+			}
+		}
+		return transitionList;
+	}
+	
+	
+	private void setSpeciesProperties(Species source, SBMLSpecies target) {
+		target.setInitialAmount(source.getInitialAmount());
+		target.setInitialConcentration(source.getInitialConcentration());
+		target.setBoundaryCondition(source.getBoundaryCondition());
+		target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
+		target.setConstant(source.isConstant());
+		
+		
+	}
+
 	@Override
 	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
 		
