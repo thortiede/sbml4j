@@ -49,6 +49,7 @@ public class LoadDataController {
 	
 	@RequestMapping(value="uploadSBMLSimple", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLSimple(@RequestParam("file") MultipartFile file) {
+		logger.info("Serving POST uploadSBMLSimple");
 		List<GraphBaseEntity> returnList = new ArrayList<>();
 		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
 		Model jsbmlModel = null;
@@ -57,12 +58,27 @@ public class LoadDataController {
 			List<GraphBaseEntity> persistedEntities = sbmlService.persistFastSimple(jsbmlModel);
 			return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
 		} catch (XMLStreamException | IOException e) {
-			defaultReturnEntity.setEntityUUID("Fuck you, this did not work");
+			defaultReturnEntity.setEntityUUID("Problem extracting the model");
 			returnList.add(defaultReturnEntity);
 			e.printStackTrace();
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		
+	}
+	
+	@RequestMapping(value="/allEntities", method=RequestMethod.GET)
+	public ResponseEntity<List<GraphBaseEntity>> showAllEntites() {
+		logger.info("Serving GET allEntities");
+		return new ResponseEntity<List<GraphBaseEntity>>(sbmlService.getAllEntities(), HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="/allEntities", method=RequestMethod.DELETE)
+	public ResponseEntity<String> deleteAllEntites() {
+		if(this.sbmlService.clearDatabase()) {
+			return new ResponseEntity<String>("Database is clear!", HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>("Database is not clear!", HttpStatus.EXPECTATION_FAILED);
+		}
 	}
 	
 	
