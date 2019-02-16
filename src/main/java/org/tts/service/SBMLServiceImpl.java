@@ -113,6 +113,21 @@ public class SBMLServiceImpl implements SBMLService {
 		return doc.getModel();
 		
 	}
+	
+	@Override
+	public List<GraphBaseEntity> getAllEntities(){
+		return (List<GraphBaseEntity>) this.graphBaseRepository.findAll();
+	}
+	
+	@Override
+	public boolean clearDatabase() {
+		this.graphBaseRepository.deleteAll();
+		if (((List<GraphBaseEntity>) this.graphBaseRepository.findAll()).isEmpty()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	private List<SBMLSpecies> buildAndPersistSBMLSpecies(ListOf<Species> speciesListOf, Map<String, SBMLCompartment> compartmentLookupMap) {
 		List<SBMLSpecies> speciesList = new ArrayList<>();

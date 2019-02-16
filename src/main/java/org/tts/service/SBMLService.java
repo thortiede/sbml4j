@@ -10,7 +10,6 @@ import javax.xml.stream.XMLStreamException;
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLDocumentEntity;
 import org.tts.model.SBMLSBaseEntity;
 
 public interface SBMLService {
@@ -29,4 +28,8 @@ public interface SBMLService {
 	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
 
 	public List<GraphBaseEntity> persistFastSimple(Model model);
+	
+	public boolean clearDatabase();
+	
+	public List<GraphBaseEntity> getAllEntities();
 }
