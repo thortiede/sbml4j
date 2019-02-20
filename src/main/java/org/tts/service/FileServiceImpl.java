@@ -9,43 +9,18 @@ import org.tts.model.SifFile;
 @Service
 public class FileServiceImpl implements FileService {
 
-	
-	private NodeEdgeListService nodeEdgeListService;
-	
-	
 	@Autowired
-	public FileServiceImpl(NodeEdgeListService nodeEdgeListService) {
+	public FileServiceImpl() {
 		super();
-		this.nodeEdgeListService = nodeEdgeListService;
 	}
-
-
 
 	@Override
-	public SifFile getFullNet() {
-		
-		return convertToSif( nodeEdgeListService.getFullNet());
-		
-	}
-
-
-
-	private SifFile convertToSif(NodeEdgeList nodeEdgeList) {
+	public SifFile getSifFromNodeEdgeList(NodeEdgeList nodeEdgeList) {
 		SifFile ret = new SifFile();
 		for (NodeNodeEdge nne : nodeEdgeList.getNodeNodeEdgeList()) {
 			ret.addSifEntry(nne.getNode1(), nne.getEdge(), nne.getNode2());
 		}
 		return ret;
-	}
-
-
-
-	@Override
-	public SifFile getMetabolicNetwork() {
-		
-		return convertToSif(nodeEdgeListService.getMetabolicNet());
-		
-		
 	}
 
 }
