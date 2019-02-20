@@ -59,6 +59,7 @@ import org.tts.repository.SBMLCompartmentalizedSBaseEntityRepository;
 import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
 import org.tts.repository.SBMLSimpleTransitionRepository;
+import org.tts.repository.SBMLSpeciesRepository;
 
 @Service
 public class SBMLServiceImpl implements SBMLService {
