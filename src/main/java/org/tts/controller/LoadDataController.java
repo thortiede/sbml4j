@@ -48,7 +48,7 @@ public class LoadDataController {
 	@Autowired
 	public LoadDataController(FileStorageService fileStorageService, 
 			FileCheckService fileCheckService, 
-			@Qualifier("sbmlServiceImpl") SBMLService sbmlService, 
+			@Qualifier("sbmlFullModelServiceImpl") SBMLService sbmlService, 
 			SBMLPersistenceService sbmlPersistenceService,
 			FileService fileService,
 			@Qualifier("simpleNodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService) {
