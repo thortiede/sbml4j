@@ -37,27 +37,27 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	private List<SBMLSBaseExtension> extensions;
 	
 	@Relationship(type = "BQ", direction = Relationship.OUTGOING)
-	private List<BiomodelsQualifier> biomodelQualifier;
+	private List<BiomodelsQualifier> biomodelsQualifier;
 	
 	
 	public List<BiomodelsQualifier> getBiomodelQualifier() {
-		return biomodelQualifier;
+		return biomodelsQualifier;
 	}
 
-	public void setBiomodelQualifier(List<BiomodelsQualifier> biomodelQualifier) {
-		this.biomodelQualifier = biomodelQualifier;
+	public void setBiomodelQualifier(List<BiomodelsQualifier> biomodelsQualifier) {
+		this.biomodelsQualifier = biomodelsQualifier;
 	}
 	
-	public boolean addBiomodelQualifier(BiomodelsQualifier newBiomodelQualifier) {
-		if (biomodelQualifier == null) {
-			biomodelQualifier = new ArrayList<>();
+	public boolean addBiomodelQualifier(BiomodelsQualifier newBiomodelsQualifier) {
+		if (biomodelsQualifier == null) {
+			biomodelsQualifier = new ArrayList<>();
 		}
-		if (biomodelQualifier.contains(newBiomodelQualifier))
+		if (biomodelsQualifier.contains(newBiomodelsQualifier))
 		{ 
 			return true;
 		} else {
 			try {
-				this.biomodelQualifier.add(newBiomodelQualifier);
+				this.biomodelsQualifier.add(newBiomodelsQualifier);
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
