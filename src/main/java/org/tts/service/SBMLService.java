@@ -29,7 +29,16 @@ public interface SBMLService {
 
 	//public List<GraphBaseEntity> persistFastSimple(Model model);
 	
+	/**
+	 * Remove all Entities from underlying repository
+	 * @return true if database is empty, false otherwise
+	 */
 	public boolean clearDatabase();
 	
+	/**
+	 * Query the underlying repository for all entities of minimal type
+	 * @return List of all entities found in repository which are or are derived from
+	 * {@link org.tts.model.GraphBaseEntity}
+	 */
 	public List<GraphBaseEntity> getAllEntities();
 }
