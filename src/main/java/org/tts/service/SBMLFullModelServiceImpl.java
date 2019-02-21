@@ -25,7 +25,6 @@ import org.sbml.jsbml.ext.qual.Output;
 import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
-import org.sbml.jsbml.xml.XMLNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +34,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.BiomodelsQualifier;
 import org.tts.model.ExternalResourceEntity;
 import org.tts.model.GraphBaseEntity;
-import org.tts.model.HelperQualSpeciesReturn;
 import org.tts.model.SBMLCompartment;
 import org.tts.model.SBMLCompartmentalizedSBaseEntity;
 import org.tts.model.SBMLDocumentEntity;
@@ -45,20 +43,16 @@ import org.tts.model.SBMLQualInput;
 import org.tts.model.SBMLQualModelExtension;
 import org.tts.model.SBMLQualOutput;
 import org.tts.model.SBMLQualSpecies;
-import org.tts.model.SBMLQualSpeciesGroup;
 import org.tts.model.SBMLQualTransition;
 import org.tts.model.SBMLSBaseEntity;
 import org.tts.model.SBMLSBaseExtension;
-import org.tts.model.SBMLSimpleTransition;
 import org.tts.model.SBMLSpecies;
-import org.tts.model.SBMLSpeciesGroup;
 import org.tts.repository.BiomodelsQualifierRepository;
 import org.tts.repository.ExternalResourceEntityRepository;
 import org.tts.repository.GraphBaseEntityRepository;
 import org.tts.repository.SBMLCompartmentalizedSBaseEntityRepository;
 import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
-import org.tts.repository.SBMLSimpleTransitionRepository;
 import org.tts.repository.SBMLSpeciesRepository;
 
 @Service
@@ -70,7 +64,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
 	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
-	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 	
 	@Autowired
@@ -80,7 +73,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 							BiomodelsQualifierRepository biomodelsQualifierRepository,
 							SBMLCompartmentalizedSBaseEntityRepository sbmlCompartmentalizedSBaseEntityRepository,
 							SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
-							SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
 							SBMLSpeciesRepository sbmlSpeciesRepository) {
 		super();
 		this.graphBaseRepository = graphBaseRepository;
@@ -89,7 +81,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 		this.sbmlCompartmentalizedSBaseEntityRepository = sbmlCompartmentalizedSBaseEntityRepository;
 		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
-		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 	}
 
@@ -110,9 +101,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	@Override
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
 		SBMLDocument doc = SBMLReader.read(file.getInputStream());
-		
 		return doc.getModel();
-		
 	}
 	
 	@Override
@@ -128,15 +117,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		} else {
 			return false;
 		}
-	}
-
-	
-	private void setSpeciesProperties(Species source, SBMLSpecies target) {
-		target.setInitialAmount(source.getInitialAmount());
-		target.setInitialConcentration(source.getInitialConcentration());
-		target.setBoundaryCondition(source.getBoundaryCondition());
-		target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
-		target.setConstant(source.isConstant());	
 	}
 
 	@Override
@@ -539,6 +519,23 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		return allEntitiesAsObjectsWithExternalResources;
 	}
 	
+/******************************************************************************************************************************
+ * 													Converter for Extensions
+ ******************************************************************************************************************************/
+	
+/******************************************************************************************************************************
+ * 													Converter for Extension QUAL
+ ******************************************************************************************************************************/
+	
+	/**
+	 * Convert a ListOf jSBML-Extension-Qual Transition Entities 
+	 * to SBMLQualTransition Entities
+	 * This function does build the needed SBMLInput and SBMLOutput Entities for the SBMLQualTransition Entities
+	 * @param listOfTransitions ListOf ({@link org.sbml.jsbml.ListOf}) of the jSBML-Extension-Qual Transition entities 
+	 * {@link org.sbml.jsbml.ext.qual.Transition}
+	 * @param qualSpeciesLookupMap A Map to lookup the SBMLQualSpecies referenced by the SBMLInput and SBMLOutput entities
+	 * @return List of SBMLQualTransition entities with connected SBMLInput/SBMLOutput entities (which are connected to SBMLQualSpecies entities)
+	 */
 	private List<SBMLQualTransition> convertQualTransition(ListOf<Transition> listOfTransitions,
 			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
 		List<SBMLQualTransition> sbmlQualTransitionList = new ArrayList<>();
@@ -557,6 +554,13 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		return sbmlQualTransitionList;
 	}
 
+	/**
+	 * Convert a ListOf jSBML-Qual-Extension Output Entities
+	 * to SBMLQualOutput entities
+	 * @param listOfOutputs ListOf ({@link org.sbml.jsbml.ListOf}) of the jSBML-Extension-Qual Output entities ({@link org.sbml.jsbml.ext.qual.Output})
+	 * @param qualSpeciesLookupMap A Map to lookup the SBMLQualSpecies referenced by the SBMLOutput entities
+	 * @return List of SBMLQualOutput Entities with connected SBMLQualSpecies entities
+	 */
 	private List<SBMLQualOutput> convertQualOutputList(ListOf<Output> listOfOutputs,
 			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
 		List<SBMLQualOutput> sbmlQualOutputList = new ArrayList<>();
@@ -569,17 +573,13 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		return sbmlQualOutputList;
 	}
 
-	private void setOutputProperties(Output source, SBMLQualOutput target,
-			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
-		if (source.isSetTransitionEffect()) target.setTransitionEffect(source.getTransitionEffect());
-		if (source.isSetOutputLevel()) target.setOutputLevel(source.getOutputLevel());
-		if (qualSpeciesLookupMap.containsKey(source.getQualitativeSpecies())) {
-			target.setQualSpecies(qualSpeciesLookupMap.get(source.getQualitativeSpecies()));
-		} else {
-			logger.debug("WARING: Output QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
-		}
-	}
-
+	/**
+	 * Convert a ListOf jSBML-Qual-Extension Input Entities
+	 * to SBMLQualInput entities
+	 * @param listOfInputsListOf ListOf ({@link org.sbml.jsbml.ListOf}) of the jSBML-Extension-Qual Input entities ({@link org.sbml.jsbml.ext.qual.Input})
+	 * @param qualSpeciesLookupMap A Map to lookup the SBMLQualSpecies referenced by the SBMLInput entities
+	 * @return List of SBMLQualInput entities with connected SBMLQualSpecies entities
+	 */
 	private List<SBMLQualInput> convertQualInputList(ListOf<Input> listOfInputs,
 			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
 		List<SBMLQualInput> sbmlQualInputList = new ArrayList<>();
@@ -592,25 +592,13 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		return sbmlQualInputList;
 	}
 
-	private void setInputProperties(Input source, SBMLQualInput target,
-			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
-		if (source.isSetSign()) target.setSign(source.getSign());
-		if (source.isSetTransitionEffect()) target.setTransitionEffect(source.getTransitionEffect());
-		if (source.isSetThresholdLevel()) target.setThresholdLevel(source.getThresholdLevel());
-		if (qualSpeciesLookupMap.containsKey(source.getQualitativeSpecies())) {
-			target.setQualSpecies(qualSpeciesLookupMap.get(source.getQualitativeSpecies()));
-		} else {
-			logger.debug("WARING: Input QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
-		}
-	}
-
-	private void setCompartmentProperties(Compartment source, SBMLCompartment target) {
-		target.setSpatialDimensions(source.getSpatialDimensions());
-		target.setSize(source.getSize());
-		target.setConstant(source.getConstant());
-		target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
-	}
-
+	/**
+	 * Convert a ListOf jSBML-Qual-Extension QualitativeSpecies entities
+	 * to SBMLQualSpecies entities
+	 * @param listOfQualitativeSpecies ListOf ({@link org.sbml.jsbml.ListOf}) of the jSBML-Extension-Qual QualitativeSpecies entities ({@link org.sbml.jsbml.ext.qual.QualitativeSpecies})
+	 * @param compartmentLookupMap A Map to lookup the correct SBMLCompartment which this CompartmentalizedSBase (from which QualitativeSpecies is derived) is located in
+	 * @return List of SBMLQualSpecies entities with connected compartment entities
+	 */
 	private List<SBMLQualSpecies> convertQualSpecies(ListOf<QualitativeSpecies> listOfQualitativeSpecies, Map<String, SBMLCompartment> compartmentLookupMap) {
 		List<SBMLQualSpecies> sbmlQualSpeciesList = new ArrayList<>();
 		for (QualitativeSpecies qualSpecies : listOfQualitativeSpecies) {
@@ -622,29 +610,46 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		}
 		return sbmlQualSpeciesList;
 	}
-
-
-
-	private void setCompartmentalizedSbaseProperties(CompartmentalizedSBase source, SBMLCompartmentalizedSBaseEntity target, Map<String, SBMLCompartment> compartmentLookupMap) {
-		target.setCompartmentMandatory(source.isCompartmentMandatory());
-		if(compartmentLookupMap.containsKey(source.getCompartment())) {
-			target.setCompartment(compartmentLookupMap.get(source.getCompartment()));
-		} else {
-			logger.debug("No matching compartment found for compartment " + source.getCompartment() + " in " + source.getName());
-		}
-	}
-
-	private void setQualSpeciesProperties(QualitativeSpecies source, SBMLQualSpecies target) {
+	
+/******************************************************************************************************************************
+ * 													Setter for SBML Core
+ ******************************************************************************************************************************/
+			
+	/**
+	 * Set Properties of SBMLCompartment entity (or any entity derived from it)
+	 * from a jSBML Compartment entity
+	 * @param source The Compartment entity from jSBML ({@link org.sbml.jsbml.Compartment}) from which the attributes are to be taken
+	 * @param target The SBMLComartment entity to which the attributes are to be applied to
+	 */
+	private void setCompartmentProperties(Compartment source, SBMLCompartment target) {
+		target.setSpatialDimensions(source.getSpatialDimensions());
+		target.setSize(source.getSize());
 		target.setConstant(source.getConstant());
-		/** 
-		 * initialLevel and maxLevel are not always set, so the jsbml entity has methods for checking if they are
-		 * Consider adding those to our Entities as well.
-		 */
-		
-		if (source.isSetInitialLevel()) target.setInitialLevel(source.getInitialLevel());
-		if (source.isSetMaxLevel()) target.setMaxLevel(source.getMaxLevel());
+		target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
 	}
 
+	/**
+	 * Set Properties of SBMLDocument entity (or any entity derived from it)
+	 * from a jSBML SBMLDocument entity
+	 * @param source The SBMLDocument entity from jSBML ({@link org.sbml.jsbml.SBMLDocument}) from which the attributes are to be taken
+	 * @param target The SBMLDocumentEntity entity to which the attributes are to be applied to
+	 * @param filename The original filename where the document was taken from
+	 */
+	private void setSBMLDocumentProperties(SBMLDocument source, SBMLDocumentEntity target,
+			String filename) {
+		target.setSbmlFileName(filename);
+		target.setSbmlLevel(source.getLevel());
+		target.setSbmlVersion(source.getVersion());
+		target.setSbmlXmlNamespace(source.getNamespace());
+	}
+
+	/**
+	 * Set Properties of SBMLModelEntity (or any entity derived from it)
+	 * from a jSBML Model Entity
+	 * @param model The Model entity from jSBML ({@link org.sbml.jsbml.Model}) from which the attributes are to be taken
+	 * @param sbmlDocument The SBMLDocumentEntity entity which encloses this SBMLModel, it will be referenced in {@linkplain sbmlModelEntity}
+	 * @param sbmlModelEntity The SBMLModelEntity to which the attributes are to be applied to
+	 */
 	private void setModelProperties(Model model, SBMLDocumentEntity sbmlDocument, SBMLModelEntity sbmlModelEntity) {
 		/**
 		 * The following string attributes contain IDRefs to 
@@ -665,6 +670,12 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		sbmlModelEntity.setEnclosingSBMLEntity(sbmlDocument);
 	}
 	
+	/**
+	 * Set Properties of SBMLSBaseEntity (or any entity derived from it)
+	 * from a jSBML SBase entity
+	 * @param source The SBase entity from jSBML ({@link org.sbml.jsbml.SBase}) from which the attributes are to be taken
+	 * @param target The SBMLSBaseEntity entity to which the attributes are to be applied to
+	 */
 	private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
 		target.setsBaseId(source.getId());
@@ -681,17 +692,98 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		if(source.getNumCVTerms() > 0) {
 			target.setCvTermList(source.getCVTerms());
 		}
-		
 	}
-
-	private void setSBMLDocumentProperties(SBMLDocument source, SBMLDocumentEntity target,
-			String filename) {
-		target.setSbmlFileName(filename);
-		target.setSbmlLevel(source.getLevel());
-		target.setSbmlVersion(source.getVersion());
-		target.setSbmlXmlNamespace(source.getNamespace());
-	}
-
 	
+	/**
+	 * Set Properties of SBMLCompartmentalizedSBaseEntity entity (or any entity derived from it)
+	 * from a jSBML CompartmentalizedSBase entity
+	 * @param source The CompartmentalizedSBase entity from jSBML ({@link org.sbml.jsbml.CompartmentalizedSBase}) from which the attributes are to be taken
+	 * @param target The SBMLCompartmentalizedSBaseEntity entity to which the attributes are to be applied to
+	 * @param compartmentLookupMap A Map to lookup the correct SBMLCompartment which this CompartmentalizedSBase is located in
+	 */
+	private void setCompartmentalizedSbaseProperties(CompartmentalizedSBase source, SBMLCompartmentalizedSBaseEntity target, Map<String, SBMLCompartment> compartmentLookupMap) {
+		target.setCompartmentMandatory(source.isCompartmentMandatory());
+		if(compartmentLookupMap.containsKey(source.getCompartment())) {
+			target.setCompartment(compartmentLookupMap.get(source.getCompartment()));
+		} else {
+			logger.debug("No matching compartment found for compartment " + source.getCompartment() + " in " + source.getName());
+		}
+	}
+	
+	/**
+	 * Set Properties of SBMLSpecies entity (or any entity derived from it)
+	 * from a jSBML Species entity
+	 * @param source The Species Entity from jSBML ({@link org.sbml.jsbml.Species)} from which the attributes are to be taken
+	 * @param target The SBMLSpecies Entity to which the attributes are to be applied
+	 */
+	private void setSpeciesProperties(Species source, SBMLSpecies target) {
+		target.setInitialAmount(source.getInitialAmount());
+		target.setInitialConcentration(source.getInitialConcentration());
+		target.setBoundaryCondition(source.getBoundaryCondition());
+		target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
+		target.setConstant(source.isConstant());	
+	}
+
+/******************************************************************************************************************************
+ * 													Setter for Extensions
+ ******************************************************************************************************************************/
+	
+/******************************************************************************************************************************
+ * 													Setter for Extension QUAL
+ ******************************************************************************************************************************/
+		
+	/**
+	 * Set Properties of SBMLQualSpecies entity (or any entity derived from it)
+	 * from a jSBML-Qual-Extension QualitativeSpecies entity
+	 * @param source The QualitativeSpecies entity from jSBML-Qual-Extension ({@link org.sbml.sbml.ext.qual.QualitativeSpecies}) from which the attributes are to be taken
+	 * @param target The SBMLQualSpecies entity to which the attributes are to be applied to
+	 */
+	private void setQualSpeciesProperties(QualitativeSpecies source, SBMLQualSpecies target) {
+		target.setConstant(source.getConstant());
+		/** 
+		 * initialLevel and maxLevel are not always set, so the jsbml entity has methods for checking if they are
+		 * Consider adding those to our Entities as well.
+		 */
+		
+		if (source.isSetInitialLevel()) target.setInitialLevel(source.getInitialLevel());
+		if (source.isSetMaxLevel()) target.setMaxLevel(source.getMaxLevel());
+	}
+
+	/**
+	 * Set Properties of SBMLQualInput entity (or any entity derived from it)
+	 * from a jSBML-Qual-Extension Input entity
+	 * @param source The Input entity from jSBML-Qual-Extension ({@link org.sbml.ext.qual.Input}) from which the attributes are to be taken
+	 * @param target The SBMLInput entity to which the attributes are to be applied to
+	 * @param qualSpeciesLookupMap A Map to lookup the SBMLQualSpecies entity this Input entity refers to
+	 */
+	private void setInputProperties(Input source, SBMLQualInput target,
+			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
+		if (source.isSetSign()) target.setSign(source.getSign());
+		if (source.isSetTransitionEffect()) target.setTransitionEffect(source.getTransitionEffect());
+		if (source.isSetThresholdLevel()) target.setThresholdLevel(source.getThresholdLevel());
+		if (qualSpeciesLookupMap.containsKey(source.getQualitativeSpecies())) {
+			target.setQualSpecies(qualSpeciesLookupMap.get(source.getQualitativeSpecies()));
+		} else {
+			logger.debug("WARING: Input QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
+		}
+	}
+	
+	/**
+	 * Set Properties of SBMLQualOutput entity (or any entity derived from it)
+	 * from a jSBML-Qual-Extension Output entity
+	 * @param source The Output entity from jSBML-Qual-Extension ({@link org.sbml.ext.qual.Output}) from which the attributes are to be taken
+	 * @param target The SBMLOutput entity to which the attributes are to be applied to
+	 * @param qualSpeciesLookupMap A Map to lookup the SBMLQualSpecies entity this Output entity refers to
+	 */
+	private void setOutputProperties(Output source, SBMLQualOutput target,
+			Map<String, SBMLQualSpecies> qualSpeciesLookupMap) {
+		if (source.isSetTransitionEffect()) target.setTransitionEffect(source.getTransitionEffect());
+		if (source.isSetOutputLevel()) target.setOutputLevel(source.getOutputLevel());
+		if (qualSpeciesLookupMap.containsKey(source.getQualitativeSpecies())) {
+			target.setQualSpecies(qualSpeciesLookupMap.get(source.getQualitativeSpecies()));
+		} else {
+			logger.debug("WARING: Output QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
+		}
+	}
 
 }
