@@ -1,7 +1,7 @@
 package org.tts.model;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.neo4j.ogm.annotation.Relationship;
+
 
 @NodeEntity(label = "SBML")
 public class SBMLDocumentEntity extends SBMLSBaseEntity {
@@ -14,9 +14,9 @@ public class SBMLDocumentEntity extends SBMLSBaseEntity {
 	
 	private String sbmlFileName;
 		
-	@Relationship(type = "CONTAINS", direction = Relationship.OUTGOING)
+	/*@Relationship(type = "CONTAINS", direction = Relationship.OUTGOING)
 	private SBMLModelEntity model;
-
+	 */
 	public String getSbmlXmlNamespace() {
 		return sbmlXmlNamespace;
 	}
@@ -49,12 +49,13 @@ public class SBMLDocumentEntity extends SBMLSBaseEntity {
 		this.sbmlFileName = sbmlFileName;
 	}
 
+	/*@JsonIgnore
 	public SBMLModelEntity getModel() {
 		return model;
 	}
 
 	public void setModel(SBMLModelEntity model) {
 		this.model = model;
-	}
+	}*/
 		
 }
