@@ -20,8 +20,8 @@ public class HelperQualSpeciesReturn {
 		if (this.speciesMap == null) {
 			this.speciesMap = new HashMap<>();
 		}
-		if(!this.speciesMap.containsKey(qualSpecies.getSBaseId())) {
-			this.speciesMap.put(qualSpecies.getSBaseId(), qualSpecies);
+		if(!this.speciesMap.containsKey(qualSpecies.getsBaseId())) {
+			this.speciesMap.put(qualSpecies.getsBaseId(), qualSpecies);
 		}
 	}
 	

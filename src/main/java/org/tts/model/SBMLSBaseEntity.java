@@ -36,28 +36,28 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	@Relationship(type="HAS", direction = Relationship.OUTGOING)
 	private List<SBMLSBaseExtension> extensions;
 	
-	/*@Relationship(type = "BQ", direction = Relationship.OUTGOING)
-	private List<BiomodelsQualifier> externalResources;
+	@Relationship(type = "BQ", direction = Relationship.OUTGOING)
+	private List<BiomodelsQualifier> biomodelQualifier;
 	
 	
-	public List<BiomodelsQualifier> getExternalResources() {
-		return externalResources;
+	public List<BiomodelsQualifier> getBiomodelQualifier() {
+		return biomodelQualifier;
 	}
 
-	public void setExternalResources(List<BiomodelsQualifier> externalResources) {
-		this.externalResources = externalResources;
+	public void setBiomodelQualifier(List<BiomodelsQualifier> biomodelQualifier) {
+		this.biomodelQualifier = biomodelQualifier;
 	}
 	
-	public boolean addExternalResource(BiomodelsQualifier newExternalResource) {
-		if (externalResources == null) {
-			externalResources = new ArrayList<>();
+	public boolean addBiomodelQualifier(BiomodelsQualifier newBiomodelQualifier) {
+		if (biomodelQualifier == null) {
+			biomodelQualifier = new ArrayList<>();
 		}
-		if (externalResources.contains(newExternalResource))
+		if (biomodelQualifier.contains(newBiomodelQualifier))
 		{ 
 			return true;
 		} else {
 			try {
-				this.externalResources.add(newExternalResource);
+				this.biomodelQualifier.add(newBiomodelQualifier);
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -65,7 +65,7 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 			}
 		}
 	}
-	*/
+	
 
 	public SBMLSBaseExtension getExtension(String nameOrURI) {
 		for (SBMLSBaseExtension plugin : this.extensions) {
@@ -90,11 +90,11 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 		}
 	}
 
-	public String getSBaseId() {
+	public String getsBaseId() {
 		return sBaseId;
 	}
 
-	public void setSBaseId(String sBaseId) {
+	public void setsBaseId(String sBaseId) {
 		this.sBaseId = sBaseId;
 	}
 

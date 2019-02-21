@@ -180,7 +180,7 @@ public class SBMLServiceImpl implements SBMLService {
 				speciesList.add(existingSBMLSpeciesGroup);
 			} else {
 				newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
-				newSBMLSpeciesGroup.setSBaseId(speciesSbaseName);
+				newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
 				newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
 				SBMLSpecies persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup);
 				speciesList.add(persistedNewSpeciesGroup);
@@ -200,13 +200,13 @@ public class SBMLServiceImpl implements SBMLService {
 			} else {
 				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(qualSpecies.getName());
 				if (existingSpecies != null) {
-					if(!qualSpeciesMap.containsKey(existingSpecies.getSBaseId())) {
-						qualSpeciesMap.put(existingSpecies.getSBaseId(), existingSpecies);
+					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
+						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
 					}	
 					if(!qualSpecies.getId().substring(5).equals(qualSpecies.getName())) {
 						// possibly this is the case when we have an entity duplicated in sbml, but deduplicate it here
 						// transitions might reference this duplicate entity and need to be pointed to the original one
-						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies.getSBaseId());
+						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies.getsBaseId());
 					}
 					
 				} else {
@@ -216,7 +216,7 @@ public class SBMLServiceImpl implements SBMLService {
 					setQualSpeciesProperties(qualSpecies, newQualSpecies);
 					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
 					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies);
-					qualSpeciesMap.put(persistedNewQualSpecies.getSBaseId(), persistedNewQualSpecies);
+					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				}
 			}
 		}
@@ -249,18 +249,18 @@ public class SBMLServiceImpl implements SBMLService {
 			}
 			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBySBaseName(qualSpeciesSbaseName);
 			if (existingSBMLQualSpeciesGroup != null) {
-				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getSBaseId())) {
-					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getSBaseId(), existingSBMLQualSpeciesGroup);
+				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
+					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);
 				}
 				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
 			} else {
 				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setSBaseId(qualSpeciesSbaseName);
+				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpeciesSbaseName));
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup);
-				qualSpeciesMap.put(persistedNewQualSpecies.getSBaseId(), persistedNewQualSpecies);
+				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			}
 		}
 		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
@@ -277,7 +277,7 @@ public class SBMLServiceImpl implements SBMLService {
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLCompartment compartment : sbmlCompartmentList) {
-			compartmentLookupMap.put(compartment.getSBaseId(), compartment);
+			compartmentLookupMap.put(compartment.getsBaseId(), compartment);
 		}
 		List<SBMLSpecies> persistedSBMLSpecies = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap);
 
@@ -386,7 +386,7 @@ public class SBMLServiceImpl implements SBMLService {
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLCompartment compartment : sbmlCompartmentList) {
-			compartmentLookupMap.put(compartment.getSBaseId(), compartment);
+			compartmentLookupMap.put(compartment.getsBaseId(), compartment);
 		}
 		
 		// build the extensions to link them
@@ -424,7 +424,7 @@ public class SBMLServiceImpl implements SBMLService {
 				List<SBMLQualSpecies> sbmlQualSpeciesList = convertQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
 				Map<String, SBMLQualSpecies> qualSpeciesLookupMap = new HashMap<>();
 				for (SBMLQualSpecies qualSpecies : sbmlQualSpeciesList) {
-					qualSpeciesLookupMap.put(qualSpecies.getSBaseId(), qualSpecies);
+					qualSpeciesLookupMap.put(qualSpecies.getsBaseId(), qualSpecies);
 				}
 				List<SBMLQualTransition> sbmlQualTransitionList = convertQualTransition(qualModelPlugin.getListOfTransitions(), qualSpeciesLookupMap);
 				logger.debug("Created QualSpecies and Transitions");
@@ -587,7 +587,7 @@ public class SBMLServiceImpl implements SBMLService {
 
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLSBaseEntity  compartment : sbmlCompartmentList) {
-			compartmentLookupMap.put(compartment.getSBaseId(), (SBMLCompartment) compartment);
+			compartmentLookupMap.put(compartment.getsBaseId(), (SBMLCompartment) compartment);
 		}
 		/**
 		 * Extension qual can be checked here and appropriate elements created
@@ -609,7 +609,7 @@ public class SBMLServiceImpl implements SBMLService {
 				List<SBMLQualSpecies> sbmlQualSpeciesList = convertQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
 				Map<String, SBMLQualSpecies> qualSpeciesLookupMap = new HashMap<>();
 				for (SBMLQualSpecies qualSpecies : sbmlQualSpeciesList) {
-					qualSpeciesLookupMap.put(qualSpecies.getSBaseId(), qualSpecies);
+					qualSpeciesLookupMap.put(qualSpecies.getsBaseId(), qualSpecies);
 				}
 				List<SBMLQualTransition> sbmlQualTransitionList = convertQualTransition(qualModelPlugin.getListOfTransitions(), qualSpeciesLookupMap);
 				logger.debug("Created QualSpecies and Transitions");
@@ -653,7 +653,7 @@ public class SBMLServiceImpl implements SBMLService {
 					case "qual":
 						SBMLQualModelExtension sbmlQualModelExtension = (SBMLQualModelExtension) sBaseExtension;
 						for(SBMLQualSpecies qualSpecies : sbmlQualModelExtension.getSbmlQualSpecies()) {
-							SBMLQualSpecies existingQualSpecies = (SBMLQualSpecies) sbmlCompartmentalizedSBaseEntityRepository.findBySBaseId(qualSpecies.getSBaseId(), 2);
+							SBMLQualSpecies existingQualSpecies = (SBMLQualSpecies) sbmlCompartmentalizedSBaseEntityRepository.findBySBaseId(qualSpecies.getsBaseId(), 2);
 							if(existingQualSpecies != null) {
 								// for now we do it the old way and only check for this attribute. might add more complex check later
 								qualSpecies.setId(existingQualSpecies.getId());
@@ -901,7 +901,7 @@ public class SBMLServiceImpl implements SBMLService {
 	
 	private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
-		target.setSBaseId(source.getId());
+		target.setsBaseId(source.getId());
 		target.setsBaseName(source.getName());
 		try {
 			target.setsBaseNotes(source.getNotesString());
