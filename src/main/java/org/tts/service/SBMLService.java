@@ -27,7 +27,7 @@ public interface SBMLService {
 	
 	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
 
-	public List<GraphBaseEntity> persistFastSimple(Model model);
+	//public List<GraphBaseEntity> persistFastSimple(Model model);
 	
 	public boolean clearDatabase();
 	
