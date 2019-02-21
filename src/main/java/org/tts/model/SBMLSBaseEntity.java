@@ -30,9 +30,9 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	@Transient
 	private List<CVTerm> cvTermList;
 	
-	@Relationship(type="IN_MODEL", direction = Relationship.OUTGOING)
+	/*@Relationship(type="IN_MODEL", direction = Relationship.OUTGOING)
 	private List<SBMLModelEntity> models = new ArrayList<>();
-	
+	*/
 	@Relationship(type="HAS", direction = Relationship.OUTGOING)
 	private List<SBMLSBaseExtension> extensions;
 	
@@ -139,14 +139,14 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 		this.cvTermList = cvTermList;
 	}
 
-	public List<SBMLModelEntity> getModels() {
+	/*public List<SBMLModelEntity> getModels() {
 		return models;
 	}
 
 	public void setModels(List<SBMLModelEntity> models) {
 		this.models = models;
 	}
-
+*/
 	public List<SBMLSBaseExtension> getExtensions() {
 		return extensions;
 	}
