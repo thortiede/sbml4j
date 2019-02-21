@@ -48,7 +48,7 @@ public class LoadDataController {
 	@Autowired
 	public LoadDataController(FileStorageService fileStorageService, 
 			FileCheckService fileCheckService, 
-			SBMLService sbmlService, 
+			@Qualifier("sbmlServiceImpl") SBMLService sbmlService, 
 			SBMLPersistenceService sbmlPersistenceService,
 			FileService fileService,
 			@Qualifier("simpleNodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService) {
@@ -61,6 +61,12 @@ public class LoadDataController {
 		this.nodeEdgeListService = nodeEdgeListService;
 	}
 	
+	/**
+	 * Old Endpoint for simple model (not the new flatSimple Model, but the intermediate deprecated simple model)
+	 * @param file
+	 * @return
+	 * @deprecated
+	 */
 	@RequestMapping(value="uploadSBMLSimple", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLSimple(@RequestParam("file") MultipartFile file) {
 		logger.info("Serving POST uploadSBMLSimple");
@@ -69,8 +75,10 @@ public class LoadDataController {
 		Model jsbmlModel = null;
 		try {
 			jsbmlModel = sbmlService.extractSBMLModel(file);
-			List<GraphBaseEntity> persistedEntities = sbmlService.persistFastSimple(jsbmlModel);
-			return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
+			// the old way, do not use this anymore
+			//List<GraphBaseEntity> persistedEntities = sbmlService.persistFastSimple(jsbmlModel);
+			//return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
+			return null;
 		} catch (XMLStreamException | IOException e) {
 			defaultReturnEntity.setEntityUUID("Problem extracting the model");
 			returnList.add(defaultReturnEntity);
