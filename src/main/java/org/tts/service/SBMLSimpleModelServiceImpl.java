@@ -38,7 +38,7 @@ import org.tts.repository.SBMLSimpleTransitionRepository;
 import org.tts.repository.SBMLSpeciesRepository;
 
 @Service
-public class SBMLSimpleFlatModelServiceImpl implements SBMLService {
+public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
