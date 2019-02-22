@@ -40,15 +40,15 @@ public class SBMLSBaseEntity extends GraphBaseEntity {
 	private List<BiomodelsQualifier> biomodelsQualifier;
 	
 	
-	public List<BiomodelsQualifier> getBiomodelQualifier() {
+	public List<BiomodelsQualifier> getBiomodelsQualifier() {
 		return biomodelsQualifier;
 	}
 
-	public void setBiomodelQualifier(List<BiomodelsQualifier> biomodelsQualifier) {
+	public void setBiomodelsQualifier(List<BiomodelsQualifier> biomodelsQualifier) {
 		this.biomodelsQualifier = biomodelsQualifier;
 	}
 	
-	public boolean addBiomodelQualifier(BiomodelsQualifier newBiomodelsQualifier) {
+	public boolean addBiomodelsQualifier(BiomodelsQualifier newBiomodelsQualifier) {
 		if (biomodelsQualifier == null) {
 			biomodelsQualifier = new ArrayList<>();
 		}
