@@ -6,12 +6,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Compartment;
+import org.sbml.jsbml.CompartmentalizedSBase;
 import org.sbml.jsbml.ListOf;
 import org.sbml.jsbml.Model;
+import org.sbml.jsbml.SBMLDocument;
+import org.sbml.jsbml.SBMLReader;
 import org.sbml.jsbml.SBase;
 import org.sbml.jsbml.Species;
 import org.sbml.jsbml.ext.qual.QualModelPlugin;
@@ -20,12 +24,16 @@ import org.sbml.jsbml.ext.qual.Transition;
 import org.sbml.jsbml.xml.XMLNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.GraphBaseEntity;
 import org.tts.model.HelperQualSpeciesReturn;
 import org.tts.model.SBMLCompartment;
+import org.tts.model.SBMLCompartmentalizedSBaseEntity;
+import org.tts.model.SBMLDocumentEntity;
+import org.tts.model.SBMLModelEntity;
 import org.tts.model.SBMLQualSpecies;
 import org.tts.model.SBMLQualSpeciesGroup;
 import org.tts.model.SBMLSBaseEntity;
@@ -47,6 +55,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
 	
+	@Autowired
+	public SBMLSimpleModelServiceImpl(SBMLSpeciesRepository sbmlSpeciesRepository,
+			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
+			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository) {
+		super();
+		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
+		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
+		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
+		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
+	}
+
 	private List<SBMLCompartment> getCompartmentList(Model model) {
 		List<SBMLCompartment> sbmlCompartmentList = new ArrayList<>();
 		for(Compartment compartment : model.getListOfCompartments()) {
@@ -88,16 +107,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 		}
 		return sbmlCompartmentList;
-	}
-	
-	private void setCompartmentProperties(Compartment compartment, SBMLCompartment sbmlCompartment) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void setSbaseProperties(Compartment compartment, SBMLCompartment sbmlCompartment) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private List<SBMLSpecies> buildAndPersistSBMLSpecies(ListOf<Species> speciesListOf, Map<String, SBMLCompartment> compartmentLookupMap) {
@@ -157,16 +166,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 		}
 		return speciesList;
-	}
-	
-	private void setSpeciesProperties(Species species, SBMLSpecies newSpecies) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private HelperQualSpeciesReturn buildAndPersistSBMLQualSpecies(ListOf<QualitativeSpecies> qualSpeciesListOf, Map<String, SBMLCompartment> compartmentLookupMap) {
@@ -251,12 +250,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return helperQualSpeciesReturn;
 	}
 	
-	private void setQualSpeciesProperties(QualitativeSpecies source,
-			SBMLQualSpecies target) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	private List<SBMLSimpleTransition> buildAndPersistTransitions(Map<String, String> qualSBaseLookupMap,
 			 ListOf<Transition> transitionListOf) {
 		List<SBMLSimpleTransition> transitionList = new ArrayList<>();
@@ -335,8 +328,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	@Override
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+		SBMLDocument doc = SBMLReader.read(file.getInputStream());
+		return doc.getModel();
 	}
 
 	@Override
@@ -396,4 +389,146 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return null;
 	}
 
+	/******************************************************************************************************************************
+	 * 													Setter for SBML Core
+	 ******************************************************************************************************************************/
+				
+		/**
+		 * Set Properties of SBMLCompartment entity (or any entity derived from it)
+		 * from a jSBML Compartment entity
+		 * @param source The Compartment entity from jSBML ({@link org.sbml.jsbml.Compartment}) from which the attributes are to be taken
+		 * @param target The SBMLComartment entity to which the attributes are to be applied to
+		 */
+		private void setCompartmentProperties(Compartment source, SBMLCompartment target) {
+			target.setSpatialDimensions(source.getSpatialDimensions());
+			target.setSize(source.getSize());
+			target.setConstant(source.getConstant());
+			target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
+		}
+
+		/**
+		 * Set Properties of SBMLDocument entity (or any entity derived from it)
+		 * from a jSBML SBMLDocument entity
+		 * @param source The SBMLDocument entity from jSBML ({@link org.sbml.jsbml.SBMLDocument}) from which the attributes are to be taken
+		 * @param target The SBMLDocumentEntity entity to which the attributes are to be applied to
+		 * @param filename The original filename where the document was taken from
+		 */
+		private void setSBMLDocumentProperties(SBMLDocument source, SBMLDocumentEntity target,
+				String filename) {
+			target.setSbmlFileName(filename);
+			target.setSbmlLevel(source.getLevel());
+			target.setSbmlVersion(source.getVersion());
+			target.setSbmlXmlNamespace(source.getNamespace());
+		}
+
+		/**
+		 * Set Properties of SBMLModelEntity (or any entity derived from it)
+		 * from a jSBML Model Entity
+		 * @param model The Model entity from jSBML ({@link org.sbml.jsbml.Model}) from which the attributes are to be taken
+		 * @param sbmlDocument The SBMLDocumentEntity entity which encloses this SBMLModel, it will be referenced in {@linkplain sbmlModelEntity}
+		 * @param sbmlModelEntity The SBMLModelEntity to which the attributes are to be applied to
+		 */
+		private void setModelProperties(Model model, SBMLDocumentEntity sbmlDocument, SBMLModelEntity sbmlModelEntity) {
+			/**
+			 * The following string attributes contain IDRefs to 
+			 * UnitDefinitions.
+			 * TODO: actually link to the UnitDefinition-Object here.
+			 * Since current queries don't use them, we skip them for now
+			 * and only save the ids to the graph
+			 * Once we load the UnitDefinitions
+			 * a) manual linking is possible
+			 * b) linking here on creation or on a second pass becomes possible.
+			 */
+			sbmlModelEntity.setSubstanceUnits(model.getSubstanceUnits());
+			sbmlModelEntity.setTimeUnits(model.getTimeUnits());
+			sbmlModelEntity.setVolumeUnits(model.getVolumeUnits());
+			sbmlModelEntity.setAreaUnits(model.getAreaUnits());
+			sbmlModelEntity.setLengthUnits(model.getLengthUnits());
+			sbmlModelEntity.setConversionFactor(model.getConversionFactor());
+			sbmlModelEntity.setEnclosingSBMLEntity(sbmlDocument);
+		}
+		
+		/**
+		 * Set Properties of SBMLSBaseEntity (or any entity derived from it)
+		 * from a jSBML SBase entity
+		 * @param source The SBase entity from jSBML ({@link org.sbml.jsbml.SBase}) from which the attributes are to be taken
+		 * @param target The SBMLSBaseEntity entity to which the attributes are to be applied to
+		 */
+		private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
+			target.setEntityUUID(UUID.randomUUID().toString());
+			target.setsBaseId(source.getId());
+			target.setsBaseName(source.getName());
+			try {
+				target.setsBaseNotes(source.getNotesString());
+			} catch (XMLStreamException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				logger.debug("Unable to generate Notes String for Entity " + source.getName());
+			}
+			target.setsBaseMetaId(source.getMetaId());
+			target.setsBaseSboTerm(source.getSBOTermID());
+			if(source.getNumCVTerms() > 0) {
+				target.setCvTermList(source.getCVTerms());
+			}
+		}
+		
+		/**
+		 * Set Properties of SBMLCompartmentalizedSBaseEntity entity (or any entity derived from it)
+		 * from a jSBML CompartmentalizedSBase entity
+		 * @param source The CompartmentalizedSBase entity from jSBML ({@link org.sbml.jsbml.CompartmentalizedSBase}) from which the attributes are to be taken
+		 * @param target The SBMLCompartmentalizedSBaseEntity entity to which the attributes are to be applied to
+		 * @param compartmentLookupMap A Map to lookup the correct SBMLCompartment which this CompartmentalizedSBase is located in
+		 */
+		private void setCompartmentalizedSbaseProperties(CompartmentalizedSBase source, SBMLCompartmentalizedSBaseEntity target, Map<String, SBMLCompartment> compartmentLookupMap) {
+			target.setCompartmentMandatory(source.isCompartmentMandatory());
+			if(compartmentLookupMap.containsKey(source.getCompartment())) {
+				target.setCompartment(compartmentLookupMap.get(source.getCompartment()));
+			} else {
+				logger.debug("No matching compartment found for compartment " + source.getCompartment() + " in " + source.getName());
+			}
+		}
+		
+		/**
+		 * Set Properties of SBMLSpecies entity (or any entity derived from it)
+		 * from a jSBML Species entity
+		 * @param source The Species Entity from jSBML ({@link org.sbml.jsbml.Species)} from which the attributes are to be taken
+		 * @param target The SBMLSpecies Entity to which the attributes are to be applied
+		 */
+		private void setSpeciesProperties(Species source, SBMLSpecies target) {
+			target.setInitialAmount(source.getInitialAmount());
+			target.setInitialConcentration(source.getInitialConcentration());
+			target.setBoundaryCondition(source.getBoundaryCondition());
+			target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
+			target.setConstant(source.isConstant());	
+		}
+
+	/******************************************************************************************************************************
+	 * 													Setter for Extensions
+	 ******************************************************************************************************************************/
+		
+	/******************************************************************************************************************************
+	 * 													Setter for Extension QUAL
+	 ******************************************************************************************************************************/
+			
+		/**
+		 * Set Properties of SBMLQualSpecies entity (or any entity derived from it)
+		 * from a jSBML-Qual-Extension QualitativeSpecies entity
+		 * @param source The QualitativeSpecies entity from jSBML-Qual-Extension ({@link org.sbml.sbml.ext.qual.QualitativeSpecies}) from which the attributes are to be taken
+		 * @param target The SBMLQualSpecies entity to which the attributes are to be applied to
+		 */
+		private void setQualSpeciesProperties(QualitativeSpecies source, SBMLQualSpecies target) {
+			target.setConstant(source.getConstant());
+			/** 
+			 * initialLevel and maxLevel are not always set, so the jsbml entity has methods for checking if they are
+			 * Consider adding those to our Entities as well.
+			 */
+			
+			if (source.isSetInitialLevel()) target.setInitialLevel(source.getInitialLevel());
+			if (source.isSetMaxLevel()) target.setMaxLevel(source.getMaxLevel());
+		}
+
+		
+
+	
+	
 }
