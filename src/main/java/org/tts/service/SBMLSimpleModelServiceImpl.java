@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.sbml.jsbml.CVTerm;
 import org.sbml.jsbml.Compartment;
 import org.sbml.jsbml.CompartmentalizedSBase;
 import org.sbml.jsbml.ListOf;
@@ -28,6 +29,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.BiomodelsQualifier;
+import org.tts.model.ExternalResourceEntity;
 import org.tts.model.GraphBaseEntity;
 import org.tts.model.HelperQualSpeciesReturn;
 import org.tts.model.SBMLCompartment;
@@ -40,6 +43,8 @@ import org.tts.model.SBMLSBaseEntity;
 import org.tts.model.SBMLSimpleTransition;
 import org.tts.model.SBMLSpecies;
 import org.tts.model.SBMLSpeciesGroup;
+import org.tts.repository.BiomodelsQualifierRepository;
+import org.tts.repository.ExternalResourceEntityRepository;
 import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
 import org.tts.repository.SBMLSimpleTransitionRepository;
@@ -54,16 +59,24 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	SBMLSBaseEntityRepository sbmlSBaseEntityRepository;
 	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
+	ExternalResourceEntityRepository externalResourceEntityRepository;
+	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	int SAVE_DEPTH = 1;
 	
 	@Autowired
 	public SBMLSimpleModelServiceImpl(SBMLSpeciesRepository sbmlSpeciesRepository,
 			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
-			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository) {
+			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
+			ExternalResourceEntityRepository externalResourceEntityRepository,
+			BiomodelsQualifierRepository biomodelsQualifierRepository) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
 		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
+		this.externalResourceEntityRepository = externalResourceEntityRepository;
+		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model) {
@@ -125,8 +138,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					setSbaseProperties(species, newSpecies);
 					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 					setSpeciesProperties(species, newSpecies);
+					
 					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies);
-					speciesList.add(persistedNewSpecies);
+					persistedNewSpecies.setCvTermList(species.getCVTerms());
+					newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies);
+					
+					speciesList.add(this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH));
 				}
 			}
 		}
@@ -161,7 +178,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
 				newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
 				newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
-				SBMLSpecies persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup);
+				SBMLSpecies persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
 				speciesList.add(persistedNewSpeciesGroup);
 			}
 		}
@@ -194,7 +211,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 					setQualSpeciesProperties(qualSpecies, newQualSpecies);
 					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
-					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies);
+					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				}
 			}
@@ -238,7 +255,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpeciesSbaseName));
-				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup);
+				
+				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			}
 		}
@@ -256,6 +274,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		for (Transition transition : transitionListOf) {
 			SBMLQualSpecies tmp = null;
 			String newTransitionId = "";
+			if(transition.getListOfInputs().size() > 1) {
+				logger.info("More than one Input in transition: " + transition.getName());
+			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
 				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
 			} else {
@@ -268,6 +289,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newTransitionId += "-";
 			newTransitionId += transition.getSBOTermID();
 			newTransitionId += "-";
+			if(transition.getListOfOutputs().size() > 1) {
+				logger.info("More than one Output in transition: " + transition.getName());
+			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
 				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
 			} else {
@@ -306,13 +330,51 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSimpleTransition.setTransitionId(newTransitionId);
 				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(inputName));
 				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(outputName));
-				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition);
+				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition, SAVE_DEPTH);
 				transitionList.add(persistedNewSimpleTransition);
 			}
 		}
 		return transitionList;
 	}
 	
+	/**
+	 * @param externalResources
+	 * @param externalResourceEntityLookupMap
+	 * @param biologicalModifierRelationships
+	 * @param sBaseEntity
+	 */
+	private SBMLSBaseEntity buildAndPersistExternalResourcesForSBaseEntity(SBMLSBaseEntity sBaseEntity) {
+		SBMLSBaseEntity updatedSBaseEntity = sBaseEntity;
+		for (CVTerm cvTerm : sBaseEntity.getCvTermList()) {
+			//createExternalResources(cvTerm, qualSpecies);
+			for (String resource : cvTerm.getResources()) {
+				// build a BiomodelsQualifier RealtionshopEntity
+				BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
+				newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+				newBiomodelsQualifier.setType(cvTerm.getQualifierType());
+				newBiomodelsQualifier.setQualifier(cvTerm.getQualifier());
+				newBiomodelsQualifier.setStartNode(updatedSBaseEntity);
+				
+				// build the ExternalResource or link to existing one
+				ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
+				if(existingExternalResourceEntity != null) {
+					newBiomodelsQualifier.setEndNode(existingExternalResourceEntity);
+				} else {
+					ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
+					newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+					newExternalResourceEntity.setUri(resource);
+					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
+					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
+					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
+				}
+				BiomodelsQualifier persistedNewBiomodelsQualifier = biomodelsQualifierRepository.save(newBiomodelsQualifier, 0);
+				updatedSBaseEntity.addBiomodelsQualifier(persistedNewBiomodelsQualifier);
+				updatedSBaseEntity = this.sbmlSBaseEntityRepository.save(updatedSBaseEntity, 0);
+				//updatedSBaseEntity.addBiomodelsQualifier(newBiomodelsQualifier);
+			}
+		}
+		return updatedSBaseEntity;
+	}	
 	
 	@Override
 	public boolean isValidSBML(File file) {
