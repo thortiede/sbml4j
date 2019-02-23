@@ -46,5 +46,8 @@ public class FlatSpecies extends SBMLCompartmentalizedSBaseEntity {
 	 @Relationship(type = "unknownFromSource")
 	 List<FlatSpecies> unknownFromSourceSpeciesList; // no SBO, eg. hsa05133 qual_K
 	 
-	
+	// add one function like
+	// addRelationship(sbo-term, flatspecies)
+	//     switch case depending on sbo term, add to that list
+	 // 	don't forget to initialise a list if nothing is in it yet.
 }
