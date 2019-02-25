@@ -61,6 +61,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	HttpService httpService;
 	
 	int SAVE_DEPTH = 1;
 	
@@ -69,7 +70,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
 			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
 			ExternalResourceEntityRepository externalResourceEntityRepository,
-			BiomodelsQualifierRepository biomodelsQualifierRepository) {
+			BiomodelsQualifierRepository biomodelsQualifierRepository,
+			HttpService httpService) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
@@ -77,6 +79,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
 		this.externalResourceEntityRepository = externalResourceEntityRepository;
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
+		this.httpService = httpService;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model) {
@@ -363,6 +366,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
 					newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
 					newExternalResourceEntity.setUri(resource);
+					if (resource.contains("kegg.genes")) {
+						newExternalResourceEntity.setType("kegg.genes");
+						setKeggGeneNames(resource, newExternalResourceEntity);
+					}
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
 					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
@@ -376,6 +383,25 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return updatedSBaseEntity;
 	}	
 	
+	private boolean setKeggGeneNames(String resource, ExternalResourceEntity entity) {
+		
+		List<String> keggGeneNames = httpService.getGeneNamesFromKeggURL(resource);
+		if (keggGeneNames != null) {
+			if (!keggGeneNames.isEmpty()) {
+				entity.setName(keggGeneNames.remove(0)); // remove returns the element it removes, so it becomes the name and keggGeneNames holds all secondary names
+			}
+			if (!keggGeneNames.isEmpty()) {
+				String[] secondaryNames = new String[keggGeneNames.size()];
+				for (int i = 0; i != keggGeneNames.size(); i++) {
+					secondaryNames[i] = keggGeneNames.get(i);
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	@Override
 	public boolean isValidSBML(File file) {
 		// TODO Auto-generated method stub
