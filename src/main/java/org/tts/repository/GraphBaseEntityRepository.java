@@ -4,7 +4,6 @@ import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.GraphBaseEntity;
 import org.tts.model.NodeNodeEdge;
-import org.tts.model.SBMLCompartment;
 
 public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 
@@ -12,7 +11,52 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 
 	boolean existsByEntityUUID(String entityUUID);
 
-	@Query(value = "match (e2:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-(s2:SBMLSpecies)-[:IS]-(q2:SBMLQualSpecies)-[:IS_INPUT]-(t:SBMLSimpleTransition)-[:IS_OUTPUT]-(q:SBMLQualSpecies)-[:IS]-(s:SBMLSpecies)-[:BQ {qualifier: {1}}]-(e:ExternalResourceEntity) where e.type = \"kegg.genes\" and e2.type = \"kegg.genes\" return e2.name as node1, t.sBaseSboTerm as edge, e.name as node2")
-	Iterable<NodeNodeEdge> getInteractionCustom1(String inputExternalRel, String outputExternalRel);
+	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
+					"(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)" +
+					"-[:IS_INPUT]-(t:SBMLSimpleTransition)-[:IS_OUTPUT]-" +
+					"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
+					"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
+					"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
+					"RETURN e1.name AS node1, "+
+						"t.sBaseSboTerm AS edge, "+
+						"e2.name AS node2")
+	Iterable<NodeNodeEdge> getInteractionCustomNoGroup(String inputExternalRel, String outputExternalRel);
 
+	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
+			"(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)" +
+			"-[:HAS_GROUP_MEMBER]-(g:SBMLQualSpeciesGroup)" +
+			"-[:IS_INPUT]-(t:SBMLSimpleTransition)-[:IS_OUTPUT]-" +
+			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
+			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
+			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
+			"RETURN e1.name AS node1, "+
+				"t.sBaseSboTerm AS edge, "+
+				"e2.name AS node2")
+	Iterable<NodeNodeEdge> getInteractionCustomGroupOnInput(String inputExternalRel, String outputExternalRel);
+	
+	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
+			"(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)" +
+			"-[:IS_INPUT]-(t:SBMLSimpleTransition)-[:IS_OUTPUT]-" +
+			"(g:SBMLQualSpeciesGroup)-[:HAS_GROUP_MEMBER]-" +
+			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
+			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
+			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
+			"RETURN e1.name AS node1, "+
+				"t.sBaseSboTerm AS edge, "+
+				"e2.name AS node2")
+	Iterable<NodeNodeEdge> getInteractionCustomGroupOnOutput(String inputExternalRel, String outputExternalRel);
+	
+	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
+			"(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)" +
+			"-[:HAS_GROUP_MEMBER]-(g:SBMLQualSpeciesGroup)" +
+			"-[:IS_INPUT]-(t:SBMLSimpleTransition)-[:IS_OUTPUT]-" +
+			"(g:SBMLQualSpeciesGroup)-[:HAS_GROUP_MEMBER]-" +
+			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
+			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
+			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
+			"RETURN e1.name AS node1, "+
+				"t.sBaseSboTerm AS edge, "+
+				"e2.name AS node2")
+	Iterable<NodeNodeEdge> getInteractionCustomGroupOnBoth(String inputExternalRel, String outputExternalRel);
+	
 }
