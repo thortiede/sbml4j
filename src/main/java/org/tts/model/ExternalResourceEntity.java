@@ -19,6 +19,12 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 	
 	private String shortIdentifierFromUri;
 	
+	private String name;
+	
+	private String[] secondaryNames;
+	
+	private String type;
+	
 	@Relationship(type = "BQ", direction = Relationship.INCOMING)
 	private List<BiomodelsQualifier> relatedSBMLSBaseEntities;
 
@@ -52,6 +58,30 @@ public class ExternalResourceEntity extends GraphBaseEntity {
 
 	public void setShortIdentifierFromUri(String shortIdentifierFromUri) {
 		this.shortIdentifierFromUri = shortIdentifierFromUri;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String[] getSecondaryNames() {
+		return secondaryNames;
+	}
+
+	public void setSecondaryNames(String[] secondaryNames) {
+		this.secondaryNames = secondaryNames;
+	}
+	
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	@JsonIgnore
