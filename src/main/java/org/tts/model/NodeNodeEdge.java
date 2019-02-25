@@ -1,12 +1,13 @@
 package org.tts.model;
 
+import org.springframework.data.neo4j.annotation.QueryResult;
 
-
+@QueryResult
 public class NodeNodeEdge {
 
-	private String node1;
-	private String node2;
-	private String edge;
+	public String node1;
+	public String node2;
+	public String edge;
 	
 	public NodeNodeEdge() {
 		
