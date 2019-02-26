@@ -45,6 +45,7 @@ import org.tts.model.SBMLSpecies;
 import org.tts.model.SBMLSpeciesGroup;
 import org.tts.repository.BiomodelsQualifierRepository;
 import org.tts.repository.ExternalResourceEntityRepository;
+import org.tts.repository.GraphBaseEntityRepository;
 import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
 import org.tts.repository.SBMLSimpleTransitionRepository;
@@ -61,6 +62,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	GraphBaseEntityRepository graphBaseEntityRepository;
 	HttpService httpService;
 	
 	int SAVE_DEPTH = 1;
@@ -71,6 +73,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
 			ExternalResourceEntityRepository externalResourceEntityRepository,
 			BiomodelsQualifierRepository biomodelsQualifierRepository,
+			GraphBaseEntityRepository graphBaseEntityRepository,
 			HttpService httpService) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
@@ -79,6 +82,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
 		this.externalResourceEntityRepository = externalResourceEntityRepository;
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
+		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.httpService = httpService;
 	}
 
@@ -467,8 +471,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	@Override
 	public boolean clearDatabase() {
-		// TODO Auto-generated method stub
-		return false;
+		this.graphBaseEntityRepository.deleteAll();
+		if (((List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll()).isEmpty()) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	@Override
