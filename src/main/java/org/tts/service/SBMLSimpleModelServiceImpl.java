@@ -478,8 +478,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	@Override
 	public List<GraphBaseEntity> getAllEntities() {
-		// TODO Auto-generated method stub
-		return null;
+		return (List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll();
 	}
 
 	/******************************************************************************************************************************
