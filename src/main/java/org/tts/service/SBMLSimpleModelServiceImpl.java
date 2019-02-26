@@ -163,7 +163,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				if(ulNode.getChild(i).getChildCount() > 0) {
 					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
 						String chars = ulNode.getChild(i).getChild(j).getCharacters();
-						logger.info(chars);
+						logger.debug(chars);
 						groupMemberSymbols.add(chars);
 					}
 				}
@@ -225,9 +225,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 		// now build the group nodes
 		for (QualitativeSpecies qualSpecies : groupQualSpeciesList) {
-			if (qualSpecies.getId().equals("qual_Group_4")) {
-				logger.debug("Group 4");
-			}
 			SBMLQualSpeciesGroup newSBMLQualSpeciesGroup = new SBMLQualSpeciesGroup();
 			List<String> groupMemberSymbols = new ArrayList<>();
 			XMLNode ulNode = qualSpecies.getNotes().getChildElement("body", "http://www.w3.org/1999/xhtml").getChildElement("p", null).getChildElement("ul", null);
@@ -235,7 +232,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				if(ulNode.getChild(i).getChildCount() > 0) {
 					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
 						String chars = ulNode.getChild(i).getChild(j).getCharacters();
-						logger.info(chars);
+						logger.debug(chars);
 						groupMemberSymbols.add(chars);
 					}
 				}
@@ -290,7 +287,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
 			}
 			if(tmp == null) {
-				logger.debug("What is going on?");
+				logger.debug("Tmp is null!!");
 			}
 			newTransitionId += tmp.getsBaseName();
 			newTransitionId += "-";
