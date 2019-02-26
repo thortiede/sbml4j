@@ -40,7 +40,7 @@ public class HttpServiceImpl implements HttpService {
 			String[] splitted;
 			String lastLine = "";
 			while ((inputLine = streamReader.readLine()) != null) {
-				logger.info(inputLine);
+				logger.debug(inputLine);
 				if(inputLine.startsWith("NAME")) {
 					lastLine = "NAME";
 					splitted = inputLine.split("\\s+");
