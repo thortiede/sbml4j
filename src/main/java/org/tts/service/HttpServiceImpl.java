@@ -31,7 +31,8 @@ public class HttpServiceImpl implements HttpService {
 			BufferedReader streamReader = null;
 			 
 			if (status > 299) {
-			    streamReader = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+			    logger.error("Cannot get kegg.genes information for " + identifier + ": " + con.getResponseMessage());
+			    return geneNames;
 			} else {
 				streamReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
 			}
