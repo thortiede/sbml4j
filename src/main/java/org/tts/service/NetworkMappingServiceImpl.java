@@ -44,7 +44,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						int i = 0;
 						loopNNE = getTransitionsBetween(bqType1, bqType2, functionName);
 						for (NodeNodeEdge nne : loopNNE) {
-							allInteractions.addListEntry(nne.getNode1(), nne.getNode2(), nne.getEdge());
+							allInteractions.addListEntry(nne.getNode1(), nne.getNode2(), org.sbml.jsbml.SBO.getTerm(nne.getEdge()).getName());
 							i++;
 						}
 						logger.info(bqType1 + "_" + bqType2 + "_" + functionName + "_interactions: " + i);
