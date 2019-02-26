@@ -69,7 +69,7 @@ public class LoadDataController {
 	 */
 	@RequestMapping(value="uploadSBMLSimple", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLSimple(@RequestParam("file") MultipartFile file) {
-		logger.info("Serving POST uploadSBMLSimple");
+		logger.info("Serving POST uploadSBMLSimple for File " + file.getOriginalFilename());
 		List<GraphBaseEntity> returnList = new ArrayList<>();
 		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
 		Model jsbmlModel = null;
@@ -77,6 +77,7 @@ public class LoadDataController {
 			jsbmlModel = sbmlService.extractSBMLModel(file);
 			// the old way, do not use this anymore
 			List<GraphBaseEntity> persistedEntities = sbmlService.buildAndPersist(jsbmlModel, file.getOriginalFilename());
+			logger.info("Finished Persisting for POST uploadSBMLSimple for File " + file.getOriginalFilename());
 			return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
 		} catch (XMLStreamException | IOException e) {
 			defaultReturnEntity.setEntityUUID("Problem extracting the model");
@@ -123,6 +124,7 @@ public class LoadDataController {
 	
 	@RequestMapping(value="/allEntities", method=RequestMethod.DELETE)
 	public ResponseEntity<String> deleteAllEntites() {
+		logger.info("Serving DELETE allEntities");
 		if(this.sbmlService.clearDatabase()) {
 			return new ResponseEntity<String>("Database is clear!", HttpStatus.OK);
 		} else {
