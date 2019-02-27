@@ -9,5 +9,7 @@ public interface NetworkMappingService {
 	public NodeEdgeList getProteinInteractionNetwork(List<String> interactionTypes);
 	
 	public NodeEdgeList getProteinInteractionNetwork();
+
+	public List<String> getTransitionTypes();
 	
 }
