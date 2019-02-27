@@ -60,44 +60,25 @@ public class LoadDataController {
 		this.fileService = fileService;
 		this.nodeEdgeListService = nodeEdgeListService;
 	}
+	/** 
+	 * All Entity Endpoints
+	 */
 	
 	/**
-	 * Endpoint for simple model
-	 * @param file
-	 * @return
-	 * 
+	 * GET /allEntities
+	 * @return all found Nodes that are derived from GraphBaseEntity (all Nodes at this point)
 	 */
-	@RequestMapping(value="uploadSBMLSimple", method=RequestMethod.POST)
-	public ResponseEntity<List<GraphBaseEntity>> uploadSBMLSimple(@RequestParam("file") MultipartFile file) {
-		logger.info("Serving POST uploadSBMLSimple for File " + file.getOriginalFilename());
-		List<GraphBaseEntity> returnList = new ArrayList<>();
-		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
-		Model jsbmlModel = null;
-		try {
-			jsbmlModel = sbmlService.extractSBMLModel(file);
-			// the old way, do not use this anymore
-			List<GraphBaseEntity> persistedEntities = sbmlService.buildAndPersist(jsbmlModel, file.getOriginalFilename());
-			logger.info("Finished Persisting for POST uploadSBMLSimple for File " + file.getOriginalFilename());
-			return new ResponseEntity<List<GraphBaseEntity>>(persistedEntities, HttpStatus.OK);
-		} catch (XMLStreamException | IOException e) {
-			defaultReturnEntity.setEntityUUID("Problem extracting the model");
-			returnList.add(defaultReturnEntity);
-			e.printStackTrace();
-			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
-		} catch (Exception e) {
-			defaultReturnEntity.setEntityUUID("Problem occured: " + e.getMessage());
-			returnList.add(defaultReturnEntity);
-			e.printStackTrace();
-			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
-		}
-		
-	}
-	
 	@RequestMapping(value="/allEntities", method=RequestMethod.GET)
 	public ResponseEntity<List<GraphBaseEntity>> showAllEntites() {
 		logger.info("Serving GET allEntities");
 		return new ResponseEntity<List<GraphBaseEntity>>(sbmlService.getAllEntities(), HttpStatus.OK);
 	}
+	
+	/**
+	 * DELETE /allEntities
+	 * Attempts to remove all Nodes and their relationships from the database. Does a check after issuing delete
+	 * @return String declaring whether database is free of nodes/relationships
+	 */
 	
 	@RequestMapping(value="/allEntities", method=RequestMethod.DELETE)
 	public ResponseEntity<String> deleteAllEntites() {
@@ -109,7 +90,13 @@ public class LoadDataController {
 		}
 	}
 	
-	@RequestMapping(value = "/uploadSBML", method=RequestMethod.POST)
+	/**
+	 * POST /sbml
+	 * Endpoint to upload a sbml file, extract the model and persist the contents in the simple model representation
+	 * @param file The file holding the sbml model to be persisted
+	 * @return all Entities as they were persisted (or connected if already present) as a result persisting the model
+	 */
+	@RequestMapping(value = "/sbml", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
 		// can we access the files name and ContentType?
 		List<GraphBaseEntity> returnList = new ArrayList<>();
@@ -119,6 +106,7 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
+		logger.info("Serving POST uploadSBML for File " + file.getOriginalFilename());
 		// is Content Type xml?
 		if(!fileCheckService.isContentXML(file)) {
 			defaultReturnEntity.setEntityUUID("File ContentType is not application/xml");
@@ -146,13 +134,7 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
-		
 		List<GraphBaseEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, file.getOriginalFilename());
-		
-		//SBMLDocumentEntity sbmlDocumentEntity = sbmlService.getSBMLDocument(sbmlModel, file.getOriginalFilename());
-		
-		
-		
 		return new ResponseEntity<List<GraphBaseEntity>>(resultSet, HttpStatus.OK);
 	}
 	
