@@ -34,7 +34,7 @@ import org.tts.service.SBMLPersistenceService;
 import org.tts.service.SBMLService;
 
 @RestController
-public class LoadDataController {
+ public class LoadDataControllerFull {
 
 	FileCheckService fileCheckService;
 	FileStorageService fileStorageService;
@@ -46,12 +46,12 @@ public class LoadDataController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
-	public LoadDataController(FileStorageService fileStorageService, 
+	public LoadDataControllerFull(FileStorageService fileStorageService, 
 			FileCheckService fileCheckService, 
 			@Qualifier("SBMLFullModelServiceImpl") SBMLService sbmlService, 
 			SBMLPersistenceService sbmlPersistenceService,
 			FileService fileService,
-			@Qualifier("NodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService) {
+			@Qualifier("nodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService) {
 		super();
 		this.fileStorageService = fileStorageService;
 		this.fileCheckService = fileCheckService;
