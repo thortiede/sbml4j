@@ -75,5 +75,13 @@ public class NetworkMappingController {
 	            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
 	            .body(resource);
 	}
-	
+	/**
+	 * Possible approach to realizing filters on network mappings that should be REST compliant (needs to be verified)
+	 * example /mapping/ppi
+	 * workflow:
+	 * 1. GET /mapping/ppi/transitionTypes (or a better endpoint name for transitionTypes) to get list of available filters
+	 * 2. POST /mapping/ppi/filter with JSON Payload to set filtering options, generate id for those filter combinations and send to user (with link to endpoint HATEOAS)
+	 * 3. GET /mapping/ppi/filters show available filter combinations with description and id (always have standard mapping with all and maybe some most used cases?)
+	 * 4. GET /mapping/ppi/filter/{id} or /mapping/ppi/filter?id={id} to get the ppi network with those filters applied 
+	 */
 }
