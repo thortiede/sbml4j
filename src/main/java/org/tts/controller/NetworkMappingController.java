@@ -1,6 +1,5 @@
 package org.tts.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -38,12 +37,23 @@ public class NetworkMappingController {
 		this.fileStorageService = fileStorageService;
 	}
 
+	/**
+	 * GET /transitionTypes
+	 * Uses custom Cypher Query to extract the types of transitions between species are present in the model
+	 * These names can be used to filter GET /mapping/ppi
+	 * @return the names of the transition types found in the network in this database
+	 */
 	@RequestMapping(value = "/transitionTypes", method=RequestMethod.GET)
 	public ResponseEntity<List<String>> getTransitionTypes() {
 		List<String> transitionTypes = networkMappingService.getTransitionTypes();
 		return new ResponseEntity<List<String>>(transitionTypes, HttpStatus.OK);
 	}
  	
+	/**
+	 * GET /mapping/ppi
+	 * Queries the database with custom Cypher Queries to get all interactions between QualitativeSpecies
+	 * @return SIF formatted List (node1 transition node2) for further processing
+	 */
 	@RequestMapping(value="/mapping/ppi", method=RequestMethod.GET)
 	public ResponseEntity<Resource> getMappingPPI() {
 		
