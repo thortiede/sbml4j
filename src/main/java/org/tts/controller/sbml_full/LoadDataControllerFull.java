@@ -183,5 +183,29 @@ import org.tts.service.SBMLService;
 		
 		return new ResponseEntity<List<GraphBaseEntity>>((List<GraphBaseEntity>) allPersistedEntites, HttpStatus.OK);
 	}
+
+	@RequestMapping(value="/simple/transitionList", method=RequestMethod.GET)
+	@Deprecated
+	public ResponseEntity<Resource> getTransitionList() {
+		
+		logger.info("Requesting transitionList");
+		NodeEdgeList fullList = nodeEdgeListService.getFullNet();
+		SifFile sifFile = fileService.getSifFromNodeEdgeList(fullList);
+		
+        //Resource resource = fileStorageService.loadFileAsResource(fileName);
+        Resource resource = fileStorageService.getSifAsResource(sifFile);
+        logger.info("Fetched sifResource");
+        // Try to determine file's content type
+        String contentType = null;
+      
+        // only generic contentType as we are not dealing with an actual file serverside,
+        // but the file shall only be created at the client side.
+        contentType = "application/octet-stream";
+        String filename = "unnamed";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(resource);
+	}
 	
 }
