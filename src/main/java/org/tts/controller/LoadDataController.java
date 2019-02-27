@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -99,7 +100,7 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
-		logger.info("Serving POST uploadSBML for File " + file.getOriginalFilename());
+		logger.info("Serving POST /sbml for File " + file.getOriginalFilename());
 		// is Content Type xml?
 		if(!fileCheckService.isContentXML(file)) {
 			defaultReturnEntity.setEntityUUID("File ContentType is not application/xml");
@@ -128,6 +129,7 @@ public class LoadDataController {
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		List<GraphBaseEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, file.getOriginalFilename());
+		logger.info("Peristed " + resultSet.size() + " entities for file " + file.getOriginalFilename());
 		return new ResponseEntity<List<GraphBaseEntity>>(resultSet, HttpStatus.OK);
 	}
 	
