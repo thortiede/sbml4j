@@ -289,7 +289,7 @@ public class BasicRestController {
 		return new ResponseEntity<List<Map<String, String>>>(allTransitionSimple, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value="/transitionTypes")
+	//@RequestMapping(value="/transitionTypes")
 	public ResponseEntity<Map<String, String>> getTransitionTypesRaw() {
 		Map<String, String> types = new HashMap<String, String>();
 		List<GraphTransition> transitions = transitionService.findAll();
