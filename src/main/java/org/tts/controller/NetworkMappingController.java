@@ -1,6 +1,8 @@
 package org.tts.controller;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +45,20 @@ public class NetworkMappingController {
 	 * These names can be used to filter GET /mapping/ppi
 	 * @return the names of the transition types found in the network in this database
 	 */
-	@RequestMapping(value = "/transitionTypes", method=RequestMethod.GET)
-	public ResponseEntity<List<String>> getTransitionTypes() {
+	@RequestMapping(value = "/mapping/ppi/filterOptions", method=RequestMethod.GET)
+	public ResponseEntity<Map<String, List<String>>> getFilterOptions() {
+		Map<String, List<String>> filterOptions = new HashMap<>();
+		// Types of Transitions
 		List<String> transitionTypes = networkMappingService.getTransitionTypes();
-		return new ResponseEntity<List<String>>(transitionTypes, HttpStatus.OK);
+		filterOptions.put("transitionTypes", transitionTypes);
+		
+		// Types of Nodes
+		// TODO: get types of Nodes to allow filtering
+		
+		// TODO: more filter options?
+		
+		// return options
+		return new ResponseEntity<Map<String, List<String>>>(filterOptions, HttpStatus.OK);
 	}
  	
 	/**
