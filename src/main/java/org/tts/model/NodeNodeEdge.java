@@ -1,12 +1,13 @@
 package org.tts.model;
 
+import org.springframework.data.neo4j.annotation.QueryResult;
 
-
+@QueryResult
 public class NodeNodeEdge {
 
-	private String node1;
-	private String node2;
-	private String edge;
+	public String node1;
+	public String node2;
+	public String edge;
 	
 	public NodeNodeEdge() {
 		
@@ -40,6 +41,16 @@ public class NodeNodeEdge {
 
 	public void setEdge(String edge) {
 		this.edge = edge;
+	}
+	
+	public boolean equals(NodeNodeEdge other) {
+		if(			this.node1.equals(other.getNode1()) 
+				&& 	this.node2.equals(other.getNode2()) 
+				&& 	this.edge.equals(other.getEdge())) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 		
 }

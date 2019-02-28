@@ -1,6 +1,5 @@
-package org.tts.controller;
+package org.tts.controller.graph_old;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.Resource;
 import org.springframework.hateoas.Link;
 import org.springframework.http.HttpHeaders;
@@ -44,6 +44,7 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 @RestController
 public class BasicRestController {
 
+	
 	private NodeEdgeListService nodeEdgeListService;
 	
 	private FileStorageService fileStorageService;
@@ -61,7 +62,7 @@ public class BasicRestController {
 	
 	@Autowired
 	public BasicRestController(
-			NodeEdgeListService nodeEdgeListService, 
+			@Qualifier("nodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService, 
 			FileStorageService fileStorageService,
 			FileService fileService,
 			ReactionService reactionService,
@@ -100,7 +101,8 @@ public class BasicRestController {
 		
 		logger.info("Requesting sifNet");
         //Resource resource = fileStorageService.loadFileAsResource(fileName);
-        Resource resource = fileStorageService.getSifAsResource(fileService.getFullNet());
+		
+        Resource resource = fileStorageService.getSifAsResource(fileService.getSifFromNodeEdgeList(nodeEdgeListService.getFullNet()));
         logger.info("Fetched sifResource");
         // Try to determine file's content type
         String contentType = null;
@@ -287,7 +289,7 @@ public class BasicRestController {
 		return new ResponseEntity<List<Map<String, String>>>(allTransitionSimple, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value="/transitionTypes")
+	//@RequestMapping(value="/transitionTypes")
 	public ResponseEntity<Map<String, String>> getTransitionTypesRaw() {
 		Map<String, String> types = new HashMap<String, String>();
 		List<GraphTransition> transitions = transitionService.findAll();
