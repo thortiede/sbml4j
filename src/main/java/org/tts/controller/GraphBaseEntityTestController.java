@@ -33,7 +33,7 @@ public class GraphBaseEntityTestController {
 	}
 	
 	
-	@RequestMapping(value = "/testBaseEntity", method=RequestMethod.GET)	
+	@RequestMapping(value = "/testBaseEntity/{uuid}", method=RequestMethod.GET)	
 	public GraphBaseEntity getNewBaseEntity(@PathVariable String uuid) {
 		
 		return graphBaseEntityService.findByEntityUUID(uuid);
