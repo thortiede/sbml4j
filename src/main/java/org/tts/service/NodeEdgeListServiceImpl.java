@@ -4,18 +4,18 @@ package org.tts.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.GraphModel;
 import org.tts.model.GraphReaction;
 import org.tts.model.GraphTransition;
 import org.tts.model.NodeEdgeList;
 import org.tts.repository.ModelRepository;
 import org.tts.repository.ReactionRepository;
 import org.tts.repository.TransitionRepository;
-import uk.ac.ebi.sbo.ws.client.SBOLink;
+
 
 
 @Service
@@ -24,7 +24,7 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 	private ModelRepository modelRepository;
 	private TransitionRepository transitionRepository;
 	private ReactionRepository reactionRepository;
-	private SBOLink sbolink;
+	
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -33,7 +33,6 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 		this.modelRepository = modelRepository;
 		this.transitionRepository = transistionRepository;
 		this.reactionRepository = reactionRepository;
-		this.sbolink = new SBOLink();
 	}
 	
 	
@@ -85,7 +84,7 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 	private String translateSBOTerm(String sbmlSBOTerm) {
 		if (sbmlSBOTerm.equals("")) return "not determined, no SBO Link";
 		// Do translation using SBOLink here
-		else return sbolink.getTerm(sbmlSBOTerm).getName();
+		else return SBO.getTerm(sbmlSBOTerm).getName();
 	}
 
 
