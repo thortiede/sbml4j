@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,6 @@ import org.tts.service.NodeEdgeListService;
 import org.tts.service.ReactionService;
 import org.tts.service.TransitionService;
 
-import uk.ac.ebi.sbo.ws.client.SBOLink;
-
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -55,7 +54,6 @@ public class BasicRestController {
 	
 	private FileService fileService;
 	
-	private SBOLink sboLink;
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -76,7 +74,6 @@ public class BasicRestController {
 		this.reactionService = reactionService;
 		this.transitionService = transitionService;
 		this.modelService = modelService;
-		this.sboLink = new SBOLink();
 	}
 
 	@RequestMapping(value = "/fullnet", method=RequestMethod.GET)
@@ -264,8 +261,8 @@ public class BasicRestController {
 		transitionSimple.put("QualSpeciesTwo", transition.getQualSpeciesTwoSbmlNameString());
 		transitionSimple.put("SBO-Term", transition.getSbmlSBOTerm());
 		if(transition.getSbmlSBOTerm() != null) {
-			if(sboLink.getTerm(transition.getSbmlSBOTerm()) != null) {
-				transitionSimple.put("SBO-Translated", sboLink.getTerm(transition.getSbmlSBOTerm()).getName());
+			if(SBO.getTerm(transition.getSbmlSBOTerm()) != null) {
+				transitionSimple.put("SBO-Translated", SBO.getTerm(transition.getSbmlSBOTerm()).getName());
 			} else {
 				transitionSimple.put("SBO-Translated-Not", transition.getSbmlSBOTerm());
 			}
@@ -302,7 +299,7 @@ public class BasicRestController {
 					sboTerm = transition.getSbmlSBOTerm();
 					if (!types.containsKey(sboTerm)) {
 						logger.debug("Translating new key " + sboTerm);
-						translated = sboLink.getTerm(transition.getSbmlSBOTerm()).getName();
+						translated = SBO.getTerm(transition.getSbmlSBOTerm()).getName();
 					}
 				} catch (NullPointerException e) {
 					sboTerm = "Empty Term";
