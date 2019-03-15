@@ -74,9 +74,7 @@
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-ogm-bolt-driver</artifactId>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web -->
-		
-		<dependency> 
+	<dependency> 
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-hateoas</artifactId> 
 		</dependency>
@@ -85,66 +83,14 @@
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
-		
 	</dependencies>
 
 	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-site-plugin</artifactId>
-					<version>3.7.1</version>
-					<configuration>
-						<locales>en</locales>
-					</configuration>
-					<executions>
-						<execution>
-							<id>attach-descriptor</id>
-							<goals>
-								<goal>attach-descriptor</goal>
-							</goals>
-						</execution>
-					</executions>
-					<dependencies>
-						<dependency>
-							<groupId>org.apache.maven.doxia</groupId>
-							<artifactId>doxia-module-markdown</artifactId>
-							<version>1.7</version>
-						</dependency>
-					</dependencies>
-				</plugin>
-				<plugin>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-maven-plugin</artifactId>
-				</plugin>
-				<!-- Set a JDK compiler level -->
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.3</version>
-					<configuration>
-						<source>${java.version}</source>
-						<target>${java.version}</target>
-					</configuration>
-				</plugin>
-				<!-- This plug-in copies resources from target/site to docs/ so Github can render it  -->
-				<plugin>
-					<artifactId>maven-resources-plugin</artifactId>
-					<version>2.7</version>
-					<configuration>
-					</configuration>
-				</plugin>
-
-			</plugins>
-		</pluginManagement>
-		<resources>
-			<resource>
-				<directory>${project.build.directory}/site/</directory>
-				<targetPath>${basedir}/docs/</targetPath>
-			</resource>
-		</resources>  
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
 	</build>
-
 </project>
