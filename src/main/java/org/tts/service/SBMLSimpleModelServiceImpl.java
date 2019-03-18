@@ -396,6 +396,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				for (int i = 0; i != keggGeneNames.size(); i++) {
 					secondaryNames[i] = keggGeneNames.get(i);
 				}
+				entity.setSecondaryNames(secondaryNames);
 			}
 			return true;
 		} else {
