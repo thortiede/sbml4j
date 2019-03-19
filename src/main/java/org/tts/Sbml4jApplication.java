@@ -2,12 +2,14 @@ package org.tts;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.tts.config.DataSourceConfig;
 import org.tts.property.FileStorageProperties;
 
 @SpringBootApplication
@@ -15,6 +17,15 @@ import org.tts.property.FileStorageProperties;
 			FileStorageProperties.class
 })
 public class Sbml4jApplication {
+
+	DataSourceConfig dataSourceConfig;
+	
+	
+	@Autowired
+	public Sbml4jApplication(DataSourceConfig dataSourceConfig) {
+		super();
+		this.dataSourceConfig = dataSourceConfig;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(Sbml4jApplication.class, args);
@@ -31,6 +42,8 @@ public class Sbml4jApplication {
             for (String beanName : beanNames) {
                 System.out.println(beanName);
             }
+            dataSourceConfig.setup();
+            
 
         };
 	}
