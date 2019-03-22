@@ -15,6 +15,7 @@ import org.sbml.jsbml.Compartment;
 import org.sbml.jsbml.CompartmentalizedSBase;
 import org.sbml.jsbml.ListOf;
 import org.sbml.jsbml.Model;
+import org.sbml.jsbml.Reaction;
 import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBMLReader;
 import org.sbml.jsbml.SBase;
@@ -40,6 +41,7 @@ import org.tts.model.SBMLModelEntity;
 import org.tts.model.SBMLQualSpecies;
 import org.tts.model.SBMLQualSpeciesGroup;
 import org.tts.model.SBMLSBaseEntity;
+import org.tts.model.SBMLSimpleReaction;
 import org.tts.model.SBMLSimpleTransition;
 import org.tts.model.SBMLSpecies;
 import org.tts.model.SBMLSpeciesGroup;
@@ -48,6 +50,7 @@ import org.tts.repository.ExternalResourceEntityRepository;
 import org.tts.repository.GraphBaseEntityRepository;
 import org.tts.repository.SBMLQualSpeciesRepository;
 import org.tts.repository.SBMLSBaseEntityRepository;
+import org.tts.repository.SBMLSimpleReactionRepository;
 import org.tts.repository.SBMLSimpleTransitionRepository;
 import org.tts.repository.SBMLSpeciesRepository;
 
@@ -57,6 +60,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	SBMLSpeciesRepository sbmlSpeciesRepository;
+	SBMLSimpleReactionRepository sbmlSimpleReactionRepository;
 	SBMLSBaseEntityRepository sbmlSBaseEntityRepository;
 	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
@@ -69,6 +73,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	
 	@Autowired
 	public SBMLSimpleModelServiceImpl(SBMLSpeciesRepository sbmlSpeciesRepository,
+			SBMLSimpleReactionRepository sbmlSimpleReactionRepository,
 			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
 			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
 			ExternalResourceEntityRepository externalResourceEntityRepository,
@@ -77,6 +82,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			HttpService httpService) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
+		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
 		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
 		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -370,6 +376,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType("kegg.genes");
 						setKeggGeneNames(resource, newExternalResourceEntity);
+					} else if(resource.contains("kegg.reaction")) {
+						newExternalResourceEntity.setType("kegg.reaction");
 					}
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
@@ -438,34 +446,120 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	@Override
 	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
 		// compartment
+		List<GraphBaseEntity> returnList= new ArrayList<>();
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLCompartment compartment : sbmlCompartmentList) {
 			compartmentLookupMap.put(compartment.getsBaseId(), compartment);
+			returnList.add(compartment);
 		}
-		List<SBMLSpecies> persistedSBMLSpecies = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap);
+		
+		// species
+		if (model.getListOfSpecies() != null && model.getListOfSpecies().size() > 0) {
+			List<SBMLSpecies> persistedSBMLSpecies = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap);
+			persistedSBMLSpecies.forEach(species->{
+				returnList.add(species);
+			});
+		}
+		// reactions
+		if(model.getListOfReactions() != null && model.getListOfReactions().size() > 0) {
+			List<SBMLSimpleReaction> persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap);
+			persistedSBMLSimpleReactions.forEach(reaction->{
+				returnList.add(reaction);
+			});
+		}
+		// Qual Model Plugin:
+		if(model.getExtension("qual") != null ) {
+			QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
 
-		QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
-		HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
+			// qualitative Species
+			if(qualModelPlugin.getListOfQualitativeSpecies() != null && qualModelPlugin.getListOfQualitativeSpecies().size() > 0) {
+				HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap);
+				
+				Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
+				persistedQualSpeciesList.forEach((k, qualSpecies)-> {
+					returnList.add(qualSpecies);
+				});
+				Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
+				
+				// transitions (qual model plugin)
+				if(qualModelPlugin.getListOfTransitions() != null && qualModelPlugin.getListOfTransitions().size() > 0) {
+					List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
+					persistedTransitionList.forEach(transition-> {
+						returnList.add(transition);
+					});
+				}
+			}
+		}
 		
-		Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
-		Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
-		List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
 		
-		List<GraphBaseEntity> returnList= new ArrayList<>();
-		persistedSBMLSpecies.forEach(species->{
-			returnList.add(species);
-		});
-		persistedQualSpeciesList.forEach((k, qualSpecies)-> {
-			returnList.add(qualSpecies);
-		});
-		persistedTransitionList.forEach(transition-> {
-			returnList.add(transition);
-		});
+		
+		
+		
+		
 		return returnList;
 	}
 
 	
+
+	private List<SBMLSimpleReaction> buildAndPersistSBMLSimpleReactions(ListOf<Reaction> listOfReactions,
+			Map<String, SBMLCompartment> compartmentLookupMap) {
+		
+		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
+		for (Reaction reaction : listOfReactions) {
+			
+			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBySBaseName(reaction.getName(), 0);
+			if(existingSimpleReaction != null) {
+				// found existing Reaction
+				// TODO: Check if it is the same reaction with reactants and products
+				sbmlSimpleReactionList.add(existingSimpleReaction);
+			} else {
+				// reaction not yet in db, build and persist it
+				SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
+				setSbaseProperties(reaction, newReaction);
+				setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
+				setSimpleReactionProperties(reaction, newReaction);
+				// reactants
+				for (int i=0; i != reaction.getReactantCount(); i++) {
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getReactant(i).getSpecies());
+					if(referencedSpecies == null) {
+						logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+					} else {
+						newReaction.addReactant(referencedSpecies);
+					}
+				}
+				// products
+				for (int i=0; i != reaction.getProductCount(); i++) {
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getProduct(i).getSpecies());
+					if(referencedSpecies == null) {
+						logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+					} else {
+						newReaction.addProduct(referencedSpecies);
+					}
+				}
+				// catalysts
+				for (int i=0; i != reaction.getModifierCount(); i++) {
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getModifier(i).getSpecies());
+					if(referencedSpecies == null) {
+						logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+					} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
+						newReaction.addCatalysts(referencedSpecies);
+					} else {
+						logger.warn("Skipping modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " with sboTerm " + reaction.getModifier(i).getSBOTermID());
+					}
+				}
+				
+				// annotations
+				SBMLSimpleReaction persistedSimpleReaction = this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH);
+				persistedSimpleReaction.setCvTermList(reaction.getCVTerms());
+				newReaction = (SBMLSimpleReaction) buildAndPersistExternalResourcesForSBaseEntity(persistedSimpleReaction);
+				sbmlSimpleReactionList.add(this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH));
+			}
+		}
+		
+		return sbmlSimpleReactionList;
+	}
+
 
 	@Override
 	public boolean clearDatabase() {
@@ -595,6 +689,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			target.setConstant(source.isConstant());	
 		}
 
+		/**
+		 * Set Properties of SBMLSimpleReaction
+		 * from a jSBML Reaction entity 
+		 * @param source The Reaction entity from jsbml ({@link org.sbml.jsbml.Reaction}) from which the attributes are to be taken
+		 * @param target The SBMLSimpleReaction entity to which the attributes are to be applied to
+		 */
+		private void setSimpleReactionProperties(Reaction source, SBMLSimpleReaction target) {
+			if (source.isSetReversible()) target.setReversible(source.isReversible());
+		}
+		
 	/******************************************************************************************************************************
 	 * 													Setter for Extensions
 	 ******************************************************************************************************************************/
