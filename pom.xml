@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -25,7 +25,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<jsbml.version>1.3.1</jsbml.version>
-		<docker.image.prefix>orgtts</docker.image.prefix>
+		<docker.image.prefix>thortiede</docker.image.prefix>
 		<!-- <spring.boot.starter.version>2.0.5.RELEASE</spring.boot.starter.version> -->
 	</properties>
 
@@ -98,7 +98,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.0.3</tag>
+	                <tag>0.0.4</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->
