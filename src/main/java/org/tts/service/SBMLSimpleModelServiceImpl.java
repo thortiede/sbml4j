@@ -146,7 +146,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 					setSpeciesProperties(species, newSpecies);
 					
-					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies);
+					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
 					persistedNewSpecies.setCvTermList(species.getCVTerms());
 					newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies);
 					
