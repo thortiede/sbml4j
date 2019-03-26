@@ -1,15 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN" name="XMLConfigTest" packages="org.sbml.*">
+<Configuration status="WARN" name="SBML4JConfig" packages="*">
   <Properties>
-    <Property name="filename">jsbml.log</Property>
+  
+    <Property name="filename_root">root.log</Property>
+    <Property name="filename_jsbml">jsbml_test.log</Property>
+	<Property name="filename_application">application.log</Property>
+    <Property name="filename_spring">spring.log</Property>
+    <Property name="filename_db">db_conn.log</Property>
   </Properties>
-  <ThresholdFilter level="trace"/>
+  <ThresholdFilter level="debug"/>
  
   <Appenders>
     <Console name="console">
       <PatternLayout pattern="%5p (%F:%L) - %m%n"/>
     </Console>
-    <File name="file" fileName="${filename}">
+     <File name="file_root" fileName="logs/${filename_root}">
+      <PatternLayout>
+        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+      </PatternLayout>
+    </File>
+    <File name="file_jsbml" fileName="logs/${filename_jsbml}">
+      <PatternLayout>
+        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+      </PatternLayout>
+    </File>
+    <File name="file_application" fileName="logs/${filename_application}">
+      <PatternLayout>
+        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+      </PatternLayout>
+    </File>
+    <File name="file_spring" fileName="logs/${filename_spring}">
+      <PatternLayout>
+        <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+      </PatternLayout>
+    </File>
+    <File name="file_db" fileName="logs/${filename_db}">
       <PatternLayout>
         <pattern>%d %p %C{1.} [%t] %m%n</pattern>
       </PatternLayout>
@@ -17,48 +42,21 @@
   </Appenders>
  
   <Loggers>
-    <Logger name="org.sbml" level="info" additivity="false">
-      <AppenderRef ref="console"/>
-      <!-- <AppenderRef ref="file"/> -->
+    <Logger name="org.sbml" level="all" additivity="false">
+      <AppenderRef ref="file_jsbml"/>
+    </Logger>
+    <Logger name="org.springframework" level="all" additivity="false">
+      <AppenderRef ref="file_spring"/>
+    </Logger>
+     <Logger name="org.tts" level="all" additivity="false">
+      <AppenderRef ref="file_application"/>
+    </Logger>
+     <Logger name="org.neo4j.ogm.drivers.bolt" level="all" additivity="false">
+      <AppenderRef ref="file_db"/>
     </Logger>
 
-<!--
-    <Logger name="org.sbml.jsbml.xml.stax.SBMLWriter" level="debug" additivity="false">
-      <AppenderRef ref="console"/>
-      <AppenderRef ref="file"/>      
-    </Logger>
-    
-    <Logger name="org.sbml.jsbml.xml.stax.SBMLReader" level="debug" additivity="false">
-      <AppenderRef ref="console"/>
-      <AppenderRef ref="file"/>      
-    </Logger>
--->
-<!--    
-# org.sbml.jsbml.test.SimpleSBaseChangeListener - DEBUG : it will display all add, remove or change event (lot of output when reading an SBML file)
-# org.sbml.jsbml.xml.parsers.SBMLCoreParser - ERROR to DEBUG : anything related to problems when parsing the SBML core elements.
-# org.sbml.jsbml.xml.parsers.StringParser - ERROR to DEBUG : (lot of output) display all the event when reading XHTML
-# org.sbml.jsbml.xml.parsers.AnnotationParser - DEBUG : output when reading non RDF annotations.
-# org.sbml.jsbml.xml.parsers.XMLNodeWriter - DEBUG : output events when writing XMLNode, so HTML block
-# org.sbml.jsbml.xml.stax.SBMLReader - ERROR to DEBUG : (lot of output) display all the event when reading an SBML file
-# org.sbml.jsbml.xml.stax.SBMLWriter - ERROR to DEBUG : (lot of output) display all the event when writing an SBML file
-# org.sbml.jsbml.util.StringTools - WARN : warning when there is a problem with the conversion of a String into a number or boolean.
-# org.sbml.jsbml.util.compilers.MathMLXMLStreamCompiler - WARN to DEBUG : (lot of output) display all the event when writing mathML
-# org.sbml.jsbml.xml.parsers.MathMLStaxParser - ERROR to DEBUG : (lot of output) display all the event when reading a MathML block
-# org.sbml.jsbml.SBMLDocument - ERROR to DEBUG : will display problems related to the checkConsistency call
-# org.sbml.jsbml.validator.SBMLValidator - DEBUG : will print the xml result file from http://sbml.org/validator/ with few others checks when the parsing is done
-# org.sbml.jsbml.util.SubModel - DEBUG : will print the details of the submodel building
-# org.sbml.jsbml.ASTNode - ERROR to DEBUG
-# org.sbml.jsbml.xml.parsers.AbstractReaderWriter - DEBUG : events when reading or writing L3 packages block (if the parser extends this abstract class)
-# org.sbml.jsbml.xml.parsers.QualParser - DEBUG : events when reading/writing the qual package/extension.
-# org.sbml.jsbml.ext.comp.CompModelPlugin - DEBUG: register and unregister debug output for the comp package id namespace
-# org.sbml.jsbml.ext.comp.ArraysSBasePlugin - DEBUG: register and unregister debug output for the arrays package id namespace
-# org.sbml.jsbml.Model - DEBUG: register and unregister debug output for the core package id namespace
-# org.sbml.jsbml.xml.parsers.SBMLRDFAnnotationParser - DEBUG: debug output when reading and writing RDF annotations
-
-    
---> 
-    <Root level="info">
-      <AppenderRef ref="file"/>
+    <Root level="all">
+      <AppenderRef ref="file_root"/>
     </Root>
   </Loggers>
  
