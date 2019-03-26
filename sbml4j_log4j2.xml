@@ -54,7 +54,15 @@
      <Logger name="org.neo4j.ogm.drivers.bolt" level="all" additivity="false">
       <AppenderRef ref="file_db"/>
     </Logger>
-
+	<Logger name="org.springframework" level="info" additivity="false">
+      <AppenderRef ref="console"/>
+    </Logger>
+     <Logger name="org.tts" level="info" additivity="false">
+      <AppenderRef ref="console"/>
+    </Logger>
+     <Logger name="org.neo4j.ogm.drivers.bolt" level="info" additivity="false">
+      <AppenderRef ref="console"/>
+    </Logger>
     <Root level="all">
       <AppenderRef ref="file_root"/>
     </Root>
