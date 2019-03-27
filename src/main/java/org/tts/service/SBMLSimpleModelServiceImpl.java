@@ -120,7 +120,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				} else {
 					setSbaseProperties(compartment, sbmlCompartment);
 					setCompartmentProperties(compartment, sbmlCompartment);
-					sbmlCompartmentList.add(sbmlCompartment);
+					sbmlCompartmentList.add(this.sbmlSBaseEntityRepository.save(sbmlCompartment, SAVE_DEPTH));
 				}
 			} catch (ClassCastException e) {	
 				e.printStackTrace();
