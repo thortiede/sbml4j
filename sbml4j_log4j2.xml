@@ -208,7 +208,7 @@
 			<AppenderRef ref="databaseRequests" />
 		</Logger>
 		
-		<Logger name="org.springframework" level="debug"
+		<Logger name="org.springframework" level="info"
 			additivity="false">
 			<AppenderRef ref="springDebug" />
 			<AppenderRef ref="springInfo" />
