@@ -52,6 +52,7 @@ public class NetworkMappingController {
 	 */
 	@RequestMapping(value = "/mapping/ppi/filterOptions", method=RequestMethod.GET)
 	public ResponseEntity<Map<String, List<String>>> getFilterOptions() {
+		logger.info("Serving GET /mapping/ppi/filterOptions");
 		Map<String, List<String>> filterOptions = new HashMap<>();
 		// Types of Transitions
 		List<String> transitionTypes = networkMappingService.getTransitionTypes();
