@@ -149,6 +149,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				} else {
 					SBMLSpecies newSpecies = new SBMLSpecies();
 					setSbaseProperties(species, newSpecies);
+					// uncomment to connect entities to compartments
 					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 					setSpeciesProperties(species, newSpecies);
 					
@@ -175,6 +176,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				}
 			}
 			setSbaseProperties(species, newSBMLSpeciesGroup);
+			// uncomment to connect entities to compartments
 			//setCompartmentalizedSbaseProperties(species, newSBMLSpeciesGroup, compartmentLookupMap);
 			setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
@@ -221,6 +223,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				} else {
 					SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
 					setSbaseProperties(qualSpecies, newQualSpecies);
+					// uncomment to connect entities to compartments
 					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 					setQualSpeciesProperties(qualSpecies, newQualSpecies);
 					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
@@ -244,6 +247,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				}
 			}
 			setSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup);
+			// uncomment to connect entities to compartments
 			//setCompartmentalizedSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup, compartmentLookupMap);
 			setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
@@ -517,7 +521,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				// reaction not yet in db, build and persist it
 				SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
 				setSbaseProperties(reaction, newReaction);
-				setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
+				// uncomment to connect entities to compartments
+				//setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
 				setSimpleReactionProperties(reaction, newReaction);
 				// reactants
 				for (int i=0; i != reaction.getReactantCount(); i++) {
