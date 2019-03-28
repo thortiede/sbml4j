@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.7-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -98,7 +98,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.0.4</tag>
+	                <tag>0.0.7</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->
