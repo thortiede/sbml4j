@@ -17,9 +17,11 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 					"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
 					"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
 					"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
-					"RETURN e1.name AS node1, "+
-						"t.sBaseSboTerm AS edge, "+
-						"e2.name AS node2")
+					"RETURN  e1.name AS node1, "+
+							"e1.entityUUID AS node1UUID, "+
+							"t.sBaseSboTerm AS edge, "+
+							"e2.name AS node2, "+
+							"e2.entityUUID AS node2UUID")
 	Iterable<NodeNodeEdge> getInteractionCustomNoGroup(String inputExternalRel, String outputExternalRel);
 
 	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
@@ -29,9 +31,11 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
 			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
 			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
-			"RETURN e1.name AS node1, "+
-				"t.sBaseSboTerm AS edge, "+
-				"e2.name AS node2")
+			"RETURN  e1.name AS node1, "+
+					"e1.entityUUID AS node1UUID, "+
+					"t.sBaseSboTerm AS edge, "+
+					"e2.name AS node2, "+
+					"e2.entityUUID AS node2UUID")
 	Iterable<NodeNodeEdge> getInteractionCustomGroupOnInput(String inputExternalRel, String outputExternalRel);
 	
 	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
@@ -41,9 +45,11 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
 			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
 			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
-			"RETURN e1.name AS node1, "+
-				"t.sBaseSboTerm AS edge, "+
-				"e2.name AS node2")
+			"RETURN  e1.name AS node1, "+
+					"e1.entityUUID AS node1UUID, "+
+					"t.sBaseSboTerm AS edge, "+
+					"e2.name AS node2, "+
+					"e2.entityUUID AS node2UUID")
 	Iterable<NodeNodeEdge> getInteractionCustomGroupOnOutput(String inputExternalRel, String outputExternalRel);
 	
 	@Query(value = "MATCH (e1:ExternalResourceEntity)-[:BQ {qualifier: {0}}]-" +
@@ -54,9 +60,11 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			"(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)" +
 			"-[:BQ {qualifier: {1}}]-(e2:ExternalResourceEntity) " +
 			"WHERE e1.type = \"kegg.genes\" AND e2.type = \"kegg.genes\""+
-			"RETURN e1.name AS node1, "+
-				"t.sBaseSboTerm AS edge, "+
-				"e2.name AS node2")
+			"RETURN  e1.name AS node1, "+
+					"e1.entityUUID AS node1UUID, "+
+					"t.sBaseSboTerm AS edge, "+
+					"e2.name AS node2, "+
+					"e2.entityUUID AS node2UUID")
 	Iterable<NodeNodeEdge> getInteractionCustomGroupOnBoth(String inputExternalRel, String outputExternalRel);
 	
 }
