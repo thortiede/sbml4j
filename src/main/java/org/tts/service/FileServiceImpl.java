@@ -16,14 +16,14 @@ public class FileServiceImpl implements FileService {
 
 	@Override
 	public SifFile getSifFromNodeEdgeList(NodeEdgeList nodeEdgeList) {
-		if(nodeEdgeList == null) {
-			return null;
-		} else {
+		if(nodeEdgeList != null) {
 			SifFile ret = new SifFile();
 			for (NodeNodeEdge nne : nodeEdgeList.getNodeNodeEdgeList()) {
 				ret.addSifEntry(nne.getNode1(), nne.getEdge(), nne.getNode2());
 			}
 			return ret;
+		} else {
+			return null;
 		}
 	}
 
