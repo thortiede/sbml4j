@@ -71,8 +71,10 @@ public class NodeEdgeListServiceImpl implements NodeEdgeListService {
 											transition.getQualSpeciesTwoSbmlNameString()+ ", " + 
 											transition.getSbmlNameString() );*/
 				
-				nodeEdgeList.addListEntry(	transition.getQualSpeciesOneSbmlNameString(), 
+				nodeEdgeList.addListEntry(	transition.getQualSpeciesOneSbmlNameString(),
+											"entitiyUUIDNotDefined",
 											transition.getQualSpeciesTwoSbmlNameString(),
+											"entitiyUUIDNotDefined",
 											translateSBOTerm(transition.getSbmlSBOTerm()));
 			}
 		}		
