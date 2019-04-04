@@ -38,6 +38,7 @@ import org.tts.repository.SBMLSimpleTransitionRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
 
 @Service
+@Deprecated
 public class SBMLFlatModelServiceImpl implements SBMLService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -126,17 +127,20 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 				logger.debug("found group");
 				groupSpeciesList.add(species);
 			} else {
-				FlatSpecies existingSpecies = this.flatSpeciesRepository.findBySBaseName(species.getName());
+				/*FlatSpecies existingSpecies = this.flatSpeciesRepository.findBySBaseName(species.getName());
 				if(existingSpecies != null) {
 					speciesList.add(existingSpecies);
 				} else {
 					FlatSpecies newSpecies = new FlatSpecies();
-					setSbaseProperties(species, newSpecies);
+					// WARNING: TODO: The next line is broken and is not supposed to be like that, if this file is ever going to be used
+					// FlatSpecies ist not derived from SBMLCompartmentalizedSBase anymore, hence the following call will not work.
+					// Flat Species needs to have set GraphBaseEntityProperties however.
+					//setSbaseProperties(species, newSpecies);
 					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 					//  TODO: setSpeciesProperties(species, newSpecies);
 					FlatSpecies persistedNewSpecies = this.flatSpeciesRepository.save(newSpecies);
 					speciesList.add(persistedNewSpecies);
-				}
+				}*/
 			}
 		}
 		// now build the groups nodes
@@ -157,12 +161,12 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			//setCompartmentalizedSbaseProperties(species, newSBMLSpeciesGroup, compartmentLookupMap);
 			setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
-			for (String symbol : groupMemberSymbols) {
+			/*for (String symbol : groupMemberSymbols) {
 				FlatSpecies existingSpecies = this.flatSpeciesRepository.findBySBaseName(symbol);
 				// TODO: newSBMLSpeciesGroup.addSpeciesToGroup(existingSpecies);
 				speciesSbaseName += "_";
 				speciesSbaseName += symbol;
-			}
+			}*/
 			SBMLSpeciesGroup existingSBMLSpeciesGroup = null;// TODO:  = (SBMLSpeciesGroup) sbmlSpeciesRepository.findBySBaseName(speciesSbaseName);
 			if (existingSBMLSpeciesGroup != null) {
 				//  TODO: speciesList.add(existingSBMLSpeciesGroup);
