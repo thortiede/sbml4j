@@ -5,6 +5,6 @@ import org.tts.model.flat.FlatSpecies;
 
 public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long> {
 
-	FlatSpecies findBySBaseName(String sBaseName);
+	
 
 }
