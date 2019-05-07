@@ -1,8 +1,10 @@
-package org.tts.model;
+package org.tts.model.full.ext.qual;
 
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.full.ext.SBMLModelExtension;
 
 public class SBMLQualModelExtension extends SBMLModelExtension {
 	@Relationship(type = "CONTAINS", direction = Relationship.OUTGOING)

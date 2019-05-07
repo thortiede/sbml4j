@@ -1,4 +1,4 @@
-package org.tts.service;
+package org.tts.service.oldModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tts.model.GraphCompartment;
-import org.tts.repository.CompartmentRepository;
+import org.tts.model.old.GraphCompartment;
+import org.tts.repository.oldModel.CompartmentRepository;
 
 @Service
 public class CompartmentServiceImpl implements CompartmentService {

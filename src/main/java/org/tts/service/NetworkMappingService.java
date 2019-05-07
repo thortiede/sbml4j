@@ -1,4 +1,4 @@
-package org.tts.service.simpleModel;
+package org.tts.service;
 
 import java.util.List;
 import java.util.Map;

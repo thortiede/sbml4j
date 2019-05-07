@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.common;
 
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;

@@ -1,6 +1,7 @@
-package org.tts.model;
+package org.tts.model.full;
 
 import org.neo4j.ogm.annotation.NodeEntity;
+import org.tts.model.common.SBMLSBaseEntity;
 
 
 @NodeEntity(label = "SBML")

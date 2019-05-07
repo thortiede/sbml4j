@@ -23,19 +23,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.HelperQualSpeciesReturn;
-import org.tts.model.SBMLCompartment;
-import org.tts.model.SBMLQualSpecies;
-import org.tts.model.SBMLQualSpeciesGroup;
-import org.tts.model.SBMLSBaseEntity;
-import org.tts.model.SBMLSimpleTransition;
 import org.tts.model.flat.FlatSpecies;
-import org.tts.model.SBMLSpeciesGroup;
-import org.tts.repository.SBMLQualSpeciesRepository;
-import org.tts.repository.SBMLSBaseEntityRepository;
-import org.tts.repository.SBMLSimpleTransitionRepository;
+import org.tts.model.simple.SBMLSimpleTransition;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.HelperQualSpeciesReturn;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLQualSpeciesGroup;
+import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.repository.common.SBMLQualSpeciesRepository;
+import org.tts.repository.common.SBMLSBaseEntityRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
+import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 @Service
 @Deprecated

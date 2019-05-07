@@ -1,8 +1,8 @@
-package org.tts.repository;
+package org.tts.repository.simpleModel;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.SBMLSimpleTransition;
+import org.tts.model.simple.SBMLSimpleTransition;
 
 public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimpleTransition, Long> {
 

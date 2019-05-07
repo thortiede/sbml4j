@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.GraphBaseEntity;
+import org.tts.model.common.GraphBaseEntity;
 
 public class FlatNetworkMapping extends GraphBaseEntity {
 

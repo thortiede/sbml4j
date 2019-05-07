@@ -1,6 +1,7 @@
-package org.tts.model;
+package org.tts.model.full;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.SBMLSBaseEntity;
 
 public class SBMLRateRule extends SBMLRule {
 

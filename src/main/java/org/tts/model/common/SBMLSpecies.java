@@ -1,6 +1,8 @@
-package org.tts.model;
+package org.tts.model.common;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.full.SBMLParameter;
+import org.tts.model.full.SBMLUnitDefinition;
 
 public class SBMLSpecies extends SBMLCompartmentalizedSBaseEntity {
 

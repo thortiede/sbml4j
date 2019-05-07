@@ -2,7 +2,7 @@ package org.tts.service;
 
 import java.util.List;
 
-import org.tts.model.GraphBaseEntity;
+import org.tts.model.common.GraphBaseEntity;
 
 public interface GraphBaseEntityService {
 

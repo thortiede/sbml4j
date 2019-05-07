@@ -1,6 +1,6 @@
-package org.tts.repository;
+package org.tts.repository.oldModel;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.GraphTransition;
+import org.tts.model.old.GraphTransition;
 
 public interface TransitionRepository extends Neo4jRepository<GraphTransition, Long> {
 

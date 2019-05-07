@@ -1,4 +1,4 @@
-package org.tts.service;
+package org.tts.service.oldModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,11 +6,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tts.model.GraphQualitativeSpecies;
-import org.tts.model.GraphReaction;
-import org.tts.model.GraphTransition;
-import org.tts.repository.QualitativeSpeciesRepository;
-import org.tts.repository.TransitionRepository;
+import org.tts.model.old.GraphQualitativeSpecies;
+import org.tts.model.old.GraphReaction;
+import org.tts.model.old.GraphTransition;
+import org.tts.repository.oldModel.QualitativeSpeciesRepository;
+import org.tts.repository.oldModel.TransitionRepository;
 
 @Service
 public class TransitionServiceImpl implements TransitionService {

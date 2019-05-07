@@ -1,4 +1,6 @@
-package org.tts.model;
+package org.tts.model.full;
+
+import org.tts.model.common.SBMLSBaseEntity;
 
 public class SBMLDelay extends SBMLSBaseEntity {
 	/**

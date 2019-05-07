@@ -1,7 +1,8 @@
-package org.tts.model;
+package org.tts.model.full.ext;
 
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.full.SBMLModelEntity;
 
 
 public class SBMLModelExtension extends SBMLSBaseExtension {

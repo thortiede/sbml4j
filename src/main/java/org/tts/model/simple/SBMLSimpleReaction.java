@@ -1,9 +1,11 @@
-package org.tts.model;
+package org.tts.model.simple;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.tts.model.common.SBMLSpecies;
 
 public class SBMLSimpleReaction extends SBMLCompartmentalizedSBaseEntity {
 	

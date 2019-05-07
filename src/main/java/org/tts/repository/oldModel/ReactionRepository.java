@@ -1,6 +1,6 @@
-package org.tts.repository;
+package org.tts.repository.oldModel;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.GraphReaction;
+import org.tts.model.old.GraphReaction;
 
 public interface ReactionRepository extends Neo4jRepository<GraphReaction, Long> {
 

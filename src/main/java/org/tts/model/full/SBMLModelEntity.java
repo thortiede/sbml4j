@@ -1,8 +1,11 @@
-package org.tts.model;
+package org.tts.model.full;
 
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.common.SBMLSpecies;
 
 public class SBMLModelEntity extends SBMLSBaseEntity {
 

@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 import org.sbml.jsbml.CVTerm;
 import org.tts.Exception.SBML4jAddExtensionException;
+import org.tts.model.full.ext.SBMLSBaseExtension;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

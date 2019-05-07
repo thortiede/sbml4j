@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.GraphBaseEntity;
+import org.tts.model.common.GraphBaseEntity;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;

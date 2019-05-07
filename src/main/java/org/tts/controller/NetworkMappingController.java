@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-import org.tts.model.NodeEdgeList;
-import org.tts.model.SifFile;
 import org.tts.model.api.Input.FilterOptions;
+import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.api.Output.SifFile;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
-import org.tts.service.SimpleModel.NetworkMappingService;
+import org.tts.service.NetworkMappingService;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 @RestController

@@ -27,20 +27,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.tts.model.GraphCompartment;
-import org.tts.model.GraphModel;
-import org.tts.model.GraphQualitativeSpecies;
-import org.tts.model.GraphReaction;
-import org.tts.model.GraphSpecies;
-import org.tts.model.GraphTransition;
-import org.tts.model.ReturnModelOverviewEntry;
-import org.tts.service.CompartmentService;
-import org.tts.service.ModelService;
-import org.tts.service.QualitativeSpeciesService;
-import org.tts.service.ReactionService;
-import org.tts.service.SpeciesService;
-import org.tts.service.TransitionService;
-
+import org.tts.model.old.GraphCompartment;
+import org.tts.model.old.GraphModel;
+import org.tts.model.old.GraphQualitativeSpecies;
+import org.tts.model.old.GraphReaction;
+import org.tts.model.old.GraphSpecies;
+import org.tts.model.old.GraphTransition;
+import org.tts.model.old.ReturnModelOverviewEntry;
+import org.tts.service.oldModel.CompartmentService;
+import org.tts.service.oldModel.ModelService;
+import org.tts.service.oldModel.QualitativeSpeciesService;
+import org.tts.service.oldModel.ReactionService;
+import org.tts.service.oldModel.SpeciesService;
+import org.tts.service.oldModel.TransitionService;
 import org.neo4j.ogm.exception.OptimisticLockingException;
 
 @RestController

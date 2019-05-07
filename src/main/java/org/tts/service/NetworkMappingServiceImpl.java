@@ -13,17 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.NodeEdgeList;
-import org.tts.model.NodeNodeEdge;
 import org.tts.model.api.Input.FilterOptions;
+import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.flat.FlatNetworkMapping;
 import org.tts.model.flat.FlatSpecies;
-import org.tts.repository.GraphBaseEntityRepository;
-import org.tts.repository.SBMLSimpleTransitionRepository;
-import org.tts.repository.SBMLSpeciesRepository;
+import org.tts.repository.common.GraphBaseEntityRepository;
+import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
-import org.tts.service.SimpleModel.NetworkMappingService;
+import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 @Service
 public class NetworkMappingServiceImpl implements NetworkMappingService {

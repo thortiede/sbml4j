@@ -1,6 +1,7 @@
-package org.tts.model;
+package org.tts.model.full;
 
 import org.sbml.jsbml.Unit;
+import org.tts.model.common.SBMLSBaseEntity;
 
 public class SBMLUnit extends SBMLSBaseEntity {
 

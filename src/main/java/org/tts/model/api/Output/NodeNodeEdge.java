@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.api.Output;
 
 import org.springframework.data.neo4j.annotation.QueryResult;
 

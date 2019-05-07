@@ -17,7 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.Exception.FileStorageException;
 import org.tts.Exception.MyFileNotFoundException;
-import org.tts.model.SifFile;
+import org.tts.model.api.Output.SifFile;
 import org.tts.property.FileStorageProperties;
 
 @Service

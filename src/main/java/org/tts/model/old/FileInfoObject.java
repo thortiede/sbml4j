@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.old;
 
 public class FileInfoObject {
 

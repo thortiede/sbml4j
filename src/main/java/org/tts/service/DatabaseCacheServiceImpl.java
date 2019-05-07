@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLQualSpecies;
-import org.tts.repository.GraphBaseEntityRepository;
-import org.tts.repository.SBMLQualSpeciesRepository;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.repository.common.GraphBaseEntityRepository;
+import org.tts.repository.common.SBMLQualSpeciesRepository;
 
 @Service
 public class DatabaseCacheServiceImpl implements DatabaseCacheService {

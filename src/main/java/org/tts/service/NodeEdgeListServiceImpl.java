@@ -9,12 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.GraphReaction;
-import org.tts.model.GraphTransition;
-import org.tts.model.NodeEdgeList;
-import org.tts.repository.ModelRepository;
-import org.tts.repository.ReactionRepository;
-import org.tts.repository.TransitionRepository;
+import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.old.GraphReaction;
+import org.tts.model.old.GraphTransition;
+import org.tts.repository.oldModel.ModelRepository;
+import org.tts.repository.oldModel.ReactionRepository;
+import org.tts.repository.oldModel.TransitionRepository;
 
 
 

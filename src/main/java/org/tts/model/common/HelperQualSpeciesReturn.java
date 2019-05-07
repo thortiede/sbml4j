@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.common;
 
 import java.util.HashMap;
 import java.util.Map;

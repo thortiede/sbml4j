@@ -1,9 +1,9 @@
-package org.tts.repository;
+package org.tts.repository.common;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.NodeNodeEdge;
+import org.tts.model.api.Output.NodeNodeEdge;
+import org.tts.model.common.GraphBaseEntity;
 
 public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 

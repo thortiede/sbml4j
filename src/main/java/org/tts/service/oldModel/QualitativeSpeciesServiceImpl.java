@@ -1,4 +1,4 @@
-package org.tts.service;
+package org.tts.service.oldModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.tts.model.GraphQualitativeSpecies;
-import org.tts.model.GraphSpecies;
-import org.tts.repository.QualitativeSpeciesRepository;
-import org.tts.repository.SpeciesRepository;
+import org.tts.model.old.GraphQualitativeSpecies;
+import org.tts.model.old.GraphSpecies;
+import org.tts.repository.oldModel.QualitativeSpeciesRepository;
+import org.tts.repository.oldModel.SpeciesRepository;
 
 
 @Service

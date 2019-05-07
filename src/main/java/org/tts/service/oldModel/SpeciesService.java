@@ -1,8 +1,8 @@
-package org.tts.service;
+package org.tts.service.oldModel;
 
 import java.util.List;
 
-import org.tts.model.GraphSpecies;
+import org.tts.model.old.GraphSpecies;
 
 public interface SpeciesService {
 

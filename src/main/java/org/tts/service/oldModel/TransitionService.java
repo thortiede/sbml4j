@@ -1,8 +1,8 @@
-package org.tts.service;
+package org.tts.service.oldModel;
 
 import java.util.List;
 
-import org.tts.model.GraphTransition;
+import org.tts.model.old.GraphTransition;
 
 public interface TransitionService {
 

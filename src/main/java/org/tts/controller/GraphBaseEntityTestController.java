@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLSBaseEntity;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.service.GraphBaseEntityService;
 
 @RestController

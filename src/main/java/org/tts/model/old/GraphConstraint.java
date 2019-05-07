@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.old;
 
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;

@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.full;
 
 /**
  * As per definition in the SBML Core Specification

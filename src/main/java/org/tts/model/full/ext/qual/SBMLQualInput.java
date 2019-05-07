@@ -1,8 +1,10 @@
-package org.tts.model;
+package org.tts.model.full.ext.qual;
 
 import org.neo4j.ogm.annotation.Relationship;
 import org.sbml.jsbml.ext.qual.InputTransitionEffect;
 import org.sbml.jsbml.ext.qual.Sign;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLSBaseEntity;
 
 public class SBMLQualInput extends SBMLSBaseEntity {
 

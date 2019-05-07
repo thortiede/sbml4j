@@ -3,8 +3,8 @@ package org.tts.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.tts.model.GraphBaseEntity;
-import org.tts.repository.GraphBaseEntityRepository;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.repository.common.GraphBaseEntityRepository;
 
 @Service
 public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {

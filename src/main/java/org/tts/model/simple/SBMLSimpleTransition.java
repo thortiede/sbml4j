@@ -1,7 +1,9 @@
-package org.tts.model;
+package org.tts.model.simple;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLSBaseEntity;
 
 @NodeEntity
 public class SBMLSimpleTransition extends SBMLSBaseEntity {

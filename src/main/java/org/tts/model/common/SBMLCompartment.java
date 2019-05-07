@@ -1,4 +1,4 @@
-package org.tts.model;
+package org.tts.model.common;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * Modeled after the Compartment class from the SBML Standard level-3 version-2
  * and modified to allow storage in a Graph database
  * 
- * This class is derived from {@link org.tts.model.SBMLSBaseEntity}
+ * This class is derived from {@link org.tts.model.common.SBMLSBaseEntity}
  * The inherited attribute {@code sbaseId} is required for this class
  * 
  * The boolean attribute {@code constant} is required by the compartment entity in SBML
