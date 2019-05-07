@@ -2,7 +2,7 @@ package org.tts.service;
 
 
 
-import org.tts.model.NodeEdgeList;
+import org.tts.model.api.Output.NodeEdgeList;
 
 public interface NodeEdgeListService {
 

@@ -16,15 +16,15 @@ import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLCompartment;
-import org.tts.model.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.SBMLDocumentEntity;
-import org.tts.model.SBMLModelEntity;
-import org.tts.model.SBMLQualSpecies;
-import org.tts.model.SBMLSBaseEntity;
-import org.tts.model.SBMLSimpleReaction;
-import org.tts.model.SBMLSpecies;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.common.SBMLSpecies;
+import org.tts.model.full.SBMLDocumentEntity;
+import org.tts.model.full.SBMLModelEntity;
+import org.tts.model.simple.SBMLSimpleReaction;
 
 @Service
 public class SBMLSimpleModelUtilityServiceImpl {

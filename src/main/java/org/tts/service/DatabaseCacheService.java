@@ -2,8 +2,8 @@ package org.tts.service;
 
 import java.util.Map;
 
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLQualSpecies;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLQualSpecies;
 
 public interface DatabaseCacheService {
 

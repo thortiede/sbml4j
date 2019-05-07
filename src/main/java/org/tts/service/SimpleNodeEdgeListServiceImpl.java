@@ -3,8 +3,8 @@ package org.tts.service;
 import org.sbml.jsbml.SBO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.NodeEdgeList;
-import org.tts.repository.SBMLSimpleTransitionRepository;
+import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 @Service
 public class SimpleNodeEdgeListServiceImpl implements NodeEdgeListService {

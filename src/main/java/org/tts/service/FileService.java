@@ -1,7 +1,7 @@
 package org.tts.service;
 
-import org.tts.model.NodeEdgeList;
-import org.tts.model.SifFile;
+import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.api.Output.SifFile;
 
 public interface FileService {
 	

@@ -9,8 +9,8 @@ import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.GraphBaseEntity;
-import org.tts.model.SBMLSBaseEntity;
+import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLSBaseEntity;
 
 public interface SBMLService {
 
@@ -44,7 +44,7 @@ public interface SBMLService {
 	/**
 	 * Query the underlying repository for all entities of minimal type
 	 * @return List of all entities found in repository which are or are derived from
-	 * {@link org.tts.model.GraphBaseEntity}
+	 * {@link org.tts.model.common.GraphBaseEntity}
 	 */
 	public List<GraphBaseEntity> getAllEntities();
 }
