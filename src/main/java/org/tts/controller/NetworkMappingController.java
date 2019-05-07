@@ -2,8 +2,9 @@ package org.tts.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+
 import java.util.Map;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +19,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.SifFile;
-import org.tts.model.flat.FlatSpecies;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
+import org.tts.service.GraphMLService;
 import org.tts.service.NetworkMappingService;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
@@ -34,16 +36,20 @@ public class NetworkMappingController {
 	NetworkMappingService networkMappingService;
 	FileService fileService;
 	FileStorageService fileStorageService;
+	GraphMLService graphMLService;
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
-	public NetworkMappingController(NetworkMappingService networkMappingService, FileService fileService,
-			FileStorageService fileStorageService) {
+	public NetworkMappingController(NetworkMappingService networkMappingService, 
+									FileService fileService,
+									FileStorageService fileStorageService,
+									GraphMLService graphMLService) {
 		super();
 		this.networkMappingService = networkMappingService;
 		this.fileService = fileService;
 		this.fileStorageService = fileStorageService;
+		this.graphMLService = graphMLService;
 	}
 
 	/**
@@ -145,7 +151,7 @@ public class NetworkMappingController {
 			retFilterOptions = this.networkMappingService.addNetworkMapping(filterOptions);
 		}
 		// add self link
-		retFilterOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(retFilterOptions.getMappingUuid())).withSelfRel());
+		retFilterOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(retFilterOptions.getMappingUuid(), "graphml")).withSelfRel());
 		// package in Map to return to requerster
 		retFilterOptionsMap.put(retFilterOptions.getMappingUuid(), retFilterOptions);
 		return new ResponseEntity<Map<String, FilterOptions>>(retFilterOptionsMap, HttpStatus.OK);
@@ -160,14 +166,15 @@ public class NetworkMappingController {
 		
 		for (String uuid : allFilterOptions.keySet()) {
 			FilterOptions currentOptions = allFilterOptions.get(uuid);
-			currentOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(uuid)).withSelfRel());
+			currentOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(uuid, "graphml")).withSelfRel());
 		}
 		
 		return new ResponseEntity<Map<String, FilterOptions>>(allFilterOptions, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/mapping/{uuid}", method=RequestMethod.GET)
-	public ResponseEntity<Resource> getMappingWithFilter(@PathVariable String uuid){
+	public ResponseEntity<Resource> getMappingWithFilter(@PathVariable String uuid,
+															@RequestParam(value = "format", defaultValue = "graphml") String format ){
 		// TODO: Check here whether the mapping has been created, or just the filterOptions posted.
 		
 		// Get FilterOption with id @id from @FILTER_OPTION_STORE
@@ -187,9 +194,10 @@ public class NetworkMappingController {
 		
 		// generate ppi with filters applied
 		NodeEdgeList flatNetwork = networkMappingService.getProteinInteractionNetwork(filterOptionsFromId.getTransitionTypes());*/
-		Resource resource = getResourceFromNodeEdgeList(flatNetwork);
+		//Resource resource = getResourceFromNodeEdgeList(flatNetwork, "sif");
+		Resource resource = getResourceFromNodeEdgeList(flatNetwork, format);
 		if (resource != null) {
-			logger.info("Converted flatNetwork to sifResource");
+			logger.info("Converted flatNetwork to Resource");
 			// Try to determine file's content type
 		    String contentType =  "application/octet-stream";
 		  
@@ -213,17 +221,31 @@ public class NetworkMappingController {
 	 * @param nodeEdgeList The nodeEdgeList to convert
 	 * @return a sifResource as ByteArrayResource
 	 */
-	private Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList) {
-		SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
-	
-	    //Resource resource = fileStorageService.loadFileAsResource(fileName);
-		if(sifFile != null) {
-		    Resource resource = fileStorageService.getSifAsResource(sifFile);
-		    return resource;
-		} else {
-			return null;
+	private Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type) {
+		switch (type) {
+		case "sif":
+		
+			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
+		
+		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
+			if(sifFile != null) {
+			    Resource resource = fileStorageService.getSifAsResource(sifFile);
+			    return resource;
+			} else {
+				return null;
+			}
+		case "graphml":
+			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
+			
+			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
+			
+		default:
+			return null;		
 		}
 	}
+
 	
+	
+
 	
 }
