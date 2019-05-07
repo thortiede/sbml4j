@@ -1,10 +1,10 @@
-package org.tts.service.SimpleModel;
+package org.tts.service.simpleModel;
 
 import java.util.List;
 import java.util.Map;
 
-import org.tts.model.NodeEdgeList;
 import org.tts.model.api.Input.FilterOptions;
+import org.tts.model.api.Output.NodeEdgeList;
 
 public interface NetworkMappingService {
 
