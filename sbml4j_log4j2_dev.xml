@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" name="SBML4JConfig"
+	packages="*">
+	<Properties>
+
+		<Property name="filename_root">root.log</Property>
+		<Property name="filename_jsbml">jsbml_test.log</Property>
+		<Property name="filename_application">application.log</Property>
+		<Property name="filename_spring">spring.log</Property>
+		<Property name="filename_db">db_conn.log</Property>
+		<Property name="log_root">logs/</Property>
+		<Property name="LOG_PATTERN">%d %C %5p (%F:%L) - %m%n</Property>
+		<Property name="LOG_PATTERN_REQUESTS">%d - %m%n</Property>
+	</Properties>
+	<!-- <ThresholdFilter level="info"/> -->
+
+	<Appenders>
+		<Console name="console">
+			<PatternLayout pattern="%d %C %5p (%F:%L) - %m%n" />
+		</Console>
+
+		<!-- Application Log Files -->
+		<RollingFile name="applicationInfo"
+			fileName="${log_root}/application-info.log"
+			filePattern="${log_root}/application-info-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="INFO" maxLevel="INFO"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="applicationWarnError"
+			fileName="${log_root}/application-warnError.log"
+			filePattern="${log_root}/application-warnError-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="WARN" maxLevel="ERROR"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="applicationDebug"
+			fileName="${log_root}/application-debug.log"
+			filePattern="${log_root}/application-debug-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+
+		<!-- Database Log Files -->
+		<RollingFile name="databaseInfo"
+			fileName="${log_root}/database-info.log"
+			filePattern="${log_root}/database-info-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="INFO" maxLevel="INFO"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="databaseWarnError"
+			fileName="${log_root}/database-warnError.log"
+			filePattern="${log_root}/database-warnError-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="WARN" maxLevel="ERROR"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="databaseDebug"
+			fileName="${log_root}/database-debug.log"
+			filePattern="${log_root}/database-debug-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="databaseRequests"
+			fileName="${log_root}/database-requests.log"
+			filePattern="${log_root}/database-requests-%d{yyyy-MM-dd}-%i.log">
+			<!-- <LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG" onMatch="ACCEPT" 
+				onMismatch="DENY"/> -->
+			<PatternLayout pattern="${LOG_PATTERN_REQUESTS}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+
+		<!-- Spring Log Files -->
+		<RollingFile name="springInfo"
+			fileName="${log_root}/spring-info.log"
+			filePattern="${log_root}/spring-info-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="INFO" maxLevel="INFO"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="springDebug"
+			fileName="${log_root}/spring-debug.log"
+			filePattern="${log_root}/spring-debug-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="springWarnError"
+			fileName="${log_root}/spring-warnError.log"
+			filePattern="${log_root}/spring-warnError-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="WARN" maxLevel="ERROR"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+
+		<!-- jSBML Log Files -->
+		<RollingFile name="jsbmlInfo"
+			fileName="${log_root}/jsbml-info.log"
+			filePattern="${log_root}/jsbml-info-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="INFO" maxLevel="INFO"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="jsbmlDebug"
+			fileName="${log_root}/jsbml-debug.log"
+			filePattern="${log_root}/jsbml-debug-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="DEBUG" maxLevel="DEBUG"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+		<RollingFile name="jsbmlWarnError"
+			fileName="${log_root}/jsbml-warnError.log"
+			filePattern="${log_root}/jsbml-warnError-%d{yyyy-MM-dd}-%i.log">
+			<LevelRangeFilter minLevel="WARN" maxLevel="ERROR"
+				onMatch="ACCEPT" onMismatch="DENY" />
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+
+		<!-- Root File -->
+		<RollingFile name="rootAll"
+			fileName="${log_root}/root.log"
+			filePattern="${log_root}/root-%d{yyyy-MM-dd}-%i.log">
+			<!-- <LevelRangeFilter minLevel="WARN" maxLevel="ERROR" onMatch="ACCEPT" 
+				onMismatch="DENY"/> -->
+			<PatternLayout pattern="${LOG_PATTERN}" />
+			<Policies>
+				<SizeBasedTriggeringPolicy size="19500KB" />
+			</Policies>
+			<DefaultRolloverStrategy max="10" />
+		</RollingFile>
+	</Appenders>
+
+	<Loggers>
+	
+
+		<Root level="INFO">
+			<AppenderRef ref="console" />
+		</Root>
+	</Loggers>
+
+</Configuration>

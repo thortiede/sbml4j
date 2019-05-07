@@ -22,7 +22,9 @@ public class SimpleNodeEdgeListServiceImpl implements NodeEdgeListService {
 		NodeEdgeList fullNet = new NodeEdgeList();
 		sbmlSimpleTransitionRepository.findAll().forEach(transition->{
 			fullNet.addListEntry(	transition.getInputSpecies().getsBaseName(), 
+									transition.getInputSpecies().getEntityUUID(),
 									transition.getOutputSpecies().getsBaseName(), 
+									transition.getOutputSpecies().getEntityUUID(),
 									transition.getsBaseSboTerm() == "" ? "Unknown Transition Type" : SBO.getTerm(transition.getsBaseSboTerm()).getName()
 								);
 		});

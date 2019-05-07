@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.tts.model.NodeEdgeList;
 import org.tts.model.SifFile;
 import org.tts.model.api.Input.FilterOptions;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
 import org.tts.service.SimpleModel.NetworkMappingService;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 @RestController
 public class NetworkMappingController {
 
@@ -45,37 +47,42 @@ public class NetworkMappingController {
 	}
 
 	/**
-	 * GET /transitionTypes
+	 * GET /filterOptions
 	 * Uses custom Cypher Query to extract the types of transitions between species are present in the model
 	 * These names can be used to filter GET /mapping/ppi
 	 * @return the names of the transition types found in the network in this database
 	 */
-	@RequestMapping(value = "/mapping/ppi/filterOptions", method=RequestMethod.GET)
-	public ResponseEntity<Map<String, List<String>>> getFilterOptions() {
-		logger.info("Serving GET /mapping/ppi/filterOptions");
-		Map<String, List<String>> filterOptions = new HashMap<>();
-		// Types of Transitions
-		List<String> transitionTypes = networkMappingService.getTransitionTypes();
-		filterOptions.put("transitionTypes", transitionTypes);
-		
-		// Types of Nodes
-		// TODO: get types of Nodes to allow filtering
-		
-		// TODO: more filter options?
-		
+	@RequestMapping(value = "/filterOptions", method=RequestMethod.GET)
+	public ResponseEntity<FilterOptions> getFilterOptions() {
+		logger.info("Serving GET /filterOptions");
+		FilterOptions fullOptions = this.networkMappingService.getFullFilterOptions();
 		// return options
-		return new ResponseEntity<Map<String, List<String>>>(filterOptions, HttpStatus.OK);
+		return new ResponseEntity<FilterOptions>(fullOptions, HttpStatus.OK);
 	}
  	
+	
 	/**
 	 * GET /mapping/ppi
 	 * Queries the database with custom Cypher Queries to get all interactions between QualitativeSpecies
 	 * @return SIF formatted List (node1 transition node2) for further processing
 	 */
-	@RequestMapping(value="/mapping/ppi", method=RequestMethod.GET)
+	/*@RequestMapping(value="/mapping/ppi", method=RequestMethod.GET)
 	public ResponseEntity<Resource> getMappingPPI() {
 		
+		/*
+		 * The idea is:
+		 * Have a caching feature that saves NodeEdgeLists for export as SiF
+		 * This cache is fed by full flatModel network mappings that got persisted in the database
+		 * if the mapping is not yet created we build it and persist in the database
+		 * if possible add labels to the nodes to denote to which network they belong.
+		 * Alternatively create a special node which denotes the filter options used for that network
+		 * and connect all flatSpecies nodes to it.
+		 */
+		/*
 		NodeEdgeList fullList = networkMappingService.getProteinInteractionNetwork();
+		
+		
+		
 		Resource resource = getResourceFromNodeEdgeList(fullList);
 	    logger.info("Fetched sifResource");
 	    // Try to determine file's content type
@@ -90,59 +97,113 @@ public class NetworkMappingController {
 	            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
 	            .body(resource);
 	}
-
+	*/
 
 	/**
 	 * Possible approach to realizing filters on network mappings that should be REST compliant (needs to be verified)
 	 * example /mapping/ppi
 	 * workflow:
-	 * 1. GET /mapping/ppi/transitionTypes (or a better endpoint name for transitionTypes) to get list of available filters
-	 * 2. POST /mapping/ppi/filter with JSON Payload to set filtering options, generate id for those filter combinations and send to user (with link to endpoint HATEOAS)
-	 * 3. GET /mapping/ppi/filters show available filter combinations with description and id (always have standard mapping with all and maybe some most used cases?)
-	 * 4. GET /mapping/ppi/filter/{id} or /mapping/ppi/filter?id={id} to get the ppi network with those filters applied 
+	 * 1. GET /filterOptions (or a better endpoint name for transitionTypes) to get list of available filters
+	 * 2. POST /mapping with JSON Payload to set filtering options, generate id for those filter combinations and send to user (with link to endpoint HATEOAS)
+	 * 3. GET /mappings show available filter combinations with description and id (always have standard mapping with all and maybe some most used cases?)
+	 * 4. GET /mapping/{id} to get the ppi network with those filters applied 
 	 */
 	
-	@RequestMapping(value = "/mapping/ppi/filter", method=RequestMethod.POST)
-	public ResponseEntity<Map<String, List<String>>> defineFilterOption(@RequestBody FilterOptions filterOptions){
-		logger.info(filterOptions.toString());
-		// Need some way to store these filter options @FILTER_OPTION_STORE
+	@RequestMapping(value = "/mapping", method=RequestMethod.POST)
+	public ResponseEntity<Map<String, FilterOptions>> defineFilterOption(@RequestBody FilterOptions filterOptions){
+		if(filterOptions == null) {
+			logger.info("Serving POST /mapping, but filterOptions was null");
+			return new ResponseEntity<Map<String, FilterOptions>>(HttpStatus.BAD_REQUEST);
+		}
+		if(filterOptions.getNetworkType() == null) {
+			filterOptions.setNetworkType("");
+		}
+		if(filterOptions.getTransitionTypes() == null) {
+			filterOptions.setTransitionTypes(new ArrayList<>());
+		}
+		if(filterOptions.getNodeTypes() == null) {
+			filterOptions.setNodeTypes(new ArrayList<>());
+		}
+		if (filterOptions.getNetworkType().equals("") && filterOptions.getTransitionTypes().size() == 0 && filterOptions.getNodeTypes().size() == 0) {
+			logger.info("Serving POST /mapping, but filterOptions were empty");
+			return new ResponseEntity<Map<String, FilterOptions>>(HttpStatus.BAD_REQUEST);
+		}
+		logger.info("Serving POST /mapping for: " + filterOptions.toString());
+		
 		// check if that set of options does already exist
-		// if yes, get id and return uri to requester
-		// if no, generate new set and return uri to requester
-		return new ResponseEntity<Map<String, List<String>>>(null, HttpStatus.OK);
+		FilterOptions retFilterOptions;
+		Map<String, FilterOptions> retFilterOptionsMap  = new HashMap<String, FilterOptions>();
+		if(this.networkMappingService.filterOptionsExists(filterOptions)) {
+			// if yes, get the existing set
+			retFilterOptions = this.networkMappingService.getExistingFilterOptions(filterOptions);
+			if(retFilterOptions == null) {
+				logger.info("Serving POST /mapping, filterOptions existed, but retrieving them failed");
+				return new ResponseEntity<Map<String, FilterOptions>>(HttpStatus.BAD_REQUEST);
+			}
+		} else {
+			// if no, generate new set and generate mapping (TODO: Generate the mapping in a separate thread)
+			retFilterOptions = this.networkMappingService.addNetworkMapping(filterOptions);
+		}
+		// add self link
+		retFilterOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(retFilterOptions.getMappingUuid())).withSelfRel());
+		// package in Map to return to requerster
+		retFilterOptionsMap.put(retFilterOptions.getMappingUuid(), retFilterOptions);
+		return new ResponseEntity<Map<String, FilterOptions>>(retFilterOptionsMap, HttpStatus.OK);
+		
 	}
 	
-	@RequestMapping(value = "/mapping/ppi/filters", method=RequestMethod.GET)
-	public ResponseEntity<Resource> showAvailableFilterOptions(){
-		// Query @FILTER_OPTION_STORE
+	@RequestMapping(value = "/mappings", method=RequestMethod.GET)
+	public ResponseEntity<Map<String, FilterOptions>> showAvailableFilterOptions(){
+		
 		// return list of filterOptions, with ids and Links to endpoint generating network using that filterOption
-		return new ResponseEntity<Resource>(new ByteArrayResource(null), HttpStatus.OK);
+		Map<String, FilterOptions> allFilterOptions = this.networkMappingService.getFilterOptions();
+		
+		for (String uuid : allFilterOptions.keySet()) {
+			FilterOptions currentOptions = allFilterOptions.get(uuid);
+			currentOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(uuid)).withSelfRel());
+		}
+		
+		return new ResponseEntity<Map<String, FilterOptions>>(allFilterOptions, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/mapping/ppi/filter/{id}", method=RequestMethod.GET)
-	public ResponseEntity<Resource> getMappingPPIWithFilter(@PathVariable Integer id){
+	@RequestMapping(value = "/mapping/{uuid}", method=RequestMethod.GET)
+	public ResponseEntity<Resource> getMappingWithFilter(@PathVariable String uuid){
+		// TODO: Check here whether the mapping has been created, or just the filterOptions posted.
+		
 		// Get FilterOption with id @id from @FILTER_OPTION_STORE
-		FilterOptions filterOptionsFromId = new FilterOptions(); // actually query the @FILTER_OPTION_STORE here ofc
+		FilterOptions filterOptionsFromId = this.networkMappingService.getFilterOptions(uuid);
+		if(filterOptionsFromId == null) {
+			logger.info("Serving GET /mapping/{uuid} with uuid: " + uuid + ", but no filterOptions-Entry was found under that uuid");
+			return new ResponseEntity<Resource>(HttpStatus.BAD_REQUEST);
+		}
+		logger.info("Serving GET /mapping/{uuid} with uuid: " + uuid);
+		NodeEdgeList flatNetwork = this.networkMappingService.getMappingFromFilterOptions(filterOptionsFromId);
+		logger.info("Retrieved flat Network representation");
 		// generating dummy data
-		List<String> dummyTransitionTypeFilterOption = new ArrayList<>();
+		/*List<String> dummyTransitionTypeFilterOption = new ArrayList<>();
 		dummyTransitionTypeFilterOption.add("stimulation");
 		dummyTransitionTypeFilterOption.add("inhibition");
 		filterOptionsFromId.setTransitionTypes(dummyTransitionTypeFilterOption);
 		
 		// generate ppi with filters applied
-		NodeEdgeList ppi = networkMappingService.getProteinInteractionNetwork(filterOptionsFromId.getTransitionTypes());
-		Resource resource = getResourceFromNodeEdgeList(ppi);
-		logger.info("Fetched sifResource");
-		// Try to determine file's content type
-	    String contentType =  "application/octet-stream";
-	  
-	    // only generic contentType as we are not dealing with an actual file serverside,
-		// but the file shall only be created at the client side.
-		String filename = "unnamed";
-		return ResponseEntity.ok()
-		        .contentType(MediaType.parseMediaType(contentType))
-		        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-		        .body(resource);	
+		NodeEdgeList flatNetwork = networkMappingService.getProteinInteractionNetwork(filterOptionsFromId.getTransitionTypes());*/
+		Resource resource = getResourceFromNodeEdgeList(flatNetwork);
+		if (resource != null) {
+			logger.info("Converted flatNetwork to sifResource");
+			// Try to determine file's content type
+		    String contentType =  "application/octet-stream";
+		  
+		    // only generic contentType as we are not dealing with an actual file serverside,
+			// but the file shall only be created at the client side.
+			String filename = "unnamed";
+			return ResponseEntity.ok()
+			        .contentType(MediaType.parseMediaType(contentType))
+			        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+			        .body(resource);	
+		} else {
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT);
+		}
+		
 	}
 	
 	
@@ -156,8 +217,12 @@ public class NetworkMappingController {
 		SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
 	
 	    //Resource resource = fileStorageService.loadFileAsResource(fileName);
-	    Resource resource = fileStorageService.getSifAsResource(sifFile);
-		return resource;
+		if(sifFile != null) {
+		    Resource resource = fileStorageService.getSifAsResource(sifFile);
+		    return resource;
+		} else {
+			return null;
+		}
 	}
 	
 	

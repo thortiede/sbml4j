@@ -59,8 +59,8 @@ public class NodeEdgeList extends ResourceSupport {
 		this.nodeNodeEdgeList = nodeNodeEdgeList;
 	}
 	
-	public NodeEdgeList addListEntry(String node1, String node2, String edge) {
-		this.getNodeNodeEdgeList().add(new NodeNodeEdge(node1, node2, edge));
+	public NodeEdgeList addListEntry(String node1, String node1UUID, String node2, String node2UUID, String edge) {
+		this.getNodeNodeEdgeList().add(new NodeNodeEdge(node1, node1UUID, node2, node2UUID, edge));
 		return this;
 	}
 		

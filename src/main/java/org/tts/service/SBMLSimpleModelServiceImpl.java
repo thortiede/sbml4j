@@ -12,13 +12,11 @@ import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.CVTerm;
 import org.sbml.jsbml.Compartment;
-import org.sbml.jsbml.CompartmentalizedSBase;
 import org.sbml.jsbml.ListOf;
 import org.sbml.jsbml.Model;
 import org.sbml.jsbml.Reaction;
 import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBMLReader;
-import org.sbml.jsbml.SBase;
 import org.sbml.jsbml.Species;
 import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
@@ -35,9 +33,6 @@ import org.tts.model.ExternalResourceEntity;
 import org.tts.model.GraphBaseEntity;
 import org.tts.model.HelperQualSpeciesReturn;
 import org.tts.model.SBMLCompartment;
-import org.tts.model.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.SBMLDocumentEntity;
-import org.tts.model.SBMLModelEntity;
 import org.tts.model.SBMLQualSpecies;
 import org.tts.model.SBMLQualSpeciesGroup;
 import org.tts.model.SBMLSBaseEntity;
@@ -68,6 +63,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
 	GraphBaseEntityRepository graphBaseEntityRepository;
 	HttpService httpService;
+	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	
 	int SAVE_DEPTH = 1;
 	
@@ -79,7 +75,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			ExternalResourceEntityRepository externalResourceEntityRepository,
 			BiomodelsQualifierRepository biomodelsQualifierRepository,
 			GraphBaseEntityRepository graphBaseEntityRepository,
-			HttpService httpService) {
+			HttpService httpService,
+			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
@@ -90,6 +87,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.httpService = httpService;
+		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model) {
@@ -118,8 +116,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					// but for now, as kegg only has one default compartment and it's the only time we load more than one model
 					// we keep it like that.
 				} else {
-					setSbaseProperties(compartment, sbmlCompartment);
-					setCompartmentProperties(compartment, sbmlCompartment);
+					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(sbmlCompartment);
+					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(compartment, sbmlCompartment);
+					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentProperties(compartment, sbmlCompartment);
 					sbmlCompartmentList.add(this.sbmlSBaseEntityRepository.save(sbmlCompartment, SAVE_DEPTH));
 				}
 			} catch (ClassCastException e) {	
@@ -148,10 +147,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					speciesList.add(existingSpecies);
 				} else {
 					SBMLSpecies newSpecies = new SBMLSpecies();
-					setSbaseProperties(species, newSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(species, newSpecies);
 					// uncomment to connect entities to compartments
-					//setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
-					setSpeciesProperties(species, newSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
+					this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSpecies);
 					
 					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
 					persistedNewSpecies.setCvTermList(species.getCVTerms());
@@ -175,10 +175,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					}
 				}
 			}
-			setSbaseProperties(species, newSBMLSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSBMLSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(species, newSBMLSpeciesGroup);
 			// uncomment to connect entities to compartments
-			//setCompartmentalizedSbaseProperties(species, newSBMLSpeciesGroup, compartmentLookupMap);
-			setSpeciesProperties(species, newSBMLSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSBMLSpeciesGroup, compartmentLookupMap);
+			this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
 				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBySBaseName(symbol);
@@ -222,10 +223,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					
 				} else {
 					SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
-					setSbaseProperties(qualSpecies, newQualSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newQualSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(qualSpecies, newQualSpecies);
 					// uncomment to connect entities to compartments
-					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
-					setQualSpeciesProperties(qualSpecies, newQualSpecies);
+					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
+					this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
 					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
 					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
@@ -246,10 +248,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					}
 				}
 			}
-			setSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSBMLQualSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			// uncomment to connect entities to compartments
-			//setCompartmentalizedSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup, compartmentLookupMap);
-			setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
+			this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newSBMLQualSpeciesGroup, compartmentLookupMap);
+			this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
 				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(symbol);
@@ -340,7 +343,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				}
 			} else {
 				SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
-				setSbaseProperties(transition, newSimpleTransition);
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSimpleTransition);
+				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(transition, newSimpleTransition);
 				newSimpleTransition.setTransitionId(newTransitionId);
 				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(inputName));
 				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(outputName));
@@ -520,10 +524,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			} else {
 				// reaction not yet in db, build and persist it
 				SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
-				setSbaseProperties(reaction, newReaction);
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newReaction);
+				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(reaction, newReaction);
 				// uncomment to connect entities to compartments
-				//setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
-				setSimpleReactionProperties(reaction, newReaction);
+				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
+				this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
 				// reactants
 				for (int i=0; i != reaction.getReactantCount(); i++) {
 					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getReactant(i).getSpecies());
@@ -581,156 +586,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return (List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll();
 	}
 
-	/******************************************************************************************************************************
-	 * 													Setter for SBML Core
-	 ******************************************************************************************************************************/
-				
-		/**
-		 * Set Properties of SBMLCompartment entity (or any entity derived from it)
-		 * from a jSBML Compartment entity
-		 * @param source The Compartment entity from jSBML ({@link org.sbml.jsbml.Compartment}) from which the attributes are to be taken
-		 * @param target The SBMLComartment entity to which the attributes are to be applied to
-		 */
-		private void setCompartmentProperties(Compartment source, SBMLCompartment target) {
-			target.setSpatialDimensions(source.getSpatialDimensions());
-			target.setSize(source.getSize());
-			target.setConstant(source.getConstant());
-			target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
-		}
-
-		/**
-		 * Set Properties of SBMLDocument entity (or any entity derived from it)
-		 * from a jSBML SBMLDocument entity
-		 * @param source The SBMLDocument entity from jSBML ({@link org.sbml.jsbml.SBMLDocument}) from which the attributes are to be taken
-		 * @param target The SBMLDocumentEntity entity to which the attributes are to be applied to
-		 * @param filename The original filename where the document was taken from
-		 */
-		private void setSBMLDocumentProperties(SBMLDocument source, SBMLDocumentEntity target,
-				String filename) {
-			target.setSbmlFileName(filename);
-			target.setSbmlLevel(source.getLevel());
-			target.setSbmlVersion(source.getVersion());
-			target.setSbmlXmlNamespace(source.getNamespace());
-		}
-
-		/**
-		 * Set Properties of SBMLModelEntity (or any entity derived from it)
-		 * from a jSBML Model Entity
-		 * @param model The Model entity from jSBML ({@link org.sbml.jsbml.Model}) from which the attributes are to be taken
-		 * @param sbmlDocument The SBMLDocumentEntity entity which encloses this SBMLModel, it will be referenced in {@linkplain sbmlModelEntity}
-		 * @param sbmlModelEntity The SBMLModelEntity to which the attributes are to be applied to
-		 */
-		private void setModelProperties(Model model, SBMLDocumentEntity sbmlDocument, SBMLModelEntity sbmlModelEntity) {
-			/**
-			 * The following string attributes contain IDRefs to 
-			 * UnitDefinitions.
-			 * TODO: actually link to the UnitDefinition-Object here.
-			 * Since current queries don't use them, we skip them for now
-			 * and only save the ids to the graph
-			 * Once we load the UnitDefinitions
-			 * a) manual linking is possible
-			 * b) linking here on creation or on a second pass becomes possible.
-			 */
-			sbmlModelEntity.setSubstanceUnits(model.getSubstanceUnits());
-			sbmlModelEntity.setTimeUnits(model.getTimeUnits());
-			sbmlModelEntity.setVolumeUnits(model.getVolumeUnits());
-			sbmlModelEntity.setAreaUnits(model.getAreaUnits());
-			sbmlModelEntity.setLengthUnits(model.getLengthUnits());
-			sbmlModelEntity.setConversionFactor(model.getConversionFactor());
-			sbmlModelEntity.setEnclosingSBMLEntity(sbmlDocument);
-		}
 		
-		/**
-		 * Set Properties of SBMLSBaseEntity (or any entity derived from it)
-		 * from a jSBML SBase entity
-		 * @param source The SBase entity from jSBML ({@link org.sbml.jsbml.SBase}) from which the attributes are to be taken
-		 * @param target The SBMLSBaseEntity entity to which the attributes are to be applied to
-		 */
-		private void setSbaseProperties(SBase source, SBMLSBaseEntity target) {
-			target.setEntityUUID(UUID.randomUUID().toString());
-			target.setsBaseId(source.getId());
-			target.setsBaseName(source.getName());
-			try {
-				target.setsBaseNotes(source.getNotesString());
-			} catch (XMLStreamException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				logger.debug("Unable to generate Notes String for Entity " + source.getName());
-			}
-			target.setsBaseMetaId(source.getMetaId());
-			target.setsBaseSboTerm(source.getSBOTermID());
-			if(source.getNumCVTerms() > 0) {
-				target.setCvTermList(source.getCVTerms());
-			}
-		}
-		
-		/**
-		 * Set Properties of SBMLCompartmentalizedSBaseEntity entity (or any entity derived from it)
-		 * from a jSBML CompartmentalizedSBase entity
-		 * @param source The CompartmentalizedSBase entity from jSBML ({@link org.sbml.jsbml.CompartmentalizedSBase}) from which the attributes are to be taken
-		 * @param target The SBMLCompartmentalizedSBaseEntity entity to which the attributes are to be applied to
-		 * @param compartmentLookupMap A Map to lookup the correct SBMLCompartment which this CompartmentalizedSBase is located in
-		 */
-		private void setCompartmentalizedSbaseProperties(CompartmentalizedSBase source, SBMLCompartmentalizedSBaseEntity target, Map<String, SBMLCompartment> compartmentLookupMap) {
-			target.setCompartmentMandatory(source.isCompartmentMandatory());
-			if(compartmentLookupMap.containsKey(source.getCompartment())) {
-				target.setCompartment(compartmentLookupMap.get(source.getCompartment()));
-			} else {
-				logger.debug("No matching compartment found for compartment " + source.getCompartment() + " in " + source.getName());
-			}
-		}
-		
-		/**
-		 * Set Properties of SBMLSpecies entity (or any entity derived from it)
-		 * from a jSBML Species entity
-		 * @param source The Species Entity from jSBML ({@link org.sbml.jsbml.Species)} from which the attributes are to be taken
-		 * @param target The SBMLSpecies Entity to which the attributes are to be applied
-		 */
-		private void setSpeciesProperties(Species source, SBMLSpecies target) {
-			target.setInitialAmount(source.getInitialAmount());
-			target.setInitialConcentration(source.getInitialConcentration());
-			target.setBoundaryCondition(source.getBoundaryCondition());
-			target.setHasOnlySubstanceUnits(source.hasOnlySubstanceUnits());
-			target.setConstant(source.isConstant());	
-		}
-
-		/**
-		 * Set Properties of SBMLSimpleReaction
-		 * from a jSBML Reaction entity 
-		 * @param source The Reaction entity from jsbml ({@link org.sbml.jsbml.Reaction}) from which the attributes are to be taken
-		 * @param target The SBMLSimpleReaction entity to which the attributes are to be applied to
-		 */
-		private void setSimpleReactionProperties(Reaction source, SBMLSimpleReaction target) {
-			if (source.isSetReversible()) target.setReversible(source.isReversible());
-		}
-		
-	/******************************************************************************************************************************
-	 * 													Setter for Extensions
-	 ******************************************************************************************************************************/
-		
-	/******************************************************************************************************************************
-	 * 													Setter for Extension QUAL
-	 ******************************************************************************************************************************/
-			
-		/**
-		 * Set Properties of SBMLQualSpecies entity (or any entity derived from it)
-		 * from a jSBML-Qual-Extension QualitativeSpecies entity
-		 * @param source The QualitativeSpecies entity from jSBML-Qual-Extension ({@link org.sbml.sbml.ext.qual.QualitativeSpecies}) from which the attributes are to be taken
-		 * @param target The SBMLQualSpecies entity to which the attributes are to be applied to
-		 */
-		private void setQualSpeciesProperties(QualitativeSpecies source, SBMLQualSpecies target) {
-			target.setConstant(source.getConstant());
-			/** 
-			 * initialLevel and maxLevel are not always set, so the jsbml entity has methods for checking if they are
-			 * Consider adding those to our Entities as well.
-			 */
-			
-			if (source.isSetInitialLevel()) target.setInitialLevel(source.getInitialLevel());
-			if (source.isSetMaxLevel()) target.setMaxLevel(source.getMaxLevel());
-		}
-
-		
-
+	
 	
 	
 }
