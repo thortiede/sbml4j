@@ -9,6 +9,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.common.SBMLFile;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLSBaseEntity;
 
@@ -47,4 +48,10 @@ public interface SBMLService {
 	 * {@link org.tts.model.common.GraphBaseEntity}
 	 */
 	public List<GraphBaseEntity> getAllEntities();
+
+	public boolean sbmlFileNodeExists(String originalFilename);
+
+	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException;
+
+	public SBMLFile getSbmlFileNode(String originalFilename);
 }

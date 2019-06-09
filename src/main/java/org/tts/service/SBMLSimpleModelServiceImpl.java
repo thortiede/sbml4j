@@ -1,12 +1,15 @@
 package org.tts.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -33,6 +36,7 @@ import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLFile;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
@@ -43,6 +47,7 @@ import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.repository.common.ExternalResourceEntityRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
+import org.tts.repository.common.SBMLFileNodeRepository;
 import org.tts.repository.common.SBMLQualSpeciesRepository;
 import org.tts.repository.common.SBMLSBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
@@ -64,6 +69,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	GraphBaseEntityRepository graphBaseEntityRepository;
 	HttpService httpService;
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
+	SBMLFileNodeRepository sbmlFileNodeRepository;
 	
 	int SAVE_DEPTH = 1;
 	
@@ -76,7 +82,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			BiomodelsQualifierRepository biomodelsQualifierRepository,
 			GraphBaseEntityRepository graphBaseEntityRepository,
 			HttpService httpService,
-			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl) {
+			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
+			SBMLFileNodeRepository sbmlFileNodeRepository) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
@@ -88,6 +95,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.httpService = httpService;
 		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
+		this.sbmlFileNodeRepository = sbmlFileNodeRepository;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model) {
@@ -584,6 +592,32 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	@Override
 	public List<GraphBaseEntity> getAllEntities() {
 		return (List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll();
+	}
+
+	@Override
+	public boolean sbmlFileNodeExists(String originalFilename) {
+		if (getSbmlFileNode(originalFilename) != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException{
+		SBMLFile newSBMLFileNode = new SBMLFile();
+		this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSBMLFileNode);
+		newSBMLFileNode.setFilename(file.getOriginalFilename());
+		
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+			newSBMLFileNode.setFilecontent( br.lines().collect(Collectors.joining(System.lineSeparator())));
+		}
+		return this.sbmlFileNodeRepository.save(newSBMLFileNode);
+	}
+
+	@Override
+	public SBMLFile getSbmlFileNode(String originalFilename) {
+		return this.sbmlFileNodeRepository.findByFilename(originalFilename);
 	}
 
 		

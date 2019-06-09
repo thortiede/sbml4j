@@ -38,6 +38,7 @@ import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.tts.model.common.SBMLFile;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
@@ -989,6 +990,24 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		} else {
 			logger.debug("WARING: Output QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
 		}
+	}
+
+	@Override
+	public boolean sbmlFileNodeExists(String originalFilename) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public SBMLFile getSbmlFileNode(String originalFilename) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
