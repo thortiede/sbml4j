@@ -376,7 +376,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
+	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlfile) {
 		// compartment
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
@@ -436,5 +436,6 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 }

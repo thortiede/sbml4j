@@ -29,10 +29,10 @@ public interface SBMLService {
 	/**
 	 * Main entry Method coming from a controller
 	 * @param model The jSBML Model ({@link org.sbml.jsbml.Model}) to persist
-	 * @param filename The name of the file this model originates from
+	 * @param sbmlFileNode The name of the file this model originates from
 	 * @return List of GraphBaseEntity that got persisted (or were already in the database) and are part of the model
 	 */
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
+	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlFileNode);
 
 	//public List<GraphBaseEntity> persistFastSimple(Model model);
 	

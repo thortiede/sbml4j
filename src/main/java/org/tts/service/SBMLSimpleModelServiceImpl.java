@@ -460,7 +460,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
+	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlfile) {
 		// compartment
 		List<GraphBaseEntity> returnList= new ArrayList<>();
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);

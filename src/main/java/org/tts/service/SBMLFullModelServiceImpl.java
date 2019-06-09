@@ -124,10 +124,11 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
+	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlfile) {
 		
 		List<GraphBaseEntity> allModelEntities = new ArrayList<>();
 		
+		String filename = sbmlfile.getFilename();
 		// 1. SBMLDocument
 		SBMLDocumentEntity sbmlDocumentEntity = getSBMLDocument(model, filename);
 		if (sbmlDocumentEntity == null) {
