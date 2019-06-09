@@ -2,7 +2,9 @@ package org.tts.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -91,9 +93,31 @@ public class LoadDataController {
 	 * @return all Entities as they were persisted (or connected if already present) as a result of persisting the model
 	 */
 	@RequestMapping(value = "/sbml", method=RequestMethod.POST)
-	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
+	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file,
+															@RequestParam("organism") String organism,
+															@RequestParam("matchingAttribute") String matchingAttribute,
+															@RequestParam("source") String source,
+															@RequestParam("version") String sourceVersion) {
 		
 		SBMLFile sbmlFileNode = null;
+		List<String> newEntityLabels = new ArrayList<>();
+		Map<String, Object> newEntityAnnotations = new HashMap<>();
+		// organism
+		if(organism != null) {
+			newEntityAnnotations.put("organism", organism);
+		}
+		
+		// source and version
+		// is this source and version already created (i.e. a model from this source has been loaded?)
+		//  if yes, 
+		//		is model already loaded?
+		//			no: then connect to that source using the matching attribute for connecting to already loaded entities
+		//			yes: check identity of filecontent -> if same, model is loaded, return that model, 
+		//												  if not, throw version conflict;  
+		//  else, source not loaded
+		//     		then create new entry (source node with that version)
+		//
+		// simple model lacks the pathway node -> either create it, or use annotation/label?
 		
 		// can we access the files name and ContentType?
 		List<GraphBaseEntity> returnList = new ArrayList<>();
@@ -147,7 +171,7 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
-		List<GraphBaseEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, file.getOriginalFilename());
+		List<GraphBaseEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode);
 		logger.info("Peristed " + resultSet.size() + " entities for file " + file.getOriginalFilename());
 		return new ResponseEntity<List<GraphBaseEntity>>(resultSet, HttpStatus.OK);
 	}
