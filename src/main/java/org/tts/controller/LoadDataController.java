@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.SBMLFile;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileService;
 import org.tts.service.FileStorageService;
@@ -87,10 +88,13 @@ public class LoadDataController {
 	 * POST /sbml
 	 * Endpoint to upload a sbml file, extract the model and persist the contents in the simple model representation
 	 * @param file The file holding the sbml model to be persisted
-	 * @return all Entities as they were persisted (or connected if already present) as a result persisting the model
+	 * @return all Entities as they were persisted (or connected if already present) as a result of persisting the model
 	 */
 	@RequestMapping(value = "/sbml", method=RequestMethod.POST)
 	public ResponseEntity<List<GraphBaseEntity>> uploadSBML(@RequestParam("file") MultipartFile file) {
+		
+		SBMLFile sbmlFileNode = null;
+		
 		// can we access the files name and ContentType?
 		List<GraphBaseEntity> returnList = new ArrayList<>();
 		GraphBaseEntity defaultReturnEntity = new GraphBaseEntity();
@@ -106,6 +110,22 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
+		// Does node with this filename already exist?
+		if(!sbmlService.sbmlFileNodeExists(file.getOriginalFilename())) {
+			// does not exist -> create
+			try {
+				sbmlFileNode = sbmlService.createSbmlFileNode(file);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				defaultReturnEntity.setEntityUUID("Cannot extract content of file " + file.getOriginalFilename());
+				returnList.add(defaultReturnEntity);
+				return new ResponseEntity<List<GraphBaseEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			}
+			
+		} else {
+			sbmlFileNode = sbmlService.getSbmlFileNode(file.getOriginalFilename());
+		}
+		returnList.add(sbmlFileNode);
 		Model sbmlModel = null;
 		try {
 			sbmlModel =  sbmlService.extractSBMLModel(file);
