@@ -1,8 +1,17 @@
 package org.tts.model.common;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.Labels;
+import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Version;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 
 public class GraphBaseEntity {
@@ -18,6 +27,12 @@ public class GraphBaseEntity {
 	 * Entities shall reference other entities only by this UUID
 	 */
 	private String entityUUID;
+
+	@Labels
+	private List<String> labels = new ArrayList<>();
+	
+	@Properties
+	private Map<String, Object> annotation = new HashMap<>();
 	
 	public Long getId() {
 		return id;
@@ -41,6 +56,24 @@ public class GraphBaseEntity {
 
 	public void setEntityUUID(String entityUUID) {
 		this.entityUUID = entityUUID;
+	}
+	
+	@JsonIgnore
+	public List<String> getLabels() {
+		return labels;
+	}
+
+	public void setLabels(List<String> labels) {
+		this.labels = labels;
+	}
+	
+	@JsonIgnore
+	public Map<String, Object> getAnnotation() {
+		return annotation;
+	}
+
+	public void setAnnotation(Map<String, Object> annotation) {
+		this.annotation = annotation;
 	}
 	
 }
