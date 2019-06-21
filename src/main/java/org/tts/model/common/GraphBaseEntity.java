@@ -9,6 +9,7 @@ import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.annotation.Properties;
+import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Version;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,6 +29,9 @@ public class GraphBaseEntity {
 	 */
 	private String entityUUID;
 
+	@Relationship(type="IN", direction=Relationship.OUTGOING)
+	private List<Organism> organisms;
+	
 	@Labels
 	private List<String> labels = new ArrayList<>();
 	
