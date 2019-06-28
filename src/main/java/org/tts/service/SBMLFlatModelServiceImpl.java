@@ -23,16 +23,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
-import org.tts.model.common.SBMLFile;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.model.flat.FlatSpecies;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.simple.SBMLSimpleTransition;
+import org.tts.model.warehouse.FileNode;
 import org.tts.repository.common.SBMLQualSpeciesRepository;
 import org.tts.repository.common.SBMLSBaseEntityRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
@@ -376,7 +378,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlfile) {
+	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
 		// compartment
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
@@ -392,7 +394,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 		Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
 		List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions());
 		
-		List<GraphBaseEntity> returnList= new ArrayList<>();
+		List<ProvenanceEntity> returnList= new ArrayList<>();
 		persistedSBMLSpecies.forEach(species->{
 			returnList.add(species);
 		});
@@ -415,24 +417,6 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 
 	@Override
 	public List<GraphBaseEntity> getAllEntities() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean sbmlFileNodeExists(String originalFilename) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public SBMLFile getSbmlFileNode(String originalFilename) {
 		// TODO Auto-generated method stub
 		return null;
 	}

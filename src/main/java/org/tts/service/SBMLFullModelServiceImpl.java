@@ -38,7 +38,6 @@ import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.common.SBMLFile;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
@@ -51,6 +50,9 @@ import org.tts.model.full.ext.qual.SBMLQualInput;
 import org.tts.model.full.ext.qual.SBMLQualModelExtension;
 import org.tts.model.full.ext.qual.SBMLQualOutput;
 import org.tts.model.full.ext.qual.SBMLQualTransition;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.warehouse.FileNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.repository.common.ExternalResourceEntityRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
@@ -124,9 +126,9 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlfile) {
+	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
 		
-		List<GraphBaseEntity> allModelEntities = new ArrayList<>();
+		List<ProvenanceEntity> allModelEntities = new ArrayList<>();
 		
 		String filename = sbmlfile.getFilename();
 		// 1. SBMLDocument
@@ -991,24 +993,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		} else {
 			logger.debug("WARING: Output QualSpecies " + source.getQualitativeSpecies() + " not found for " + source.getName());
 		}
-	}
-
-	@Override
-	public boolean sbmlFileNodeExists(String originalFilename) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public SBMLFile getSbmlFileNode(String originalFilename) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }
