@@ -6,40 +6,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.GraphEnum.RelationTypes;
+import org.tts.model.provenance.ProvenanceEntity;
 
-enum RelationTypes {
-	DISSOCIATION("SBO:0000180"),
-	PHOSPHORYLATION("SBO:0000216"),
-	DEPHOSPHORYLATION("SBO:0000330"),
-	UNCERTAINPROCESS("SBO:0000396"),
-	NONCOVALENTBINDING("SBO:0000177"),
-	STIMULATION("SBO:0000170"),
-	INHIBITION("SBO:0000169"),
-	GLYCOSYLATION("SBO:0000217"),
-	UBIQUITINATION("SBO:0000224"),
-	METHYLATION("SBO:0000214"),
-	MOLECULARINTERACTION("SBO:0000344"),
-	CONTROL("SBO:0000168");
-	
-	private final String relType;
-	
-	private RelationTypes(String sboString) {
-		this.relType = sboString;
-	}
-	
-	String getRelType() {
-		return this.relType;
-	}
-	
-}
 
-public class FlatSpecies extends GraphBaseEntity {
+public class FlatSpecies extends ProvenanceEntity {
 
-	
-	
-	
-	private String simpleModelEntityUUID;
+	private String simpleModelEntityUUID; // maybe use ProvenanceEdge wasDerivedFrom to link back to the Entity in the simpleModel?
 	
 	private String symbol;
 	
@@ -83,10 +56,7 @@ public class FlatSpecies extends GraphBaseEntity {
 	 @Relationship(type = "unknownFromSource")
 	 List<FlatSpecies> unknownFromSourceSpeciesList; // no SBO, eg. hsa05133 qual_K
 	 
-	// add one function like
-	// addRelationship(sbo-term, flatspecies)
-	//     switch case depending on sbo term, add to that list
-	 // 	don't forget to initialise a list if nothing is in it yet.
+	
 	 
 	 public String getSimpleModelEntityUUID() {
 		return simpleModelEntityUUID;
