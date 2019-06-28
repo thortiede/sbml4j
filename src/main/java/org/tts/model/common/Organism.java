@@ -1,7 +1,10 @@
 package org.tts.model.common;
 
-public class Organism extends GraphBaseEntity {
+import org.tts.model.warehouse.WarehouseGraphNode;
 
+public class Organism extends WarehouseGraphNode { 
+	// not sure this should be derived from WarehouseGraphNode or rather ProvenanceEntity
+	// it does not need the connection to the organism as it is the organism
 	private String orgCode;
 	private String tNumber;
 	
