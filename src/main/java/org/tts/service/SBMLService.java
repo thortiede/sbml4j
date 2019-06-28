@@ -9,9 +9,13 @@ import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.common.SBMLFile;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.warehouse.FileNode;
+import org.tts.model.common.Organism;
 
 public interface SBMLService {
 
@@ -32,7 +36,7 @@ public interface SBMLService {
 	 * @param sbmlFileNode The name of the file this model originates from
 	 * @return List of GraphBaseEntity that got persisted (or were already in the database) and are part of the model
 	 */
-	public List<GraphBaseEntity> buildAndPersist(Model model, SBMLFile sbmlFileNode);
+	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode);
 
 	//public List<GraphBaseEntity> persistFastSimple(Model model);
 	
@@ -49,9 +53,5 @@ public interface SBMLService {
 	 */
 	public List<GraphBaseEntity> getAllEntities();
 
-	public boolean sbmlFileNodeExists(String originalFilename);
-
-	public SBMLFile createSbmlFileNode(MultipartFile file) throws IOException;
-
-	public SBMLFile getSbmlFileNode(String originalFilename);
+	
 }
