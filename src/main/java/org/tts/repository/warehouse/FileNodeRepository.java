@@ -1,10 +1,13 @@
-package org.tts.repository.common;
+package org.tts.repository.warehouse;
+
+import java.util.List;
 
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.SBMLFile;
+import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.warehouse.FileNode;
 
-public interface SBMLFileNodeRepository extends Neo4jRepository<SBMLFile, Long> {
+public interface FileNodeRepository extends Neo4jRepository<FileNode, Long> {
 
-	public SBMLFile findByFilename(String filename);
+	public List<FileNode> findByFileNodeTypeAndFilename(FileNodeType fileNodeType, String originalFilename);
 	
 }
