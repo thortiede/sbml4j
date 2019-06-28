@@ -5,11 +5,12 @@ import java.util.List;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.provenance.ProvenanceEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class ExternalResourceEntity extends GraphBaseEntity {
+public class ExternalResourceEntity extends ProvenanceEntity {
 
 	private String uri;
 	
