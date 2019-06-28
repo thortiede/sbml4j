@@ -152,7 +152,7 @@ public class NetworkMappingController {
 		}
 		// add self link
 		retFilterOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(retFilterOptions.getMappingUuid(), "graphml")).withSelfRel());
-		// package in Map to return to requerster
+		// package in Map to return to requester
 		retFilterOptionsMap.put(retFilterOptions.getMappingUuid(), retFilterOptions);
 		return new ResponseEntity<Map<String, FilterOptions>>(retFilterOptionsMap, HttpStatus.OK);
 		
