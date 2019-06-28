@@ -62,13 +62,31 @@ public class GraphBaseEntity {
 		this.entityUUID = entityUUID;
 	}
 	
-	@JsonIgnore
 	public List<String> getLabels() {
 		return labels;
 	}
 
 	public void setLabels(List<String> labels) {
 		this.labels = labels;
+	}
+	
+	public boolean addLabel(String newLabel) {
+		try {
+			this.labels.add(newLabel);
+		} catch (Exception e) {
+			// element could not be added
+			return false;
+		}
+		return true;
+	}
+	
+	public boolean removeLabel(String name) {
+		try {
+			this.labels.remove(name);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
 	
 	@JsonIgnore
