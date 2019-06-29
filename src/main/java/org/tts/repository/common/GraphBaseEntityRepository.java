@@ -67,4 +67,61 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 					"e2.entityUUID AS node2UUID")
 	Iterable<NodeNodeEdge> getInteractionCustomGroupOnBoth(String inputExternalRel, String outputExternalRel);
 	
+	
+	/**
+	 * match (p:PathwayNode {pathwayIdString: "path_hsa05100"})-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(c:SBMLSimpleTransition) with c match x= (c)-[tr:IS_INPUT | IS_OUTPUT ]-(qin:SBMLQualSpecies)-[:IS]-(s:SBMLSpecies)-[bq:BQ {qualifier:"BQB_HAS_VERSION"}]-(e:ExternalResourceEntity {type: "kegg.genes"}) return e.name, c.sBaseSboTerm, c.entityUUID, type(tr)
+	 * 
+	 * match (p:PathwayNode {pathwayIdString: "path_hsa05100"})
+	 * 			-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-
+	 *       (c:SBMLSimpleTransition) 
+	 *  with c 
+	 * match x= (c)
+	 * 				-[tr:IS_INPUT | IS_OUTPUT ]-
+	 *          (qin:SBMLQualSpecies)
+	 *          	-[:IS]-
+	 *          (s:SBMLSpecies)
+	 *          	-[bq:BQ {qualifier:"BQB_HAS_VERSION"}]-
+	 *          (e:ExternalResourceEntity {type: "kegg.genes"}) 
+	 * return 	e.name, 
+	 * 			c.sBaseSboTerm, 
+	 * 			c.entityUUID, 
+	 * 			type(tr)
+	 */
+	
+	/**
+	 * match (p:PathwayNode {pathwayIdString: "path_hsa05100"})-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(c:SBMLSimpleTransition) with c match x= (e1:ExternalResourceEntity {type: "kegg.genes"})-[bq1:BQ]-(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-(c)-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)-[bq2:BQ]-(e2:ExternalResourceEntity {type: "kegg.genes"}) where bq1.qualifier IN ["BQB_HAS_VERSION", "BQB_IS"] and bq2.qualifier IN ["BQB_HAS_VERSION", "BQB_IS"] return e1.name, bq1.qualifier, s1.sBaseName, type(tr1), c.sBaseSboTerm, c.entityUUID, type(tr2), s2.sBaseName, bq2.qualifier, e2.name
+	 * 
+	 * 	match 	(p:PathwayNode {pathwayIdString: "path_hsa05100"})
+	 * 				-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-
+	 * 			(c:SBMLSimpleTransition) 
+	 *   with 	c 
+	 *  match   x = 
+	 *  		(e1:ExternalResourceEntity {type: "kegg.genes"})
+	 *  			-[bq1:BQ]-
+	 *  		(s1:SBMLSpecies)
+	 *  			-[:IS]-
+	 *  		(q1:SBMLQualSpecies)
+	 *  			-[tr1:IS_INPUT]-
+	 *  		(c)
+	 *  			-[tr2:IS_OUTPUT ]-
+	 *  		(q2:SBMLQualSpecies)
+	 *  			-[:IS]-
+	 *  		(s2:SBMLSpecies)
+	 *  			-[bq2:BQ]-
+	 *  		(e2:ExternalResourceEntity {type: "kegg.genes"}) 
+	 * 
+	 *  where 	bq1.qualifier IN ["BQB_HAS_VERSION", "BQB_IS"] 
+	 *    and 	bq2.qualifier IN ["BQB_HAS_VERSION", "BQB_IS"] 
+	 * return 	e1.name, 
+	 * 			bq1.qualifier, 
+	 * 			s1.sBaseName, 
+	 * 			type(tr1), 
+	 * 			c.sBaseSboTerm, 
+	 * 			c.entityUUID, 
+	 * 			type(tr2), 
+	 * 			s2.sBaseName, 
+	 * 			bq2.qualifier, 
+	 * 			e2.name
+	 */
+	
 }
