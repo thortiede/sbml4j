@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.warehouse.PathwayNode;
 
 public interface NetworkMappingService {
 
@@ -27,5 +29,9 @@ public interface NetworkMappingService {
 	public FilterOptions getFilterOptions(String uuid);
 
 	public NodeEdgeList getMappingFromFilterOptions(FilterOptions filterOptionsFromId);
+	
+	
+	
+	public String createMappingFromPathway(PathwayNode pathway, NetworkMappingType type);
 	
 }

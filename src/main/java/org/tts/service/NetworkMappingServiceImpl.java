@@ -16,8 +16,11 @@ import org.springframework.stereotype.Service;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
+import org.tts.model.common.ContentGraphNode;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.flat.FlatNetworkMapping;
 import org.tts.model.flat.FlatSpecies;
+import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatNetworkMappingRepository;
@@ -33,6 +36,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	FlatSpeciesRepository flatSpeciesRepository;
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
+	WarehouseGraphService warehouseGraphService;
 	
 	/*private enum interactionTypes {
 		DISSOCIATION ("dissociation"),
@@ -54,7 +58,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			FlatNetworkMappingRepository flatNetworkMappingRepository,
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
 			FlatSpeciesRepository flatSpeciesRepository,
-			SBMLSpeciesRepository sbmlSpeciesRepository) {
+			SBMLSpeciesRepository sbmlSpeciesRepository,
+			WarehouseGraphService warehouseGraphService) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -62,6 +67,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.flatNetworkMappingRepository = flatNetworkMappingRepository;
 		this.flatSpeciesRepository = flatSpeciesRepository;
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
+		this.warehouseGraphService = warehouseGraphService;
 	}
 
 	@Override
@@ -405,6 +411,12 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		}
 		mapping.setName(flatNetworkMapping.getEntityUUID());
 		return mapping;
+	}
+
+	@Override
+	public String createMappingFromPathway(PathwayNode pathway, NetworkMappingType type) {
+		//List<ContentGraphNode> pathwayContentNodes = this.warehouseGraphService.getContentNodesOfPathway(pathway.getEntityUUID());
+		return "Not implemented yet";
 	}
 
 }
