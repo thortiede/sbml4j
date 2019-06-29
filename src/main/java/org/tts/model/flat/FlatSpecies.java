@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.ContentGraphNode;
 import org.tts.model.common.GraphEnum.RelationTypes;
-import org.tts.model.provenance.ProvenanceEntity;
 
 
-public class FlatSpecies extends ProvenanceEntity {
+public class FlatSpecies extends ContentGraphNode {
 
 	private String simpleModelEntityUUID; // maybe use ProvenanceEdge wasDerivedFrom to link back to the Entity in the simpleModel?
 	
