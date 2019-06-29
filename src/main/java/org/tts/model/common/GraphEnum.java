@@ -2,6 +2,14 @@ package org.tts.model.common;
 
 public class GraphEnum {
 	
+	
+	public enum NetworkMappingType {
+		PPI,
+		REGULATORY,
+		METABOLIC,
+		SIGNALLING
+	}
+	
 	/**
 	 * DATABASE<br>
 	 * FILE<br>
