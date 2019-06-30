@@ -7,7 +7,8 @@ public class GraphEnum {
 		PPI,
 		REGULATORY,
 		METABOLIC,
-		SIGNALLING
+		SIGNALLING,
+		ALLTRANSITIONS
 	}
 	
 	/**
