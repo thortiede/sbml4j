@@ -11,9 +11,12 @@ import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.provenance.ProvenanceGraphEdge;
+import org.tts.model.warehouse.DatabaseNode;
+import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.provenance.ProvenanceEntityRepository;
 import org.tts.repository.provenance.ProvenanceGraphActivityNodeRepository;
 import org.tts.repository.provenance.ProvenanceGraphAgentNodeRepository;
+import org.tts.repository.provenance.ProvenanceGraphEdgeRepository;
 
 @Service
 public class ProvenanceGraphService {
@@ -26,7 +29,8 @@ public class ProvenanceGraphService {
 	private SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	@Autowired
 	private ProvenanceGraphActivityNodeRepository provenanceGraphActivityNodeRepository;
-	
+	@Autowired
+	private ProvenanceGraphEdgeRepository provenanceGraphEdgeRepository;
 	
 	/**
 	 * Creates a ProvenanceGraphAgentNode if it not already exists for that type and the given name
