@@ -31,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
@@ -481,10 +482,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
 					newExternalResourceEntity.setUri(resource);
 					if (resource.contains("kegg.genes")) {
-						newExternalResourceEntity.setType("kegg.genes");
+						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 						setKeggGeneNames(resource, newExternalResourceEntity);
 					} else if(resource.contains("kegg.reaction")) {
-						newExternalResourceEntity.setType("kegg.reaction");
+						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 					}
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
