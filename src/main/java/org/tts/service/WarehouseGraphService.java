@@ -1,14 +1,19 @@
 package org.tts.service;
 
+import java.util.List;
 import java.util.Map;
 
+import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.Organism;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
+import org.tts.model.warehouse.WarehouseGraphNode;
 
 
 public interface WarehouseGraphService {
@@ -33,5 +38,9 @@ public interface WarehouseGraphService {
 	public void connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
 
 	public PathwayNode createPathwayNode(String idString, String nameString, Organism org);
+
+	public MappingNode createMappingNode(WarehouseGraphNode pathway, NetworkMappingType type, String mappingName);
+
+	public List<PathwayInventoryItem> getListofPathwayInventory(String username);
 	
 }

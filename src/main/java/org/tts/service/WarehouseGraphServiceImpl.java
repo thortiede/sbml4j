@@ -1,11 +1,14 @@
 package org.tts.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
@@ -15,6 +18,7 @@ import org.tts.model.provenance.ProvenanceGraphEntityNode;
 import org.tts.model.common.Organism;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
@@ -151,6 +155,45 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		newPathwayNode.setPathwayIdString(idString);
 		newPathwayNode.setPathwayNameString(nameString);
 		return this.pathwayNodeRepository.save(newPathwayNode);
+	}
+
+	@Override
+	public MappingNode createMappingNode(WarehouseGraphNode parent, NetworkMappingType type, String mappingName) {
+		MappingNode newMappingNode = new MappingNode();
+		this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newMappingNode);
+		newMappingNode.setOrganism(parent.getOrganism());
+		newMappingNode.setMappingType(type);
+		newMappingNode.setMappingName(mappingName);
+		return this.mappingNodeRepository.save(newMappingNode);
+	}
+
+	@Override
+	public List<PathwayInventoryItem> getListofPathwayInventory(String username) {
+		List<PathwayInventoryItem> pathwayInventoryItemList = new ArrayList<>();
+		for (PathwayNode pathwayNode : this.pathwayNodeRepository.findAllPathwaysAttributedToUser(username)) {
+			PathwayInventoryItem item = new PathwayInventoryItem();
+			item.setEntityUUID(pathwayNode.getEntityUUID());
+			item.setPathwayId(pathwayNode.getPathwayIdString());
+			item.setPathwayName(pathwayNode.getPathwayNameString());
+			DatabaseNode sourceEntity = this.findSource(pathwayNode);
+			item.setPathwaySource(sourceEntity.getSource());
+			item.setPathwaySourceVersion(sourceEntity.getSourceVersion());
+			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphEdgeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, pathwayNode);
+			item.setNumberOfNodes(pathwayNodes.size());
+			
+			pathwayInventoryItemList.add(item);
+			
+		}
+		return pathwayInventoryItemList;
+		
+	}
+
+	private DatabaseNode findSource(ProvenanceEntity node) {
+		if(node.getClass() == DatabaseNode.class) {
+			return (DatabaseNode) node;
+		} else {
+			return findSource(this.warehouseGraphNodeRepository.findByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType.CONTAINS, node.getEntityUUID()));
+		}
 	}
 
 }
