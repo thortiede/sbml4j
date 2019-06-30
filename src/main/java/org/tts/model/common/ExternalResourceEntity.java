@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.provenance.ProvenanceEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,7 +25,7 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	
 	private String[] secondaryNames;
 	
-	private String type;
+	private ExternalResourceType type;
 	
 	@Relationship(type = "BQ", direction = Relationship.INCOMING)
 	private List<BiomodelsQualifier> relatedSBMLSBaseEntities;
@@ -77,11 +78,11 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 		this.secondaryNames = secondaryNames;
 	}
 	
-	public String getType() {
+	public ExternalResourceType getType() {
 		return type;
 	}
 
-	public void setType(String type) {
+	public void setType(ExternalResourceType type) {
 		this.type = type;
 	}
 
