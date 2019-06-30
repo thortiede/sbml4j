@@ -5,7 +5,11 @@ import java.util.Map;
 
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 
 public interface NetworkMappingService {
@@ -32,6 +36,6 @@ public interface NetworkMappingService {
 	
 	
 	
-	public String createMappingFromPathway(PathwayNode pathway, NetworkMappingType type);
+	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ExternalResourceType erType, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode);
 	
 }

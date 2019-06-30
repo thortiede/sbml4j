@@ -17,14 +17,21 @@ import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.common.ContentGraphNode;
+import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.flat.FlatNetworkMapping;
 import org.tts.model.flat.FlatSpecies;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
+import org.tts.repository.provenance.ProvenanceEntityRepository;
 import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 @Service
@@ -35,8 +42,11 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	FlatNetworkMappingRepository flatNetworkMappingRepository;
 	FlatSpeciesRepository flatSpeciesRepository;
 	SBMLSpeciesRepository sbmlSpeciesRepository;
+	ProvenanceEntityRepository provenanceEntityRepository;
+	
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	WarehouseGraphService warehouseGraphService;
+	ProvenanceGraphService provenanceGraphService;
 	
 	/*private enum interactionTypes {
 		DISSOCIATION ("dissociation"),
@@ -59,7 +69,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
 			FlatSpeciesRepository flatSpeciesRepository,
 			SBMLSpeciesRepository sbmlSpeciesRepository,
-			WarehouseGraphService warehouseGraphService) {
+			ProvenanceEntityRepository provenanceEntityRepository,
+			WarehouseGraphService warehouseGraphService,
+			ProvenanceGraphService provenanceGraphService) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -67,7 +79,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.flatNetworkMappingRepository = flatNetworkMappingRepository;
 		this.flatSpeciesRepository = flatSpeciesRepository;
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
+		this.provenanceEntityRepository = provenanceEntityRepository;
 		this.warehouseGraphService = warehouseGraphService;
+		this.provenanceGraphService = provenanceGraphService;
 	}
 
 	@Override
@@ -414,9 +428,64 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	}
 
 	@Override
-	public String createMappingFromPathway(PathwayNode pathway, NetworkMappingType type) {
-		//List<ContentGraphNode> pathwayContentNodes = this.warehouseGraphService.getContentNodesOfPathway(pathway.getEntityUUID());
-		return "Not implemented yet";
+	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ExternalResourceType erType, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) {
+		
+		// need a Warehouse Node of Type Mapping, set NetworkMappingTypes
+		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString() + "_" + erType.name();
+		MappingNode mappingFromPathway = this.warehouseGraphService.createMappingNode(pathway, type, mappingName);
+		
+		// connect MappingNode to PathwayNode with wasDerivedFrom
+		this.provenanceGraphService.connect(mappingFromPathway, pathway, ProvenanceGraphEdgeType.wasDerivedFrom);
+		// connect MappingNode to Activity with wasGeneratedBy
+		this.provenanceGraphService.connect(mappingFromPathway, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+		// attribute the new Mapping to the agent
+		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+		
+		// get all Transitions from Pathway
+		Iterable<NodeNodeEdge> allFlatTransitionsOfPathway = 
+					this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(), erType);
+		
+		// create FlatSpecies for QueryResults
+		Map<String, FlatSpecies> networkFlatSpecies = new HashMap<>();
+		for(NodeNodeEdge nne : allFlatTransitionsOfPathway) {
+			// on creation of Flat Species, provenanceConnect them to the initialEntities (and to the Transition?)
+			FlatSpecies node2;
+			if (networkFlatSpecies.containsKey(nne.getNode2())) {
+				// Node2 already in List, we can build a relationship to it, so extract it
+				node2 = networkFlatSpecies.get(nne.getNode2());
+			} else {
+				// Node 2 does not yet exist, we need to create it:
+				node2 = new FlatSpecies();
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node2); // this uses the utility for simpleModel, but they are stored in same db, so should be fine
+				node2.setSymbol(nne.getNode2());
+				node2 = this.flatSpeciesRepository.save(node2);
+				//node2.setSimpleModelEntityUUID(nne.getNode2UUID());
+				this.provenanceGraphService.connect(node2, this.provenanceEntityRepository.findByEntityUUID(nne.getNode2UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
+				this.provenanceGraphService.connect(node2, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.warehouseGraphService.connect(mappingFromPathway, node2, WarehouseGraphEdgeType.CONTAINS);
+				networkFlatSpecies.put(node2.getSymbol(), node2);
+			}
+			// at this point we have node2 (be it already existing, or just created)
+			FlatSpecies node1;
+			if (networkFlatSpecies.containsKey(nne.getNode1())) {
+				// node 1 does already exist
+				node1 = networkFlatSpecies.get(nne.getNode1());
+			} else {
+				// node 1 does not already exist, create it and add relation to node 2
+				node1 = new FlatSpecies();
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node1);// this uses the utility for simpleModel, but they are stored in same db, so should be fine
+				node1.setSymbol(nne.getNode1());
+				node1 = this.flatSpeciesRepository.save(node1);
+				//node1.setSimpleModelEntityUUID(nne.getNode1UUID());
+				this.provenanceGraphService.connect(node1, this.provenanceEntityRepository.findByEntityUUID(nne.getNode1UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
+				this.provenanceGraphService.connect(node1, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.warehouseGraphService.connect(mappingFromPathway, node1, WarehouseGraphEdgeType.CONTAINS);
+			}
+			 //int sbo = SBO.convertAlias2SBO(nne.getEdge().toUpperCase());
+			node1.addRelatedSpecies(node2, nne.getEdge());
+			node1 = this.flatSpeciesRepository.save(node1);			
+			networkFlatSpecies.put(node1.getSymbol(), node1); // this replaces node1 with the version that has the new relationship
+		}
+		return mappingFromPathway;
 	}
-
 }
