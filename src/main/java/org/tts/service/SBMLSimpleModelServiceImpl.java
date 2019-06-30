@@ -214,7 +214,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
 				newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
 				newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
-				SBMLSpecies persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+				SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+				persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
+				newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
+				persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
 				speciesList.add(persistedNewSpeciesGroup);
 				this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
