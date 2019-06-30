@@ -253,7 +253,8 @@ public class LoadDataController {
 		
 		
 		List<String> newEntityLabels = new ArrayList<>();
-			
+		
+		
 		Model sbmlModel = null;
 		try {
 			sbmlModel =  sbmlService.extractSBMLModel(file);
@@ -275,9 +276,11 @@ public class LoadDataController {
 			returnList.add(defaultReturnEntity);
 			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
+		// create a Pathway Node for the model
+		PathwayNode pathwayNode = this.warehouseGraphService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
+		
 		List<ProvenanceEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
 		
-		PathwayNode pathwayNode = this.warehouseGraphService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
 		
 		for (ProvenanceEntity entity : resultSet) {
 			this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
