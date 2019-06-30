@@ -143,5 +143,18 @@ public class GraphEnum {
 		FOR
 	}
 	
+	public enum ExternalResourceType {
+		KEGGGENES("kegg.genes");
+		
+		private final String externalResourceType;
+		
+		private ExternalResourceType(String type) {
+			this.externalResourceType = type;
+		}
+		
+		public String getExternalResourceType() {
+			return this.externalResourceType;
+		}
+	}
 	
 }
