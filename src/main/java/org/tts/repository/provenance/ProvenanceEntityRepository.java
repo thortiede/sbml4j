@@ -16,4 +16,7 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 	boolean areProvenanceEntitiesConnectedWithProvenanceEdgeType(String sourceEntityUUID, String targetEntityUUID,
 			ProvenanceGraphEdgeType edgetype);
 
+	
+	public ProvenanceEntity findByEntityUUID(String node2uuid);
+
 }
