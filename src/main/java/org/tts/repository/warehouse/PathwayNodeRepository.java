@@ -19,4 +19,15 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN p")
 	Iterable<PathwayNode> findAllPathwaysAttributedToUser(String username);
 
+	
+	@Query(value="MATCH "
+			+ "(p:PathwayNode {entityUUID: {1}})"
+			+ "-[:PROV {provenanceGraphEdgeType: \"wasAttributedTo\"}]-"
+			+ "(:PROV_AGENT {graphAgentName: {0}})"
+			+ "RETURN p")
+	PathwayNode findPathwayAttributedToUser(String username, String entityUUID);
+
+
+	PathwayNode findByEntityUUID(String entityUUID);
+
 }
