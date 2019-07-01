@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.tts.model.api.Output.PathwayInventoryItem;
-import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.WarehouseGraphService;
@@ -24,9 +23,9 @@ public class WarehouseController {
 	
 	
 	@RequestMapping(value="/pathwayInventory", method = RequestMethod.GET)
-	public List<PathwayInventoryItem> listAllPathways(@RequestHeader("user") String username) {
+	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(@RequestHeader("user") String username) {
 		
-		return this.warehouseGraphService.getListofPathwayInventory(username);
+		return new ResponseEntity<List<PathwayInventoryItem>>(this.warehouseGraphService.getListofPathwayInventory(username), HttpStatus.OK);
 		
 	}
 
