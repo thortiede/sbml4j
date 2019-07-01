@@ -115,7 +115,7 @@ public class NetworkMappingController {
 	 * 4. GET /mapping/{id} to get the ppi network with those filters applied 
 	 */
 	
-	@RequestMapping(value = "/mapping", method=RequestMethod.POST)
+	//@RequestMapping(value = "/mapping", method=RequestMethod.POST)
 	public ResponseEntity<Map<String, FilterOptions>> defineFilterOption(@RequestBody FilterOptions filterOptions){
 		if(filterOptions == null) {
 			logger.info("Serving POST /mapping, but filterOptions was null");
