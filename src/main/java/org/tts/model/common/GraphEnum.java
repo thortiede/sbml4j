@@ -8,7 +8,7 @@ public class GraphEnum {
 		REGULATORY,
 		METABOLIC,
 		SIGNALLING,
-		ALLTRANSITIONS
+		PATHWAYMAPPING
 	}
 	
 	/**
