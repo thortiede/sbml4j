@@ -1,21 +1,36 @@
 package org.tts.service;
 
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.controller.WarehouseController;
 import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
+import org.tts.model.full.SBMLReaction;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphEdge;
 import org.tts.model.provenance.ProvenanceGraphEntityNode;
+import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.common.Organism;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLQualSpeciesGroup;
+import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.common.SBMLSpecies;
+import org.tts.model.common.SBMLSpeciesGroup;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.MappingNode;
@@ -32,6 +47,8 @@ import org.tts.repository.warehouse.WarehouseGraphNodeRepository;
 @Service
 public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+		
 	@Autowired
 	WarehouseGraphNodeRepository warehouseGraphNodeRepository;
 	
@@ -53,6 +70,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Autowired
 	WarehouseGraphEdgeRepository warehouseGraphEdgeRepository;
 
+	@Autowired
+	UtilityService utilityService;
+	
 	@Override
 	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
 			Map<String, String> matchingAttributes) {
@@ -175,17 +195,41 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			item.setEntityUUID(pathwayNode.getEntityUUID());
 			item.setPathwayId(pathwayNode.getPathwayIdString());
 			item.setPathwayName(pathwayNode.getPathwayNameString());
+			item.setPathwayOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
 			DatabaseNode sourceEntity = this.findSource(pathwayNode);
 			item.setPathwaySource(sourceEntity.getSource());
 			item.setPathwaySourceVersion(sourceEntity.getSourceVersion());
-			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphEdgeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, pathwayNode);
-			item.setNumberOfNodes(pathwayNodes.size());
+			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, pathwayNode.getEntityUUID());
+			//item.setNumberOfNodes(pathwayNodes.size());
+			
+			for (ProvenanceEntity node : pathwayNodes) {
+				if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
+					item.addNodeType(this.utilityService.translateSBOString(((SBMLSBaseEntity)node).getsBaseSboTerm()));
+					item.increaseNodeCounter();
+				}
+				else if (node.getClass() == SBMLSimpleTransition.class) {
+					item.addTransitionType(this.utilityService.translateSBOString(((SBMLSBaseEntity)node).getsBaseSboTerm()));
+					item.increaseTransitionCounter();
+				} else if (node.getClass() == SBMLReaction.class) {
+					item.increaseReactionCounter();
+				} else if (node.getClass() == SBMLCompartment.class) {
+					item.addCompartment(((SBMLCompartment)node).getsBaseName());
+					item.increaseComparmentCounter();
+				} else if(node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
+					// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can ignore those
+					logger.debug("Found QualSpecies or QualSpeciesGroup, ignoring");
+				} else {
+					logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
+				}
+			}
+			// now add a link
+			item.add(linkTo(methodOn(WarehouseController.class).getPathwayContents(username, pathwayNode.getEntityUUID())).withSelfRel());
 			
 			pathwayInventoryItemList.add(item);
-			
 		}
-		return pathwayInventoryItemList;
 		
+		
+		return pathwayInventoryItemList;
 	}
 
 	private DatabaseNode findSource(ProvenanceEntity node) {
@@ -194,6 +238,22 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		} else {
 			return findSource(this.warehouseGraphNodeRepository.findByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType.CONTAINS, node.getEntityUUID()));
 		}
+	}
+
+	
+	
+	@Override
+	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID) {
+		// again, for now ignore username
+		return this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, entityUUID);
+	}
+
+	@Override
+	public PathwayNode getPathwayNode(String username, String entityUUID) {
+		// Do this if we want to restrict users to only see their own pathways.
+		//return this.pathwayNodeRepository.findPathwayAttributedToUser(username, entityUUID);
+		// for now, we ignore the username:
+		return this.pathwayNodeRepository.findByEntityUUID(entityUUID);
 	}
 
 }

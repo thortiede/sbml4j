@@ -42,5 +42,9 @@ public interface WarehouseGraphService {
 	public MappingNode createMappingNode(WarehouseGraphNode pathway, NetworkMappingType type, String mappingName);
 
 	public List<PathwayInventoryItem> getListofPathwayInventory(String username);
+
+	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID);
+
+	public PathwayNode getPathwayNode(String username, String entityUUID);
 	
 }
