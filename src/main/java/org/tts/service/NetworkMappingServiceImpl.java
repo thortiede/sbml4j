@@ -47,6 +47,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	WarehouseGraphService warehouseGraphService;
 	ProvenanceGraphService provenanceGraphService;
+	UtilityService utilityService;
 	
 	/*private enum interactionTypes {
 		DISSOCIATION ("dissociation"),
@@ -71,7 +72,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			SBMLSpeciesRepository sbmlSpeciesRepository,
 			ProvenanceEntityRepository provenanceEntityRepository,
 			WarehouseGraphService warehouseGraphService,
-			ProvenanceGraphService provenanceGraphService) {
+			ProvenanceGraphService provenanceGraphService,
+			UtilityService utilityService) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -82,13 +84,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.provenanceEntityRepository = provenanceEntityRepository;
 		this.warehouseGraphService = warehouseGraphService;
 		this.provenanceGraphService = provenanceGraphService;
+		this.utilityService = utilityService;
 	}
 
 	@Override
 	public List<String> getTransitionTypes() {
 		List<String> transitionTypes = new ArrayList<>();
 		this.sbmlSimpleTransitionRepository.getTransitionTypes().forEach(sboString -> {
-			transitionTypes.add(translateSBOString(sboString));
+			transitionTypes.add(this.utilityService.translateSBOString(sboString));
 		});
 		return transitionTypes;
 	}
@@ -96,7 +99,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	private List<String> getNodeTypes() {
 		List<String> nodeTypes = new ArrayList<>();
 		this.sbmlSpeciesRepository.getNodeTypes().forEach(sboString -> {
-			nodeTypes.add(translateSBOString(sboString));
+			nodeTypes.add(this.utilityService.translateSBOString(sboString));
 		});
 		return nodeTypes;
 	}
@@ -183,7 +186,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					loopNNE = getTransitionsBetween(bqType1, bqType2, functionName);
 					for (NodeNodeEdge nne : loopNNE) {
 						// do not translate sbo term, as it will be used to connect FlatSpecies
-						String transitionType = translateSBOString(nne.getEdge());
+						String transitionType = this.utilityService.translateSBOString(nne.getEdge());
 						if (interactionTypes.contains(transitionType)) {
 							/*allInteractions.addListEntry(
 									nne.getNode1(), 
@@ -214,10 +217,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		return allInteractions;
 	}
 
-	private String translateSBOString(String sboString) {
-		return sboString == "" ? "undefined in source" : org.sbml.jsbml.SBO.getTerm(sboString).getName();
-	}
-	
 	private String removeWhitespace(String input) {
 		return input.replaceAll("\\s", "_");
 	}
@@ -419,7 +418,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		for (FlatSpecies node1 : flatSpeciesInMapping) {
 			node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
 				for (FlatSpecies node2 : node2List) {
-					mapping.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), translateSBOString(relationType));
+					mapping.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
 				}
 			});
 		}
