@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
@@ -46,5 +47,7 @@ public interface WarehouseGraphService {
 	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID);
 
 	public PathwayNode getPathwayNode(String username, String entityUUID);
+
+	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode);
 	
 }

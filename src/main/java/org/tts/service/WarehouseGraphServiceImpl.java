@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
 import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -72,6 +73,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	@Autowired
 	UtilityService utilityService;
+	
+	@Autowired
+	ProvenanceGraphService provenanceGraphService;
 	
 	@Override
 	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
@@ -194,11 +198,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			PathwayInventoryItem item = new PathwayInventoryItem();
 			item.setEntityUUID(pathwayNode.getEntityUUID());
 			item.setPathwayId(pathwayNode.getPathwayIdString());
-			item.setPathwayName(pathwayNode.getPathwayNameString());
-			item.setPathwayOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
+			item.setName(pathwayNode.getPathwayNameString());
+			item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
 			DatabaseNode sourceEntity = this.findSource(pathwayNode);
-			item.setPathwaySource(sourceEntity.getSource());
-			item.setPathwaySourceVersion(sourceEntity.getSourceVersion());
+			item.setSource(sourceEntity.getSource());
+			item.setSourceVersion(sourceEntity.getSourceVersion());
+			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
 			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, pathwayNode.getEntityUUID());
 			//item.setNumberOfNodes(pathwayNodes.size());
 			
@@ -236,7 +241,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		if(node.getClass() == DatabaseNode.class) {
 			return (DatabaseNode) node;
 		} else {
-			return findSource(this.warehouseGraphNodeRepository.findByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType.CONTAINS, node.getEntityUUID()));
+			return findSource(this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasDerivedFrom, node.getEntityUUID()));
 		}
 	}
 
@@ -254,6 +259,20 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		//return this.pathwayNodeRepository.findPathwayAttributedToUser(username, entityUUID);
 		// for now, we ignore the username:
 		return this.pathwayNodeRepository.findByEntityUUID(entityUUID);
+	}
+
+	@Override
+	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
+		WarehouseInventoryItem item = new WarehouseInventoryItem();
+		item.setEntityUUID(warehouseGraphNode.getEntityUUID());
+		item.setSource(findSource(warehouseGraphNode).getSource());
+		item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
+		item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(warehouseGraphNode.getEntityUUID())).getOrgCode());
+		if(warehouseGraphNode.getClass() == MappingNode.class) {
+			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
+			item.setName(((MappingNode)warehouseGraphNode).getMappingName());
+		}
+		return item;
 	}
 
 }
