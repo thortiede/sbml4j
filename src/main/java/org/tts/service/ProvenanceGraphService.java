@@ -83,34 +83,21 @@ public class ProvenanceGraphService {
 	 */
 	public ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
 			Map<String, Object> activityNodeProperties) {
+	
+		ProvenanceGraphActivityNode provenanceGraphActivityNode = 
+		this.provenanceGraphActivityNodeRepository.findByGraphActivityTypeAndGraphActivityName(
+				(ProvenanceGraphActivityType) activityNodeProperties.get("graphactivitytype"),
+				activityNodeProperties.get("graphactivityname").toString()
+				);
 
-		switch ((ProvenanceGraphActivityType) activityNodeProperties.get("graphactivitytype")) {
-		case persistFile:
-			ProvenanceGraphActivityNode provenanceGraphActivityNode = 
-			this.provenanceGraphActivityNodeRepository.findByGraphActivityTypeAndGraphActivityName(
-					(ProvenanceGraphActivityType) activityNodeProperties.get("graphactivitytype"),
-					activityNodeProperties.get("graphactivityname").toString()
-					);
-
-			if(provenanceGraphActivityNode == null) {
-				provenanceGraphActivityNode = new ProvenanceGraphActivityNode();
-				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(provenanceGraphActivityNode);
-			}
-			provenanceGraphActivityNode.setGraphActivityType((ProvenanceGraphActivityType) activityNodeProperties.get("graphactivitytype"));
-			provenanceGraphActivityNode.setGraphActivityName((String) activityNodeProperties.get("graphactivityname"));
-			
-			return this.provenanceGraphActivityNodeRepository.save(provenanceGraphActivityNode);
-			
-		case createMapping:
-			break;
-		case mapAnnotations:
-			break;
-		case runAlgorithm:
-			break;
-		default:
-			break;
+		if(provenanceGraphActivityNode == null) {
+			provenanceGraphActivityNode = new ProvenanceGraphActivityNode();
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(provenanceGraphActivityNode);
 		}
-		return null;
+		provenanceGraphActivityNode.setGraphActivityType((ProvenanceGraphActivityType) activityNodeProperties.get("graphactivitytype"));
+		provenanceGraphActivityNode.setGraphActivityName((String) activityNodeProperties.get("graphactivityname"));
+		
+		return this.provenanceGraphActivityNodeRepository.save(provenanceGraphActivityNode);
 	}
 
 
@@ -133,5 +120,11 @@ public class ProvenanceGraphService {
 			
 			this.provenanceEntityRepository.save(newEdge, 0);
 		}
+	}
+
+
+	public ProvenanceEntity findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
+			String startNodeEntityUUID) {
+		return this.provenanceEntityRepository.findByProvenanceGraphEdgeTypeAndStartNode(edgetype, startNodeEntityUUID);
 	}
 }
