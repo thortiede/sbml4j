@@ -38,6 +38,7 @@ public class GraphBaseEntity {
 	@Properties
 	private Map<String, Object> annotation = new HashMap<>();
 	
+	@JsonIgnore
 	public Long getId() {
 		return id;
 	}
@@ -46,6 +47,7 @@ public class GraphBaseEntity {
 		this.id = id;
 	}
 
+	@JsonIgnore
 	public Long getVersion() {
 		return version;
 	}
