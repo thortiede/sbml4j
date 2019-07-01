@@ -1,8 +1,11 @@
 package org.tts.repository.warehouse;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.warehouse.WarehouseGraphNode;
 
 public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseGraphNode, Long> {
@@ -20,5 +23,22 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			+ "(:WarehouseGraphNode {entityUUID: {1}})"
 			+ "RETURN w")
 	WarehouseGraphNode findByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType warehouseGraphEdgeType, String EndNodeEntityUUID);
+
+	
+	@Query(value="MATCH"
+			+ "(s:WarehouseGraphNode {entityUUID: {1}})"
+			+ "-[e:Warehouse {warehouseGraphEdgeType: {0}}]->"
+			+ "(p:ProvenanceEntity)"
+			+ "RETURN p")
+	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType contains,
+			String startNodeEntityUUID);
+
+
+	@Query(value="MATCH"
+			+ "(w:WarehouseGraphNode {entityUUID: {0}})"
+			+ "-[:FOR]->"
+			+ "(o:Organism)"
+			+ "RETURN o")
+	WarehouseGraphNode findOrganismForWarehouseGraphNode(String entityUUID);
 
 }
