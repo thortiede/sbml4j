@@ -249,8 +249,8 @@ public class LoadDataController {
 		}
 		// FileNode needs to connect to DatabaseNode
 		// what if already connected?
-		this.warehouseGraphService.connect(database, sbmlFileNode, WarehouseGraphEdgeType.CONTAINS);
-		
+		//this.warehouseGraphService.connect(database, sbmlFileNode, WarehouseGraphEdgeType.CONTAINS);
+		this.provenanceGraphService.connect(sbmlFileNode, database, ProvenanceGraphEdgeType.wasDerivedFrom);
 		
 		List<String> newEntityLabels = new ArrayList<>();
 		
@@ -295,8 +295,8 @@ public class LoadDataController {
 		this.provenanceGraphService.connect(sbmlFileNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(database, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		
-		this.warehouseGraphService.connect(sbmlFileNode, pathwayNode, WarehouseGraphEdgeType.CONTAINS);
-		
+		//this.warehouseGraphService.connect(sbmlFileNode, pathwayNode, WarehouseGraphEdgeType.CONTAINS);
+		this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 		
 		return new ResponseEntity<List<ProvenanceEntity>>(resultSet, HttpStatus.OK);
 	}
