@@ -4,6 +4,7 @@ import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,19 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
+import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
-import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
-import org.tts.model.full.SBMLReaction;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphEdge;
-import org.tts.model.provenance.ProvenanceGraphEntityNode;
-import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.common.Organism;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLQualSpecies;
@@ -32,15 +28,23 @@ import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.model.full.SBMLReaction;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
+import org.tts.repository.common.ContentGraphNodeRepository;
 import org.tts.repository.warehouse.DatabaseNodeRepository;
 import org.tts.repository.warehouse.FileNodeRepository;
 import org.tts.repository.warehouse.MappingNodeRepository;
+import org.tts.repository.warehouse.PathwayCollectionNodeRepository;
 import org.tts.repository.warehouse.PathwayNodeRepository;
 import org.tts.repository.warehouse.WarehouseGraphEdgeRepository;
 import org.tts.repository.warehouse.WarehouseGraphNodeRepository;
@@ -66,6 +70,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	MappingNodeRepository mappingNodeRepository;
 
 	@Autowired
+	ContentGraphNodeRepository contentGraphNodeRepository;
+	
+	@Autowired
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 
 	@Autowired
@@ -76,6 +83,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	
 	@Autowired
 	ProvenanceGraphService provenanceGraphService;
+
+	@Autowired
+	PathwayCollectionNodeRepository pathwayCollectionNodeRepository;
 	
 	@Override
 	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
@@ -151,16 +161,24 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	/**
-	 * connect two warehouse entities. The entity is not returned. 
-	 * Should that be required in the future, it needs to be changed here
+	 * connect two warehouse entities. 
+	 * Always leaves the two entities connected with that edgetype, whether they already have been connected or not
 	 * @param source the startNode of the edge
 	 * @param target the endNode of the edge
 	 * @param edgetype the WarehouseGraphEdgeType
+	 * @return true if a new connection is made, false if the entities were already connected with that edgetype
 	 */
 	@Override
-	public void connect(ProvenanceEntity source, ProvenanceEntity target,
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target,
 			WarehouseGraphEdgeType edgetype) {
 
+		if(this.warehouseGraphNodeRepository.areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(
+									source.getEntityUUID(), 
+									target.getEntityUUID(), 
+									edgetype)) {
+			return false;
+		}
+		
 		WarehouseGraphEdge newEdge = new WarehouseGraphEdge();
 		this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newEdge);
 		newEdge.setWarehouseGraphEdgeType(edgetype);
@@ -168,6 +186,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		newEdge.setEndNode(target);
 		
 		this.warehouseGraphEdgeRepository.save(newEdge, 0);
+		return true;
 		
 	}
 
@@ -237,16 +256,6 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return pathwayInventoryItemList;
 	}
 
-	private DatabaseNode findSource(ProvenanceEntity node) {
-		if(node.getClass() == DatabaseNode.class) {
-			return (DatabaseNode) node;
-		} else {
-			return findSource(this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasDerivedFrom, node.getEntityUUID()));
-		}
-	}
-
-	
-	
 	@Override
 	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID) {
 		// again, for now ignore username
@@ -275,4 +284,98 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return item;
 	}
 
+	@Override
+	public DatabaseNode getDatabaseNode(String databaseEntityUUID) {
+		return this.databaseNodeRepository.findByEntityUUID(databaseEntityUUID);
+	}
+
+	
+	
+
+	private DatabaseNode findSource(ProvenanceEntity node) {
+		if(node.getClass() == DatabaseNode.class) {
+			return (DatabaseNode) node;
+		} else {
+			return findSource(this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasDerivedFrom, node.getEntityUUID()));
+		}
+	}
+
+	@Override
+	public PathwayCollectionNode createPathwayCollection(PathwayCollectionCreationItem pathwayCollectionCreationItem, DatabaseNode databaseNode,
+			ProvenanceGraphActivityNode createPathwayCollectionGraphActivityNode, ProvenanceGraphAgentNode agentNode) {
+		// create knowledgeGraph Node
+		PathwayCollectionNode pathwayCollectionNode = this.createPathwayCollectionNode(pathwayCollectionCreationItem.getPathwayNodeIdString(), pathwayCollectionCreationItem.getName(), databaseNode.getOrganism());
+		// TODO how to mark it as a collection?
+		
+		// connect provenance and to database node
+		this.provenanceGraphService.connect(pathwayCollectionNode, databaseNode, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(pathwayCollectionNode, createPathwayCollectionGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+		this.provenanceGraphService.connect(pathwayCollectionNode, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+		// take all listed pathways
+		for (String pathwayEntityUUID : pathwayCollectionCreationItem.getSourcePathwayEntityUUIDs()) {
+			// add entities of pathway to knowledgegraphNode
+			PathwayNode pathway = this.pathwayNodeRepository.findByEntityUUID(pathwayEntityUUID);
+			if(pathway != null && findSource(pathway).getEntityUUID() == databaseNode.getEntityUUID()) {
+				this.provenanceGraphService.connect(pathwayCollectionNode, pathway, ProvenanceGraphEdgeType.hadMember);
+				this.provenanceGraphService.connect(createPathwayCollectionGraphActivityNode, pathway, ProvenanceGraphEdgeType.used);
+			}
+		}
+		return pathwayCollectionNode;
+	}
+
+	@Override
+	public PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
+			Organism organism) {
+		for(PathwayCollectionNode pwc : this.pathwayCollectionNodeRepository.findAllByPathwayCollectionName(pathwayCollectionName)) {
+			if(pwc.getOrganism().equals(organism) && pwc.getPathwayCollectionDescription().equals(pathwayCollectionDescription)) {
+				return pwc;
+			} 
+		}
+		PathwayCollectionNode pathwayCollectionNode = new PathwayCollectionNode();
+		this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(pathwayCollectionNode);
+		pathwayCollectionNode.setPathwayCollectionName(pathwayCollectionName);
+		pathwayCollectionNode.setPathwayCollectionDescription(pathwayCollectionDescription);
+		pathwayCollectionNode.setOrganism(organism);
+		return this.pathwayCollectionNodeRepository.save(pathwayCollectionNode);
+	
+	}
+
+	@Override
+	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
+			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode) {
+		
+		int entityCounter = 0;
+		int connectionCounter = 0;
+		if(this.provenanceGraphService.areProvenanceEntitiesConnectedWithProvenanceEdgeType(pathwayNode.getEntityUUID(), 
+																							pathwayCollectionNode.getEntityUUID(), 
+																							ProvenanceGraphEdgeType.wasDerivedFrom)) {
+			for(ProvenanceEntity pathwayEntity : this.provenanceGraphService.
+											findAllByProvenanceGraphEdgeTypeAndStartNode(
+													ProvenanceGraphEdgeType.hadMember, 
+													pathwayCollectionNode.getEntityUUID())) {
+				// get all element in the pathway (Connected with CONTAINS)
+				for (ProvenanceEntity entity : this.warehouseGraphNodeRepository.
+										findAllByWarehouseGraphEdgeTypeAndStartNode(
+													WarehouseGraphEdgeType.CONTAINS, 
+													pathwayEntity.getEntityUUID())) {
+					// connect them to the new pathwayNode
+					if(this.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS)) {
+						++connectionCounter;
+					}
+					++entityCounter;
+					// Possibility to connect the activity to all entities here, but might just create ALOT of edges that do not help anyone.
+					// might become interesting, if we introduce filtering on nodes here, aka. not build the full pathway, but just a subset of the pathways
+					// that the collection holds
+					// but that better be done from the pathway that is created here in a second step with a new activity.
+				}
+			}
+		}
+		Map<String, Integer> counterMap = new HashMap<>();
+		counterMap.put("entity", entityCounter);
+		counterMap.put("connection", connectionCounter);
+		return counterMap;
+		
+	}
+
+	
 }
