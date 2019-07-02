@@ -8,13 +8,16 @@ import org.tts.repository.common.OrganismRepository;
 @Service
 public class OrganismService {
 	
-	OrganismRepository organismRepository;
 	
+	OrganismRepository organismRepository;
+	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityService;
 	
 	@Autowired
-	public OrganismService(OrganismRepository organismRepository) {
+	public OrganismService(OrganismRepository organismRepository,
+			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityService) {
 		super();
 		this.organismRepository = organismRepository;
+		this.sbmlSimpleModelUtilityService = sbmlSimpleModelUtilityService;
 	}
 
 	public boolean organismExists(String orgCode) {
@@ -34,6 +37,7 @@ public class OrganismService {
 			return getOrgansimByOrgCode(orgCode);
 		} else {
 			Organism newOrganism = new Organism();
+			this.sbmlSimpleModelUtilityService.setGraphBaseEntityProperties(newOrganism);
 			newOrganism.setOrgCode(orgCode);
 			// TODO: set more attributes here, maybe query webservice
 			return this.organismRepository.save(newOrganism);
