@@ -15,14 +15,14 @@ public class GraphEnum {
 	 * DATABASE<br>
 	 * FILE<br>
 	 * PATHWAY<br>
-	 * KNOWLEDGEGRAPH<br>
+	 * KNOWLEDGEGRAPH (Deprecated)<br>
 	 * MAPPING<br>
 	 */
 	public enum WarehouseGraphNodeType {
 		DATABASE,
 		FILE,
 		PATHWAY,
-		KNOWLEDGEGRAPH,
+		//KNOWLEDGEGRAPH, // instead it is a Pathway of a collection of Pathways and itself a Pathway
 		MAPPING,
 		ORGANISM
 	}
@@ -73,7 +73,8 @@ public class GraphEnum {
 		persistFile,
 		createMapping,
 		mapAnnotations,
-		runAlgorithm
+		runAlgorithm,
+		createKnowledgeGraph
 	}
 	
 	/**
