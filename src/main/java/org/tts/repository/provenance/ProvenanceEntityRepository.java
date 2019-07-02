@@ -27,4 +27,14 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 	ProvenanceEntity findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID);
 
+
+	
+	@Query(value = "MATCH "
+			+ "(p:ProvenanceEntity)"
+			+ "<-[:PROV {provenanceGraphEdgeType: {0}}]-"
+			+ "(c:ProvenanceEntity {entityUUID: {1}}) "
+			+ "RETURN p")
+	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
+			String startNodeEntityUUID);
+
 }
