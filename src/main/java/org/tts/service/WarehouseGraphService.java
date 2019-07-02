@@ -3,6 +3,7 @@ package org.tts.service;
 import java.util.List;
 import java.util.Map;
 
+import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -10,9 +11,12 @@ import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.Organism;
 import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphNode;
 
@@ -36,7 +40,7 @@ public interface WarehouseGraphService {
 
 	public FileNode getFileNode(FileNodeType fileNodeType, Organism org, String filename);
 
-	public void connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
 
 	public PathwayNode createPathwayNode(String idString, String nameString, Organism org);
 
@@ -49,5 +53,16 @@ public interface WarehouseGraphService {
 	public PathwayNode getPathwayNode(String username, String entityUUID);
 
 	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode);
+
+	public DatabaseNode getDatabaseNode(String databaseEntityUUID);
+
+	public PathwayCollectionNode createPathwayCollection(PathwayCollectionCreationItem pathwayCollectionCreationItem, DatabaseNode databaseNode,
+			ProvenanceGraphActivityNode createPathwayCollectionGraphActivityNode, ProvenanceGraphAgentNode agentNode);
+
+	PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
+			Organism organism);
+
+	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
+			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode);
 	
 }
