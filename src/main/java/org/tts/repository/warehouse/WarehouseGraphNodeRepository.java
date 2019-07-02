@@ -30,7 +30,7 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			+ "-[e:Warehouse {warehouseGraphEdgeType: {0}}]->"
 			+ "(p:ProvenanceEntity)"
 			+ "RETURN p")
-	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType contains,
+	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType warehouseGraphEdgeType,
 			String startNodeEntityUUID);
 
 
@@ -41,4 +41,13 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			+ "RETURN o")
 	WarehouseGraphNode findOrganismForWarehouseGraphNode(String entityUUID);
 
-}
+	
+	
+	@Query(value = "MATCH p=(e1:ProvenanceEntity {entityUUID: {0}})-" +
+			"[:Warehouse {warehouseGraphEdgeType: {2}}]-" +
+			"(e2:ProvenanceEntity {entityUUID: {1}}) " +
+			"RETURN count(p) > 0")
+	boolean areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(String sourceEntityUUID, 
+																String targetEntityUUID,
+																WarehouseGraphEdgeType edgetype);
+	}
