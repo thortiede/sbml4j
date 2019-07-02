@@ -10,4 +10,6 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 
 	List<DatabaseNode> findBySourceAndSourceVersion(String source, String sourceVersion);
 
+	DatabaseNode findByEntityUUID(String entityUUID);
+
 }
