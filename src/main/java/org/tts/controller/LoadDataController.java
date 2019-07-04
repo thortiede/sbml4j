@@ -231,6 +231,8 @@ public class LoadDataController {
 		
 		FileNode sbmlFileNode = null;
 		// Does node with this filename already exist?
+		// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
+		
 		if(!this.warehouseGraphService.fileNodeExists(FileNodeType.SBML, org, file.getOriginalFilename())) {
 			// does not exist -> create
 			try {
@@ -277,6 +279,7 @@ public class LoadDataController {
 			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		// create a Pathway Node for the model
+		// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 		PathwayNode pathwayNode = this.warehouseGraphService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
 		
 		List<ProvenanceEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
