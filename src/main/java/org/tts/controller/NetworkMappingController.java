@@ -195,7 +195,7 @@ public class NetworkMappingController {
 		// generate ppi with filters applied
 		NodeEdgeList flatNetwork = networkMappingService.getProteinInteractionNetwork(filterOptionsFromId.getTransitionTypes());*/
 		//Resource resource = getResourceFromNodeEdgeList(flatNetwork, "sif");
-		Resource resource = getResourceFromNodeEdgeList(flatNetwork, format);
+		Resource resource = this.networkMappingService.getResourceFromNodeEdgeList(flatNetwork, format);
 		if (resource != null) {
 			logger.info("Converted flatNetwork to Resource");
 			// Try to determine file's content type
@@ -216,33 +216,7 @@ public class NetworkMappingController {
 	
 	
 	
-	/**
-	 * Convert a NodeEdgeList to a returnable Resource Object
-	 * @param nodeEdgeList The nodeEdgeList to convert
-	 * @return a sifResource as ByteArrayResource
-	 */
-	private Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type) {
-		switch (type) {
-		case "sif":
-		
-			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
-		
-		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
-			if(sifFile != null) {
-			    Resource resource = fileStorageService.getSifAsResource(sifFile);
-			    return resource;
-			} else {
-				return null;
-			}
-		case "graphml":
-			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
-			
-			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
-			
-		default:
-			return null;		
-		}
-	}
+	
 
 	
 	
