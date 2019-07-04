@@ -3,6 +3,7 @@ package org.tts.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.core.io.Resource;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
@@ -37,5 +38,7 @@ public interface NetworkMappingService {
 	
 	
 	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ExternalResourceType erType, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode);
+
+	Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type);
 	
 }

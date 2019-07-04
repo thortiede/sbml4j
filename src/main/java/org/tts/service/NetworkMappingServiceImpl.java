@@ -1,21 +1,28 @@
 package org.tts.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.tomcat.jni.Time;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
+import org.tts.model.api.Output.SifFile;
 import org.tts.model.common.ContentGraphNode;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -48,6 +55,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	WarehouseGraphService warehouseGraphService;
 	ProvenanceGraphService provenanceGraphService;
 	UtilityService utilityService;
+	FileService fileService;
+	FileStorageService fileStorageService;
+	GraphMLService graphMLService;
 	
 	/*private enum interactionTypes {
 		DISSOCIATION ("dissociation"),
@@ -73,7 +83,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			ProvenanceEntityRepository provenanceEntityRepository,
 			WarehouseGraphService warehouseGraphService,
 			ProvenanceGraphService provenanceGraphService,
-			UtilityService utilityService) {
+			UtilityService utilityService,
+			FileService fileService,
+			FileStorageService fileStorageService,
+			GraphMLService graphMLService) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -85,6 +98,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.warehouseGraphService = warehouseGraphService;
 		this.provenanceGraphService = provenanceGraphService;
 		this.utilityService = utilityService;
+		this.fileService = fileService;
+		this.fileStorageService = fileStorageService;
+		this.graphMLService = graphMLService;
 	}
 
 	@Override
@@ -429,10 +445,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	@Override
 	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ExternalResourceType erType, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) {
 		
+		Instant startTime = Instant.now();
+		logger.info("Started Creating Mapping from Pathway at " + startTime.toString());
+		int numberOfRelations = 0;
 		// need a Warehouse Node of Type Mapping, set NetworkMappingTypes
 		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString() + "_" + erType.name();
 		MappingNode mappingFromPathway = this.warehouseGraphService.createMappingNode(pathway, type, mappingName);
-		
+		Set<String> relationTypes = new HashSet<>();
+		Set<String> nodeTypes = new HashSet<>();
 		// connect MappingNode to PathwayNode with wasDerivedFrom
 		this.provenanceGraphService.connect(mappingFromPathway, pathway, ProvenanceGraphEdgeType.wasDerivedFrom);
 		// connect MappingNode to Activity with wasGeneratedBy
@@ -440,6 +460,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// attribute the new Mapping to the agent
 		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		
+		// TODO divert here for different mapping types?
 		// get all Transitions from Pathway
 		Iterable<NodeNodeEdge> allFlatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(), erType);
@@ -457,7 +478,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node2 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node2); // this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node2.setSymbol(nne.getNode2());
+				node2.setSboTerm(nne.getNode2Type());
 				node2 = this.flatSpeciesRepository.save(node2);
+				nodeTypes.add(nne.getNode2Type());
 				//node2.setSimpleModelEntityUUID(nne.getNode2UUID());
 				this.provenanceGraphService.connect(node2, this.provenanceEntityRepository.findByEntityUUID(nne.getNode2UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
 				this.provenanceGraphService.connect(node2, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -474,7 +497,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node1 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node1);// this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node1.setSymbol(nne.getNode1());
+				node1.setSboTerm(nne.getNode1Type());
 				node1 = this.flatSpeciesRepository.save(node1);
+				nodeTypes.add(nne.getNode1Type());
 				//node1.setSimpleModelEntityUUID(nne.getNode1UUID());
 				this.provenanceGraphService.connect(node1, this.provenanceEntityRepository.findByEntityUUID(nne.getNode1UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
 				this.provenanceGraphService.connect(node1, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -482,9 +507,50 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			}
 			 //int sbo = SBO.convertAlias2SBO(nne.getEdge().toUpperCase());
 			node1.addRelatedSpecies(node2, nne.getEdge());
+			numberOfRelations++;
+			relationTypes.add(nne.getEdge());
 			node1 = this.flatSpeciesRepository.save(node1);			
 			networkFlatSpecies.put(node1.getSymbol(), node1); // this replaces node1 with the version that has the new relationship
 		}
-		return mappingFromPathway;
+		Instant endTime = Instant.now();
+		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
+		mappingFromPathway.addWarehouseAnnotation("creationendtime", endTime.toString());
+		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(networkFlatSpecies.size()));
+		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
+		mappingFromPathway.setMappingNodeTypes(nodeTypes);
+		mappingFromPathway.setMappingRelationTypes(relationTypes);
+		
+		logger.info("Finished Creating Mapping from Pathway at " + endTime.toString());
+		return (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(mappingFromPathway);
 	}
+	
+	/**
+	 * Convert a NodeEdgeList to a returnable Resource Object
+	 * @param nodeEdgeList The nodeEdgeList to convert
+	 * @return a sifResource as ByteArrayResource
+	 */
+	@Override
+	public Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type) {
+		switch (type) {
+		case "sif":
+		
+			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
+		
+		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
+			if(sifFile != null) {
+			    Resource resource = fileStorageService.getSifAsResource(sifFile);
+			    return resource;
+			} else {
+				return null;
+			}
+		case "graphml":
+			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
+			
+			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
+		
+		default:
+			return null;		
+		}
+	}
+	
 }
