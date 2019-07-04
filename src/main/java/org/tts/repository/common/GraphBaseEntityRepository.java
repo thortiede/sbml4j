@@ -148,9 +148,22 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			+ "RETURN "
 			+ "e1.name AS node1, "
 			+ "e1.entityUUID as node1UUID, "
+			+ "s1.sBaseSboTerm as node1Type, "
 			+ "t.sBaseSboTerm as edge, "
 			+ "e2.name as node2, "
-			+ "e2.entityUUID as node2UUID "
+			+ "e2.entityUUID as node2UUID, "
+			+ "s2.sBaseSboTerm as node2Type"
 			)
 	Iterable<NodeNodeEdge> getAllFlatTransitionsForPathway(String pathwayEntityUUID, ExternalResourceType erType);
+	
+	/**
+	 * match (n:MappingNode)-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(fs:FlatSpecies) where n.mappingName = "Map_PATHWAYMAPPING_path_hsa05210_KEGGGENES" detach delete fs
+	 * Delete FlatSpecies of mapping with mappingName
+	 */
+	
+	
+	/**
+	 * match (org:Organism)-[f:FOR]-(n:MappingNode)-[p:PROV]-(o:GraphBaseEntity) where n.mappingName = "Map_PATHWAYMAPPING_path_hsa05210_KEGGGENES" delete f, p, n
+	 * delete mapping node after flatspecies have been deleted
+	 */
 }
