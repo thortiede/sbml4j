@@ -1,5 +1,6 @@
 package org.tts.model.warehouse;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Properties;
@@ -13,6 +14,31 @@ public class WarehouseGraphNode extends ProvenanceGraphEntityNode {
 	@Properties
 	private Map<String, Object> warehouse;
 	
+	public Map<String, Object> getWarehouse() {
+		return this.warehouse;
+	}
+
+	public void addWarehouseAnnotation(Map<String, Object> warehouse) {
+		if(this.warehouse == null) {
+			this.warehouse = new HashMap<>();
+		}
+		for (String key : warehouse.keySet()) {
+			this.warehouse.put(key, warehouse.get(key));
+		}
+	}
+	
+	public boolean addWarehouseAnnotation(String warehouseKey, Object warehouseValue) {
+		if(this.warehouse == null) {
+			this.warehouse = new HashMap<>();
+		}
+		try {
+			this.warehouse.put(warehouseKey, warehouseValue);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+
 	@Relationship(type="FOR")
 	private Organism organism;
 
