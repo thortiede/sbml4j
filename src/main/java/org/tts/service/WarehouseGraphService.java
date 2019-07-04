@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.Output.NetworkInventoryItem;
+import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -64,5 +66,13 @@ public interface WarehouseGraphService {
 
 	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
 			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode);
+
+	public List<String> getListofPathwayUUIDs();
+
+	WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node);
+
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems();
+
+	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
 	
 }
