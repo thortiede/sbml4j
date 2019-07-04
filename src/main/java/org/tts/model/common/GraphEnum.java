@@ -36,6 +36,16 @@ public class GraphEnum {
 		GRAPHML,
 		SQL
 	}
+	
+	/**
+	 * graphml<br>
+	 * sif
+	 */
+	public enum OutputType {
+		graphml,
+		sif
+	}
+	
 	/**
 	 *	used, 				// (Activity to Entity)<br>
 	 *	wasGeneratedBy, 	// (Entity to Activity)<br>
