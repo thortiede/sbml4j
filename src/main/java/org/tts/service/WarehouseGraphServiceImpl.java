@@ -14,10 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.Output.NetworkInventoryItem;
+import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.common.GraphEnum.OutputType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
@@ -28,6 +31,7 @@ import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.full.SBMLReaction;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
@@ -41,6 +45,7 @@ import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.common.ContentGraphNodeRepository;
+import org.tts.repository.flat.FlatSpeciesRepository;
 import org.tts.repository.warehouse.DatabaseNodeRepository;
 import org.tts.repository.warehouse.FileNodeRepository;
 import org.tts.repository.warehouse.MappingNodeRepository;
@@ -86,6 +91,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	@Autowired
 	PathwayCollectionNodeRepository pathwayCollectionNodeRepository;
+	
+	@Autowired
+	FlatSpeciesRepository flatSpeciesRepository;
 	
 	@Override
 	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
@@ -210,6 +218,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return this.mappingNodeRepository.save(newMappingNode);
 	}
 
+	@Override
+	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node) {
+		return this.warehouseGraphNodeRepository.save(node, 0);
+	}
+	
 	@Override
 	public List<PathwayInventoryItem> getListofPathwayInventory(String username) {
 		List<PathwayInventoryItem> pathwayInventoryItemList = new ArrayList<>();
@@ -375,6 +388,92 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		counterMap.put("connection", connectionCounter);
 		return counterMap;
 		
+	}
+
+	@Override
+	public List<String> getListofPathwayUUIDs() {
+		List<String> uuids = new ArrayList<>();
+		for (PathwayNode node : this.pathwayNodeRepository.findAll()) {
+			uuids.add(node.getEntityUUID());
+		}
+		return uuids;
+	}
+
+	@Override
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems() {
+		List<NetworkInventoryItem> inventory = new ArrayList<>();
+		// get all mapping nodes
+		for (MappingNode mapping : this.mappingNodeRepository.findAll()) {
+			// create an inventory item for each of them and fill it.
+			NetworkInventoryItem item = new NetworkInventoryItem();
+			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
+			item.setEntityUUID(mapping.getEntityUUID());
+			item.setSource(findSource(mapping).getSource());
+			item.setSourceVersion(findSource(mapping).getSourceVersion());
+			item.setName(mapping.getMappingName());
+			item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
+			if (mapping.getMappingNodeTypes() != null) {
+				for (String sboTerm : mapping.getMappingNodeTypes()) {
+					item.addNodeType(this.utilityService.translateSBOString(sboTerm));
+				}
+			}
+			//item.setNodeTypes(mapping.getMappingNodeTypes());
+			//item.setRelationTypes(mapping.getMappingRelationTypes());
+			if (mapping.getMappingRelationTypes() != null) {
+				for (String sboTerm : mapping.getMappingRelationTypes()) {
+					item.addRelationType(this.utilityService.translateSBOString(sboTerm));
+				}
+			}
+			
+			try {
+				Map<String, Object> warehouseMap = mapping.getWarehouse();
+				
+				item.setNumberOfNodes((String)warehouseMap.get("numberofnodes"));
+				item.setNumberOfRelations((String)warehouseMap.get("numberofrelations"));
+			} catch (Exception e) {
+				logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID() + ") does not have the warehouse-Properties set");
+			}
+			for (OutputType type : OutputType.values()) {
+				item.add(linkTo(methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(), "standard", type.name())).withRel(type.name()));
+			
+			}	inventory.add(item);
+		
+		}
+		return inventory;
+		
+	}
+
+	@Override
+	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method) {
+		//MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID);
+		NodeEdgeList mappingNEL = new NodeEdgeList();
+		if (method == "directed") {
+			
+			mappingNEL.setNodeNodeEdgeList(this.mappingNodeRepository.getMappingContentDirected(mappingNodeEntityUUID));
+			mappingNEL.setName(mappingNodeEntityUUID);
+			mappingNEL.setListId(-1L);
+			
+		} else if (method == "undirected") {
+			
+			mappingNEL.setNodeNodeEdgeList(this.mappingNodeRepository.getMappingContentUnDirected(mappingNodeEntityUUID));
+			mappingNEL.setName(mappingNodeEntityUUID);
+			mappingNEL.setListId(-1L);
+			
+		} else {
+			List<FlatSpecies> mappingFlatSpecies = this.mappingNodeRepository.getMappingFlatSpecies(mappingNodeEntityUUID);
+			
+			logger.info("Gathered " + mappingFlatSpecies.size() + " Flat Species");
+			for (FlatSpecies species : mappingFlatSpecies) {
+				FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
+				node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
+					for (FlatSpecies node2 : node2List) {
+						//logger.info("Working on Node " + species.getSymbol() + " connected with " + relationType + " to " + node2.getSymbol());
+						mappingNEL.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
+					}
+				});
+			}
+		}
+		return mappingNEL;
 	}
 
 	
