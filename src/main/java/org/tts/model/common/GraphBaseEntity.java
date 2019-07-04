@@ -29,9 +29,9 @@ public class GraphBaseEntity {
 	 */
 	private String entityUUID;
 
-	@Relationship(type="IN", direction=Relationship.OUTGOING)
+	/*@Relationship(type="IN", direction=Relationship.OUTGOING)
 	private List<Organism> organisms;
-	
+	*/
 	@Labels
 	private List<String> labels = new ArrayList<>();
 	
