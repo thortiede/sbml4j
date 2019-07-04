@@ -16,6 +16,8 @@ public class FlatSpecies extends ContentGraphNode {
 	
 	private String symbol;
 	
+	private String sboTerm;
+	
 	
 	 @Relationship(type = "dissociation")
 	 List<FlatSpecies> dissociationSpeciesList; // SBO:0000180
@@ -231,6 +233,14 @@ public class FlatSpecies extends ContentGraphNode {
 		}
 		return this; 
 	 }
+
+	public String getSboTerm() {
+		return sboTerm;
+	}
+
+	public void setSboTerm(String sboTerm) {
+		this.sboTerm = sboTerm;
+	}
 	 
 	 
 }
