@@ -17,6 +17,9 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "RETURN fs")
 	List<FlatSpecies> getMappingFlatSpecies(String mappingNodeEntityUUID);
 
+	/*
+	 * This undierected version seems to be the fastest. Faster than the directed one by 200 ms and faster than the traditional way by factor 3
+	 */
 	@Query(value = "MATCH "
 			+ "(m:MappingNode {entityUUID: {0}})"
 			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"

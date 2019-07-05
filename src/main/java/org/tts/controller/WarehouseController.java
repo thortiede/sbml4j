@@ -1,9 +1,13 @@
 package org.tts.controller;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -54,6 +58,7 @@ public class WarehouseController {
 	OrganismService organismService;
 	
 	Map<String, Map<String, Resource>> networkResources = new HashMap<>();
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@RequestMapping(value="/pathwayInventory", method = RequestMethod.GET)
 	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(@RequestHeader("user") String username) {
@@ -170,7 +175,7 @@ public class WarehouseController {
 	}
 	
 	@RequestMapping(value="/network", method = RequestMethod.GET)
-	public ResponseEntity<Resource> getNetwork(@RequestParam("UUID") String mappingNodeEntityUUID, @RequestParam("method") String method, @RequestParam("format") String format) {
+	public ResponseEntity<Resource> getNetwork(@RequestParam("UUID") String mappingNodeEntityUUID, @RequestParam(value = "method", defaultValue = "undirected") String method, @RequestParam("format") String format) {
 		/**
 		 * An Alternative might be to directly run:
 		 * MATCH (m:MappingNode {entityUUID:"3859039b-f92a-41da-b393-4c90a18e8e4e"})-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]->(fs:FlatSpecies)-[r]-(fs2:FlatSpecies) RETURN fs.entityUUID, fs.symbol, fs.sboTerm, type(r), fs2.symbol, fs2.entityUUID, fs2.sboTerm;
@@ -213,8 +218,11 @@ public class WarehouseController {
 			this.networkResources.put(mappingNodeEntityUUID, uuidMap);
 		}
 		*/
+		Instant startTime = Instant.now();
 		NodeEdgeList nel = this.warehouseGraphService.getNetwork(mappingNodeEntityUUID, method);
+		Instant middleTime = Instant.now();
 		resource = this.networkMappingService.getResourceFromNodeEdgeList(nel, format);
+		Instant afterTime = Instant.now();
 		if (resource != null) {
 			//logger.info("Converted flatNetwork to Resource");
 			// Try to determine file's content type
@@ -223,6 +231,7 @@ public class WarehouseController {
 		    // only generic contentType as we are not dealing with an actual file serverside,
 			// but the file shall only be created at the client side.
 			String filename = "network." + method + "." + nel.getName() + "." + format;
+			logger.info("Start: " + startTime.toString() + " middle " + middleTime.toString() + " after " + afterTime.toString() + "=> " + Duration.between(startTime, middleTime).toString() + " / " + Duration.between(middleTime, afterTime).toString());
 			return ResponseEntity.ok()
 			        .contentType(MediaType.parseMediaType(contentType))
 			        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

@@ -3,6 +3,8 @@ package org.tts.service;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,7 @@ import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.NodeEdgeList;
+import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -446,23 +449,39 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method) {
 		//MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID);
+		Instant start = Instant.now();
 		NodeEdgeList mappingNEL = new NodeEdgeList();
-		if (method == "directed") {
-			
-			mappingNEL.setNodeNodeEdgeList(this.mappingNodeRepository.getMappingContentDirected(mappingNodeEntityUUID));
+		Instant mappingNelTime = Instant.now();
+		Instant insideLoggedTime;
+		Instant insideRetrievedTime;
+		Instant insideretrievedAndSetTime;
+		if (method.equals("directed")) {
+			logger.info("Using directed method to get MappingContent for mapping " + mappingNodeEntityUUID);
+			insideLoggedTime = Instant.now();
+			List<NodeNodeEdge> mappingList = this.mappingNodeRepository.getMappingContentDirected(mappingNodeEntityUUID);
+			insideRetrievedTime = Instant.now();
+			mappingNEL.setNodeNodeEdgeList(mappingList);
+			insideretrievedAndSetTime = Instant.now();
 			mappingNEL.setName(mappingNodeEntityUUID);
 			mappingNEL.setListId(-1L);
 			
-		} else if (method == "undirected") {
-			
-			mappingNEL.setNodeNodeEdgeList(this.mappingNodeRepository.getMappingContentUnDirected(mappingNodeEntityUUID));
+		} else if (method.equals("undirected")) {
+			logger.info("Using undirected method to get MappingContent for mapping " + mappingNodeEntityUUID);
+			insideLoggedTime = Instant.now();
+			List<NodeNodeEdge> mappingList = this.mappingNodeRepository.getMappingContentUnDirected(mappingNodeEntityUUID);
+			insideRetrievedTime = Instant.now();
+			mappingNEL.setNodeNodeEdgeList(mappingList);
+			insideretrievedAndSetTime = Instant.now();
 			mappingNEL.setName(mappingNodeEntityUUID);
 			mappingNEL.setListId(-1L);
 			
 		} else {
+			logger.info("Using standard method to get MappingContent for mapping " + mappingNodeEntityUUID);
+			insideLoggedTime = Instant.now();
 			List<FlatSpecies> mappingFlatSpecies = this.mappingNodeRepository.getMappingFlatSpecies(mappingNodeEntityUUID);
-			
+			insideRetrievedTime = Instant.now();
 			logger.info("Gathered " + mappingFlatSpecies.size() + " Flat Species");
+			
 			for (FlatSpecies species : mappingFlatSpecies) {
 				FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
 				node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
@@ -472,7 +491,14 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					}
 				});
 			}
+			insideretrievedAndSetTime = Instant.now();
 		}
+		Instant end = Instant.now();
+		logger.info("Timing: " + Duration.between(start, mappingNelTime).toString() + 
+				" / " + Duration.between(mappingNelTime, insideLoggedTime).toString() + 
+				" / " + Duration.between(insideLoggedTime, insideRetrievedTime).toString() + 
+				" / " + Duration.between(insideRetrievedTime, insideretrievedAndSetTime).toString() + 
+				" / " + Duration.between(insideretrievedAndSetTime, end).toString());
 		return mappingNEL;
 	}
 
