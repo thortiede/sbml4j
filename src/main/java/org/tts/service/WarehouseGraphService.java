@@ -69,7 +69,7 @@ public interface WarehouseGraphService {
 
 	public List<String> getListofPathwayUUIDs();
 
-	WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node);
+	WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
 	public List<NetworkInventoryItem> getListOfNetworkInventoryItems();
 

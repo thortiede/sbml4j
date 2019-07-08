@@ -222,8 +222,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node) {
-		return this.warehouseGraphNodeRepository.save(node, 0);
+	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth) {
+		return this.warehouseGraphNodeRepository.save(node, depth);
 	}
 	
 	@Override
