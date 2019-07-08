@@ -467,50 +467,60 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		
 		// create FlatSpecies for QueryResults
 		Map<String, FlatSpecies> networkFlatSpecies = new HashMap<>();
+		int counter = 1;
 		for(NodeNodeEdge nne : allFlatTransitionsOfPathway) {
+			logger.info(Instant.now().toString() + ": Processing NNE #" + counter++);
 			// on creation of Flat Species, provenanceConnect them to the initialEntities (and to the Transition?)
 			FlatSpecies node2;
 			if (networkFlatSpecies.containsKey(nne.getNode2())) {
 				// Node2 already in List, we can build a relationship to it, so extract it
 				node2 = networkFlatSpecies.get(nne.getNode2());
+				logger.info(Instant.now().toString() + ": Using Flat Species for Node2 with symbol " + node2.getSymbol());
 			} else {
 				// Node 2 does not yet exist, we need to create it:
 				node2 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node2); // this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node2.setSymbol(nne.getNode2());
 				node2.setSboTerm(nne.getNode2Type());
-				node2 = this.flatSpeciesRepository.save(node2);
+				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node2 with symbol " + nne.getNode2());
+				//node2 = this.flatSpeciesRepository.save(node2);
 				nodeTypes.add(nne.getNode2Type());
-				//node2.setSimpleModelEntityUUID(nne.getNode2UUID());
-				this.provenanceGraphService.connect(node2, this.provenanceEntityRepository.findByEntityUUID(nne.getNode2UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
-				this.provenanceGraphService.connect(node2, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-				this.warehouseGraphService.connect(mappingFromPathway, node2, WarehouseGraphEdgeType.CONTAINS);
+				node2.setSimpleModelEntityUUID(nne.getNode2UUID());
+				//this.provenanceGraphService.connect(node2, this.provenanceEntityRepository.findByEntityUUID(nne.getNode2UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
+				//this.provenanceGraphService.connect(node2, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				//this.warehouseGraphService.connect(mappingFromPathway, node2, WarehouseGraphEdgeType.CONTAINS);
 				networkFlatSpecies.put(node2.getSymbol(), node2);
+				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node2 with symbol " + nne.getNode2() + " Created prov and warehouse Links");
 			}
 			// at this point we have node2 (be it already existing, or just created)
 			FlatSpecies node1;
 			if (networkFlatSpecies.containsKey(nne.getNode1())) {
 				// node 1 does already exist
 				node1 = networkFlatSpecies.get(nne.getNode1());
+				logger.info(Instant.now().toString() + ": Using Flat Species for Node1 with symbol " + node1.getSymbol());
 			} else {
 				// node 1 does not already exist, create it and add relation to node 2
 				node1 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node1);// this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node1.setSymbol(nne.getNode1());
 				node1.setSboTerm(nne.getNode1Type());
-				node1 = this.flatSpeciesRepository.save(node1);
+				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node1 with symbol " + nne.getNode1());
+				//node1 = this.flatSpeciesRepository.save(node1);
 				nodeTypes.add(nne.getNode1Type());
-				//node1.setSimpleModelEntityUUID(nne.getNode1UUID());
-				this.provenanceGraphService.connect(node1, this.provenanceEntityRepository.findByEntityUUID(nne.getNode1UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
-				this.provenanceGraphService.connect(node1, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-				this.warehouseGraphService.connect(mappingFromPathway, node1, WarehouseGraphEdgeType.CONTAINS);
+				node1.setSimpleModelEntityUUID(nne.getNode1UUID());
+				//this.provenanceGraphService.connect(node1, this.provenanceEntityRepository.findByEntityUUID(nne.getNode1UUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
+				//this.provenanceGraphService.connect(node1, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				//this.warehouseGraphService.connect(mappingFromPathway, node1, WarehouseGraphEdgeType.CONTAINS);
+				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node1 with symbol " + nne.getNode1() + " Created prov and warehouse Links");
 			}
 			 //int sbo = SBO.convertAlias2SBO(nne.getEdge().toUpperCase());
 			node1.addRelatedSpecies(node2, nne.getEdge());
 			numberOfRelations++;
 			relationTypes.add(nne.getEdge());
-			node1 = this.flatSpeciesRepository.save(node1);			
+			//logger.info(Instant.now().toString() + ": Adding relationship " + nne.getEdge());
+			//node1 = this.flatSpeciesRepository.save(node1);			
 			networkFlatSpecies.put(node1.getSymbol(), node1); // this replaces node1 with the version that has the new relationship
+			logger.info(Instant.now().toString() + ": Adding relationship " + nne.getEdge() + " ..Done");
 		}
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
@@ -520,8 +530,26 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
 		
+		logger.info(Instant.now().toString() + ": Finished Building internal Map. Collecting FlatSpecies for persistence..");
+		List<FlatSpecies> allFlatSpeciesOfMapping = new ArrayList<>();
+		for (String key : networkFlatSpecies.keySet()) {
+			FlatSpecies fs = networkFlatSpecies.get(key);
+			allFlatSpeciesOfMapping.add(fs);
+		}
+		logger.info(Instant.now().toString() + ": Finished Collecting Flat Species for persistence.");
+		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(mappingFromPathway, 0);
+		logger.info(Instant.now().toString() + ": Persisted Mapping Node. Starting Persistence of FlatSpecies");
+		Iterable<FlatSpecies> persistedFlatSpeciesOfMapping = this.flatSpeciesRepository.save(allFlatSpeciesOfMapping, 1);// saveAll(allFlatSpeciesOfMapping);
+		logger.info(Instant.now().toString() + ": Persisted FlatSpecies. Starting to connect");
+		int fsConnectCounter = 1;
+		for (FlatSpecies fs : persistedFlatSpeciesOfMapping) {
+			logger.info(Instant.now().toString() + ": Building ConnectionSet #" + fsConnectCounter++);
+			this.provenanceGraphService.connect(fs, this.provenanceEntityRepository.findByEntityUUID(fs.getSimpleModelEntityUUID()), ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
+		}
 		logger.info("Finished Creating Mapping from Pathway at " + endTime.toString());
-		return (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(mappingFromPathway);
+		return persistedMappingOfPathway;
 	}
 	
 	/**
