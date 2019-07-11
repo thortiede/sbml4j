@@ -4,20 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.hateoas.ResourceSupport;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
 
 public class FilterOptions  extends ResourceSupport {
 	
 	String mappingUuid;
 	
-	List<String> transitionTypes;
+	List<String> relationTypes;
 	
 	List<String> nodeTypes;
-
-	String networkType;
 	
-	@JsonIgnore
+	List<String> nodeSymbols;
+
+	NetworkMappingType networkType;
+	
+	
 	public String getMappingUuid() {
 		return mappingUuid;
 	}
@@ -26,12 +27,12 @@ public class FilterOptions  extends ResourceSupport {
 		this.mappingUuid = mappingUuid;
 	}
 
-	public List<String> getTransitionTypes() {
-		return transitionTypes;
+	public List<String> getRelationTypes() {
+		return relationTypes;
 	}
 
-	public void setTransitionTypes(List<String> transitionTypes) {
-		this.transitionTypes = transitionTypes;
+	public void setRelationTypes(List<String> relationTypes) {
+		this.relationTypes = relationTypes;
 	}
 
 	public List<String> getNodeTypes() {
@@ -42,11 +43,19 @@ public class FilterOptions  extends ResourceSupport {
 		this.nodeTypes = nodeTypes;
 	}
 
-	public String getNetworkType() {
+	public List<String> getNodeSymbols() {
+		return nodeSymbols;
+	}
+
+	public void setNodeSymbols(List<String> nodeSymbols) {
+		this.nodeSymbols = nodeSymbols;
+	}
+
+	public NetworkMappingType getNetworkType() {
 		return networkType;
 	}
 
-	public void setNetworkType(String networkType) {
+	public void setNetworkType(NetworkMappingType networkType) {
 		this.networkType = networkType;
 	}
 
@@ -58,9 +67,9 @@ public class FilterOptions  extends ResourceSupport {
 			ret += ") ";
 		}		
 		ret += "are: (";
-		if(this.transitionTypes != null) {
-			ret += "transitionTypes: ";
-			for (String type : this.transitionTypes) {
+		if(this.relationTypes != null) {
+			ret += "relationTypes: ";
+			for (String type : this.relationTypes) {
 				ret += type;
 				ret += ", ";
 			}
@@ -77,7 +86,15 @@ public class FilterOptions  extends ResourceSupport {
 		}
 		ret = ret.substring(0, ret.length() - 2);
 		ret += "); ";
-		
+		if(this.nodeSymbols != null) {
+			ret += "(nodeSymbols: ";
+			for(String nodeSymbol : this.nodeSymbols) {
+				ret += nodeSymbol;
+				ret += ", ";
+			}
+		}
+		ret = ret.substring(0, ret.length() - 2);
+		ret += "); ";
 		if (this.networkType != null) {
 			ret += "(networkType: ";
 			ret += this.networkType;
@@ -109,13 +126,21 @@ public class FilterOptions  extends ResourceSupport {
 		if (thisNodeTypes.size() != 0) {
 			return false;
 		}
-		// compare transitionTypes
-		List<String> thisTransitionTypes = new ArrayList<>(this.getTransitionTypes());
-		for (String transitionType : other.getTransitionTypes()) {
+		// compare relationTypes
+		List<String> thisTransitionTypes = new ArrayList<>(this.getRelationTypes());
+		for (String transitionType : other.getRelationTypes()) {
 			if (thisTransitionTypes.remove(transitionType) != true) {
 				return false;
 			}
 		}
+		
+		List<String> thisNodeSymbols = new ArrayList<>(this.getNodeSymbols());
+		for (String nodeSymbol : other.getNodeSymbols()) {
+			if (thisNodeSymbols.remove(nodeSymbol) != true) {
+				return false;
+			}
+		}
+		
 		if (thisTransitionTypes.size() != 0) {
 			return false;
 		}
