@@ -483,10 +483,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					newExternalResourceEntity.setUri(resource);
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
+						newExternalResourceEntity.setDatabaseFromUri("KEGG");
 						setKeggGeneNames(resource, newExternalResourceEntity);
 					} else if(resource.contains("kegg.reaction")) {
-						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
-					}
+						newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);
+						newExternalResourceEntity.setDatabaseFromUri("KEGG");
+					} else if(resource.contains("kegg.drug")) {
+						newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
+						newExternalResourceEntity.setDatabaseFromUri("KEGG");
+					} else if(resource.contains("kegg.compound")) {
+						newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
+						newExternalResourceEntity.setDatabaseFromUri("KEGG");
+					} 
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
 					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
