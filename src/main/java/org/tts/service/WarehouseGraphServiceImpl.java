@@ -7,14 +7,17 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
+import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.NodeEdgeList;
@@ -403,44 +406,60 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
+	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID) {
+		MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(entityUUID);
+		return getNetworkIventoryItem(mapping);
+	}
+	
+	private NetworkInventoryItem getNetworkIventoryItem(MappingNode mapping) {
+		NetworkInventoryItem item = new NetworkInventoryItem();
+		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
+		item.setEntityUUID(mapping.getEntityUUID());
+		item.setSource(findSource(mapping).getSource());
+		item.setSourceVersion(findSource(mapping).getSourceVersion());
+		item.setName(mapping.getMappingName());
+		item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
+		item.setNetworkMappingType(mapping.getMappingType());
+		if (mapping.getMappingNodeTypes() != null) {
+			for (String sboTerm : mapping.getMappingNodeTypes()) {
+				item.addNodeType(this.utilityService.translateSBOString(sboTerm));
+			}
+		}
+		//item.setNodeTypes(mapping.getMappingNodeTypes());
+		//item.setRelationTypes(mapping.getMappingRelationTypes());
+		if (mapping.getMappingRelationTypes() != null) {
+			for (String sboTerm : mapping.getMappingRelationTypes()) {
+				item.addRelationType(this.utilityService.translateSBOString(sboTerm));
+			}
+		}
+		
+		try {
+			Map<String, Object> warehouseMap = mapping.getWarehouse();
+			
+			item.setNumberOfNodes(Integer.valueOf(((String)warehouseMap.get("numberofnodes"))));
+			item.setNumberOfRelations(Integer.valueOf((String)warehouseMap.get("numberofrelations")));
+		} catch (Exception e) {
+			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID() + ") does not have the warehouse-Properties set");
+		}
+		for (OutputType type : OutputType.values()) {
+			item.add(linkTo(methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(), "standard", type.name())).withRel(type.name()));
+		}
+		// add link to the item detail:
+		item.add(linkTo(methodOn(WarehouseController.class).getNetworkInventoryDetail(item.getEntityUUID())).withRel("InventoryItemDetail"));
+		
+		// add link to the item FilterOptions
+		item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(item.getEntityUUID())).withRel("FilterOptions"));
+		return item;
+	}
+
+	@Override
 	public List<NetworkInventoryItem> getListOfNetworkInventoryItems() {
 		List<NetworkInventoryItem> inventory = new ArrayList<>();
 		// get all mapping nodes
 		for (MappingNode mapping : this.mappingNodeRepository.findAll()) {
 			// create an inventory item for each of them and fill it.
-			NetworkInventoryItem item = new NetworkInventoryItem();
-			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
-			item.setEntityUUID(mapping.getEntityUUID());
-			item.setSource(findSource(mapping).getSource());
-			item.setSourceVersion(findSource(mapping).getSourceVersion());
-			item.setName(mapping.getMappingName());
-			item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
-			if (mapping.getMappingNodeTypes() != null) {
-				for (String sboTerm : mapping.getMappingNodeTypes()) {
-					item.addNodeType(this.utilityService.translateSBOString(sboTerm));
-				}
-			}
-			//item.setNodeTypes(mapping.getMappingNodeTypes());
-			//item.setRelationTypes(mapping.getMappingRelationTypes());
-			if (mapping.getMappingRelationTypes() != null) {
-				for (String sboTerm : mapping.getMappingRelationTypes()) {
-					item.addRelationType(this.utilityService.translateSBOString(sboTerm));
-				}
-			}
-			
-			try {
-				Map<String, Object> warehouseMap = mapping.getWarehouse();
-				
-				item.setNumberOfNodes((String)warehouseMap.get("numberofnodes"));
-				item.setNumberOfRelations((String)warehouseMap.get("numberofrelations"));
-			} catch (Exception e) {
-				logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID() + ") does not have the warehouse-Properties set");
-			}
-			for (OutputType type : OutputType.values()) {
-				item.add(linkTo(methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(), "standard", type.name())).withRel(type.name()));
-			
-			}	inventory.add(item);
 		
+			inventory.add(this.getNetworkIventoryItem(mapping));
 		}
 		return inventory;
 		
@@ -500,6 +519,179 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				" / " + Duration.between(insideRetrievedTime, insideretrievedAndSetTime).toString() + 
 				" / " + Duration.between(insideretrievedAndSetTime, end).toString());
 		return mappingNEL;
+	}
+
+	@Override
+	public List<String> getNetworkNodeSymbols(String entityUUID) {
+		return this.getNetworkNodeSymbols(this.getNetworkNodes(entityUUID));
+	}
+	
+	@Override
+	public List<String> getNetworkNodeSymbols(List<FlatSpecies> networkNodes) {
+		List<String> networkNodeNames = new ArrayList<>();
+		for (FlatSpecies node : networkNodes) {
+			networkNodeNames.add(node.getSymbol());
+		}
+		return networkNodeNames;
+	}
+	
+	@Override
+	public List<FlatSpecies> getNetworkNodes(String entityUUID) {
+		
+		return this.flatSpeciesRepository.findAllNetworkNodes(entityUUID);
+	}
+
+	@Override
+	public MappingNode getMappingNode(String entityUUID) {
+		return this.mappingNodeRepository.findByEntityUUID(entityUUID);
+	}
+
+	@Override
+	public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original) {
+		List<FlatSpecies> newSpeciesList = new ArrayList<>(original.size());
+		Map<String, FlatSpecies> oldUUIDToNewSpeciesMap = new HashMap<>();
+		for(int i = 0; i != original.size(); i++) {
+			//Map<String, List<String>> relationTypeOldUUIDListMap = new HashMap<>();
+			FlatSpecies oldSpecies = original.get(i);
+			FlatSpecies newSpecies = new FlatSpecies();
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
+			newSpecies.setAnnotation(oldSpecies.getAnnotation());
+			newSpecies.setLabels(oldSpecies.getLabels());
+			newSpecies.setProvenance(oldSpecies.getProvenance());
+			newSpecies.setSboTerm(oldSpecies.getSboTerm());
+			newSpecies.setSimpleModelEntityUUID(oldSpecies.getSimpleModelEntityUUID());
+			newSpecies.setSymbol(oldSpecies.getSymbol());
+			//newSpecies.addRelatedSpecies(oldSpecies.getAllRelatedSpecies());
+			oldUUIDToNewSpeciesMap.put(oldSpecies.getEntityUUID(), newSpecies);
+			newSpeciesList.add(i, newSpecies);
+		}
+		for(int j = 0; j!= original.size(); j++) {
+			FlatSpecies oldSpecies = original.get(j);
+			FlatSpecies newSpecies = newSpeciesList.get(j);
+			oldSpecies.getAllRelatedSpecies().forEach((relation, speciesList)-> {
+				for (FlatSpecies oldRelatedSpecies : speciesList) {
+					newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()), relation);
+				}
+			});
+		}
+		
+		return newSpeciesList;
+	}
+
+	@Override
+	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options) {
+		final List<String> relationTypes = options.getRelationTypes();
+		/*List<String> nodeTypes =  new ArrayList<>();
+		for (String type : options.getNodeTypes()) {
+			nodeTypes.add(this.utilityService.translateToSBOString(type));
+		}*/
+		List<String> nodeTypes = options.getNodeTypes();
+		List<String> nodeSymbols = options.getNodeSymbols();
+		List<FlatSpecies> newSpeciesList = new ArrayList<>(originalFlatSpeciesList.size());
+		Map<String, FlatSpecies> oldUUIDToNewSpeciesMap = new HashMap<>();
+		Set<String> oldSkippedSpecies = new HashSet<>();
+		Set<String> newConnectedSpecies = new HashSet<>();
+		for(int i = 0; i != originalFlatSpeciesList.size(); i++) {
+			//Map<String, List<String>> relationTypeOldUUIDListMap = new HashMap<>();
+			FlatSpecies oldSpecies = originalFlatSpeciesList.get(i);
+			if(nodeSymbols != null && (!nodeSymbols.contains(oldSpecies.getSymbol()) || !nodeTypes.contains(this.utilityService.translateSBOString(oldSpecies.getSboTerm())))) {
+				oldSkippedSpecies.add(oldSpecies.getEntityUUID());
+				newSpeciesList.add(i, null);
+				continue;
+			}
+			FlatSpecies newSpecies = new FlatSpecies();
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
+			newSpecies.setAnnotation(oldSpecies.getAnnotation());
+			newSpecies.setLabels(oldSpecies.getLabels());
+			newSpecies.setProvenance(oldSpecies.getProvenance());
+			newSpecies.setSboTerm(oldSpecies.getSboTerm());
+			newSpecies.setSimpleModelEntityUUID(oldSpecies.getSimpleModelEntityUUID());
+			newSpecies.setSymbol(oldSpecies.getSymbol());
+			//newSpecies.addRelatedSpecies(oldSpecies.getAllRelatedSpecies());
+			oldUUIDToNewSpeciesMap.put(oldSpecies.getEntityUUID(), newSpecies);
+			newSpeciesList.add(i, newSpecies);
+		}
+		for(int j = 0; j!= originalFlatSpeciesList.size(); j++) {
+			FlatSpecies oldSpecies = originalFlatSpeciesList.get(j);
+			FlatSpecies newSpecies = newSpeciesList.get(j);
+			if(!(newSpecies == null)) {
+				oldSpecies.getAllRelatedSpecies().forEach((relation, speciesList)-> {
+					if(relationTypes.contains(this.utilityService.translateSBOString(relation))) {
+						for (FlatSpecies oldRelatedSpecies : speciesList) {
+							if (!oldSkippedSpecies.contains(oldRelatedSpecies.getEntityUUID())) {
+								newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()), relation);
+								newConnectedSpecies.add(newSpecies.getEntityUUID());
+								newConnectedSpecies.add(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()).getEntityUUID());
+							}
+						}
+					}
+				});
+				
+			}
+		}
+		// check for dangling species (that did not get connected with a relation)
+		for (int i = 0; i != newSpeciesList.size(); i++) {
+			FlatSpecies species = newSpeciesList.get(i);
+			if(species != null && !newConnectedSpecies.contains(species.getEntityUUID())) {
+				logger.debug("Removing Species with parent " + originalFlatSpeciesList.get(i).getEntityUUID());
+				// be sure to keep the list the same length
+				newSpeciesList.set(i, null);
+			}
+		}
+		return newSpeciesList;
+	}
+
+	@Override
+	public FilterOptions getFilterOptions(WarehouseGraphNodeType nodeType, String entityUUID) {
+		if(nodeType.equals(WarehouseGraphNodeType.MAPPING)) {
+			return this.getFilterOptions(this.mappingNodeRepository.findByEntityUUID(entityUUID));
+		} else {
+			return null; // TODO
+		}
+		
+	}
+
+	private FilterOptions getFilterOptions(MappingNode mappingNode) {
+		FilterOptions filterOptions = new FilterOptions();
+		filterOptions.setMappingUuid(mappingNode.getEntityUUID());
+		filterOptions.setNetworkType(mappingNode.getMappingType());
+		filterOptions.setNodeSymbols(getNetworkNodeSymbols(mappingNode.getEntityUUID()));
+		List<String> nodeTypes = new ArrayList<>();
+		for (String sboTerm : mappingNode.getMappingNodeTypes()) {
+			nodeTypes.add(this.utilityService.translateSBOString(sboTerm));
+		}
+		filterOptions.setNodeTypes(nodeTypes);
+		List<String> relationTypes = new ArrayList<>();
+		for (String sboTerm : mappingNode.getMappingRelationTypes()) {
+			relationTypes.add(this.utilityService.translateSBOString(sboTerm));
+		}
+		filterOptions.setRelationTypes(relationTypes);
+		return filterOptions;
+	}
+
+	@Override
+	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options) {
+		List<String> sourceSpeciesForContext = options.getNodeSymbols();
+		String startNodeSymbol = sourceSpeciesForContext.get(0);
+		List<String> relationTypes = options.getRelationTypes();
+		List<String> nodeTypes = options.getNodeTypes();
+		String startNodeEntityUUID = "";
+		for (FlatSpecies oldSpecies : oldSpeciesList) {
+			if (oldSpecies.getSymbol().equals(startNodeSymbol)) {
+				startNodeEntityUUID = oldSpecies.getEntityUUID();
+			}
+		}
+		String relationTypesApocString = "";
+		for (String relationType : relationTypes) {
+			relationTypesApocString += relationType;
+			relationTypesApocString += "|";
+		}
+		relationTypesApocString = relationTypesApocString.substring(0, relationTypesApocString.length()-1);
+		int minPathLength = 1;
+		int maxPathLength = 2;
+		List<FlatSpecies> contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, minPathLength, maxPathLength);
+		
+		return contextSpeciesList;
 	}
 
 	

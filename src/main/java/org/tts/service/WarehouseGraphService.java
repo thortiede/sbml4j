@@ -3,6 +3,7 @@ package org.tts.service;
 import java.util.List;
 import java.util.Map;
 
+import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.NodeEdgeList;
@@ -11,7 +12,9 @@ import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 import org.tts.model.common.Organism;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
@@ -61,7 +64,7 @@ public interface WarehouseGraphService {
 	public PathwayCollectionNode createPathwayCollection(PathwayCollectionCreationItem pathwayCollectionCreationItem, DatabaseNode databaseNode,
 			ProvenanceGraphActivityNode createPathwayCollectionGraphActivityNode, ProvenanceGraphAgentNode agentNode);
 
-	PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
+	public PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
 			Organism organism);
 
 	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
@@ -69,10 +72,28 @@ public interface WarehouseGraphService {
 
 	public List<String> getListofPathwayUUIDs();
 
-	WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
+	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
 	public List<NetworkInventoryItem> getListOfNetworkInventoryItems();
 
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
+
+	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID);
+
+	public List<FlatSpecies> getNetworkNodes(String entityUUID);
+
+	public List<String> getNetworkNodeSymbols(List<FlatSpecies> networkNodes);
+
+	public List<String> getNetworkNodeSymbols(String entityUUID);
+
+	public MappingNode getMappingNode(String entityUUID);
+
+	public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original);
+
+	public FilterOptions getFilterOptions(WarehouseGraphNodeType nodeType, String entityUUID);
+
+	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
+
+	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
 	
 }
