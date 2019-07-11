@@ -25,6 +25,7 @@ import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.SifFile;
 import org.tts.model.common.ContentGraphNode;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
+import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
@@ -131,8 +132,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	private FilterOptions mapNetworkMappingToFilterOptions(FlatNetworkMapping flatNetworkMapping) {
 		FilterOptions returnFilterOptions = new FilterOptions();
-		returnFilterOptions.setNetworkType(flatNetworkMapping.getNetworkType());
-		returnFilterOptions.setTransitionTypes(Arrays.asList(flatNetworkMapping.getRelationshipTypes()));
+		//returnFilterOptions.setNetworkType(flatNetworkMapping.getNetworkType());
+		returnFilterOptions.setRelationTypes(Arrays.asList(flatNetworkMapping.getRelationshipTypes()));
 		returnFilterOptions.setNodeTypes(Arrays.asList(flatNetworkMapping.getNodeTypes()));
 		return returnFilterOptions;
 	}
@@ -358,19 +359,19 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 	private FlatNetworkMapping convertToFlatNetworkMapping(FilterOptions filterOptions) throws ClassCastException {
 		FlatNetworkMapping newFlatNetworkMapping = new FlatNetworkMapping();
-		newFlatNetworkMapping.setNetworkType(filterOptions.getNetworkType());
+		//newFlatNetworkMapping.setNetworkType(filterOptions.getNetworkType());
 		newFlatNetworkMapping.setEntityUUID(newFlatNetworkMapping.getNetworkType() + "_" + UUID.randomUUID().toString());
 		newFlatNetworkMapping.setNodeTypes(filterOptions.getNodeTypes().toArray(new String[filterOptions.getNodeTypes().size()]));
-		newFlatNetworkMapping.setRelationshipTypes(filterOptions.getTransitionTypes().toArray(new String[filterOptions.getTransitionTypes().size()]));
+		newFlatNetworkMapping.setRelationshipTypes(filterOptions.getRelationTypes().toArray(new String[filterOptions.getRelationTypes().size()]));
 		return newFlatNetworkMapping;
 	}
 
 	@Override
 	public FilterOptions getFullFilterOptions() {
 		FilterOptions fullFilterOptions = new FilterOptions();
-		fullFilterOptions.setTransitionTypes(getTransitionTypes());
+		fullFilterOptions.setRelationTypes(getTransitionTypes());
 		fullFilterOptions.setNodeTypes(getNodeTypes());
-		fullFilterOptions.setNetworkType(getNetworkTypes());
+	//	fullFilterOptions.setNetworkType(getNetworkTypes());
 		return fullFilterOptions;
 	}
 
@@ -396,9 +397,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	private FilterOptions convertToFilterOptions(FlatNetworkMapping flatNetworkMapping) {
 		FilterOptions filterOptions = new FilterOptions();
 		filterOptions.setMappingUuid(flatNetworkMapping.getEntityUUID());
-		filterOptions.setNetworkType(flatNetworkMapping.getNetworkType());
+		//filterOptions.setNetworkType(flatNetworkMapping.getNetworkType());
 		filterOptions.setNodeTypes(Arrays.asList(flatNetworkMapping.getNodeTypes()));
-		filterOptions.setTransitionTypes(Arrays.asList(flatNetworkMapping.getRelationshipTypes()));
+		filterOptions.setRelationTypes(Arrays.asList(flatNetworkMapping.getRelationshipTypes()));
 		return filterOptions;
 	}
 
@@ -443,16 +444,20 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	}
 
 	@Override
-	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ExternalResourceType erType, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) {
+	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, IDSystem idSystem, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) {
 		
 		Instant startTime = Instant.now();
 		logger.info("Started Creating Mapping from Pathway at " + startTime.toString());
 		int numberOfRelations = 0;
 		// need a Warehouse Node of Type Mapping, set NetworkMappingTypes
-		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString() + "_" + erType.name();
+		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString() + "_" + idSystem.name();
+		
 		MappingNode mappingFromPathway = this.warehouseGraphService.createMappingNode(pathway, type, mappingName);
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
+		List<String> transitionSBOTerms = new ArrayList<>();
+		List<String> nodeSBOTerms = new ArrayList<>();
+		Iterable<NodeNodeEdge> flatTransitionsOfPathway = new ArrayList<>();;
 		// connect MappingNode to PathwayNode with wasDerivedFrom
 		this.provenanceGraphService.connect(mappingFromPathway, pathway, ProvenanceGraphEdgeType.wasDerivedFrom);
 		// connect MappingNode to Activity with wasGeneratedBy
@@ -460,15 +465,41 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// attribute the new Mapping to the agent
 		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		
-		// TODO divert here for different mapping types?
-		// get all Transitions from Pathway
-		Iterable<NodeNodeEdge> allFlatTransitionsOfPathway = 
-					this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(), erType);
+		// TODO divert here for different mapping types
+		if(type.equals(NetworkMappingType.PATHWAYMAPPING)) {
+			// get all Transitions from Pathway
+			flatTransitionsOfPathway = 
+						this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem);
+			
+		} else if (type.equals(NetworkMappingType.METABOLIC)) {
+			flatTransitionsOfPathway = 
+					this.graphBaseEntityRepository.getFlatMetabolicReactionsForPathway(pathway.getEntityUUID(), idSystem);
+		} else if (type.equals(NetworkMappingType.PPI)) {
+			transitionSBOTerms.add(SBO.getTerm(216).getId());
+			flatTransitionsOfPathway = 
+					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms);
+		
+		} else if (type.equals(NetworkMappingType.REGULATORY)) {
+			nodeSBOTerms.add("SBO:0000252");
+			nodeSBOTerms.add("SBO:0000247");
+			transitionSBOTerms.add("SBO:0000168");
+			transitionSBOTerms.add("SBO:0000170");
+			transitionSBOTerms.add("SBO:0000169");
+			flatTransitionsOfPathway = 
+					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms, nodeSBOTerms);
+		} else if (type.equals(NetworkMappingType.SIGNALLING)) {
+			nodeSBOTerms.add("SBO:0000252");
+			transitionSBOTerms.add("SBO:0000656");
+			transitionSBOTerms.add("SBO:0000170");
+			transitionSBOTerms.add("SBO:0000169");
+			flatTransitionsOfPathway = 
+					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms, nodeSBOTerms);
+		} 
 		
 		// create FlatSpecies for QueryResults
 		Map<String, FlatSpecies> networkFlatSpecies = new HashMap<>();
 		int counter = 1;
-		for(NodeNodeEdge nne : allFlatTransitionsOfPathway) {
+		for(NodeNodeEdge nne : flatTransitionsOfPathway) {
 			logger.info(Instant.now().toString() + ": Processing NNE #" + counter++);
 			// on creation of Flat Species, provenanceConnect them to the initialEntities (and to the Transition?)
 			FlatSpecies node2;
@@ -525,7 +556,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		mappingFromPathway.addWarehouseAnnotation("creationendtime", endTime.toString());
-		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(networkFlatSpecies.size()));
+		mappingFromPathway.addWarehouseAnnotation("numberofnodes",  String.valueOf(networkFlatSpecies.size()));
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
@@ -539,7 +570,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		logger.info(Instant.now().toString() + ": Finished Collecting Flat Species for persistence.");
 		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(mappingFromPathway, 0);
 		logger.info(Instant.now().toString() + ": Persisted Mapping Node. Starting Persistence of FlatSpecies");
-		Iterable<FlatSpecies> persistedFlatSpeciesOfMapping = this.flatSpeciesRepository.save(allFlatSpeciesOfMapping, 1);// saveAll(allFlatSpeciesOfMapping);
+		Iterable<FlatSpecies> persistedFlatSpeciesOfMapping = this. persistListOfFlatSpecies(allFlatSpeciesOfMapping);// saveAll(allFlatSpeciesOfMapping);
 		logger.info(Instant.now().toString() + ": Persisted FlatSpecies. Starting to connect");
 		int fsConnectCounter = 1;
 		for (FlatSpecies fs : persistedFlatSpeciesOfMapping) {
@@ -579,6 +610,18 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		default:
 			return null;		
 		}
+	}
+	
+	
+
+	@Override
+	public Iterable<FlatSpecies> persistListOfFlatSpecies(List<FlatSpecies> flatSpeciesList) {
+		return this.flatSpeciesRepository.save(flatSpeciesList, 1);
+	}
+	
+	@Override
+	public FlatSpecies persistFlatSpecies(FlatSpecies species) {
+		return this.flatSpeciesRepository.save(species, 1);
 	}
 	
 }
