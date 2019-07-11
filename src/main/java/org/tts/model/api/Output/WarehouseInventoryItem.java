@@ -11,6 +11,18 @@ public class WarehouseInventoryItem extends ResourceSupport {
 	private String sourceVersion;
 	private WarehouseGraphNodeType warehouseGraphNodeType;
 
+	public WarehouseInventoryItem() {
+		super();
+	}
+	public WarehouseInventoryItem(WarehouseInventoryItem item) {
+		super();
+		this.entityUUID = item.getEntityUUID();
+		this.name = item.getName();
+		this.organismCode = item.getOrganismCode();
+		this.source = item.getSource();
+		this.sourceVersion = item.getSourceVersion();
+		this.warehouseGraphNodeType = item.getWarehouseGraphNodeType();
+	}
 	public String getEntityUUID() {
 		return entityUUID;
 	}
