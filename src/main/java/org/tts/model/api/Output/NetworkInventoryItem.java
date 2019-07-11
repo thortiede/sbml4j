@@ -3,23 +3,38 @@ package org.tts.model.api.Output;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.tts.model.common.GraphEnum.NetworkMappingType;
+
 public class NetworkInventoryItem extends WarehouseInventoryItem {
 
-	private String numberOfNodes;
-	private String numberOfRelations;
+	private int numberOfNodes;
+	private int numberOfRelations;
 	private Set<String> nodeTypes;
 	private Set<String> relationTypes;
+	private NetworkMappingType networkMappingType;
 	
-	public String getNumberOfNodes() {
+	public NetworkInventoryItem() {
+		super();
+	}
+	protected NetworkInventoryItem(NetworkInventoryItem item) {
+		super((WarehouseInventoryItem)item);
+		this.add(item.getLinks());
+		this.numberOfNodes = item.getNumberOfNodes();
+		this.numberOfRelations = item.getNumberOfRelations();
+		this.nodeTypes = item.getNodeTypes();
+		this.relationTypes = item.getRelationTypes();
+		this.networkMappingType = item.getNetworkMappingType();
+	}
+	public int getNumberOfNodes() {
 		return numberOfNodes;
 	}
-	public void setNumberOfNodes(String numberOfNodes) {
+	public void setNumberOfNodes(int numberOfNodes) {
 		this.numberOfNodes = numberOfNodes;
 	}
-	public String getNumberOfRelations() {
+	public int getNumberOfRelations() {
 		return numberOfRelations;
 	}
-	public void setNumberOfRelations(String numberOfRelations) {
+	public void setNumberOfRelations(int numberOfRelations) {
 		this.numberOfRelations = numberOfRelations;
 	}
 	public Set<String> getNodeTypes() {
@@ -46,5 +61,11 @@ public class NetworkInventoryItem extends WarehouseInventoryItem {
 			this.relationTypes = new HashSet<>();
 		}
 		this.relationTypes.add(type);
+	}
+	public NetworkMappingType getNetworkMappingType() {
+		return networkMappingType;
+	}
+	public void setNetworkMappingType(NetworkMappingType networkMappingType) {
+		this.networkMappingType = networkMappingType;
 	}
 }
