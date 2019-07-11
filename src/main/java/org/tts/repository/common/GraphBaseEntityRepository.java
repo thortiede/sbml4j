@@ -1,10 +1,12 @@
 package org.tts.repository.common;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.common.GraphBaseEntity;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
+import org.tts.model.common.GraphEnum.IDSystem;
 
 public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 
@@ -138,11 +140,11 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			+ "(t:SBMLSimpleTransition) "
 			+ "WITH t "
 			+ "MATCH "
-			+ "(e1:ExternalResourceEntity {type: {1}})"
+			+ "(e1:ExternalResourceEntity {databaseFromUri: {1}})"
 			+ "-[bq1:BQ]-(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
 			+ "(t)"
 			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)-[bq2:BQ]-"
-			+ "(e2:ExternalResourceEntity {type: {1}}) "
+			+ "(e2:ExternalResourceEntity {databaseFromUri: {1}}) "
 			+ "WHERE bq1.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
 			+ "AND bq2.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
 			+ "RETURN "
@@ -154,7 +156,92 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			+ "e2.entityUUID as node2UUID, "
 			+ "s2.sBaseSboTerm as node2Type"
 			)
-	Iterable<NodeNodeEdge> getAllFlatTransitionsForPathway(String pathwayEntityUUID, ExternalResourceType erType);
+	Iterable<NodeNodeEdge> getAllFlatTransitionsForPathway(String pathwayEntityUUID, IDSystem idSystem);
+
+	
+	
+	@Query(value="MATCH"
+			+ "(p:PathwayNode {entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(t:SBMLSimpleTransition) where t.sBaseSboTerm IN ({2})"
+			+ "WITH t "
+			+ "MATCH "
+			+ "(e1:ExternalResourceEntity {databaseFromUri: {1}})"
+			+ "-[bq1:BQ]-(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
+			+ "(t)"
+			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)-[bq2:BQ]-"
+			+ "(e2:ExternalResourceEntity {databaseFromUri: {1}}) "
+			+ "WHERE bq1.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND bq2.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "RETURN "
+			+ "e1.name AS node1, "
+			+ "e1.entityUUID as node1UUID, "
+			+ "s1.sBaseSboTerm as node1Type, "
+			+ "t.sBaseSboTerm as edge, "
+			+ "e2.name as node2, "
+			+ "e2.entityUUID as node2UUID, "
+			+ "s2.sBaseSboTerm as node2Type"
+			)
+	Iterable<NodeNodeEdge> getFlatTransitionsForPathway(String entityUUID, IDSystem idSystem,
+			List<String> transitionSBOTerms);
+
+	/**
+	 * Doesnt work that way well for metabolic.
+	 * Proably need a different return element for bi/tripartite graph and different handlers for creating graphml
+	 * @param entityUUID
+	 * @param erType
+	 * @return
+	 */
+	@Query(value="MATCH"
+			+ "(p:PathwayNode {entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(t:SBMLSimpleReaction) "
+			+ "WITH t "
+			+ "MATCH "
+			+ "(e1:ExternalResourceEntity {databaseFromUri: {1}})"
+			+ "-[bq1:BQ]-(s1:SBMLSpecies)<-[:IS_REACTANT]-"
+			+ "(t)"
+			+ "-[:IS_PRODUCT]->(s2:SBMLSpecies)-[bq2:BQ]-"
+			+ "(e2:ExternalResourceEntity {databaseFromUri: {1}}) "
+			+ "WHERE bq1.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND bq2.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "RETURN "
+			+ "e1.name AS node1, "
+			+ "e1.entityUUID as node1UUID, "
+			+ "s1.sBaseSboTerm as node1Type, "
+			+ "t.sBaseName as edge, "
+			+ "e2.name as node2, "
+			+ "e2.entityUUID as node2UUID, "
+			+ "s2.sBaseSboTerm as node2Type"
+			)
+	Iterable<NodeNodeEdge> getFlatMetabolicReactionsForPathway(String entityUUID, IDSystem idSystem);
+
+	@Query(value="MATCH"
+			+ "(p:PathwayNode {entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(t:SBMLSimpleTransition) where t.sBaseSboTerm IN ({2})"
+			+ "WITH t "
+			+ "MATCH "
+			+ "(e1:ExternalResourceEntity {databaseFromUri: {1}})"
+			+ "-[bq1:BQ]-(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
+			+ "(t)"
+			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies)-[bq2:BQ]-"
+			+ "(e2:ExternalResourceEntity {databaseFromUri: {1}}) "
+			+ "WHERE bq1.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND bq2.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND s1.sBaseSboTerm IN ({3}) "
+			+ "AND s2.sBaseSboTerm IN ({3}) "
+			+ "RETURN "
+			+ "e1.name AS node1, "
+			+ "e1.entityUUID as node1UUID, "
+			+ "s1.sBaseSboTerm as node1Type, "
+			+ "t.sBaseSboTerm as edge, "
+			+ "e2.name as node2, "
+			+ "e2.entityUUID as node2UUID, "
+			+ "s2.sBaseSboTerm as node2Type"
+			)
+	Iterable<NodeNodeEdge> getFlatTransitionsForPathway(String entityUUID, IDSystem idSystem,
+			List<String> transitionSBOTerms, List<String> nodeSBOTerms);
 	
 	/**
 	 * match (n:MappingNode)-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(fs:FlatSpecies) where n.mappingName = "Map_PATHWAYMAPPING_path_hsa05210_KEGGGENES" detach delete fs
