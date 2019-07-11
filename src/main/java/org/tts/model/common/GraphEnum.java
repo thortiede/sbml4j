@@ -3,6 +3,13 @@ package org.tts.model.common;
 public class GraphEnum {
 	
 	
+	public enum MappingStep {
+		COPY,
+		ANNOTATE,
+		FILTER,
+		CONTEXT
+	}
+	
 	public enum NetworkMappingType {
 		PPI,
 		REGULATORY,
@@ -119,6 +126,7 @@ public class GraphEnum {
 		METHYLATION("SBO:0000214"),<br>
 		MOLECULARINTERACTION("SBO:0000344"),<br>
 		CONTROL("SBO:0000168");<br>
+		UNKNOWNINSOURCE("unknown");
 	 */
 	
 	public enum RelationTypes {
@@ -133,7 +141,8 @@ public class GraphEnum {
 		UBIQUITINATION("SBO:0000224"),
 		METHYLATION("SBO:0000214"),
 		MOLECULARINTERACTION("SBO:0000344"),
-		CONTROL("SBO:0000168");
+		CONTROL("SBO:0000168"),
+		UNKNOWNINSOURCE("undefined in source");
 		
 		private final String relType;
 		
@@ -155,8 +164,18 @@ public class GraphEnum {
 		FOR
 	}
 	
+	/**
+	 * 	KEGGGENES("kegg.genes"),<br>
+		KEGGCOMPOUND("kegg.compound"),<br>
+		KEGGDRUG("kegg.drug"),<br>
+		KEGGREACTION("kegg.reaction");
+		
+	 */
 	public enum ExternalResourceType {
-		KEGGGENES("kegg.genes");
+		KEGGGENES("kegg.genes"),
+		KEGGCOMPOUND("kegg.compound"),
+		KEGGDRUG("kegg.drug"),
+		KEGGREACTION("kegg.reaction");
 		
 		private final String externalResourceType;
 		
@@ -167,6 +186,12 @@ public class GraphEnum {
 		public String getExternalResourceType() {
 			return this.externalResourceType;
 		}
+	}
+	
+	
+	public enum IDSystem{
+		KEGG,
+		OTHER
 	}
 	
 }
