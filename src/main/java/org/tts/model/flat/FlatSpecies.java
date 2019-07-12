@@ -140,14 +140,14 @@ public class FlatSpecies extends ContentGraphNode {
 					allRelatedSpecies.put(type.getRelType(), uncertainProcessSpeciesList);
 				}
 				break;
-			case UNKNOWNINSOURCE:
+			case UNKNOWNFROMSOURCE:
 				if(this.unknownFromSourceSpeciesList != null) {
 					allRelatedSpecies.put(type.getRelType(), unknownFromSourceSpeciesList);
 				}
 				break;
 			default:
 				if(this.unknownFromSourceSpeciesList != null) {
-					allRelatedSpecies.put("unknown", unknownFromSourceSpeciesList);
+					allRelatedSpecies.put("unknownFromSource", unknownFromSourceSpeciesList);
 				}
 				break;
 			}
@@ -238,7 +238,7 @@ public class FlatSpecies extends ContentGraphNode {
 			}
 			controlSpeciesList.add(other);
 			break;
-		case "unknown":
+		case "unknownFromSource":
 			if(unknownFromSourceSpeciesList == null) {
 				unknownFromSourceSpeciesList = new ArrayList<>();
 			}

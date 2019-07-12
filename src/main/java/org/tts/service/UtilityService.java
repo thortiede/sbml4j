@@ -7,7 +7,7 @@ public class UtilityService {
 
 	
 	public String translateSBOString(String sboString) {
-		return (sboString.equals("") || sboString.equals("unknown") || sboString.equals("undefined in source")) ? "undefined in source" : org.sbml.jsbml.SBO.getTerm(sboString).getName();
+		return (sboString.equals("") || sboString.equals("unknown") || sboString.equals("undefined in source") || sboString.equals("unknownFromSource")) ? "unknownFromSource" : org.sbml.jsbml.SBO.getTerm(sboString).getName();
 	}
 	
 	public String translateToSBOString(String alias) {
