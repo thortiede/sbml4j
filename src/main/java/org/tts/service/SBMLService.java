@@ -11,6 +11,11 @@ import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.warehouse.FileNode;
+import org.tts.model.common.Organism;
 
 public interface SBMLService {
 
@@ -28,10 +33,10 @@ public interface SBMLService {
 	/**
 	 * Main entry Method coming from a controller
 	 * @param model The jSBML Model ({@link org.sbml.jsbml.Model}) to persist
-	 * @param filename The name of the file this model originates from
+	 * @param sbmlFileNode The name of the file this model originates from
 	 * @return List of GraphBaseEntity that got persisted (or were already in the database) and are part of the model
 	 */
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename);
+	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode);
 
 	//public List<GraphBaseEntity> persistFastSimple(Model model);
 	
@@ -47,4 +52,6 @@ public interface SBMLService {
 	 * {@link org.tts.model.common.GraphBaseEntity}
 	 */
 	public List<GraphBaseEntity> getAllEntities();
+
+	
 }

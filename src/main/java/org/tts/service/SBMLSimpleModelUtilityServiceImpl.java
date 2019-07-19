@@ -1,5 +1,6 @@
 package org.tts.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,7 +97,58 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 * @param target the GraphBaseEntity for which the basic properties (entityUUID) are to be set.
 	 */
 	void setGraphBaseEntityProperties(GraphBaseEntity target) {
+		setGraphBaseEntityProperties(target, null, null);
+	}
+	
+	void setGraphBaseEntityProperties(GraphBaseEntity target, List<String> labels) {
+		setGraphBaseEntityProperties(target, labels, null);
+	}
+	
+	void setGraphBaseEntityProperties(GraphBaseEntity target,  Map<String, Object> annotations) {
+		setGraphBaseEntityProperties(target, null, annotations);
+	}
+	
+	/**
+	 * Set Properties of GraphBaseEntity.
+	 */
+	void setGraphBaseEntityProperties(GraphBaseEntity target, List<String> labels, Map<String, Object> annotations) {
 		target.setEntityUUID(UUID.randomUUID().toString());
+		// labels
+		if (labels != null) {
+			List<String> targetLabels = target.getLabels();
+			if (targetLabels.size() == 0) {
+				for (String label : labels) {
+					targetLabels.add(label);
+				}
+			} else {
+				// we need to check if label already exists
+				for (String label : labels) {
+					if (!targetLabels.contains(label)) {
+						targetLabels.add(label);
+					}
+				}
+			}
+			// we have added the new labels, write them back
+			target.setLabels(targetLabels);
+		}
+		// properties
+		if (annotations != null) {
+			Map<String, Object> targetAnnotation = target.getAnnotation();
+			if (targetAnnotation.size() == 0) {
+				for (String annotationKey : annotations.keySet()) {
+					targetAnnotation.put(annotationKey, annotations.get(annotationKey));
+				}
+			} else {
+				for (String annotationKey : annotations.keySet()) {
+					if (!targetAnnotation.containsKey(annotationKey)) {
+						targetAnnotation.put(annotationKey, annotations.get(annotationKey));
+					}
+				}
+			}
+			// we have added the new properties, write them back
+			target.setAnnotation(targetAnnotation);
+		}
+		
 	}
 	
 	/**

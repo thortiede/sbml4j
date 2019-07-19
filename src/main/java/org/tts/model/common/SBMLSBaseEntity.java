@@ -13,7 +13,7 @@ import org.tts.model.full.ext.SBMLSBaseExtension;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity(label="SBase")
-public class SBMLSBaseEntity extends GraphBaseEntity {
+public class SBMLSBaseEntity extends ContentGraphNode {
 
 	private String sBaseId;
 	

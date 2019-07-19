@@ -5,11 +5,13 @@ import org.springframework.data.neo4j.annotation.QueryResult;
 @QueryResult
 public class NodeNodeEdge {
 
-	public String node1;
-	public String node1UUID;
-	public String node2;
-	public String node2UUID;
-	public String edge;
+	private String node1;
+	private String node1UUID;
+	private String node1Type;
+	private String node2;
+	private String node2UUID;
+	private String node2Type;
+	private String edge;
 	
 	public NodeNodeEdge() {
 		
@@ -61,6 +63,22 @@ public class NodeNodeEdge {
 
 	public void setNode2UUID(String node2uuid) {
 		node2UUID = node2uuid;
+	}
+
+	public String getNode1Type() {
+		return node1Type;
+	}
+
+	public void setNode1Type(String node1Type) {
+		this.node1Type = node1Type;
+	}
+
+	public String getNode2Type() {
+		return node2Type;
+	}
+
+	public void setNode2Type(String node2Type) {
+		this.node2Type = node2Type;
 	}
 
 	public boolean equals(NodeNodeEdge other) {

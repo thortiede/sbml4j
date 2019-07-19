@@ -109,28 +109,29 @@ public class NetworkMappingController {
 	 * Possible approach to realizing filters on network mappings that should be REST compliant (needs to be verified)
 	 * example /mapping/ppi
 	 * workflow:
-	 * 1. GET /filterOptions (or a better endpoint name for transitionTypes) to get list of available filters
+	 * 1. GET /filterOptions (or a better endpoint name for relationTypes) to get list of available filters
 	 * 2. POST /mapping with JSON Payload to set filtering options, generate id for those filter combinations and send to user (with link to endpoint HATEOAS)
 	 * 3. GET /mappings show available filter combinations with description and id (always have standard mapping with all and maybe some most used cases?)
 	 * 4. GET /mapping/{id} to get the ppi network with those filters applied 
 	 */
 	
-	@RequestMapping(value = "/mapping", method=RequestMethod.POST)
+	//@RequestMapping(value = "/mapping", method=RequestMethod.POST)
 	public ResponseEntity<Map<String, FilterOptions>> defineFilterOption(@RequestBody FilterOptions filterOptions){
 		if(filterOptions == null) {
 			logger.info("Serving POST /mapping, but filterOptions was null");
 			return new ResponseEntity<Map<String, FilterOptions>>(HttpStatus.BAD_REQUEST);
 		}
 		if(filterOptions.getNetworkType() == null) {
-			filterOptions.setNetworkType("");
+			//filterOptions.setNetworkType("");
+			logger.warn("FilterOptions have no networkType set.");
 		}
-		if(filterOptions.getTransitionTypes() == null) {
-			filterOptions.setTransitionTypes(new ArrayList<>());
+		if(filterOptions.getRelationTypes() == null) {
+			filterOptions.setRelationTypes(new ArrayList<>());
 		}
 		if(filterOptions.getNodeTypes() == null) {
 			filterOptions.setNodeTypes(new ArrayList<>());
 		}
-		if (filterOptions.getNetworkType().equals("") && filterOptions.getTransitionTypes().size() == 0 && filterOptions.getNodeTypes().size() == 0) {
+		if (filterOptions.getNetworkType().equals("") && filterOptions.getRelationTypes().size() == 0 && filterOptions.getNodeTypes().size() == 0) {
 			logger.info("Serving POST /mapping, but filterOptions were empty");
 			return new ResponseEntity<Map<String, FilterOptions>>(HttpStatus.BAD_REQUEST);
 		}
@@ -152,7 +153,7 @@ public class NetworkMappingController {
 		}
 		// add self link
 		retFilterOptions.add(linkTo(methodOn(NetworkMappingController.class).getMappingWithFilter(retFilterOptions.getMappingUuid(), "graphml")).withSelfRel());
-		// package in Map to return to requerster
+		// package in Map to return to requester
 		retFilterOptionsMap.put(retFilterOptions.getMappingUuid(), retFilterOptions);
 		return new ResponseEntity<Map<String, FilterOptions>>(retFilterOptionsMap, HttpStatus.OK);
 		
@@ -195,7 +196,7 @@ public class NetworkMappingController {
 		// generate ppi with filters applied
 		NodeEdgeList flatNetwork = networkMappingService.getProteinInteractionNetwork(filterOptionsFromId.getTransitionTypes());*/
 		//Resource resource = getResourceFromNodeEdgeList(flatNetwork, "sif");
-		Resource resource = getResourceFromNodeEdgeList(flatNetwork, format);
+		Resource resource = this.networkMappingService.getResourceFromNodeEdgeList(flatNetwork, format);
 		if (resource != null) {
 			logger.info("Converted flatNetwork to Resource");
 			// Try to determine file's content type
@@ -216,33 +217,7 @@ public class NetworkMappingController {
 	
 	
 	
-	/**
-	 * Convert a NodeEdgeList to a returnable Resource Object
-	 * @param nodeEdgeList The nodeEdgeList to convert
-	 * @return a sifResource as ByteArrayResource
-	 */
-	private Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type) {
-		switch (type) {
-		case "sif":
-		
-			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
-		
-		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
-			if(sifFile != null) {
-			    Resource resource = fileStorageService.getSifAsResource(sifFile);
-			    return resource;
-			} else {
-				return null;
-			}
-		case "graphml":
-			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
-			
-			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
-			
-		default:
-			return null;		
-		}
-	}
+	
 
 	
 	

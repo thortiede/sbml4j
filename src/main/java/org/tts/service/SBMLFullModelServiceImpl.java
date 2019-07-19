@@ -50,6 +50,9 @@ import org.tts.model.full.ext.qual.SBMLQualInput;
 import org.tts.model.full.ext.qual.SBMLQualModelExtension;
 import org.tts.model.full.ext.qual.SBMLQualOutput;
 import org.tts.model.full.ext.qual.SBMLQualTransition;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.warehouse.FileNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.repository.common.ExternalResourceEntityRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
@@ -123,10 +126,11 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public List<GraphBaseEntity> buildAndPersist(Model model, String filename) {
+	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
 		
-		List<GraphBaseEntity> allModelEntities = new ArrayList<>();
+		List<ProvenanceEntity> allModelEntities = new ArrayList<>();
 		
+		String filename = sbmlfile.getFilename();
 		// 1. SBMLDocument
 		SBMLDocumentEntity sbmlDocumentEntity = getSBMLDocument(model, filename);
 		if (sbmlDocumentEntity == null) {

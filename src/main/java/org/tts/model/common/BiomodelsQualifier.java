@@ -8,7 +8,7 @@ import org.sbml.jsbml.CVTerm;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @RelationshipEntity(type = "BQ")
-public class BiomodelsQualifier extends GraphBaseEntity {
+public class BiomodelsQualifier extends ContentGraphEdge {
 
 	private CVTerm.Type type;
 	

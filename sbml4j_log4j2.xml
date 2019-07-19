@@ -186,13 +186,13 @@
 
 	<Loggers>
 		<Logger name="org.tts" level="debug" additivity="false">
-			<AppenderRef ref="applicationDebug" />
+<!-- 			<AppenderRef ref="applicationDebug" /> -->
 			<AppenderRef ref="applicationInfo" />
 			<AppenderRef ref="applicationWarnError" />
 		</Logger>
 
 		<Logger name="org.neo4j" level="info" additivity="false">
-			<AppenderRef ref="databaseDebug" />
+<!-- 			<AppenderRef ref="databaseDebug" /> -->
 			<AppenderRef ref="databaseInfo" />
 			<AppenderRef ref="databaseWarnError" />
 		</Logger>
@@ -210,13 +210,13 @@
 		
 		<Logger name="org.springframework" level="info"
 			additivity="false">
-			<AppenderRef ref="springDebug" />
+<!-- 			<AppenderRef ref="springDebug" /> -->
 			<AppenderRef ref="springInfo" />
 			<AppenderRef ref="springWarnError" />
 		</Logger>
 		
 		<Logger name="org.sbml" level="info" additivity="false">
-			<AppenderRef ref="jsbmlDebug" />
+<!-- 			<AppenderRef ref="jsbmlDebug" /> -->
 			<AppenderRef ref="jsbmlInfo" />
 			<AppenderRef ref="jsbmlWarnError" />
 		</Logger>
