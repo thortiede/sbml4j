@@ -453,10 +453,13 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems() {
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username) {
 		List<NetworkInventoryItem> inventory = new ArrayList<>();
 		// get all mapping nodes
-		for (MappingNode mapping : this.mappingNodeRepository.findAll()) {
+		List<String> usernames = new ArrayList<>();
+		usernames.add(username);
+		usernames.add("All");
+		for (MappingNode mapping : this.mappingNodeRepository.findAllFromUsers(usernames)) {
 			// create an inventory item for each of them and fill it.
 		
 			inventory.add(this.getNetworkIventoryItem(mapping));
@@ -594,7 +597,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		for(int i = 0; i != originalFlatSpeciesList.size(); i++) {
 			//Map<String, List<String>> relationTypeOldUUIDListMap = new HashMap<>();
 			FlatSpecies oldSpecies = originalFlatSpeciesList.get(i);
-			if(nodeSymbols != null && (!nodeSymbols.contains(oldSpecies.getSymbol()) || !nodeTypes.contains(this.utilityService.translateSBOString(oldSpecies.getSboTerm())))) {
+			if(nodeSymbols != null && (!nodeSymbols.contains(oldSpecies.getSymbol()) || (nodeTypes != null && !nodeTypes.contains(this.utilityService.translateSBOString(oldSpecies.getSboTerm()))))) {
 				oldSkippedSpecies.add(oldSpecies.getEntityUUID());
 				newSpeciesList.add(i, null);
 				continue;
@@ -677,8 +680,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		List<String> nodeTypes = options.getNodeTypes();
 		String startNodeEntityUUID = "";
 		for (FlatSpecies oldSpecies : oldSpeciesList) {
-			if (oldSpecies.getSymbol().equals(startNodeSymbol)) {
+			if (oldSpecies.getSymbol() != null && oldSpecies.getSymbol().equals(startNodeSymbol)) {
 				startNodeEntityUUID = oldSpecies.getEntityUUID();
+				break;
 			}
 		}
 		String relationTypesApocString = "";
@@ -687,11 +691,18 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			relationTypesApocString += "|";
 		}
 		relationTypesApocString = relationTypesApocString.substring(0, relationTypesApocString.length()-1);
-		int minPathLength = 1;
-		int maxPathLength = 2;
+		int minPathLength = options.getMinSize();
+		int maxPathLength = options.getMaxSize();
 		List<FlatSpecies> contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, minPathLength, maxPathLength);
 		
 		return contextSpeciesList;
+	}
+
+	@Override
+	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize) {
+		MappingNode mappingNode = this.mappingNodeRepository.getByBaseNetworkEntityUUIDAndGeneSymbolAndMinSizeAndMaxSize(baseNetworkEntityUUID, geneSymbol, minSize, maxSize);
+		return mappingNode != null ? mappingNode.getEntityUUID() : null;
+		
 	}
 
 	
