@@ -38,6 +38,9 @@ public class GraphBaseEntity {
 	@Properties
 	private Map<String, Object> annotation = new HashMap<>();
 	
+	@Properties
+	private Map<String, String> annotationType = new HashMap<>();
+	
 	@JsonIgnore
 	public Long getId() {
 		return id;
@@ -99,5 +102,38 @@ public class GraphBaseEntity {
 	public void setAnnotation(Map<String, Object> annotation) {
 		this.annotation = annotation;
 	}
+	
+	public void addAnnotation(Map<String,Object> annotation) {
+		if (this.annotation == null) {
+			this.annotation = annotation;
+		} else {
+			for (String key : annotation.keySet()) {
+				this.annotation.put(key, annotation.get(key));
+			}
+			
+		}
+	}
+	public void addAnnotation(String key, Object value) {
+		if (this.annotation == null) {
+			this.annotation = new HashMap<>();
+		}
+		this.annotation.put(key, value);
+	}
+
+	public Map<String, String> getAnnotationType() {
+		return annotationType;
+	}
+
+	public void setAnnotationType(Map<String, String> annotationType) {
+		this.annotationType = annotationType;
+	}
+	
+	public void addAnnotationType(String annotationName, String annotationType) {
+		if(this.annotationType == null) {
+			this.annotationType = new HashMap<>();
+		}
+		this.annotationType.put(annotationName, annotationType);
+	}
+	
 	
 }
