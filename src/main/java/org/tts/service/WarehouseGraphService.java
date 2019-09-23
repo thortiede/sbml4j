@@ -74,7 +74,7 @@ public interface WarehouseGraphService {
 
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems();
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username);
 
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
 
@@ -95,5 +95,7 @@ public interface WarehouseGraphService {
 	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
 
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
+
+	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize);
 	
 }
