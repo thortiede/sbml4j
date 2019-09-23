@@ -180,7 +180,7 @@ public class WarehouseController {
 	
 	@RequestMapping(value = "/networkInventory", method = RequestMethod.GET)
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(@RequestHeader("user") String username) {
-		List<NetworkInventoryItem> networkInventory = this.warehouseGraphService.getListOfNetworkInventoryItems();
+		List<NetworkInventoryItem> networkInventory = this.warehouseGraphService.getListOfNetworkInventoryItems(username);
 		return new ResponseEntity<List<NetworkInventoryItem>>(networkInventory, HttpStatus.OK);
 	}
 	
@@ -189,6 +189,33 @@ public class WarehouseController {
 		NetworkInventoryItemDetail networkInventoryItemDetail = new NetworkInventoryItemDetail(this.warehouseGraphService.getNetworkInventoryItem(entityUUID));
 		networkInventoryItemDetail.setNodes(this.warehouseGraphService.getNetworkNodeSymbols(entityUUID));
 		return new ResponseEntity<NetworkInventoryItemDetail>(networkInventoryItemDetail, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="/context", method = RequestMethod.GET)
+	public ResponseEntity<Resource> getContext(	@RequestHeader("user") String username,
+												@RequestParam(value="baseNetworkUUID", defaultValue="edb856fb-7c91-44de-8b23-68364b9c00e8") String baseNetworkUUID,
+												@RequestParam(value="gene") String geneSymbol,
+												@RequestParam(value = "minSize", defaultValue = "1") int minSize,
+												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize) {
+		String mappingEntityUUID = this.warehouseGraphService.getMappingEntityUUID(baseNetworkUUID, geneSymbol, minSize, maxSize);
+		if(mappingEntityUUID != null) {
+			return this.getNetwork(mappingEntityUUID, "undirected", "graphml");
+		} else {
+			FilterOptions masterOptions = this.warehouseGraphService.getFilterOptions(WarehouseGraphNodeType.MAPPING, baseNetworkUUID);
+			List<String> contextNodeSymbol = new ArrayList<>();
+			contextNodeSymbol.add(geneSymbol);
+			masterOptions.setNodeSymbols(contextNodeSymbol);
+			masterOptions.setMinSize(minSize);
+			masterOptions.setMaxSize(maxSize);
+			//String step = "CONTEXT";
+			ResponseEntity<NetworkInventoryItemDetail> resp = this.createMappingFromMappingWithOptions(username, baseNetworkUUID, MappingStep.CONTEXT, masterOptions);
+			if(resp.getStatusCode().equals(HttpStatus.OK)) {
+				return this.getContext(username, baseNetworkUUID, geneSymbol, minSize, maxSize);
+			} else {
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+			
+		}
 	}
 	
 	@RequestMapping(value="/network", method = RequestMethod.POST)
@@ -220,6 +247,7 @@ public class WarehouseController {
 		// create new networkMapping that is the same as the parent one
 		// need mapingNode (name: OldName + step)
 		MappingNode newMapping = this.warehouseGraphService.createMappingNode(parent, options.getNetworkType(), parent.getMappingName() + "_" + step.name() + "_with_" + options.toString()); 
+		
 		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
 		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(newMapping, createMappingActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -239,6 +267,11 @@ public class WarehouseController {
 			newSpeciesList = this.warehouseGraphService.copyFlatSpeciesList(oldSpeciesList);
 			break;
 		case CONTEXT:
+			newMapping.setGeneSymbol(options.getNodeSymbols().get(0));
+			newMapping.setMinSize(options.getMinSize());
+			newMapping.setMaxSize(options.getMaxSize());
+			newMapping.setBaseNetworkEntityUUID(parentUUID);
+			newMapping = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
 			// this needs one (or) more nodes in the options
 			// plus some parameters for the context search (number of relationships to travel, endpointType of travel)
 			// then calculate the context on the parentNet
