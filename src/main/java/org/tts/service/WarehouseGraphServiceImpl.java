@@ -705,5 +705,20 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 	}
 
+	@Override
+	public boolean mappingForPathwayExists(String entityUUID) {
+		List<ProvenanceEntity> possibleMappings = (List<ProvenanceEntity>) this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, entityUUID);
+		if(possibleMappings.size() < 1) {
+			return false;
+		} else {
+			for (ProvenanceEntity entity : possibleMappings) {
+				if(entity.getClass().equals(MappingNode.class)) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
 	
 }

@@ -97,5 +97,7 @@ public interface WarehouseGraphService {
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
 
 	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize);
+
+	public boolean mappingForPathwayExists(String entityUUID);
 	
 }
