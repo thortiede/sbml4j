@@ -185,16 +185,16 @@
 	</Appenders>
 	
 	<Loggers>
-		<Logger name="org.tts" level="info" additivity="false">
-<!-- 			<AppenderRef ref="applicationDebug" /> -->
+		<Logger name="org.tts" level="debug" additivity="false">
+			<AppenderRef ref="applicationDebug" />
 			<AppenderRef ref="applicationInfo" />
 			<AppenderRef ref="applicationWarnError" />
 		</Logger>
 
-		<Logger name="org.neo4j" level="info" additivity="false">
-<!-- 			<AppenderRef ref="databaseDebug" /> -->
-			<AppenderRef ref="databaseInfo" />
-			<AppenderRef ref="databaseWarnError" />
+		<Logger name="org.neo4j" level="debug" additivity="false">
+			<AppenderRef ref="springDebug" />
+			<AppenderRef ref="springInfo" />
+			<AppenderRef ref="springWarnError" />
 		</Logger>
 
 		<Logger name="org.neo4j.ogm.drivers.bolt.request.BoltRequest"
