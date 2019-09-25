@@ -238,9 +238,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			item.setPathwayId(pathwayNode.getPathwayIdString());
 			item.setName(pathwayNode.getPathwayNameString());
 			item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
-			DatabaseNode sourceEntity = this.findSource(pathwayNode);
-			item.setSource(sourceEntity.getSource());
-			item.setSourceVersion(sourceEntity.getSourceVersion());
+			//DatabaseNode sourceEntity = this.findSource(pathwayNode);
+			//item.setSource(sourceEntity.getSource());
+			//item.setSourceVersion(sourceEntity.getSourceVersion());
 			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
 			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS, pathwayNode.getEntityUUID());
 			//item.setNumberOfNodes(pathwayNodes.size());
@@ -293,8 +293,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
 		WarehouseInventoryItem item = new WarehouseInventoryItem();
 		item.setEntityUUID(warehouseGraphNode.getEntityUUID());
-		item.setSource(findSource(warehouseGraphNode).getSource());
-		item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
+		//item.setSource(findSource(warehouseGraphNode).getSource());
+		//item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
 		item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(warehouseGraphNode.getEntityUUID())).getOrgCode());
 		if(warehouseGraphNode.getClass() == MappingNode.class) {
 			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
@@ -334,7 +334,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		for (String pathwayEntityUUID : pathwayCollectionCreationItem.getSourcePathwayEntityUUIDs()) {
 			// add entities of pathway to knowledgegraphNode
 			PathwayNode pathway = this.pathwayNodeRepository.findByEntityUUID(pathwayEntityUUID);
-			if(pathway != null && findSource(pathway).getEntityUUID() == databaseNode.getEntityUUID()) {
+			if(pathway != null) {// && findSource(pathway).getEntityUUID() == databaseNode.getEntityUUID()) {
 				this.provenanceGraphService.connect(pathwayCollectionNode, pathway, ProvenanceGraphEdgeType.hadMember);
 				this.provenanceGraphService.connect(createPathwayCollectionGraphActivityNode, pathway, ProvenanceGraphEdgeType.used);
 			}
@@ -415,8 +415,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		NetworkInventoryItem item = new NetworkInventoryItem();
 		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
 		item.setEntityUUID(mapping.getEntityUUID());
-		item.setSource(findSource(mapping).getSource());
-		item.setSourceVersion(findSource(mapping).getSourceVersion());
+		//item.setSource(findSource(mapping).getSource());
+		//item.setSourceVersion(findSource(mapping).getSourceVersion());
 		item.setName(mapping.getMappingName());
 		item.setOrganismCode(((Organism)this.warehouseGraphNodeRepository.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
 		item.setNetworkMappingType(mapping.getMappingType());
