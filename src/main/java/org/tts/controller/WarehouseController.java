@@ -395,4 +395,8 @@ public class WarehouseController {
 	public ResponseEntity<FilterOptions> getNetworkFilterOptions(@PathVariable String entityUUID) {
 		return new ResponseEntity<FilterOptions>(this.warehouseGraphService.getFilterOptions(WarehouseGraphNodeType.MAPPING, entityUUID), HttpStatus.OK);
 	}
+
+	public boolean mappingForPathwayExists(String entityUUID) {
+		return this.warehouseGraphService.mappingForPathwayExists(entityUUID);
+	}
 }
