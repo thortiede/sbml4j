@@ -99,5 +99,11 @@ public interface WarehouseGraphService {
 	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize);
 
 	public boolean mappingForPathwayExists(String entityUUID);
+
+	public String findStartNode(String baseNetworkUUID, String geneSymbol);
+
+	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
+
+	NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList);
 	
 }

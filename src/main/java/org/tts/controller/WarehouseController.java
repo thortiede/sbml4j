@@ -191,32 +191,82 @@ public class WarehouseController {
 		return new ResponseEntity<NetworkInventoryItemDetail>(networkInventoryItemDetail, HttpStatus.OK);
 	}
 	
+	
 	@RequestMapping(value="/context", method = RequestMethod.GET)
 	public ResponseEntity<Resource> getContext(	@RequestHeader("user") String username,
 												@RequestParam(value="baseNetworkUUID", defaultValue="edb856fb-7c91-44de-8b23-68364b9c00e8") String baseNetworkUUID,
 												@RequestParam(value="gene") String geneSymbol,
 												@RequestParam(value = "minSize", defaultValue = "1") int minSize,
-												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize) {
-		String mappingEntityUUID = this.warehouseGraphService.getMappingEntityUUID(baseNetworkUUID, geneSymbol, minSize, maxSize);
-		if(mappingEntityUUID != null) {
-			return this.getNetwork(mappingEntityUUID, "undirected", "graphml");
+												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize,
+												@RequestParam(value = "persist", defaultValue = "false") boolean persist,
+												@RequestParam(value = "format", defaultValue = "graphml") String format) {
+		
+		logger.info("Creating context in " + baseNetworkUUID + " (geneSymbol=" + geneSymbol + ", maxSize=" + maxSize + ", persist=" + persist + ",format=" + format + ") for user " + username);
+		
+		if(persist) {
+			String mappingEntityUUID = this.warehouseGraphService.getMappingEntityUUID(baseNetworkUUID, geneSymbol, minSize, maxSize);
+			if(mappingEntityUUID != null) {
+				return this.getNetwork(mappingEntityUUID, "undirected", "graphml");
+			} else {
+				FilterOptions masterOptions = this.warehouseGraphService.getFilterOptions(WarehouseGraphNodeType.MAPPING, baseNetworkUUID);
+				List<String> contextNodeSymbol = new ArrayList<>();
+				contextNodeSymbol.add(geneSymbol);
+				masterOptions.setNodeSymbols(contextNodeSymbol);
+				masterOptions.setMinSize(minSize);
+				masterOptions.setMaxSize(maxSize);
+				//String step = "CONTEXT";
+				ResponseEntity<NetworkInventoryItemDetail> resp = this.createMappingFromMappingWithOptions(username, baseNetworkUUID, MappingStep.CONTEXT, masterOptions);
+				if(resp.getStatusCode().equals(HttpStatus.OK)) {
+					return this.getContext(username, baseNetworkUUID, geneSymbol, minSize, maxSize, persist, format);
+				} else {
+					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				}
+			}
 		} else {
+			Resource resource;
+			Instant startTime = Instant.now();
+			// get startNode EntityUUID
+			String startNodeEntityUUID = this.warehouseGraphService.findStartNode(baseNetworkUUID, geneSymbol);
+			Instant findNodeTime = Instant.now();
 			FilterOptions masterOptions = this.warehouseGraphService.getFilterOptions(WarehouseGraphNodeType.MAPPING, baseNetworkUUID);
+			Instant getFilterOptionsTime = Instant.now();
 			List<String> contextNodeSymbol = new ArrayList<>();
 			contextNodeSymbol.add(geneSymbol);
 			masterOptions.setNodeSymbols(contextNodeSymbol);
 			masterOptions.setMinSize(minSize);
 			masterOptions.setMaxSize(maxSize);
-			//String step = "CONTEXT";
-			ResponseEntity<NetworkInventoryItemDetail> resp = this.createMappingFromMappingWithOptions(username, baseNetworkUUID, MappingStep.CONTEXT, masterOptions);
-			if(resp.getStatusCode().equals(HttpStatus.OK)) {
-				return this.getContext(username, baseNetworkUUID, geneSymbol, minSize, maxSize);
+			logger.info(masterOptions.toString());
+			List<FlatSpecies> networkContextFlatSpeciesList = this.warehouseGraphService.findNetworkContext(startNodeEntityUUID, masterOptions);
+			Instant findNetworkContextTime = Instant.now();
+			NodeEdgeList nel = this.warehouseGraphService.flatSpeciesListToNEL(networkContextFlatSpeciesList);
+			Instant nelTime = Instant.now();
+			resource = this.networkMappingService.getResourceFromNodeEdgeList(nel, format);
+			Instant afterTime = Instant.now();
+			if (resource != null) {
+				//logger.info("Converted flatNetwork to Resource");
+				// Try to determine file's content type
+			    String contentType =  "application/octet-stream";
+			  
+			    // only generic contentType as we are not dealing with an actual file serverside,
+				// but the file shall only be created at the client side.
+				String filename = "network." + nel.getName() + "." + format;
+				//logger.info("Start: " + startTime.toString() + " middle " + middleTime.toString() + " after " + afterTime.toString() + "=> " + Duration.between(startTime, middleTime).toString() + " / " + Duration.between(middleTime, afterTime).toString());
+				logger.info("findNodeTime: " + Duration.between(startTime, findNodeTime).toString() + " / " 
+						 + "getFilterOptionsTime: " + Duration.between(findNodeTime, getFilterOptionsTime).toString() + " / "  
+						 + "findNetworkContextTime: " + Duration.between(getFilterOptionsTime, findNetworkContextTime).toString() + " / "
+						 + "nelTime: " + Duration.between(findNetworkContextTime, nelTime).toString() + " / "	
+						 + "resourceTime: " + Duration.between(nelTime, afterTime).toString() 
+											);
+				return ResponseEntity.ok()
+				        .contentType(MediaType.parseMediaType(contentType))
+				        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+				        .body(resource);	
 			} else {
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+				return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT);
 			}
-			
 		}
 	}
+
 	
 	@RequestMapping(value="/network", method = RequestMethod.POST)
 	public ResponseEntity<NetworkInventoryItemDetail> createMappingFromMappingWithOptions(@RequestHeader("user") String username,
@@ -295,6 +345,7 @@ public class WarehouseController {
 		int numberOfNodes = 0;
 		Set<String> nodeTypes = new HashSet<>();
 		Set<String> relationTypes = new HashSet<>();
+		Set<String> nodeSymbols = new HashSet<>();
 		for (int i = 0; i != newSpeciesList.size(); i++) {
 			FlatSpecies newSpecies = newSpeciesList.get(i);
 			if(newSpecies != null) {
@@ -302,6 +353,12 @@ public class WarehouseController {
 				Map<String, List<FlatSpecies>> relatedSpeciesList = newSpecies.getAllRelatedSpecies();
 				
 				nodeTypes.add(newSpecies.getSboTerm());
+				if(newSpecies.getSymbol() != null) {
+					nodeSymbols.add(newSpecies.getSymbol());
+				} else if (newSpecies.getEntityUUID() != null && newSpecies.getSimpleModelEntityUUID() != null){
+					logger.info("Species with uuid: " + newSpecies.getEntityUUID() + " has no symbol set (parent: " + newSpecies.getSimpleModelEntityUUID() + ")");
+				}
+				
 				for (String key : relatedSpeciesList.keySet()) {
 					numberOfRelations += relatedSpeciesList.get(key).size();
 					relationTypes.add(key);
@@ -320,6 +377,7 @@ public class WarehouseController {
 		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
 		newMapping.setMappingNodeTypes(nodeTypes);
 		newMapping.setMappingRelationTypes(relationTypes);
+		newMapping.setMappingNodeSymbols(nodeSymbols);
 		this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
 		return this.getNetworkInventoryDetail(newMapping.getEntityUUID());		
 	}

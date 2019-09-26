@@ -469,6 +469,24 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
+	public NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList) {
+		NodeEdgeList nel = new NodeEdgeList();
+		for (FlatSpecies node1 : flatSpeciesList) {
+			//FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
+			node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
+				for (FlatSpecies node2 : node2List) {
+					//logger.info("Working on Node " + species.getSymbol() + " connected with " + relationType + " to " + node2.getSymbol());
+					nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
+				}
+			});
+		}
+		nel.setName("Context transient");
+		nel.setListId(-1L);
+		return nel;
+		
+	}
+	
+	@Override
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method) {
 		//MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID);
 		Instant start = Instant.now();
@@ -658,7 +676,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		FilterOptions filterOptions = new FilterOptions();
 		filterOptions.setMappingUuid(mappingNode.getEntityUUID());
 		filterOptions.setNetworkType(mappingNode.getMappingType());
-		filterOptions.setNodeSymbols(getNetworkNodeSymbols(mappingNode.getEntityUUID()));
+		if(mappingNode.getMappingNodeSymbols() == null) {
+			filterOptions.setNodeSymbols(getNetworkNodeSymbols(mappingNode.getEntityUUID()));
+		} else {
+			filterOptions.setNodeSymbols(new ArrayList<>(mappingNode.getMappingNodeSymbols()));
+		}
 		List<String> nodeTypes = new ArrayList<>();
 		for (String sboTerm : mappingNode.getMappingNodeTypes()) {
 			nodeTypes.add(this.utilityService.translateSBOString(sboTerm));
@@ -676,8 +698,6 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options) {
 		List<String> sourceSpeciesForContext = options.getNodeSymbols();
 		String startNodeSymbol = sourceSpeciesForContext.get(0);
-		List<String> relationTypes = options.getRelationTypes();
-		List<String> nodeTypes = options.getNodeTypes();
 		String startNodeEntityUUID = "";
 		for (FlatSpecies oldSpecies : oldSpeciesList) {
 			if (oldSpecies.getSymbol() != null && oldSpecies.getSymbol().equals(startNodeSymbol)) {
@@ -685,8 +705,23 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				break;
 			}
 		}
+		
+		List<FlatSpecies> contextSpeciesList = findNetworkContext(startNodeEntityUUID, options);
+		
+		return contextSpeciesList;
+	}
+
+	/**
+	 * @param startNodeEntityUUID
+	 * @param relationTypesApocString
+	 * @param minPathLength
+	 * @param maxPathLength
+	 * @return
+	 */
+	@Override
+	public List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options) {
 		String relationTypesApocString = "";
-		for (String relationType : relationTypes) {
+		for (String relationType : options.getRelationTypes()) {
 			relationTypesApocString += relationType;
 			relationTypesApocString += "|";
 		}
@@ -694,7 +729,6 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		int minPathLength = options.getMinSize();
 		int maxPathLength = options.getMaxSize();
 		List<FlatSpecies> contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, minPathLength, maxPathLength);
-		
 		return contextSpeciesList;
 	}
 
@@ -718,6 +752,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			}
 			return false;
 		}
+	}
+
+	@Override
+	public String findStartNode(String baseNetworkUUID, String geneSymbol) {
+		return this.flatSpeciesRepository.findStartNodeEntityUUID(baseNetworkUUID, geneSymbol);
 	}
 
 	
