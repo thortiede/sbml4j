@@ -1,5 +1,6 @@
 package org.tts.service;
 
+import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -593,19 +594,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		switch (type) {
 		case "sif":
 		
-			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
+			SifFile sifFile = this.fileService.getSifFromNodeEdgeList(nodeEdgeList);
 		
 		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
 			if(sifFile != null) {
-			    Resource resource = fileStorageService.getSifAsResource(sifFile);
+			    Resource resource = this.fileStorageService.getSifAsResource(sifFile);
 			    return resource;
 			} else {
 				return null;
 			}
 		case "graphml":
-			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
 			
-			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
+			ByteArrayOutputStream bo = this.graphMLService.getGraphMLByteArrayOutputStream(nodeEdgeList, new ByteArrayOutputStream());
+			
+			
+			//String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
+			
+			return new ByteArrayResource(bo.toByteArray(), "network.graphml");
 		
 		default:
 			return null;		
