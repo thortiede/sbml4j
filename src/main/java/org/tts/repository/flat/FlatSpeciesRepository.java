@@ -20,11 +20,19 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "RETURN fs, r, fs2")
 	List<FlatSpecies> findAllNetworkNodes(String entityUUID);
 
-
-	@Query(value="MATCH (fs:FlatSpecies {entityUUID : {0}}) call apoc.path.expand(fs, {1}, \"+FlatSpecies\", {2}, {3}) yield path as pp return pp;")
+	//match (fs:FlatSpecies) where fs.entityUUID = "5ad2ad42-f546-43be-a7cc-5f5225e309cf" call apoc.path.subgraphNodes(fs,{maxlevel:3, labelFilter:'FlatSpecies', relationshipFilter:'inhibition|stimulation'}) yield node as n return n;
+	
+	@Query(value="MATCH (fs:FlatSpecies {entityUUID : {0}}) call apoc.path.expand(fs, {1}, \"+FlatSpecies\", {2}, {3}) yield path as pp return nodes(pp), relationships(pp);")
+	//@Query(value="MATCH (fs:FlatSpecies {entityUUID : {0}}) call apoc.path.subgraphNodes(fs,{maxLevel:{3}, relationshipFilter:{1}, labelFilter:\"+FlatSpecies\"}) yield node as n return n;")
 	List<FlatSpecies> findNetworkContext(String startNodeUUID, String relationTypesApocString,
 			int minPathLength, int maxPathLength);
 
-	
+	@Query(value="MATCH "
+			+ "(m:MappingNode{entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(fs:FlatSpecies) "
+			+ "WHERE fs.symbol=$symbol "
+			+ "RETURN fs.entityUUID")
+	String findStartNodeEntityUUID(String networkUUID, String symbol);
 
 }
