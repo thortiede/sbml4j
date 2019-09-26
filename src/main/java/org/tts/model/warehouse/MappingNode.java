@@ -14,6 +14,8 @@ public class MappingNode extends WarehouseGraphNode {
 	
 	private Set<String> mappingRelationTypes;
 	
+	private Set<String> mappingNodeSymbols;
+	
 	private String baseNetworkEntityUUID;
 	
 	private String geneSymbol;
@@ -95,5 +97,12 @@ public class MappingNode extends WarehouseGraphNode {
 	public void setBaseNetworkEntityUUID(String baseNetworkEntityUUID) {
 		this.baseNetworkEntityUUID = baseNetworkEntityUUID;
 	}
+
+	public void setMappingNodeSymbols(Set<String> mappingNodeSymbols) {
+		this.mappingNodeSymbols = mappingNodeSymbols;
+	}
 	
+	public Set<String> getMappingNodeSymbols() {
+		return this.mappingNodeSymbols;
+	}
 }
