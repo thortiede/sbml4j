@@ -475,19 +475,39 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		} else if (type.equals(NetworkMappingType.METABOLIC)) {
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatMetabolicReactionsForPathway(pathway.getEntityUUID(), idSystem);
+			
 		} else if (type.equals(NetworkMappingType.PPI)) {
-			transitionSBOTerms.add(SBO.getTerm(216).getId());
+			nodeSBOTerms.add("SBO:0000252");
+			String conversionSBO = SBO.getTerm(182).getId();
+			transitionSBOTerms.add(conversionSBO);
+			for (String conversionChildSBO : this.utilityService.getAllSBOChildren(conversionSBO)) {
+				transitionSBOTerms.add(conversionChildSBO);
+			}
+			String biochemicalOrTransportReactionSBO = SBO.getTerm(167).getId();
+			transitionSBOTerms.add(biochemicalOrTransportReactionSBO);
+			for (String biochemicalOrTransportReactionChildSBO : this.utilityService.getAllSBOChildren(biochemicalOrTransportReactionSBO)) {
+				transitionSBOTerms.add(biochemicalOrTransportReactionChildSBO);
+			}
+			String molecularInteractionSBO = SBO.getTerm(344).getId();
+			transitionSBOTerms.add(molecularInteractionSBO);
+			for (String molecularInteractionChildSBO : this.utilityService.getAllSBOChildren(molecularInteractionSBO)) {
+				transitionSBOTerms.add(molecularInteractionChildSBO);
+			}
+			
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms);
 		
 		} else if (type.equals(NetworkMappingType.REGULATORY)) {
 			nodeSBOTerms.add("SBO:0000252");
 			nodeSBOTerms.add("SBO:0000247");
-			transitionSBOTerms.add("SBO:0000168");
-			transitionSBOTerms.add("SBO:0000170");
-			transitionSBOTerms.add("SBO:0000169");
+			String controlSBO = "SBO:0000168";
+			transitionSBOTerms.add(controlSBO);
+			for (String controlChildSBO : this.utilityService.getAllSBOChildren(controlSBO)) {
+				transitionSBOTerms.add(controlChildSBO);
+			}
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms, nodeSBOTerms);
+			
 		} else if (type.equals(NetworkMappingType.SIGNALLING)) {
 			nodeSBOTerms.add("SBO:0000252");
 			transitionSBOTerms.add("SBO:0000656");
