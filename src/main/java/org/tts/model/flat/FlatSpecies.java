@@ -58,7 +58,8 @@ public class FlatSpecies extends ContentGraphNode {
 	 @Relationship(type = "unknownFromSource")
 	 List<FlatSpecies> unknownFromSourceSpeciesList; // no SBO, eg. hsa05133 qual_K
 	 
-	
+	@Relationship(type = "targets")
+	List<FlatSpecies> targetsSpeciesList; // no SBO, this comes from MyDrug / Drugbank
 	 
 	 public String getSimpleModelEntityUUID() {
 		return simpleModelEntityUUID;
@@ -145,6 +146,10 @@ public class FlatSpecies extends ContentGraphNode {
 					allRelatedSpecies.put(type.getRelType(), unknownFromSourceSpeciesList);
 				}
 				break;
+			case TARGETS:
+				if(this.targetsSpeciesList != null) {
+					allRelatedSpecies.put(type.getRelType(), targetsSpeciesList);
+				}
 			default:
 				if(this.unknownFromSourceSpeciesList != null) {
 					allRelatedSpecies.put("unknownFromSource", unknownFromSourceSpeciesList);
@@ -237,6 +242,12 @@ public class FlatSpecies extends ContentGraphNode {
 				controlSpeciesList = new ArrayList<>();
 			}
 			controlSpeciesList.add(other);
+			break;
+		case "targets":
+			if(targetsSpeciesList == null) {
+				targetsSpeciesList = new ArrayList<>();
+			}
+			targetsSpeciesList.add(other);
 			break;
 		case "unknownFromSource":
 			if(unknownFromSourceSpeciesList == null) {
