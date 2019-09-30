@@ -11,13 +11,16 @@ public class UtilityService {
 
 	
 	public String translateSBOString(String sboString) {
-		return (sboString.equals("") || sboString.equals("unknown") || sboString.equals("undefined in source") || sboString.equals("unknownFromSource")) ? "unknownFromSource" : org.sbml.jsbml.SBO.getTerm(sboString).getName();
+		return (sboString.equals("") || sboString.equals("unknown") || sboString.equals("undefined in source") || sboString.equals("unknownFromSource")) ? "unknownFromSource" : (sboString.equals("targets") ? "targets" : org.sbml.jsbml.SBO.getTerm(sboString).getName());
 	}
 	
 	public String translateToSBOString(String alias) {
-		return org.sbml.jsbml.SBO.intToString(org.sbml.jsbml.SBO.convertAlias2SBO(alias)) != "" ?
+		if(alias.equals("targets")) return "targets";
+		else {
+			return org.sbml.jsbml.SBO.intToString(org.sbml.jsbml.SBO.convertAlias2SBO(alias)) != "" ?
 				org.sbml.jsbml.SBO.intToString(org.sbml.jsbml.SBO.convertAlias2SBO(alias)) :
 					"undefined in source"; // error prone TODO not all not known aliases should lead to "undefined in source"
+		}
 	}
 	
 	public Set<String> getSBOChildren(String sboRootTerm) {
