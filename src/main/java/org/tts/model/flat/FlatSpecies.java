@@ -248,6 +248,7 @@ public class FlatSpecies extends ContentGraphNode {
 				targetsSpeciesList = new ArrayList<>();
 			}
 			targetsSpeciesList.add(other);
+			this.addLabel("Drug");
 			break;
 		case "unknownFromSource":
 			if(unknownFromSourceSpeciesList == null) {
