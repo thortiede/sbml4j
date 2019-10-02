@@ -521,6 +521,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// create FlatSpecies for QueryResults
 		Map<String, FlatSpecies> networkFlatSpecies = new HashMap<>();
 		int counter = 1;
+		Set<String> nodeSymbols = new HashSet<>();
 		for(NodeNodeEdge nne : flatTransitionsOfPathway) {
 			logger.info(Instant.now().toString() + ": Processing NNE #" + counter++);
 			// on creation of Flat Species, provenanceConnect them to the initialEntities (and to the Transition?)
@@ -534,6 +535,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node2 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node2); // this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node2.setSymbol(nne.getNode2());
+				nodeSymbols.add(nne.getNode2());
 				node2.setSboTerm(nne.getNode2Type());
 				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node2 with symbol " + nne.getNode2());
 				//node2 = this.flatSpeciesRepository.save(node2);
@@ -556,6 +558,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node1 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node1);// this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node1.setSymbol(nne.getNode1());
+				nodeSymbols.add(nne.getNode1());
 				node1.setSboTerm(nne.getNode1Type());
 				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node1 with symbol " + nne.getNode1());
 				//node1 = this.flatSpeciesRepository.save(node1);
@@ -582,6 +585,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
+		mappingFromPathway.setMappingNodeSymbols(nodeSymbols);
 		
 		logger.info(Instant.now().toString() + ": Finished Building internal Map. Collecting FlatSpecies for persistence..");
 		List<FlatSpecies> allFlatSpeciesOfMapping = new ArrayList<>();
