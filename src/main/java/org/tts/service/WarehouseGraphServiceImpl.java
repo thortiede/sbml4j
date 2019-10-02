@@ -470,13 +470,19 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	@Override
 	public NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList) {
+		Set<String> nodeSymbols = new HashSet<>();
+		for (FlatSpecies node : flatSpeciesList) {
+			nodeSymbols.add(node.getSymbol());
+		}
 		NodeEdgeList nel = new NodeEdgeList();
 		for (FlatSpecies node1 : flatSpeciesList) {
 			//FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
 			node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
 				for (FlatSpecies node2 : node2List) {
+					if(nodeSymbols.contains(node2.getSymbol())) {
 					//logger.info("Working on Node " + species.getSymbol() + " connected with " + relationType + " to " + node2.getSymbol());
-					nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
+						nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
+					}
 				}
 			});
 		}
