@@ -8,7 +8,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,20 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.Output.MyDrugItem;
 import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.repository.warehouse.MappingNodeRepository;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.type.CollectionType;
 
 @Service
 public class HttpServiceImpl implements HttpService {
@@ -320,10 +313,6 @@ public class HttpServiceImpl implements HttpService {
 			
 			int status = con.getResponseCode();
 			logger.debug("ResponseCode: " + status + " with body: " + con.getResponseMessage());
-			BufferedReader streamReader = null;
-			//JsonFactory jsonFactory = new JsonFactory();
-			//JsonParser jp;
-			
 			ObjectMapper objectMapper = new ObjectMapper();
 			objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 			
@@ -331,11 +320,8 @@ public class HttpServiceImpl implements HttpService {
 			    logger.debug("Cannot get mydrug database information for " + mydrugURL + ": " + con.getResponseCode() + ": " + con.getResponseMessage());
 			    return new ArrayList<FlatSpecies>();
 			} else {
-				CollectionType collectionType = objectMapper.getTypeFactory().constructCollectionType(List.class, MyDrugItem.class);
 				// symbolToFlatSpceciesMap
 				Map<String, FlatSpecies> drugNameSpeciesMap = new HashMap<>();
-				//jp = jsonFactory.createParser(con.getInputStream());
-				//List<MyDrugItem> listMyDrugItems = objectMapper.readValue(con.getInputStream(), collectionType);
 				JsonNode jsnNde = objectMapper.readValue(con.getInputStream(), JsonNode.class);//.get("results").get("data");
 				JsonNode resultsNode = jsnNde.get("results");
 				if(resultsNode.isArray()) {
@@ -385,17 +371,6 @@ public class HttpServiceImpl implements HttpService {
 					}
 				}
 				return myDrugFlatSpeciesList;
-//				List<MyDrugItem> listMyDrugItems = objectMapper.readTree(resultsArrayNode, collectionType);
-//				logger.debug(jsnNde.asText());
-//				
-//				for (int i = 0; i != dataArrayNode.size(); i++) {
-//					JsonNode node = dataArrayNode.get(i);
-//					if (i < 10) logger.debug(node.get("row").toString());
-//				}
-//				for (MyDrugItem mdi : listMyDrugItems) {
-//					logger.debug(mdi.getGene_Symbol());
-//				}
-				
 			}
 			
 		} catch (MalformedURLException e) {
