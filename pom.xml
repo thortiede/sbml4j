@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.0.10-SNAPSHOT</version>
+	<version>0.0.13-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -46,7 +46,6 @@
 			<artifactId>jsbml-qual</artifactId>
 			<version>${jsbml.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -102,7 +101,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.0.10</tag>
+	                <tag>0.0.13</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->
