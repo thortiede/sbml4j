@@ -92,7 +92,7 @@
 ////        					options.setMaxSize(2);
 //        					
 //        					//ResponseEntity<NetworkInventoryItemDetail> contextDetailResponse = this.warehouseController.createMappingFromMappingWithOptions(user, parentUUID, MappingStep.CONTEXT, options);
-//        					ResponseEntity<Resource> contextDetailResponse = this.warehouseController.getContext(user, parentUUID, nodeSymbol, 1, 3, false, "graphml");
+//        					ResponseEntity<Resource> contextDetailResponse = this.warehouseController.getContext(user, parentUUID, nodeSymbol, 1, 2, false, "graphml");
 //        					if(contextDetailResponse.getStatusCode().equals(HttpStatus.OK)) {
 //        						System.out.println("Successfully read network context for Symbol " + nodeSymbol + " in mapping " + parentUUID + " resulting in new Mapping with uuid: " + contextDetailResponse.getBody().getFilename());
 //        					} else {
