@@ -11,7 +11,19 @@ public class UtilityService {
 
 	
 	public String translateSBOString(String sboString) {
-		return (sboString.equals("") || sboString.equals("unknown") || sboString.equals("undefined in source") || sboString.equals("unknownFromSource")) ? "unknownFromSource" : (sboString.equals("targets") ? "targets" : org.sbml.jsbml.SBO.getTerm(sboString).getName());
+		return (	sboString.equals("") 
+				|| 	sboString.equals("unknown") 
+				|| 	sboString.equals("undefined in source") 
+				|| 	sboString.equals("unknownFromSource")
+				) 	? "unknownFromSource" 
+					: (sboString.equals("targets") 
+							? "targets" 
+							: (sboString.equals("Drug") 
+									? 	"Drug"
+									:	org.sbml.jsbml.SBO.getTerm(sboString).getName()
+							)
+					)
+				;
 	}
 	
 	public String translateToSBOString(String alias) {
