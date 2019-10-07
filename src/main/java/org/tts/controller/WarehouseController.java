@@ -47,6 +47,7 @@ import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
+import org.tts.service.HttpService;
 import org.tts.service.NetworkMappingService;
 import org.tts.service.OrganismService;
 import org.tts.service.ProvenanceGraphService;
@@ -66,6 +67,10 @@ public class WarehouseController {
 	
 	@Autowired
 	OrganismService organismService;
+	
+	@Autowired
+	HttpService httpService;
+
 	
 	Map<String, Map<String, Resource>> networkResources = new HashMap<>();
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -199,7 +204,8 @@ public class WarehouseController {
 												@RequestParam(value = "minSize", defaultValue = "1") int minSize,
 												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize,
 												@RequestParam(value = "persist", defaultValue = "false") boolean persist,
-												@RequestParam(value = "format", defaultValue = "graphml") String format) {
+												@RequestParam(value = "format", defaultValue = "graphml") String format,
+												@RequestParam(value = "terminateAtDrug", defaultValue = "false") boolean terminateAtDrug) {
 		
 		logger.info("Creating context in " + baseNetworkUUID + " (geneSymbol=" + geneSymbol + ", maxSize=" + maxSize + ", persist=" + persist + ",format=" + format + ") for user " + username);
 		
@@ -217,7 +223,7 @@ public class WarehouseController {
 				//String step = "CONTEXT";
 				ResponseEntity<NetworkInventoryItemDetail> resp = this.createMappingFromMappingWithOptions(username, baseNetworkUUID, MappingStep.CONTEXT, masterOptions);
 				if(resp.getStatusCode().equals(HttpStatus.OK)) {
-					return this.getContext(username, baseNetworkUUID, geneSymbol, minSize, maxSize, persist, format);
+					return this.getContext(username, baseNetworkUUID, geneSymbol, minSize, maxSize, persist, format, terminateAtDrug);
 				} else {
 					return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 				}
@@ -235,10 +241,11 @@ public class WarehouseController {
 			masterOptions.setNodeSymbols(contextNodeSymbol);
 			masterOptions.setMinSize(minSize);
 			masterOptions.setMaxSize(maxSize);
+			masterOptions.setTerminateAtDrug(terminateAtDrug);
 			logger.info(masterOptions.toString());
 			List<FlatSpecies> networkContextFlatSpeciesList = this.warehouseGraphService.findNetworkContext(startNodeEntityUUID, masterOptions);
 			Instant findNetworkContextTime = Instant.now();
-			NodeEdgeList nel = this.warehouseGraphService.flatSpeciesListToNEL(networkContextFlatSpeciesList);
+			NodeEdgeList nel = this.warehouseGraphService.flatSpeciesListToNEL(networkContextFlatSpeciesList, baseNetworkUUID);
 			Instant nelTime = Instant.now();
 			resource = this.networkMappingService.getResourceFromNodeEdgeList(nel, format);
 			Instant afterTime = Instant.now();
@@ -314,7 +321,21 @@ public class WarehouseController {
 			break;
 		case ANNOTATE:
 			// same as copy, but add annotation from options (this means FilterOptions needs to be extended)
+			if(options.getAnnotationName() == null || options.getAnnotationName().equals("") || options.getAnnotation().size() < 1) {
+				//annotation information not complete
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+			logger.info("Adding annotation with Name: " + options.getAnnotationName());
+			newMapping.addAnnotationType(options.getAnnotationName(), options.getAnnotationType());
+			newMapping = this.warehouseGraphService.saveMappingNode(newMapping, 0);
+			
+			Map<String, Object> newAnnotation = options.getAnnotation();
 			newSpeciesList = this.warehouseGraphService.copyFlatSpeciesList(oldSpeciesList);
+			for (FlatSpecies fs : newSpeciesList) {
+				if(newAnnotation.containsKey(fs.getSymbol())) {
+					fs.addAnnotation(options.getAnnotationName(), newAnnotation.get(fs.getSymbol()));
+				}
+			}
 			break;
 		case CONTEXT:
 			newMapping.setGeneSymbol(options.getNodeSymbols().get(0));
@@ -457,4 +478,124 @@ public class WarehouseController {
 	public boolean mappingForPathwayExists(String entityUUID) {
 		return this.warehouseGraphService.mappingForPathwayExists(entityUUID);
 	}
+	
+	
+	
+	@RequestMapping(value = "/mydrug", method=RequestMethod.POST)
+	public ResponseEntity<NetworkInventoryItem> addMyDrugAnnotationToMapping(@RequestHeader("user") String username,
+																				@RequestParam("networkUUID") String networkUUID,
+																				@RequestParam("mydrugURL") String mydrugURL,
+																				@RequestParam(name = "mappingType", defaultValue = "PATHWAYMAPPING") NetworkMappingType networkMappingType,
+																				@RequestParam(name = "idSystem", defaultValue = "KEGG") IDSystem idSystem) {
+		
+		// need a user
+		Map<String, Object> agentNodeProperties = new HashMap<>();
+		agentNodeProperties.put("graphagentname", username);
+		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
+		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
+		
+		// need an activity
+		//Instant createDate = Instant.now();
+		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.addMyDrugNodes);
+		activityNodeProvenanceProperties.put("graphactivityname", mydrugURL); 
+		//activityNodeProvenanceProperties.put("createdate", createDate);
+
+		ProvenanceGraphActivityNode addmydrugActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+		
+		// Associate Activity with User Agent
+		this.provenanceGraphService.connect(addmydrugActivityNode, userAgentNode, ProvenanceGraphEdgeType.wasAssociatedWith);
+		
+		// check if basenetwork exists
+		MappingNode baseNetwork = this.warehouseGraphService.getMappingNode(networkUUID);
+		MappingNode newNetwork;
+		if(baseNetwork == null) {
+			PathwayNode basePathway = this.warehouseGraphService.getPathwayNode(username, networkUUID);
+			if (basePathway == null) {
+				return new ResponseEntity<NetworkInventoryItem>(HttpStatus.BAD_REQUEST);
+			} else {
+				logger.info("Using Pathway with uuid: " + networkUUID + " to build mapping with mydrug nodes");
+				// associate basePathway with activity
+				this.provenanceGraphService.connect(addmydrugActivityNode, basePathway, ProvenanceGraphEdgeType.used);
+				//create mapping from pathway
+				ResponseEntity<WarehouseInventoryItem> mappingFromPathwayResponseEntity = createMappingFromWarehouseGraphNode(username, networkUUID, networkMappingType.name(), idSystem.name());
+				if(!mappingFromPathwayResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
+					return new ResponseEntity<NetworkInventoryItem>(mappingFromPathwayResponseEntity.getStatusCode());
+				} else {
+					newNetwork = this.warehouseGraphService.getMappingNode(mappingFromPathwayResponseEntity.getBody().getEntityUUID());
+				}
+			}
+		} else {
+			// associate baseNetwork with activity
+			this.provenanceGraphService.connect(addmydrugActivityNode, baseNetwork, ProvenanceGraphEdgeType.used);
+			// copy the network
+			ResponseEntity<NetworkInventoryItemDetail> newNetworkInventoryItemDetailResponseEntity = 
+					this.createMappingFromMappingWithOptions(username, networkUUID, MappingStep.COPY, this.warehouseGraphService.getFilterOptions(WarehouseGraphNodeType.MAPPING, networkUUID));
+			if(!newNetworkInventoryItemDetailResponseEntity.getStatusCode().equals(HttpStatus.OK)) {
+				return new ResponseEntity<NetworkInventoryItem>(newNetworkInventoryItemDetailResponseEntity.getStatusCode());
+			} else {
+				newNetwork = this.warehouseGraphService.getMappingNode(newNetworkInventoryItemDetailResponseEntity.getBody().getEntityUUID());
+			}
+		}
+		
+		// get all (compound)-[targets]->(gene) from mydrug (preferably as a stream)
+		List<FlatSpecies> drugSpeciesForNewNetwork = this.httpService.getMyDrugCompoundsForNetwork(mydrugURL, newNetwork);
+	
+		// save the newSpecies
+		drugSpeciesForNewNetwork = (List<FlatSpecies>) this.networkMappingService.persistListOfFlatSpecies(drugSpeciesForNewNetwork);
+		
+		
+		int numberOfRelatedSpecies = 0;
+		Map<String, String> annotationTypeMap = new HashMap<>();
+		// connect new Species to activity and networknode
+		for(FlatSpecies drug: drugSpeciesForNewNetwork) {
+			numberOfRelatedSpecies += drug.getTargetsSpeciesList().size();
+			for (String annotation : drug.getAnnotation().keySet()) {
+				if(!annotationTypeMap.containsKey(annotation)) {
+					annotationTypeMap.put(annotation, "String");
+				}
+			}
+			this.provenanceGraphService.connect(drug, addmydrugActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			this.warehouseGraphService.connect(newNetwork, drug, WarehouseGraphEdgeType.CONTAINS);
+		}
+		// update mappingNode
+		newNetwork.addMappingNodeType("Drug");
+		newNetwork.addMappingRelationType("targets");
+		newNetwork.setAnnotationType(annotationTypeMap);
+		
+		try {
+			int numNodes = Integer.parseInt((String)newNetwork.getWarehouse().get("numberofnodes"));
+			numNodes += drugSpeciesForNewNetwork.size();
+			newNetwork.addWarehouseAnnotation("numberofnodes", String.valueOf(numNodes));
+			int numRelations = Integer.parseInt((String)newNetwork.getWarehouse().get("numberofrelations"));
+			numRelations += numberOfRelatedSpecies;
+			newNetwork.addWarehouseAnnotation("numberofrelations", String.valueOf(numRelations));
+			newNetwork.addWarehouseAnnotation("creationendtime", Instant.now().toString());
+		} catch (ClassCastException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			logger.info("ClassCastException for annotation");
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			logger.info("NumberFormatException for annotation");
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		newNetwork.setMappingName(newNetwork.getMappingName() + "_AddedMyDrugAnnotations_From_" + mydrugURL);
+		newNetwork = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(newNetwork, 0);
+		this.provenanceGraphService.connect(newNetwork, addmydrugActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+		
+		// done
+		NetworkInventoryItem fullNetworkWithMyDrugNodesItem = this.warehouseGraphService.getNetworkInventoryItem(newNetwork.getEntityUUID());
+		if(fullNetworkWithMyDrugNodesItem != null ) {
+			return new ResponseEntity<NetworkInventoryItem>(fullNetworkWithMyDrugNodesItem, HttpStatus.OK); 
+		}
+		else {
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+	}
+	
 }
