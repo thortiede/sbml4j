@@ -91,7 +91,8 @@ public class GraphEnum {
 		createMapping,
 		mapAnnotations,
 		runAlgorithm,
-		createKnowledgeGraph
+		createKnowledgeGraph,
+		addMyDrugNodes
 	}
 	
 	/**
