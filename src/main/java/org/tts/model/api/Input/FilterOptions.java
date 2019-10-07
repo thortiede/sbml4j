@@ -2,6 +2,7 @@ package org.tts.model.api.Input;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.hateoas.ResourceSupport;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -16,9 +17,16 @@ public class FilterOptions  extends ResourceSupport {
 	
 	List<String> nodeSymbols;
 
-
 	int minSize;
 	int maxSize;
+
+	boolean terminateAtDrug;
+	
+	Map<String, Object> annotation; // symbol to annotation map
+	
+	String annotationName;
+	
+	String annotationType;
 	
 	public int getMinSize() {
 		return minSize;
@@ -77,6 +85,30 @@ public class FilterOptions  extends ResourceSupport {
 
 	public void setNetworkType(NetworkMappingType networkType) {
 		this.networkType = networkType;
+	}
+	
+	public Map<String, Object> getAnnotation() {
+		return annotation;
+	}
+
+	public void setAnnotation(Map<String, Object> annotation) {
+		this.annotation = annotation;
+	}
+
+	public String getAnnotationName() {
+		return annotationName;
+	}
+
+	public void setAnnotationName(String annotationName) {
+		this.annotationName = annotationName;
+	}
+
+	public String getAnnotationType() {
+		return annotationType;
+	}
+
+	public void setAnnotationType(String annotationType) {
+		this.annotationType = annotationType;
 	}
 
 	public String toString() {
@@ -166,6 +198,14 @@ public class FilterOptions  extends ResourceSupport {
 		}
 		// all comparisions valid, filterOptions are equal		
 		return true;
+	}
+
+	public boolean isTerminateAtDrug() {
+		return terminateAtDrug;
+	}
+
+	public void setTerminateAtDrug(boolean terminateAtDrug) {
+		this.terminateAtDrug = terminateAtDrug;
 	}
 	
 }
