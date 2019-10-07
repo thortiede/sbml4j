@@ -77,7 +77,8 @@ public class GraphBaseEntity {
 	
 	public boolean addLabel(String newLabel) {
 		try {
-			this.labels.add(newLabel);
+			if(!labels.contains(newLabel))
+				this.labels.add(newLabel);
 		} catch (Exception e) {
 			// element could not be added
 			return false;
@@ -94,7 +95,7 @@ public class GraphBaseEntity {
 		return true;
 	}
 	
-	@JsonIgnore
+	//@JsonIgnore
 	public Map<String, Object> getAnnotation() {
 		return annotation;
 	}
