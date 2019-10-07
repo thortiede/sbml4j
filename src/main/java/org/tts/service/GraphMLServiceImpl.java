@@ -2,8 +2,10 @@ package org.tts.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -112,17 +114,16 @@ public class GraphMLServiceImpl implements GraphMLService {
 	}
 
 	private ByteArrayOutputStream addGraphToFilebAOS(ByteArrayOutputStream byteArrayOutputStream, NodeEdgeList nodeEdgeList) throws IOException {
+		Set<String> nodeAnnotations = new HashSet<>();
+		Map<String, String> idNodeMap = new HashMap<>();
+		int nodeId = 0;
+		Set<byte[]> uniqueEdges = new HashSet<>();
 		// add keys for annotations:
 				// node Name:
 		byteArrayOutputStream.write("\t<key id=\"v_name\" for=\"node\" attr.name=\"name\" attr.type=\"string\"/>\n".getBytes());
-				// interactionTypes:
-		byteArrayOutputStream.write("\t<key id=\"e_interaction\" for=\"edge\" attr.name=\"interaction\" attr.type=\"string\"/>\n".getBytes());
-				
-		byteArrayOutputStream.write("\t<graph id=\"G\" edgedefault=\"undirected\">\n".getBytes());
-				
-		Map<String, String> idNodeMap = new HashMap<>();
-		int nodeId = 0;
-		Set<String> uniqueEdges = new HashSet<>();
+		
+		List<byte[]> nodeAnnotationContent = new ArrayList<>();
+		
 		for(NodeNodeEdge nne : nodeEdgeList.getNodeNodeEdgeList()) {
 			if (!idNodeMap.containsKey(nne.getNode1())) {
 			//if(uniqueNodes.add(nne.getNode1())) {
@@ -132,7 +133,16 @@ public class GraphMLServiceImpl implements GraphMLService {
 				idNodeMap.put(nne.getNode1(), nodeIdString);
 				// add to graphML
 				//graphMLString += String.format("\t\t<node id=\"%s\">\n\t\t\t<data key=\"v_name\">%s</data>\n\t\t</node>\n", nne.getNode1(), nne.getNode1());
-				byteArrayOutputStream.write(String.format("\t\t<node id=\"%s\">\n\t\t\t<data key=\"v_name\">%s</data>\n\t\t</node>\n", nodeIdString, nne.getNode1()).getBytes());
+				nodeAnnotationContent.add(String.format("\t\t<node id=\"%s\">\n", nodeIdString).getBytes());
+				nodeAnnotationContent.add(String.format("\t\t\t<data key=\"v_name\">%s</data>\n", nne.getNode1()).getBytes());
+				
+				if(nne.getNode1Annotation() != null ) {
+					for (String key : nne.getNode1Annotation().keySet()) {
+						nodeAnnotations.add(key);
+						nodeAnnotationContent.add(String.format("\t\t\t<data key=\"v_%s\">%s</data>\n", key, nne.getNode1Annotation().get(key).toString()).getBytes());
+					}
+				}
+				nodeAnnotationContent.add("\t\t</node>\n".getBytes());
 			}
 			if(!idNodeMap.containsKey(nne.getNode2())) {
 			//if(uniqueNodes.add(nne.getNode2())) {
@@ -142,17 +152,44 @@ public class GraphMLServiceImpl implements GraphMLService {
 				idNodeMap.put(nne.getNode2(), nodeIdString);
 				// add to graphML
 				//graphMLString += String.format("\t\t<node id=\"%s\">\n\t\t\t<data key=\"v_name\">%s</data>\n\t\t</node>\n", nne.getNode2(), nne.getNode2());
-				byteArrayOutputStream.write(String.format("\t\t<node id=\"%s\">\n\t\t\t<data key=\"v_name\">%s</data>\n\t\t</node>\n", nodeIdString, nne.getNode2()).getBytes());
+				nodeAnnotationContent.add(String.format("\t\t<node id=\"%s\">\n", nodeIdString).getBytes());
+				nodeAnnotationContent.add(String.format("\t\t\t<data key=\"v_name\">%s</data>\n", nne.getNode2()).getBytes());
+				
+				if(nne.getNode2Annotation() != null ) {
+					for (String key : nne.getNode2Annotation().keySet()) {
+						nodeAnnotations.add(key);
+						nodeAnnotationContent.add(String.format("\t\t\t<data key=\"v_%s\">%s</data>\n", key, nne.getNode2Annotation().get(key).toString()).getBytes());
+					}
+				}
+				nodeAnnotationContent.add("\t\t</node>\n".getBytes());
+				
 			}
 			// TODO: If graph is undirected: Be sure that the edges we add are unique also in the way that
 			// N1 -e1-> N2 is the same as N2 -e1-> N1 
-			uniqueEdges.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n\t\t</edge>\n", idNodeMap.get(nne.getNode1()), idNodeMap.get(nne.getNode2()), nne.getEdge()));
-			
-			
+			uniqueEdges.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n\t\t</edge>\n", idNodeMap.get(nne.getNode1()), idNodeMap.get(nne.getNode2()), nne.getEdge()).getBytes());
 		}
-		for (String edgeString : uniqueEdges) {
-			byteArrayOutputStream.write(edgeString.getBytes());;
+		
+		// add nodeAttributeDefinition
+		for (String nodeAttribute : nodeAnnotations) {
+			String annotationType = nodeEdgeList.getAnnotationType().get(nodeAttribute);
+			
+			byteArrayOutputStream.write(String.format("\t<key id=\"v_%s\" for=\"node\" attr.name=\"%s\" attr.type=\"%s\"/>\n", nodeAttribute, nodeAttribute, annotationType).getBytes()); 
 		}
+		// interactionTypes:
+		byteArrayOutputStream.write("\t<key id=\"e_interaction\" for=\"edge\" attr.name=\"interaction\" attr.type=\"string\"/>\n".getBytes());
+		
+		// open graph, TODO make directed/undirected configurable
+		byteArrayOutputStream.write("\t<graph id=\"G\" edgedefault=\"undirected\">\n".getBytes());
+		
+		// write nodes
+		for (byte[] nodeElement : nodeAnnotationContent) {
+			byteArrayOutputStream.write(nodeElement);
+		}
+		// write edges
+		for (byte[] edgeElement : uniqueEdges) {
+			byteArrayOutputStream.write(edgeElement);;
+		}
+		// close graph
 		byteArrayOutputStream.write("\t</graph>\n".getBytes());;
 	
 		return byteArrayOutputStream;
