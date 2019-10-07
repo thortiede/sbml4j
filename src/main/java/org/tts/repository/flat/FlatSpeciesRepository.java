@@ -27,6 +27,10 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	List<FlatSpecies> findNetworkContext(String startNodeUUID, String relationTypesApocString,
 			int minPathLength, int maxPathLength);
 
+	@Query(value="MATCH (fs:FlatSpecies {entityUUID : {0}}) call apoc.path.expand(fs, {1}, {2}, {3}, {4}) yield path as pp return nodes(pp), relationships(pp);")
+	List<FlatSpecies> findNetworkContext(String startNodeUUID, String relationTypesApocString, String nodeFilterString,
+			int minPathLength, int maxPathLength);
+
 	@Query(value="MATCH "
 			+ "(m:MappingNode{entityUUID: {0}})"
 			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
