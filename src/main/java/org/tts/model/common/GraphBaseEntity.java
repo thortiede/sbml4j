@@ -28,6 +28,13 @@ public class GraphBaseEntity {
 	 * Entities shall reference other entities only by this UUID
 	 */
 	private String entityUUID;
+	
+	/**
+	 * The flag to indicate whether this entity is active
+	 * i.e. findable by inventory-queries
+	 */
+	private boolean isActive;
+	
 
 	/*@Relationship(type="IN", direction=Relationship.OUTGOING)
 	private List<Organism> organisms;
@@ -134,6 +141,14 @@ public class GraphBaseEntity {
 			this.annotationType = new HashMap<>();
 		}
 		this.annotationType.put(annotationName, annotationType);
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 	
 	
