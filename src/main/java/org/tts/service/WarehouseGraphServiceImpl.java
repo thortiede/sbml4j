@@ -416,6 +416,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		NetworkInventoryItem item = new NetworkInventoryItem();
 		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
 		item.setEntityUUID(mapping.getEntityUUID());
+		item.setActive(mapping.isActive());
 		//item.setSource(findSource(mapping).getSource());
 		//item.setSourceVersion(findSource(mapping).getSourceVersion());
 		item.setName(mapping.getMappingName());
@@ -801,5 +802,18 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public MappingNode saveMappingNode(MappingNode node, int depth) {
 		return this.mappingNodeRepository.save(node, depth);
+	}
+
+	@Override
+	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID) {
+		MappingNode networkNode = this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID);
+		if (networkNode != null) {
+			networkNode.setActive(false);
+			this.mappingNodeRepository.save(networkNode, 0);
+			
+			return this.getNetworkIventoryItem(networkNode);
+		}
+		
+		return null;
 	}
 }
