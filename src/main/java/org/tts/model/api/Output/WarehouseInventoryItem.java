@@ -5,6 +5,7 @@ import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 
 public class WarehouseInventoryItem extends ResourceSupport {
 	private String entityUUID;
+	private boolean isActive;
 	private String name;
 	private String organismCode;
 	private String source;
@@ -58,6 +59,12 @@ public class WarehouseInventoryItem extends ResourceSupport {
 	}
 	public void setWarehouseGraphNodeType(WarehouseGraphNodeType warehouseGraphNodeType) {
 		this.warehouseGraphNodeType = warehouseGraphNodeType;
+	}
+	public boolean isActive() {
+		return isActive;
+	}
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 	
 }
