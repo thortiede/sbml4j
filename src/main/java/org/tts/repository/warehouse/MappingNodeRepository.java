@@ -66,7 +66,7 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "-[:PROV]-"
 			+ "(a:PROV_AGENT) "
 			+ "WHERE "
-			+ "m.isActive is true and "
+			+ "m.isActive = true and "
 			+ "a.graphAgentName in $users "
 			+ "return m")
 	List<MappingNode> findAllActiveFromUsers(List<String> usernames);
