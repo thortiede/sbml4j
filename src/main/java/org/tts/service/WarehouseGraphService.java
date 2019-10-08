@@ -74,7 +74,7 @@ public interface WarehouseGraphService {
 
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username);
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly);
 
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
 

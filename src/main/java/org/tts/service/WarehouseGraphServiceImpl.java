@@ -455,13 +455,19 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username) {
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly) {
 		List<NetworkInventoryItem> inventory = new ArrayList<>();
 		// get all mapping nodes
 		List<String> usernames = new ArrayList<>();
 		usernames.add(username);
 		usernames.add("All");
-		for (MappingNode mapping : this.mappingNodeRepository.findAllFromUsers(usernames)) {
+		List<MappingNode> mappings = new ArrayList<>();
+		if(isActiveOnly) {
+			mappings = this.mappingNodeRepository.findAllActiveFromUsers(usernames);
+		} else {
+			mappings = this.mappingNodeRepository.findAllFromUsers(usernames);
+		}
+		for (MappingNode mapping : mappings) {
 			// create an inventory item for each of them and fill it.
 		
 			inventory.add(this.getNetworkIventoryItem(mapping));
