@@ -107,5 +107,7 @@ public interface WarehouseGraphService {
 	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
 
 	NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
+
+	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID);
 	
 }
