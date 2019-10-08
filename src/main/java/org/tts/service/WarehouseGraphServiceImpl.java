@@ -451,6 +451,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 		// add link to the item FilterOptions
 		item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(item.getEntityUUID())).withRel("FilterOptions"));
+		
+		// add link to deleting the item (setting isactive = false
+		item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.getEntityUUID())).withRel("Delete Mapping").withType("DELETE"));
 		return item;
 	}
 
