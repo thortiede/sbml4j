@@ -184,8 +184,9 @@ public class WarehouseController {
 	}
 	
 	@RequestMapping(value = "/networkInventory", method = RequestMethod.GET)
-	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(@RequestHeader("user") String username) {
-		List<NetworkInventoryItem> networkInventory = this.warehouseGraphService.getListOfNetworkInventoryItems(username);
+	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(	@RequestHeader("user") String username,
+																		@RequestParam(value = "active", defaultValue = "true") boolean isActiveOnly) {
+		List<NetworkInventoryItem> networkInventory = this.warehouseGraphService.getListOfNetworkInventoryItems(username, isActiveOnly);
 		return new ResponseEntity<List<NetworkInventoryItem>>(networkInventory, HttpStatus.OK);
 	}
 	
@@ -402,9 +403,21 @@ public class WarehouseController {
 		this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
 		return this.getNetworkInventoryDetail(newMapping.getEntityUUID());		
 	}
+	@RequestMapping(value = "/network", method = RequestMethod.DELETE)
+	public ResponseEntity<NetworkInventoryItem> deactivateNetwork(@RequestParam("UUID") String mappingNodeEntityUUID) {
+		
+		NetworkInventoryItem networkInventoryItem = this.warehouseGraphService.deactivateNetwork(mappingNodeEntityUUID);
+		if(networkInventoryItem != null) {
+			return new ResponseEntity<NetworkInventoryItem>(networkInventoryItem, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.BAD_REQUEST);
+		}
+	}
 	
 	@RequestMapping(value="/network", method = RequestMethod.GET)
-	public ResponseEntity<Resource> getNetwork(@RequestParam("UUID") String mappingNodeEntityUUID, @RequestParam(value = "method", defaultValue = "undirected") String method, @RequestParam("format") String format) {
+	public ResponseEntity<Resource> getNetwork(	@RequestParam("UUID") String mappingNodeEntityUUID, 
+												@RequestParam(value = "method", defaultValue = "undirected") String method, 
+												@RequestParam("format") String format) {
 		/**
 		 * An Alternative might be to directly run:
 		 * MATCH (m:MappingNode {entityUUID:"3859039b-f92a-41da-b393-4c90a18e8e4e"})-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]->(fs:FlatSpecies)-[r]-(fs2:FlatSpecies) RETURN fs.entityUUID, fs.symbol, fs.sboTerm, type(r), fs2.symbol, fs2.entityUUID, fs2.sboTerm;
@@ -469,6 +482,8 @@ public class WarehouseController {
 			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT);
 		}
 	}
+
+
 
 	@RequestMapping(value = "/networkInventory/{entityUUID}/filterOptions", method = RequestMethod.GET)
 	public ResponseEntity<FilterOptions> getNetworkFilterOptions(@PathVariable String entityUUID) {

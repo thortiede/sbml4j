@@ -416,6 +416,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		NetworkInventoryItem item = new NetworkInventoryItem();
 		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
 		item.setEntityUUID(mapping.getEntityUUID());
+		item.setActive(mapping.isActive());
 		//item.setSource(findSource(mapping).getSource());
 		//item.setSourceVersion(findSource(mapping).getSourceVersion());
 		item.setName(mapping.getMappingName());
@@ -450,17 +451,26 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 		// add link to the item FilterOptions
 		item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(item.getEntityUUID())).withRel("FilterOptions"));
+		
+		// add link to deleting the item (setting isactive = false
+		item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.getEntityUUID())).withRel("Delete Mapping").withType("DELETE"));
 		return item;
 	}
 
 	@Override
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username) {
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly) {
 		List<NetworkInventoryItem> inventory = new ArrayList<>();
 		// get all mapping nodes
 		List<String> usernames = new ArrayList<>();
 		usernames.add(username);
 		usernames.add("All");
-		for (MappingNode mapping : this.mappingNodeRepository.findAllFromUsers(usernames)) {
+		List<MappingNode> mappings = new ArrayList<>();
+		if(isActiveOnly) {
+			mappings = this.mappingNodeRepository.findAllActiveFromUsers(usernames);
+		} else {
+			mappings = this.mappingNodeRepository.findAllFromUsers(usernames);
+		}
+		for (MappingNode mapping : mappings) {
 			// create an inventory item for each of them and fill it.
 		
 			inventory.add(this.getNetworkIventoryItem(mapping));
@@ -801,5 +811,18 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public MappingNode saveMappingNode(MappingNode node, int depth) {
 		return this.mappingNodeRepository.save(node, depth);
+	}
+
+	@Override
+	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID) {
+		MappingNode networkNode = this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID);
+		if (networkNode != null) {
+			networkNode.setActive(false);
+			this.mappingNodeRepository.save(networkNode, 0);
+			
+			return this.getNetworkIventoryItem(networkNode);
+		}
+		
+		return null;
 	}
 }

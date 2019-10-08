@@ -74,7 +74,7 @@ public interface WarehouseGraphService {
 
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username);
+	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly);
 
 	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
 
@@ -107,5 +107,7 @@ public interface WarehouseGraphService {
 	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
 
 	NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
+
+	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID);
 	
 }
