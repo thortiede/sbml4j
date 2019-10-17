@@ -220,6 +220,15 @@ public class HttpServiceImpl implements HttpService {
 	@Override
 	public List<FlatSpecies> getMyDrugCompoundsForNetwork(String mydrugURL, MappingNode mappingNode) {
 		Set<String> mappingNodeSymbols = mappingNode.getMappingNodeSymbols();
+		String logString = "";
+		for(String symbol : mappingNodeSymbols) {
+			if (symbol == null)
+				logger.info("Symbol is null!!");
+			else {
+				logString = logString.concat(symbol + ", ");
+			}
+		}
+		logger.info("NodeSymbols are: " + logString);
 		//List<FlatSpecies> mappingSpecies = this.mappingNodeRepository.getMappingFlatSpecies(mappingNode.getBaseNetworkEntityUUID());
 		Map<String, FlatSpecies> symbolToFlatSpceciesMap = new HashMap<>();
 		for(FlatSpecies fs : this.mappingNodeRepository.getMappingFlatSpecies(mappingNode.getEntityUUID())) {
@@ -305,7 +314,7 @@ public class HttpServiceImpl implements HttpService {
 			}
 			jsonInputString = jsonInputString.substring(0, jsonInputString.length() - 2);
 			jsonInputString += "] return a.name, a.midrug_id, a.drugbank_id, a.drugbank_version, a.drug_class, a.mechanism_of_action, a.indication, a.categories, b.symbol, b.gene_names, b.name;\" } ]}";
-			//logger.debug("Using body: " + jsonInputString);
+			logger.debug("Using body: " + jsonInputString);
 			try(OutputStream os = con.getOutputStream()) {
 			    byte[] input = jsonInputString.getBytes("utf-8");
 			    os.write(input, 0, input.length);           
