@@ -8,13 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.full.ext.SBMLSBaseExtension;
-import org.tts.model.full.ext.qual.SBMLQualModelExtension;
-import org.tts.model.full.ext.qual.SBMLQualTransition;
 import org.tts.repository.common.GraphBaseEntityRepository;
 
 @Service

@@ -11,8 +11,6 @@ import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.provenance.ProvenanceGraphEdge;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.provenance.ProvenanceEntityRepository;
 import org.tts.repository.provenance.ProvenanceGraphActivityNodeRepository;
 import org.tts.repository.provenance.ProvenanceGraphAgentNodeRepository;

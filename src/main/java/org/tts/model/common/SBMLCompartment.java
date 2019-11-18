@@ -1,11 +1,5 @@
 package org.tts.model.common;
 
-import java.util.List;
-
-import org.neo4j.ogm.annotation.Relationship;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 /**
  * Class SBMLCompartment
  * Modeled after the Compartment class from the SBML Standard level-3 version-2

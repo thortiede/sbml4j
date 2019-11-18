@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.apache.tomcat.jni.Time;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,6 @@ import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.SifFile;
-import org.tts.model.common.ContentGraphNode;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
