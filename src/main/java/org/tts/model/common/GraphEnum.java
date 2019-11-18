@@ -91,7 +91,8 @@ public class GraphEnum {
 		createMapping,
 		mapAnnotations,
 		runAlgorithm,
-		createKnowledgeGraph
+		createKnowledgeGraph,
+		addMyDrugNodes
 	}
 	
 	/**
@@ -142,7 +143,8 @@ public class GraphEnum {
 		METHYLATION("SBO:0000214"),
 		MOLECULARINTERACTION("SBO:0000344"),
 		CONTROL("SBO:0000168"),
-		UNKNOWNFROMSOURCE("unknownFromSource");
+		UNKNOWNFROMSOURCE("unknownFromSource"),
+		TARGETS("targets");
 		
 		private final String relType;
 		

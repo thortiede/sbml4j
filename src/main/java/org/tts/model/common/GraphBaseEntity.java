@@ -9,7 +9,6 @@ import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.Labels;
 import org.neo4j.ogm.annotation.Properties;
-import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Version;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -28,6 +27,13 @@ public class GraphBaseEntity {
 	 * Entities shall reference other entities only by this UUID
 	 */
 	private String entityUUID;
+	
+	/**
+	 * The flag to indicate whether this entity is active
+	 * i.e. findable by inventory-queries
+	 */
+	private boolean isActive;
+	
 
 	/*@Relationship(type="IN", direction=Relationship.OUTGOING)
 	private List<Organism> organisms;
@@ -37,6 +43,9 @@ public class GraphBaseEntity {
 	
 	@Properties
 	private Map<String, Object> annotation = new HashMap<>();
+	
+	@Properties
+	private Map<String, String> annotationType = new HashMap<>();
 	
 	@JsonIgnore
 	public Long getId() {
@@ -74,7 +83,8 @@ public class GraphBaseEntity {
 	
 	public boolean addLabel(String newLabel) {
 		try {
-			this.labels.add(newLabel);
+			if(!labels.contains(newLabel))
+				this.labels.add(newLabel);
 		} catch (Exception e) {
 			// element could not be added
 			return false;
@@ -91,7 +101,7 @@ public class GraphBaseEntity {
 		return true;
 	}
 	
-	@JsonIgnore
+	//@JsonIgnore
 	public Map<String, Object> getAnnotation() {
 		return annotation;
 	}
@@ -99,5 +109,46 @@ public class GraphBaseEntity {
 	public void setAnnotation(Map<String, Object> annotation) {
 		this.annotation = annotation;
 	}
+	
+	public void addAnnotation(Map<String,Object> annotation) {
+		if (this.annotation == null) {
+			this.annotation = annotation;
+		} else {
+			for (String key : annotation.keySet()) {
+				this.annotation.put(key, annotation.get(key));
+			}
+			
+		}
+	}
+	public void addAnnotation(String key, Object value) {
+		if (this.annotation == null) {
+			this.annotation = new HashMap<>();
+		}
+		this.annotation.put(key, value);
+	}
+
+	public Map<String, String> getAnnotationType() {
+		return annotationType;
+	}
+
+	public void setAnnotationType(Map<String, String> annotationType) {
+		this.annotationType = annotationType;
+	}
+	
+	public void addAnnotationType(String annotationName, String annotationType) {
+		if(this.annotationType == null) {
+			this.annotationType = new HashMap<>();
+		}
+		this.annotationType.put(annotationName, annotationType);
+	}
+
+	public boolean isActive() {
+		return isActive;
+	}
+
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+	
 	
 }

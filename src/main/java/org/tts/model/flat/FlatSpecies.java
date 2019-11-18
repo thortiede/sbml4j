@@ -58,7 +58,8 @@ public class FlatSpecies extends ContentGraphNode {
 	 @Relationship(type = "unknownFromSource")
 	 List<FlatSpecies> unknownFromSourceSpeciesList; // no SBO, eg. hsa05133 qual_K
 	 
-	
+	@Relationship(type = "targets")
+	List<FlatSpecies> targetsSpeciesList; // no SBO, this comes from MyDrug / Drugbank
 	 
 	 public String getSimpleModelEntityUUID() {
 		return simpleModelEntityUUID;
@@ -145,6 +146,10 @@ public class FlatSpecies extends ContentGraphNode {
 					allRelatedSpecies.put(type.getRelType(), unknownFromSourceSpeciesList);
 				}
 				break;
+			case TARGETS:
+				if(this.targetsSpeciesList != null) {
+					allRelatedSpecies.put(type.getRelType(), targetsSpeciesList);
+				}
 			default:
 				if(this.unknownFromSourceSpeciesList != null) {
 					allRelatedSpecies.put("unknownFromSource", unknownFromSourceSpeciesList);
@@ -238,6 +243,13 @@ public class FlatSpecies extends ContentGraphNode {
 			}
 			controlSpeciesList.add(other);
 			break;
+		case "targets":
+			if(targetsSpeciesList == null) {
+				targetsSpeciesList = new ArrayList<>();
+			}
+			targetsSpeciesList.add(other);
+			this.addLabel("Drug");
+			break;
 		case "unknownFromSource":
 			if(unknownFromSourceSpeciesList == null) {
 				unknownFromSourceSpeciesList = new ArrayList<>();
@@ -260,6 +272,118 @@ public class FlatSpecies extends ContentGraphNode {
 
 	public void setSboTerm(String sboTerm) {
 		this.sboTerm = sboTerm;
+	}
+
+	public List<FlatSpecies> getDissociationSpeciesList() {
+		return dissociationSpeciesList;
+	}
+
+	public void setDissociationSpeciesList(List<FlatSpecies> dissociationSpeciesList) {
+		this.dissociationSpeciesList = dissociationSpeciesList;
+	}
+
+	public List<FlatSpecies> getDephosphorylationSpeciesList() {
+		return dephosphorylationSpeciesList;
+	}
+
+	public void setDephosphorylationSpeciesList(List<FlatSpecies> dephosphorylationSpeciesList) {
+		this.dephosphorylationSpeciesList = dephosphorylationSpeciesList;
+	}
+
+	public List<FlatSpecies> getUncertainProcessSpeciesList() {
+		return uncertainProcessSpeciesList;
+	}
+
+	public void setUncertainProcessSpeciesList(List<FlatSpecies> uncertainProcessSpeciesList) {
+		this.uncertainProcessSpeciesList = uncertainProcessSpeciesList;
+	}
+
+	public List<FlatSpecies> getNonCovalentBindingSpeciesList() {
+		return nonCovalentBindingSpeciesList;
+	}
+
+	public void setNonCovalentBindingSpeciesList(List<FlatSpecies> nonCovalentBindingSpeciesList) {
+		this.nonCovalentBindingSpeciesList = nonCovalentBindingSpeciesList;
+	}
+
+	public List<FlatSpecies> getStimulationSpeciesList() {
+		return stimulationSpeciesList;
+	}
+
+	public void setStimulationSpeciesList(List<FlatSpecies> stimulationSpeciesList) {
+		this.stimulationSpeciesList = stimulationSpeciesList;
+	}
+
+	public List<FlatSpecies> getGlycosylationSpeciesList() {
+		return glycosylationSpeciesList;
+	}
+
+	public void setGlycosylationSpeciesList(List<FlatSpecies> glycosylationSpeciesList) {
+		this.glycosylationSpeciesList = glycosylationSpeciesList;
+	}
+
+	public List<FlatSpecies> getPhosphorylationSpeciesList() {
+		return phosphorylationSpeciesList;
+	}
+
+	public void setPhosphorylationSpeciesList(List<FlatSpecies> phosphorylationSpeciesList) {
+		this.phosphorylationSpeciesList = phosphorylationSpeciesList;
+	}
+
+	public List<FlatSpecies> getInhibitionSpeciesList() {
+		return inhibitionSpeciesList;
+	}
+
+	public void setInhibitionSpeciesList(List<FlatSpecies> inhibitionSpeciesList) {
+		this.inhibitionSpeciesList = inhibitionSpeciesList;
+	}
+
+	public List<FlatSpecies> getUbiquitinationSpeciesList() {
+		return ubiquitinationSpeciesList;
+	}
+
+	public void setUbiquitinationSpeciesList(List<FlatSpecies> ubiquitinationSpeciesList) {
+		this.ubiquitinationSpeciesList = ubiquitinationSpeciesList;
+	}
+
+	public List<FlatSpecies> getMethylationSpeciesList() {
+		return methylationSpeciesList;
+	}
+
+	public void setMethylationSpeciesList(List<FlatSpecies> methylationSpeciesList) {
+		this.methylationSpeciesList = methylationSpeciesList;
+	}
+
+	public List<FlatSpecies> getMolecularInteractionSpeciesList() {
+		return molecularInteractionSpeciesList;
+	}
+
+	public void setMolecularInteractionSpeciesList(List<FlatSpecies> molecularInteractionSpeciesList) {
+		this.molecularInteractionSpeciesList = molecularInteractionSpeciesList;
+	}
+
+	public List<FlatSpecies> getControlSpeciesList() {
+		return controlSpeciesList;
+	}
+
+	public void setControlSpeciesList(List<FlatSpecies> controlSpeciesList) {
+		this.controlSpeciesList = controlSpeciesList;
+	}
+
+	public List<FlatSpecies> getUnknownFromSourceSpeciesList() {
+		return unknownFromSourceSpeciesList;
+	}
+
+	public void setUnknownFromSourceSpeciesList(List<FlatSpecies> unknownFromSourceSpeciesList) {
+		this.unknownFromSourceSpeciesList = unknownFromSourceSpeciesList;
+	}
+
+	public List<FlatSpecies> getTargetsSpeciesList() {
+		return targetsSpeciesList;
+	}
+
+	public void setTargetsSpeciesList(List<FlatSpecies> targetsSpeciesList) {
+		this.targetsSpeciesList = targetsSpeciesList;
 	}
 	 
 	 

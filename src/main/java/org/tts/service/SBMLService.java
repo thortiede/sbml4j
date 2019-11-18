@@ -13,9 +13,7 @@ import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.warehouse.FileNode;
-import org.tts.model.common.Organism;
 
 public interface SBMLService {
 

@@ -9,6 +9,20 @@ public class MappingNode extends WarehouseGraphNode {
 	private NetworkMappingType mappingType;
 	
 	private String mappingName;
+
+	private Set<String> mappingNodeTypes;
+	
+	private Set<String> mappingRelationTypes;
+	
+	private Set<String> mappingNodeSymbols;
+	
+	private String baseNetworkEntityUUID;
+	
+	private String geneSymbol;
+	
+	private int minSize;
+	private int maxSize;
+	
 	
 	public Set<String> getMappingNodeTypes() {
 		return mappingNodeTypes;
@@ -34,9 +48,6 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingRelationTypes.add(type);
 	}
 
-	private Set<String> mappingNodeTypes;
-	
-	private Set<String> mappingRelationTypes;
 	
 
 	public NetworkMappingType getMappingType() {
@@ -54,5 +65,44 @@ public class MappingNode extends WarehouseGraphNode {
 	public void setMappingName(String mappingName) {
 		this.mappingName = mappingName;
 	}
+
+	public String getGeneSymbol() {
+		return geneSymbol;
+	}
+
+	public void setGeneSymbol(String geneSymbol) {
+		this.geneSymbol = geneSymbol;
+	}
+
+	public long getMinSize() {
+		return minSize;
+	}
+
+	public void setMinSize(int minSize) {
+		this.minSize = minSize;
+	}
+
+	public int getMaxSize() {
+		return maxSize;
+	}
+
+	public void setMaxSize(int maxSize) {
+		this.maxSize = maxSize;
+	}
+
+	public String getBaseNetworkEntityUUID() {
+		return baseNetworkEntityUUID;
+	}
+
+	public void setBaseNetworkEntityUUID(String baseNetworkEntityUUID) {
+		this.baseNetworkEntityUUID = baseNetworkEntityUUID;
+	}
+
+	public void setMappingNodeSymbols(Set<String> mappingNodeSymbols) {
+		this.mappingNodeSymbols = mappingNodeSymbols;
+	}
 	
+	public Set<String> getMappingNodeSymbols() {
+		return this.mappingNodeSymbols;
+	}
 }

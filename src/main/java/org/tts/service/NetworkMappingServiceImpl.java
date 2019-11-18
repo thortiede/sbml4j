@@ -1,5 +1,6 @@
 package org.tts.service;
 
+import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.apache.tomcat.jni.Time;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,8 +23,6 @@ import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.SifFile;
-import org.tts.model.common.ContentGraphNode;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
@@ -453,6 +451,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString() + "_" + idSystem.name();
 		
 		MappingNode mappingFromPathway = this.warehouseGraphService.createMappingNode(pathway, type, mappingName);
+		logger.info("Created MappingNode with uuid:" + mappingFromPathway.getEntityUUID());
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
 		List<String> transitionSBOTerms = new ArrayList<>();
@@ -474,19 +473,39 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		} else if (type.equals(NetworkMappingType.METABOLIC)) {
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatMetabolicReactionsForPathway(pathway.getEntityUUID(), idSystem);
+			
 		} else if (type.equals(NetworkMappingType.PPI)) {
-			transitionSBOTerms.add(SBO.getTerm(216).getId());
+			nodeSBOTerms.add("SBO:0000252");
+			String conversionSBO = SBO.getTerm(182).getId();
+			transitionSBOTerms.add(conversionSBO);
+			for (String conversionChildSBO : this.utilityService.getAllSBOChildren(conversionSBO)) {
+				transitionSBOTerms.add(conversionChildSBO);
+			}
+			String biochemicalOrTransportReactionSBO = SBO.getTerm(167).getId();
+			transitionSBOTerms.add(biochemicalOrTransportReactionSBO);
+			for (String biochemicalOrTransportReactionChildSBO : this.utilityService.getAllSBOChildren(biochemicalOrTransportReactionSBO)) {
+				transitionSBOTerms.add(biochemicalOrTransportReactionChildSBO);
+			}
+			String molecularInteractionSBO = SBO.getTerm(344).getId();
+			transitionSBOTerms.add(molecularInteractionSBO);
+			for (String molecularInteractionChildSBO : this.utilityService.getAllSBOChildren(molecularInteractionSBO)) {
+				transitionSBOTerms.add(molecularInteractionChildSBO);
+			}
+			
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms);
 		
 		} else if (type.equals(NetworkMappingType.REGULATORY)) {
 			nodeSBOTerms.add("SBO:0000252");
 			nodeSBOTerms.add("SBO:0000247");
-			transitionSBOTerms.add("SBO:0000168");
-			transitionSBOTerms.add("SBO:0000170");
-			transitionSBOTerms.add("SBO:0000169");
+			String controlSBO = "SBO:0000168";
+			transitionSBOTerms.add(controlSBO);
+			for (String controlChildSBO : this.utilityService.getAllSBOChildren(controlSBO)) {
+				transitionSBOTerms.add(controlChildSBO);
+			}
 			flatTransitionsOfPathway = 
 					this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(), idSystem, transitionSBOTerms, nodeSBOTerms);
+			
 		} else if (type.equals(NetworkMappingType.SIGNALLING)) {
 			nodeSBOTerms.add("SBO:0000252");
 			transitionSBOTerms.add("SBO:0000656");
@@ -499,6 +518,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// create FlatSpecies for QueryResults
 		Map<String, FlatSpecies> networkFlatSpecies = new HashMap<>();
 		int counter = 1;
+		Set<String> nodeSymbols = new HashSet<>();
 		for(NodeNodeEdge nne : flatTransitionsOfPathway) {
 			logger.info(Instant.now().toString() + ": Processing NNE #" + counter++);
 			// on creation of Flat Species, provenanceConnect them to the initialEntities (and to the Transition?)
@@ -512,6 +532,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node2 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node2); // this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node2.setSymbol(nne.getNode2());
+				nodeSymbols.add(nne.getNode2());
 				node2.setSboTerm(nne.getNode2Type());
 				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node2 with symbol " + nne.getNode2());
 				//node2 = this.flatSpeciesRepository.save(node2);
@@ -534,6 +555,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				node1 = new FlatSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(node1);// this uses the utility for simpleModel, but they are stored in same db, so should be fine
 				node1.setSymbol(nne.getNode1());
+				nodeSymbols.add(nne.getNode1());
 				node1.setSboTerm(nne.getNode1Type());
 				//logger.info(Instant.now().toString() + ": Persisting Flat Species for Node1 with symbol " + nne.getNode1());
 				//node1 = this.flatSpeciesRepository.save(node1);
@@ -560,6 +582,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
+		mappingFromPathway.setMappingNodeSymbols(nodeSymbols);
 		
 		logger.info(Instant.now().toString() + ": Finished Building internal Map. Collecting FlatSpecies for persistence..");
 		List<FlatSpecies> allFlatSpeciesOfMapping = new ArrayList<>();
@@ -593,19 +616,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		switch (type) {
 		case "sif":
 		
-			SifFile sifFile = fileService.getSifFromNodeEdgeList(nodeEdgeList);
+			SifFile sifFile = this.fileService.getSifFromNodeEdgeList(nodeEdgeList);
 		
 		    //Resource resource = fileStorageService.loadFileAsResource(fileName);
 			if(sifFile != null) {
-			    Resource resource = fileStorageService.getSifAsResource(sifFile);
+			    Resource resource = this.fileStorageService.getSifAsResource(sifFile);
 			    return resource;
 			} else {
 				return null;
 			}
 		case "graphml":
-			String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
 			
-			return new ByteArrayResource(graphMLString.getBytes(), "network.graphml");
+			ByteArrayOutputStream bo = this.graphMLService.getGraphMLByteArrayOutputStream(nodeEdgeList, new ByteArrayOutputStream());
+			
+			
+			//String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
+			
+			return new ByteArrayResource(bo.toByteArray(), "network.graphml");
 		
 		default:
 			return null;		

@@ -113,6 +113,7 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 */
 	void setGraphBaseEntityProperties(GraphBaseEntity target, List<String> labels, Map<String, Object> annotations) {
 		target.setEntityUUID(UUID.randomUUID().toString());
+		target.setActive(true);
 		// labels
 		if (labels != null) {
 			List<String> targetLabels = target.getLabels();

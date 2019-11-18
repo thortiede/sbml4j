@@ -1,5 +1,8 @@
 package org.tts.model.api.Output;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.data.neo4j.annotation.QueryResult;
 
 @QueryResult
@@ -8,9 +11,11 @@ public class NodeNodeEdge {
 	private String node1;
 	private String node1UUID;
 	private String node1Type;
+	private Map<String, Object> node1Annotation;
 	private String node2;
 	private String node2UUID;
 	private String node2Type;
+	private Map<String, Object> node2Annotation;
 	private String edge;
 	
 	public NodeNodeEdge() {
@@ -20,11 +25,23 @@ public class NodeNodeEdge {
 	public NodeNodeEdge(String node1, String node1UUID, String node2, String node2UUID, String edge) {
 		this.node1 = node1;
 		this.node1UUID = node1UUID;
+		this.setNode1Annotation(new HashMap<>());
 		this.node2 = node2;
 		this.node2UUID = node2UUID;
+		this.setNode2Annotation(new HashMap<>());
 		this.edge = edge;
 	}
 
+	public NodeNodeEdge(String node1, String node1UUID, Map<String, Object> node1Annotation, String node2, String node2UUID, Map<String, Object> node2Annotation, String edge) {
+		this.node1 = node1;
+		this.node1UUID = node1UUID;
+		this.setNode1Annotation(node1Annotation);
+		this.node2 = node2;
+		this.node2UUID = node2UUID;
+		this.setNode2Annotation(node2Annotation);
+		this.edge = edge;
+	}
+	
 	public String getNode1() {
 		return node1;
 	}
@@ -91,6 +108,22 @@ public class NodeNodeEdge {
 		} else {
 			return false;
 		}
+	}
+
+	public Map<String, Object> getNode1Annotation() {
+		return node1Annotation;
+	}
+
+	public void setNode1Annotation(Map<String, Object> node1Annotation) {
+		this.node1Annotation = node1Annotation;
+	}
+
+	public Map<String, Object> getNode2Annotation() {
+		return node2Annotation;
+	}
+
+	public void setNode2Annotation(Map<String, Object> node2Annotation) {
+		this.node2Annotation = node2Annotation;
 	}
 		
 }

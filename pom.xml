@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.0.8-SNAPSHOT</version>
+	<version>0.0.15-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -46,7 +46,6 @@
 			<artifactId>jsbml-qual</artifactId>
 			<version>${jsbml.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
@@ -71,6 +70,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-ogm-bolt-driver</artifactId>
@@ -98,7 +101,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.0.8</tag>
+	                <tag>0.0.15</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->

@@ -491,9 +491,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					} else if(resource.contains("kegg.drug")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
+						newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
 					} else if(resource.contains("kegg.compound")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
+						setKeggCompoundNames(resource, newExternalResourceEntity);
 					} 
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
@@ -508,6 +510,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 		return updatedSBaseEntity;
 	}	
+	
+	private void setKeggCompoundNames(String resource, ExternalResourceEntity newExternalResourceEntity) {
+		// TODO Here httpService needs to fetch the resource from KEGG Compound and set the name and secondary Name
+		// what about formula? Is this more interesting? -> Do this as annotation
+		this.httpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
+	}
 	
 	private boolean setKeggGeneNames(String resource, ExternalResourceEntity entity) {
 		

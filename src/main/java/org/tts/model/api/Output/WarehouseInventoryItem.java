@@ -3,8 +3,11 @@ package org.tts.model.api.Output;
 import org.springframework.hateoas.ResourceSupport;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class WarehouseInventoryItem extends ResourceSupport {
 	private String entityUUID;
+	private boolean isActive;
 	private String name;
 	private String organismCode;
 	private String source;
@@ -29,6 +32,7 @@ public class WarehouseInventoryItem extends ResourceSupport {
 	public void setEntityUUID(String entityUUID) {
 		this.entityUUID = entityUUID;
 	}
+	@JsonIgnore
 	public String getName() {
 		return name;
 	}
@@ -41,23 +45,33 @@ public class WarehouseInventoryItem extends ResourceSupport {
 	public void setOrganismCode(String organismCode) {
 		this.organismCode = organismCode;
 	}
+	@JsonIgnore
 	public String getSource() {
 		return source;
 	}
 	public void setSource(String source) {
 		this.source = source;
 	}
+	@JsonIgnore
 	public String getSourceVersion() {
 		return sourceVersion;
 	}
 	public void setSourceVersion(String sourceVersion) {
 		this.sourceVersion = sourceVersion;
 	}
+	@JsonIgnore
 	public WarehouseGraphNodeType getWarehouseGraphNodeType() {
 		return warehouseGraphNodeType;
 	}
 	public void setWarehouseGraphNodeType(WarehouseGraphNodeType warehouseGraphNodeType) {
 		this.warehouseGraphNodeType = warehouseGraphNodeType;
+	}
+	@JsonIgnore
+	public boolean isActive() {
+		return isActive;
+	}
+	public void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 	
 }
