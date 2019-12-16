@@ -2,12 +2,19 @@ package org.tts.model.common;
 
 public class GraphEnum {
 	
-	
+	/**
+	 * COPY,<br>
+	 * ANNOTATE,<br>
+	 * FILTER,<br>
+	 * CONTEXT,<br>
+	 * MULTIGENESUBNET,
+	 */
 	public enum MappingStep {
 		COPY,
 		ANNOTATE,
 		FILTER,
-		CONTEXT
+		CONTEXT,
+		MULTIGENESUBNET,
 	}
 	
 	public enum NetworkMappingType {
