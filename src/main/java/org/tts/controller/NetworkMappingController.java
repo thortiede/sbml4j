@@ -56,6 +56,7 @@ public class NetworkMappingController {
 	 * These names can be used to filter GET /mapping/ppi
 	 * @return the names of the transition types found in the network in this database
 	 */
+	@Deprecated
 	@RequestMapping(value = "/filterOptions", method=RequestMethod.GET)
 	public ResponseEntity<FilterOptions> getFilterOptions() {
 		logger.info("Serving GET /filterOptions");
