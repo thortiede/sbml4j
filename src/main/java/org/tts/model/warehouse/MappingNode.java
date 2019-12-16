@@ -1,5 +1,6 @@
 package org.tts.model.warehouse;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -19,6 +20,8 @@ public class MappingNode extends WarehouseGraphNode {
 	private String baseNetworkEntityUUID;
 	
 	private String geneSymbol;
+	
+	private Set<String> subnetGeneSymbolSet;
 	
 	private int minSize;
 	private int maxSize;
@@ -104,5 +107,20 @@ public class MappingNode extends WarehouseGraphNode {
 	
 	public Set<String> getMappingNodeSymbols() {
 		return this.mappingNodeSymbols;
+	}
+
+	public Set<String> getSubnetGeneSymbolSet() {
+		return subnetGeneSymbolSet;
+	}
+
+	public void setSubnetGeneSymbolSet(Set<String> subnetGeneSymbolSet) {
+		this.subnetGeneSymbolSet = subnetGeneSymbolSet;
+	}
+	
+	public boolean addSubnetGeneSymbol(String subnetGeneSymbol) {
+		if (this.subnetGeneSymbolSet == null) {
+			this.subnetGeneSymbolSet = new HashSet<>();
+		}
+		return this.subnetGeneSymbolSet.add(subnetGeneSymbol);
 	}
 }
