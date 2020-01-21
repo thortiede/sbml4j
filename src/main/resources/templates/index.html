@@ -182,7 +182,7 @@
     <div class="app-desc">This is the api for the network service as part of the openMTB ecosystem</div>
     <div class="app-desc">More information: <a href="https://helloreverb.com">https://helloreverb.com</a></div>
     <div class="app-desc">Contact Info: <a href="tiede@informatik.uni-tuebingen.de">tiede@informatik.uni-tuebingen.de</a></div>
-    <div class="app-desc">Version: 1.0.0</div>
+    <div class="app-desc">Version: 1.0.1</div>
     <div class="app-desc">BasePath:/tiede/openMTB_networkStore/1.0.0</div>
     <div class="license-info">Apache 2.0</div>
     <div class="license-url">http://www.apache.org/licenses/LICENSE-2.0.html</div>
@@ -199,12 +199,280 @@
   <div class="method-summary"></div>
   <h4><a href="#Network">Network</a></h4>
   <ul>
+  <li><a href="#createMappingFromMappingWithOptions"><code><span class="http-method">post</span> /network</code></a></li>
+  <li><a href="#deactivateNetwork"><code><span class="http-method">delete</span> /network</code></a></li>
   <li><a href="#getContext"><code><span class="http-method">get</span> /context</code></a></li>
+  <li><a href="#getNetwork"><code><span class="http-method">get</span> /network</code></a></li>
   <li><a href="#getNetworkFilterOptions"><code><span class="http-method">get</span> /networkInventory/{entityUUID}/filterOptions</code></a></li>
   <li><a href="#listAllNetworks"><code><span class="http-method">get</span> /networkInventory</code></a></li>
   </ul>
 
   <h1><a name="Network">Network</a></h1>
+  <div class="method"><a name="createMappingFromMappingWithOptions"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="post"><code class="huge"><span class="http-method">post</span> /network</code></pre></div>
+    <div class="method-summary">Request the creation of a new network (<span class="nickname">createMappingFromMappingWithOptions</span>)</div>
+    <div class="method-notes"></div>
+
+
+    <h3 class="field-label">Consumes</h3>
+    This API call consumes the following media types via the <span class="header">Content-Type</span> request header:
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Request body</h3>
+    <div class="field-items">
+      <div class="param">body <a href="#NetworkFilterOptions">NetworkFilterOptions</a> (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Body Parameter</span> &mdash; &lt;p&gt;The filterOptions to be used in the step upon creation.&lt;/p&gt;
+&lt;p&gt;NodeSymbols are used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored, the network gets duplicated with a new entityUUID&lt;/li&gt;
+&lt;li&gt;in step FILTER: Only nodes listed here can be part of the network (and if they match given nodeTypes)&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored, the fields annotation, annotationName, annotationType are used&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: The first listed geneSymbol is used as the center for the context search&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: All listed geneSymbols are used as center for context search, as well as startNode/endNode for dijkstra shortestPath search&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;NodeTypes are used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored, the network gets duplicated with a new entityUUID&lt;/li&gt;
+&lt;li&gt;in step FILTER: Only nodes having one of the listed nodesTypes here can be part of the network (and if they are contained in NodeSymbols)&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored, the fields annotation, annotationName, annotationType are used&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: ignored (filter the network first, then search context on the newly created network to exlude certain node types)&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: ignored (filter the network first, then search context on the newly created network to exlude certain node types)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;RelationTypes are used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored, the network gets duplicated with a new entityUUID&lt;/li&gt;
+&lt;li&gt;in step FILTER: Only edges having one of the listed relationTypes here can be part of the network&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored, the fields annotation, annotationName, annotationType are used&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: ignored (filter the network first, then search context on the newly created network to exlude certain relation types)&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: ignored (filter the network first, then search context on the newly created network to exlude certain edge types)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;NetworkType is set as the networkType property. Allowed Values:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;PPI&lt;/li&gt;
+&lt;li&gt;SIGNALLING&lt;/li&gt;
+&lt;li&gt;REGULATORY&lt;/li&gt;
+&lt;li&gt;METABOLIC&lt;/li&gt;
+&lt;li&gt;PATHWAYMAPPING&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Annotation is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: geneSymbol must match one of the genes in the network, annotation is added to the node under the name defined in annotationName using the type in annotationType&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: ignored&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: ignored&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;AnnotationName is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: used as name under which the annotations in the annotation filed of the request body are attached to nodes&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: ignored&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: ignored&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;AnnotationType is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: used as type with which the annotations in the annotation filed of the request body are attached to nodes. Is also used to read out the annotation in said format when extracting network&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: ignored&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: ignored&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;minSize is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: determines the minimum number of relationships to be traveresed for a path to be included in the context&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: determines the minimum number of relationships to be traveresed for a path to be included in the context&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;maxSize is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: determines the maximum number of relationships to be traveresed for a path to be included in the context&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: determines the maximum number of relationships to be traveresed for a path to be included in the context&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;terminateAtDrug is used as follows&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;in step COPY: ignored&lt;/li&gt;
+&lt;li&gt;in step FILTER: ignored&lt;/li&gt;
+&lt;li&gt;in step ANNOTATE: ignored&lt;/li&gt;
+&lt;li&gt;in step CONTEXT: determines whether the context search should only contain paths (within minSize, maxSize) that end in a &#x27;Drug&#x27;-Node. It is required to add MyDrug annotations to a network for this to work.&lt;/li&gt;
+&lt;li&gt;in step MULTIGENESUBNET: determines whether the context search should only contain paths (within minSize, maxSize) that end in a &#x27;Drug&#x27;-Node. It is required to add MyDrug annotations to a network for this to work.&lt;/li&gt;
+&lt;/ul&gt;
+ </div>
+                </div>  <!-- field-items -->
+
+    <h3 class="field-label">Request headers</h3>
+    <div class="field-items">
+    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">networkEntityUUID (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; The entityUUID of the network to get format: uuid</div>      <div class="param">step (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; &lt;p&gt;The type of step to be performed upon creation  (one of: COPY, ANNOTATE, FILTER, CONTEXT, MULTIGENESUBNET)&lt;/p&gt;
+&lt;p&gt;Step determines which action to perform upon network creation.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;COPY: duplicate the given network with all it&#x27;s contained nodes and edges&lt;/li&gt;
+&lt;li&gt;FILTER: duplicate the given network but filter according to properties in the Request body (see sections of request body fields for details)&lt;/li&gt;
+&lt;li&gt;ANNOTATE: duplicate the given network and add annotation to nodes using the fields &#x27;annotation&#x27;, &#x27;annotationName&#x27;, &#x27;annotationType&#x27;&lt;/li&gt;
+&lt;li&gt;CONTEXT: calculate and persist the network context in given network for given gene with request body parameters &#x27;minSize&#x27;, &#x27;maxSize&#x27;, &#x27;terminateAtDrug&#x27;&lt;/li&gt;
+&lt;li&gt;MULTIGENESUBNET: calculate and persist a subnetwork from the given network containing the contexts around the given genes according to the paramters found in CONTEXT as well as the pairwise shortest paths (using dijkstra with constant edge-score) between the genes in the given network&lt;/li&gt;
+&lt;/ul&gt;
+ </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      array[<a href="#NetworkInventoryItem">NetworkInventoryItem</a>]
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>[ {
+  "relationTypes" : [ "stimulation", "stimulation" ],
+  "entityUUID" : "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+  "name" : "Example Mapping",
+  "organismCode" : "hsa",
+  "links" : [ {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  }, {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  } ],
+  "numberOfNodes" : 0,
+  "numberOfRelations" : 6,
+  "nodeTypes" : [ "polypeptide chain", "polypeptide chain" ],
+  "networkMappingType" : "REGULATORY"
+}, {
+  "relationTypes" : [ "stimulation", "stimulation" ],
+  "entityUUID" : "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+  "name" : "Example Mapping",
+  "organismCode" : "hsa",
+  "links" : [ {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  }, {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  } ],
+  "numberOfNodes" : 0,
+  "numberOfRelations" : 6,
+  "nodeTypes" : [ "polypeptide chain", "polypeptide chain" ],
+  "networkMappingType" : "REGULATORY"
+} ]</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    network created
+        
+    <h4 class="field-label">405</h4>
+    Invalid input
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
+  <div class="method"><a name="deactivateNetwork"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="delete"><code class="huge"><span class="http-method">delete</span> /network</code></pre></div>
+    <div class="method-summary">Request the deletion of a network (<span class="nickname">deactivateNetwork</span>)</div>
+    <div class="method-notes"></div>
+
+
+
+
+    <h3 class="field-label">Request headers</h3>
+    <div class="field-items">
+    </div>  <!-- field-items -->
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">UUID (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; The entityUUID of the network to delete format: uuid</div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      array[<a href="#NetworkInventoryItem">NetworkInventoryItem</a>]
+      
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>[ {
+  "relationTypes" : [ "stimulation", "stimulation" ],
+  "entityUUID" : "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+  "name" : "Example Mapping",
+  "organismCode" : "hsa",
+  "links" : [ {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  }, {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  } ],
+  "numberOfNodes" : 0,
+  "numberOfRelations" : 6,
+  "nodeTypes" : [ "polypeptide chain", "polypeptide chain" ],
+  "networkMappingType" : "REGULATORY"
+}, {
+  "relationTypes" : [ "stimulation", "stimulation" ],
+  "entityUUID" : "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+  "name" : "Example Mapping",
+  "organismCode" : "hsa",
+  "links" : [ {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  }, {
+    "rel" : "graphml",
+    "href" : "http://example.com:8080/sbml4j/network?UUID=2d25f4b9-8dd5-4bc3-9d04-9af418302244&method=standard&format=graphml"
+  } ],
+  "numberOfNodes" : 0,
+  "numberOfRelations" : 6,
+  "nodeTypes" : [ "polypeptide chain", "polypeptide chain" ],
+  "networkMappingType" : "REGULATORY"
+} ]</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/json</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    Network deleted.
+        
+    <h4 class="field-label">400</h4>
+    Delete failed (wrong user or network not found)
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
   <div class="method"><a name="getContext"></a>
     <div class="method-path">
     <a class="up" href="#__Methods">Up</a>
@@ -263,6 +531,58 @@ One of: graphml, sif </div>    </div>  <!-- field-items -->
         <a href="#"></a>
   </div> <!-- method -->
   <hr/>
+  <div class="method"><a name="getNetwork"></a>
+    <div class="method-path">
+    <a class="up" href="#__Methods">Up</a>
+    <pre class="get"><code class="huge"><span class="http-method">get</span> /network</code></pre></div>
+    <div class="method-summary">Retrieve the contents of a network (<span class="nickname">getNetwork</span>)</div>
+    <div class="method-notes"></div>
+
+
+
+
+
+    <h3 class="field-label">Query parameters</h3>
+    <div class="field-items">
+      <div class="param">UUID (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; The entityUUID of the network to get format: uuid</div>      <div class="param">format (required)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; return format for network (one of: graphml, sif) </div>      <div class="param">method (optional)</div>
+      
+            <div class="param-desc"><span class="param-type">Query Parameter</span> &mdash; &lt;p&gt;method to use for extracting the nodes (one of: standard, directed, undirected, properties);&lt;/p&gt;
+&lt;p&gt;if in doubt, omit&lt;/p&gt;
+ </div>    </div>  <!-- field-items -->
+
+
+    <h3 class="field-label">Return type</h3>
+    <div class="return-type">
+      
+      byte[]
+    </div>
+
+    <!--Todo: process Response Object and its headers, schema, examples -->
+
+    <h3 class="field-label">Example data</h3>
+    <div class="example-data-content-type">Content-Type: application/json</div>
+    <pre class="example"><code>""</code></pre>
+
+    <h3 class="field-label">Produces</h3>
+    This API call produces the following media types according to the <span class="header">Accept</span> request header;
+    the media type will be conveyed by the <span class="header">Content-Type</span> response header.
+    <ul>
+      <li><code>application/octet-stream</code></li>
+    </ul>
+
+    <h3 class="field-label">Responses</h3>
+    <h4 class="field-label">200</h4>
+    File with requested network in format as given in query
+        <a href="#byte[]">byte[]</a>
+    <h4 class="field-label">204</h4>
+    Network is empty or not available
+        <a href="#"></a>
+  </div> <!-- method -->
+  <hr/>
   <div class="method"><a name="getNetworkFilterOptions"></a>
     <div class="method-path">
     <a class="up" href="#__Methods">Up</a>
@@ -293,8 +613,16 @@ One of: graphml, sif </div>    </div>  <!-- field-items -->
     <div class="example-data-content-type">Content-Type: application/json</div>
     <pre class="example"><code>{
   "relationTypes" : [ "stimulation", "stimulation" ],
+  "annotation" : {
+    "key" : ""
+  },
   "nodeSymbols" : [ "BRCA1", "BRCA1" ],
   "mappingUuid" : "046b6c7f-0b8a-43b9-b35d-6489e6daee91",
+  "annotationName" : "ExpressionValue",
+  "annotationType" : "String",
+  "minSize" : 1,
+  "maxSize" : 3,
+  "terminateAtDrug" : false,
   "nodeTypes" : [ "polypeptide chain", "polypeptide chain" ],
   "networkType" : "REGULATORY"
 }</code></pre>
@@ -422,6 +750,17 @@ One of: graphml, sif </div>    </div>  <!-- field-items -->
 <div class="param">nodeSymbols (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">array[String]</a></span>  </div>
 <div class="param">networkType (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> One of: REGULATORY, SIGNALLING, PPI </div>
           <div class="param-desc"><span class="param-type">example: REGULATORY</span></div>
+<div class="param">annotationName (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> The name of the annotation to be added </div>
+          <div class="param-desc"><span class="param-type">example: ExpressionValue</span></div>
+<div class="param">annotationType (optional)</div><div class="param-desc"><span class="param-type"><a href="#string">String</a></span> The type of the annotation values (e.g. String, int, boolean) </div>
+          <div class="param-desc"><span class="param-type">example: String</span></div>
+<div class="param">annotation (optional)</div><div class="param-desc"><span class="param-type"><a href="#">map[String, null]</a></span>  </div>
+<div class="param">minSize (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> the minimal size for the context generation (number of relationships to move from given gene) </div>
+          <div class="param-desc"><span class="param-type">example: 1</span></div>
+<div class="param">maxSize (optional)</div><div class="param-desc"><span class="param-type"><a href="#integer">Integer</a></span> the maximal size for the context generation (number of relationships to move from given gene) </div>
+          <div class="param-desc"><span class="param-type">example: 3</span></div>
+<div class="param">terminateAtDrug (optional)</div><div class="param-desc"><span class="param-type"><a href="#boolean">Boolean</a></span> allows to restrict the context search to only show paths that end in a drug node (MyDrug annotations are required for this) </div>
+          <div class="param-desc"><span class="param-type">example: false</span></div>
     </div>  <!-- field-items -->
   </div>
   <div class="model">
