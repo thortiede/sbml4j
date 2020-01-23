@@ -754,7 +754,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			contextSpeciesList = findNetworkContext(startNodeEntityUUID, options);
 		} else if (sourceSpeciesForContext.size() > 1) {
 			Map<String, FlatSpecies> uuidToOldSpeciesMap = new HashMap<>();
-			String relationTypesApocString = getRelationShipApocString(options);
+			Set<String> excludeDrug = new HashSet<>();
+			excludeDrug.add("targets");
+			String relationTypesApocString = getRelationShipApocString(options, excludeDrug);
 			List<String> startNodeEntityUUIDList = new ArrayList<>();
 			for (FlatSpecies oldSpecies : oldSpeciesList) {
 				if (options.getNodeSymbols().contains((String) oldSpecies.getSymbol())) {
@@ -825,6 +827,23 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			relationTypesApocString += "|";
 		}
 		return relationTypesApocString.substring(0, relationTypesApocString.length()-1);
+	}
+
+	/**
+	 * @param options
+	 * @return
+	 */
+	private String getRelationShipApocString(FilterOptions options, Set<String> exclude) {
+		String relationTypesApocString = "";
+		boolean addedAtLeastOne = false;
+		for (String relationType : options.getRelationTypes()) {
+			if(!exclude.contains(relationType)) {
+				addedAtLeastOne = true;
+				relationTypesApocString += relationType;
+				relationTypesApocString += "|";
+			}
+		}
+		return addedAtLeastOne ? relationTypesApocString.substring(0, relationTypesApocString.length()-1) : relationTypesApocString;
 	}
 
 	@Override
