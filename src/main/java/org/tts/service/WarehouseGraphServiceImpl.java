@@ -741,18 +741,60 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options) {
 		List<String> sourceSpeciesForContext = options.getNodeSymbols();
-		String startNodeSymbol = sourceSpeciesForContext.get(0);
-		String startNodeEntityUUID = "";
-		for (FlatSpecies oldSpecies : oldSpeciesList) {
-			if (oldSpecies.getSymbol() != null && oldSpecies.getSymbol().equals(startNodeSymbol)) {
-				startNodeEntityUUID = oldSpecies.getEntityUUID();
-				break;
+		List<FlatSpecies> contextSpeciesList;
+		if(sourceSpeciesForContext.size() == 1) {
+			String startNodeSymbol = sourceSpeciesForContext.get(0);
+			String startNodeEntityUUID = "";
+			for (FlatSpecies oldSpecies : oldSpeciesList) {
+				if (oldSpecies.getSymbol() != null && oldSpecies.getSymbol().equals(startNodeSymbol)) {
+					startNodeEntityUUID = oldSpecies.getEntityUUID();
+					break;
+				}
 			}
+			contextSpeciesList = findNetworkContext(startNodeEntityUUID, options);
+		} else if (sourceSpeciesForContext.size() > 1) {
+			Map<String, FlatSpecies> uuidToOldSpeciesMap = new HashMap<>();
+			Set<String> excludeDrug = new HashSet<>();
+			excludeDrug.add("targets");
+			String relationTypesApocString = getRelationShipApocString(options, excludeDrug);
+			List<String> startNodeEntityUUIDList = new ArrayList<>();
+			for (FlatSpecies oldSpecies : oldSpeciesList) {
+				if (options.getNodeSymbols().contains((String) oldSpecies.getSymbol())) {
+					startNodeEntityUUIDList.add(oldSpecies.getEntityUUID());
+					uuidToOldSpeciesMap.put(oldSpecies.getEntityUUID(), oldSpecies);
+				}
+			}
+			contextSpeciesList = this.findMultiGeneSubnet(startNodeEntityUUIDList, relationTypesApocString, options);
+			//contextSpeciesList = new ArrayList<FlatSpecies>();
+			for(int i = 0; i != startNodeEntityUUIDList.size(); i++) {
+				for (int j = i+1; j != startNodeEntityUUIDList.size(); j++) {
+					List<FlatSpecies> dijkstraFlatSpeciesList = 
+							this.flatSpeciesRepository.apocDijkstraWithDefaultWeight(startNodeEntityUUIDList.get(i),//uuidToOldSpeciesMap.get(startNodeEntityUUIDList.get(i)), 
+																					startNodeEntityUUIDList.get(j), //uuidToOldSpeciesMap.get(startNodeEntityUUIDList.get(j)), 
+																					relationTypesApocString, 
+																					"weight", 
+																					1.0f);
+					for (FlatSpecies fs : dijkstraFlatSpeciesList) {
+						if(!contextSpeciesList.contains(fs)) {
+							contextSpeciesList.add(fs);
+						}
+					}
+				}
+			}
+		} else {
+			return null; // raise Exception? or otherwise let controller know what happend..
 		}
 		
-		List<FlatSpecies> contextSpeciesList = findNetworkContext(startNodeEntityUUID, options);
-		
 		return contextSpeciesList;
+	}
+
+	private List<FlatSpecies> findMultiGeneSubnet(List<String> sourceSpeciesForContext, String relationTypesApocString, FilterOptions options) {
+		
+		if(options.isTerminateAtDrug()) {
+			return this.flatSpeciesRepository.findMultiGeneSubnet(sourceSpeciesForContext, relationTypesApocString, "+FlatSpecies/Drug", options.getMinSize(), options.getMaxSize());
+		} else {
+			return this.flatSpeciesRepository.findMultiGeneSubnet(sourceSpeciesForContext, relationTypesApocString, "+FlatSpecies", options.getMinSize(), options.getMaxSize());
+		}
 	}
 
 	/**
@@ -764,21 +806,44 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 */
 	@Override
 	public List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options) {
+		String relationTypesApocString = getRelationShipApocString(options);
+		List<FlatSpecies> contextSpeciesList;
+		if(options.isTerminateAtDrug()) {
+			contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, "/Drug", options.getMinSize(), options.getMaxSize());
+		} else {
+			contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, options.getMinSize(), options.getMaxSize());
+		}
+		return contextSpeciesList;
+	}
+
+	/**
+	 * @param options
+	 * @return
+	 */
+	private String getRelationShipApocString(FilterOptions options) {
 		String relationTypesApocString = "";
 		for (String relationType : options.getRelationTypes()) {
 			relationTypesApocString += relationType;
 			relationTypesApocString += "|";
 		}
-		relationTypesApocString = relationTypesApocString.substring(0, relationTypesApocString.length()-1);
-		int minPathLength = options.getMinSize();
-		int maxPathLength = options.getMaxSize();
-		List<FlatSpecies> contextSpeciesList;
-		if(options.isTerminateAtDrug()) {
-			contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, "/Drug", minPathLength, maxPathLength);
-		} else {
-			contextSpeciesList = this.flatSpeciesRepository.findNetworkContext(startNodeEntityUUID, relationTypesApocString, minPathLength, maxPathLength);
+		return relationTypesApocString.substring(0, relationTypesApocString.length()-1);
+	}
+
+	/**
+	 * @param options
+	 * @return
+	 */
+	private String getRelationShipApocString(FilterOptions options, Set<String> exclude) {
+		String relationTypesApocString = "";
+		boolean addedAtLeastOne = false;
+		for (String relationType : options.getRelationTypes()) {
+			if(!exclude.contains(relationType)) {
+				addedAtLeastOne = true;
+				relationTypesApocString += relationType;
+				relationTypesApocString += "|";
+			}
 		}
-		return contextSpeciesList;
+		return addedAtLeastOne ? relationTypesApocString.substring(0, relationTypesApocString.length()-1) : relationTypesApocString;
 	}
 
 	@Override

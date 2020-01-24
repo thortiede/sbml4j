@@ -31,6 +31,14 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	List<FlatSpecies> findNetworkContext(String startNodeUUID, String relationTypesApocString, String nodeFilterString,
 			int minPathLength, int maxPathLength);
 
+	@Query(value="MATCH (fs:FlatSpecies) where fs.entityUUID IN $startNodeSymbols call apoc.path.expand(fs, {1}, {2}, {3}, {4}) yield path as pp return nodes(pp), relationships(pp);")
+	List<FlatSpecies> findMultiGeneSubnet(List<String> startNodeSymbols, String relationTypesApocString, String nodeFilterString,
+			int minPathLength, int maxPathLength);
+	
+	@Query(value="MATCH (fs1:FlatSpecies) where fs1.entityUUID = $startNodeEntityUUID with fs1 MATCH (fs2:FlatSpecies) where fs2.entityUUID = $endNodeEntityUUID call apoc.algo.dijkstraWithDefaultWeight(fs1, fs2, {2}, {3}, {4}) yield path as pp, weight as w return nodes(pp), relationships(pp);")
+	List<FlatSpecies> apocDijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, String relationTypesApocString, String propertyName, float defaultWeight);
+	
+	
 	@Query(value="MATCH "
 			+ "(m:MappingNode{entityUUID: {0}})"
 			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"

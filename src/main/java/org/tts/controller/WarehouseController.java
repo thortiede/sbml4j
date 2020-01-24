@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -312,7 +313,7 @@ public class WarehouseController {
 		// copy all Nodes with their relationships to new mapping
 		List<FlatSpecies> oldSpeciesList = this.warehouseGraphService.getNetworkNodes(parentUUID);
 		List<FlatSpecies> newSpeciesList = new ArrayList<>(oldSpeciesList.size());
-		
+		List<String> newNodeSymbols;
 		switch (step) {
 		case COPY:
 			newSpeciesList = this.warehouseGraphService.copyFlatSpeciesList(oldSpeciesList);
@@ -350,8 +351,25 @@ public class WarehouseController {
 			// persist the resulting network with all relationships between contained nodes
 			List<FlatSpecies> contextSpeciesList = this.warehouseGraphService.createNetworkContext(oldSpeciesList, parentUUID, options);
 			// adjust the options here to include all the nodes that are present in the created oldSpeciesList
-			List<String> newNodeSymbols = new ArrayList<>();
+			newNodeSymbols = new ArrayList<>();
 			for (FlatSpecies species : contextSpeciesList) {
+				newNodeSymbols.add(species.getSymbol());
+			}
+			options.setNodeSymbols(newNodeSymbols);
+			// then copy and filter the FlatSpecies accordingly
+			// The nodeSymbols step now guarantees, that only those nodes remain (and get referenced in relations) that are part of the network context
+			newSpeciesList = this.warehouseGraphService.copyAndFilterFlatSpeciesList(oldSpeciesList, options);
+			break;
+		case MULTIGENESUBNET:
+			newMapping.setSubnetGeneSymbolSet(options.getNodeSymbols().stream().collect(Collectors.toSet())); // subnetGeneSymbolList is a Set -> convert via Stream
+			newMapping.setMinSize(options.getMinSize());
+			newMapping.setMaxSize(options.getMaxSize());
+			newMapping.setBaseNetworkEntityUUID(parentUUID);
+			newMapping = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
+			List<FlatSpecies> subNetSpeciesList = this.warehouseGraphService.createNetworkContext(oldSpeciesList, parentUUID, options);
+			// adjust the options here to include all the nodes that are present in the created oldSpeciesList
+			newNodeSymbols = new ArrayList<>();
+			for (FlatSpecies species : subNetSpeciesList) {
 				newNodeSymbols.add(species.getSymbol());
 			}
 			options.setNodeSymbols(newNodeSymbols);
