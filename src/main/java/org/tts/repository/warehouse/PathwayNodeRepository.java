@@ -30,4 +30,20 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 
 	PathwayNode findByEntityUUID(String entityUUID);
 
+
+	@Query("MATCH "
+			+ "(p:PathwayNode)-[w:Warehouse]->(s:SBMLSpecies) "
+			+ "WHERE p.entityUUID = $pathwayNodeEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN DISTINCT s.sBaseSboTerm")
+	Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID);
+
+
+	@Query("MATCH "
+			+ "(p:PathwayNode)-[w:Warehouse]->(t:SBMLSimpleTransition) "
+			+ "WHERE p.entityUUID = $pathwayNodeEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN DISTINCT t.sBaseSboTerm")
+	Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID);
+
 }
