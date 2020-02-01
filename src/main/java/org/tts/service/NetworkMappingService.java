@@ -38,7 +38,7 @@ public interface NetworkMappingService {
 	
 	
 	
-	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, IDSystem idSystem, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode);
+	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, IDSystem idSystem, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) throws Exception;
 
 	Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type);
 
