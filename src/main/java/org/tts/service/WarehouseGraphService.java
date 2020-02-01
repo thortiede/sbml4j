@@ -110,4 +110,8 @@ public interface WarehouseGraphService {
 
 	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID);
 	
+	public Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID);
+
+	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID);
+	
 }
