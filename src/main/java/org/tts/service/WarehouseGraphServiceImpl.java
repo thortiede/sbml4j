@@ -38,11 +38,13 @@ import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.full.SBMLReaction;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.simple.SBMLSimpleReaction;
 import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
@@ -254,7 +256,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				else if (node.getClass() == SBMLSimpleTransition.class) {
 					item.addTransitionType(this.utilityService.translateSBOString(((SBMLSBaseEntity)node).getsBaseSboTerm()));
 					item.increaseTransitionCounter();
-				} else if (node.getClass() == SBMLReaction.class) {
+				} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
 					item.increaseReactionCounter();
 				} else if (node.getClass() == SBMLCompartment.class) {
 					item.addCompartment(((SBMLCompartment)node).getsBaseName());
@@ -489,11 +491,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		for (FlatSpecies node1 : flatSpeciesList) {
 			//FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
 			node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
-				for (FlatSpecies node2 : node2List) {
-					if(nodeSymbols.contains(node2.getSymbol())) {
+				for (FlatEdge node2Edge : node2List) {
+					if(nodeSymbols.contains(node2Edge.getOutputFlatSpecies().getSymbol())) {
 					//logger.info("Working on Node " + species.getSymbol() + " connected with " + relationType + " to " + node2.getSymbol());
 						//nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
-						nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node1.getAnnotation(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), node2.getAnnotation(), this.utilityService.translateSBOString(relationType));
+						nel.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node1.getAnnotation(), node2Edge.getOutputFlatSpecies().getSymbol(), node2Edge.getOutputFlatSpecies().getSimpleModelEntityUUID(), node2Edge.getOutputFlatSpecies().getAnnotation(), this.utilityService.translateSBOString(relationType));
 					}
 				}
 			});
@@ -569,9 +571,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			for (FlatSpecies species : mappingFlatSpecies) {
 				FlatSpecies node1 = this.flatSpeciesRepository.findByEntityUUID(species.getEntityUUID());
 				node1.getAllRelatedSpecies().forEach((relationType, node2List) -> {
-					for (FlatSpecies node2 : node2List) {
+					for (FlatEdge node2Edge : node2List) {
 						//logger.info("Working on Node " + species.getSymbol() + " connected with " + relationType + " to " + node2.getSymbol());
-						mappingNEL.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2.getSymbol(), node2.getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
+						mappingNEL.addListEntry(node1.getSymbol(), node1.getSimpleModelEntityUUID(), node2Edge.getOutputFlatSpecies().getSymbol(), node2Edge.getOutputFlatSpecies().getSimpleModelEntityUUID(), this.utilityService.translateSBOString(relationType));
 					}
 				});
 			}
@@ -634,8 +636,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			FlatSpecies oldSpecies = original.get(j);
 			FlatSpecies newSpecies = newSpeciesList.get(j);
 			oldSpecies.getAllRelatedSpecies().forEach((relation, speciesList)-> {
-				for (FlatSpecies oldRelatedSpecies : speciesList) {
-					newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()), relation);
+				for (FlatEdge oldRelatedSpeciesEdge : speciesList) {
+					newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpeciesEdge.getOutputFlatSpecies().getEntityUUID()), relation);
 				}
 			});
 		}
@@ -682,11 +684,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			if(!(newSpecies == null)) {
 				oldSpecies.getAllRelatedSpecies().forEach((relation, speciesList)-> {
 					if(relationTypes.contains(this.utilityService.translateSBOString(relation))) {
-						for (FlatSpecies oldRelatedSpecies : speciesList) {
-							if (!oldSkippedSpecies.contains(oldRelatedSpecies.getEntityUUID())) {
-								newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()), relation);
+						for (FlatEdge oldRelatedSpeciesEdge : speciesList) {
+							if (!oldSkippedSpecies.contains(oldRelatedSpeciesEdge.getOutputFlatSpecies().getEntityUUID())) {
+								newSpecies.addRelatedSpecies(oldUUIDToNewSpeciesMap.get(oldRelatedSpeciesEdge.getOutputFlatSpecies().getEntityUUID()), relation);
 								newConnectedSpecies.add(newSpecies.getEntityUUID());
-								newConnectedSpecies.add(oldUUIDToNewSpeciesMap.get(oldRelatedSpecies.getEntityUUID()).getEntityUUID());
+								newConnectedSpecies.add(oldUUIDToNewSpeciesMap.get(oldRelatedSpeciesEdge.getOutputFlatSpecies().getEntityUUID()).getEntityUUID());
 							}
 						}
 					}
@@ -889,5 +891,15 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		}
 		
 		return null;
+	}
+
+	@Override
+	public Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID) {
+		return this.pathwayNodeRepository.getAllDistinctSpeciesSboTermsOfPathway(pathwayNodeEntityUUID);
+	}
+
+	@Override
+	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID) {
+		return this.pathwayNodeRepository.getAllDistinctTransitionSboTermsOfPathway(pathwayNodeEntityUUID);
 	}
 }
