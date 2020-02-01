@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NodeNodeEdge;
+import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.IDSystem;
 
@@ -158,7 +160,24 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			)
 	Iterable<NodeNodeEdge> getAllFlatTransitionsForPathway(String pathwayEntityUUID, IDSystem idSystem);
 
-	
+	@Query(value="MATCH"
+			+ "(p:PathwayNode {entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(t:SBMLSimpleTransition) where t.sBaseSboTerm IN ({2})"
+			+ "WITH t "
+			+ "MATCH "
+			+ "(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
+			+ "(t)"
+			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies) "
+			+ "WHERE s1.sBaseSboTerm IN ({3}) "
+			+ "AND s2.sBaseSboTerm IN ({3}) "
+			+ "RETURN "
+			+ "s1 as inputSpecies,"
+			+ "t as transition, "
+			+ "s2 as outputSpecies"
+			)
+	Iterable<NonMetabolicPathwayReturnType> getFlatTransitionsForPathwayUsingSpecies(String entityUUID, IDSystem idSystem,
+			List<String> transitionSBOTerms, List<String> nodeSBOTerms);
 	
 	@Query(value="MATCH"
 			+ "(p:PathwayNode {entityUUID: {0}})"
@@ -249,6 +268,24 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			)
 	Iterable<NodeNodeEdge> getFlatTransitionsForPathway(String entityUUID, IDSystem idSystem,
 			List<String> transitionSBOTerms, List<String> nodeSBOTerms);
+
+	
+	@Query("MATCH "
+			+ " (p:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(r:SBMLSimpleReaction) "
+			+ "WHERE p.entityUUID = $pathwayEntityUUID "
+			+ "AND w.warehouseGraphEdgeType=\"CONTAINS\""
+			+ "WITH r "
+			+ "MATCH "
+			+ "(r)"
+			+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
+			+ "(s:SBMLSpecies) "
+			+ "RETURN s as species, "
+			+ "type(rel) as typeOfRelation, "
+			+ "r as reaction")
+	Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(String pathwayEntityUUID,
+			List<String> nodeSBOTerms);
 	
 	/**
 	 * match (n:MappingNode)-[:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(fs:FlatSpecies) where n.mappingName = "Map_PATHWAYMAPPING_path_hsa05210_KEGGGENES" detach delete fs
