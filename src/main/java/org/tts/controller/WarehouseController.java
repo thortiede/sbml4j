@@ -40,6 +40,7 @@ import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
+import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
@@ -139,7 +140,15 @@ public class WarehouseController {
 		}
 		this.provenanceGraphService.connect(createMappingActivityNode, pathway, ProvenanceGraphEdgeType.used);
 		// create the mappingNode
-		MappingNode mappingNode = this.networkMappingService.createMappingFromPathway(pathway, NetworkMappingType.valueOf(mappingType), IDSystem.valueOf(idSystem), createMappingActivityNode, userAgentNode);
+		MappingNode mappingNode;
+		try {
+			mappingNode = this.networkMappingService.createMappingFromPathway(pathway, NetworkMappingType.valueOf(mappingType), IDSystem.valueOf(idSystem), createMappingActivityNode, userAgentNode);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			logger.info(e.getMessage());
+			e.printStackTrace();
+			return new ResponseEntity<WarehouseInventoryItem>(HttpStatus.BAD_REQUEST);
+		}
 			
 		
 		// build the inventoryItem
@@ -390,7 +399,7 @@ public class WarehouseController {
 			FlatSpecies newSpecies = newSpeciesList.get(i);
 			if(newSpecies != null) {
 				numberOfNodes++;
-				Map<String, List<FlatSpecies>> relatedSpeciesList = newSpecies.getAllRelatedSpecies();
+				Map<String, List<FlatEdge>> relatedSpeciesEdgeList = newSpecies.getAllRelatedSpecies();
 				
 				nodeTypes.add(newSpecies.getSboTerm());
 				if(newSpecies.getSymbol() != null) {
@@ -399,8 +408,8 @@ public class WarehouseController {
 					logger.info("Species with uuid: " + newSpecies.getEntityUUID() + " has no symbol set (parent: " + newSpecies.getSimpleModelEntityUUID() + ")");
 				}
 				
-				for (String key : relatedSpeciesList.keySet()) {
-					numberOfRelations += relatedSpeciesList.get(key).size();
+				for (String key : relatedSpeciesEdgeList.keySet()) {
+					numberOfRelations += relatedSpeciesEdgeList.get(key).size();
 					relationTypes.add(key);
 				}
 				newSpecies = this.networkMappingService.persistFlatSpecies(newSpecies);
