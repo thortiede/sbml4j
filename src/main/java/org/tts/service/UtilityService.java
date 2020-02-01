@@ -20,9 +20,19 @@ public class UtilityService {
 							? "targets" 
 							: (sboString.equals("Drug") 
 									? 	"Drug"
-									:	org.sbml.jsbml.SBO.getTerm(sboString).getName()
-							)
-					)
+									:	(sboString.equals("PRODUCTOF")
+											? "PRODCUTOF"
+											: (sboString.equals("REACTANTOF")
+													? "REACTANTOF"
+													: (sboString.equals("CATALYSES")
+															? "CATALYSES"
+															: org.sbml.jsbml.SBO.getTerm(sboString).getName()
+															)
+												)
+										)
+								)
+							
+						)
 				;
 	}
 	
