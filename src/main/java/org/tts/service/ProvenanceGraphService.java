@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
@@ -120,6 +121,46 @@ public class ProvenanceGraphService {
 		}
 	}
 
+	/**
+	 * connect two provenance entities. The entity is not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param source the startNode of the edge
+	 * @param targetEntityUUID the entityUUID of the endNode of the edge, this gets queried in the db and used for connection
+	 * @param edgetype the provenanceGraphEdgeType
+	 */
+	public void connect (ProvenanceEntity source, String targetEntityUUID, 
+			ProvenanceGraphEdgeType edgetype) {
+		this.connect(source, this.getByEntityUUID(targetEntityUUID), edgetype);
+	}
+	/**
+	 * connect two provenance entities. The entity is not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntityUUID the entityUUID of the startNode of the edge, this gets queried in the db and used for connection
+	 * @param target  the endNode of the edge
+	 * @param edgetype the provenanceGraphEdgeType
+	 */
+	public void connect (String sourceEntityUUID, ProvenanceEntity target,
+			ProvenanceGraphEdgeType edgetype) {
+		this.connect(getByEntityUUID(sourceEntityUUID), target, edgetype);
+	}
+	/**
+	 * connect two provenance entities. The entity is not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntityUUID the entityUUID of the startNode of the edge, this gets queried in the db and used for connection
+	 * @param targetEntityUUID the entityUUID of the endNode of the edge, this gets queried in the db and used for connection
+	 * @param edgetype the provenanceGraphEdgeType
+	 */
+	public void connect (String sourceEntityUUID, String targetEntityUUID,
+			ProvenanceGraphEdgeType edgetype) {
+		this.connect(getByEntityUUID(sourceEntityUUID),
+						getByEntityUUID(targetEntityUUID), 
+						edgetype);
+	}
+	
+	public ProvenanceEntity getByEntityUUID(String entityUUID) {
+		return this.provenanceEntityRepository.findByEntityUUID(entityUUID);
+	}
+	
 	public boolean areProvenanceEntitiesConnectedWithProvenanceEdgeType(String sourceEntityUUID, String targetEntityUUID, ProvenanceGraphEdgeType edgetype) {
 		return this.provenanceEntityRepository.areProvenanceEntitiesConnectedWithProvenanceEdgeType(sourceEntityUUID, targetEntityUUID, edgetype);
 	}
