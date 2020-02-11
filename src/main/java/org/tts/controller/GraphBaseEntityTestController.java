@@ -94,7 +94,11 @@ public class GraphBaseEntityTestController {
 		
 	}
 	
-
+	@RequestMapping(value="/testSubgrapExtract", method = RequestMethod.GET)
+	public ResponseEntity<String> testSubgraphExtract(@RequestParam("EntityUUID")String entityUUID) {
+		String ret = this.graphBaseEntityService.testFlatMappingExtract(entityUUID);
+		return new ResponseEntity<>(ret, HttpStatus.OK);
+	}
 	
 	
 }

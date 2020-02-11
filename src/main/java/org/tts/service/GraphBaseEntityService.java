@@ -10,4 +10,6 @@ public interface GraphBaseEntityService {
 
 	Iterable<GraphBaseEntity> findAll();
 
+	String testFlatMappingExtract(String entityUUID);
+
 }
