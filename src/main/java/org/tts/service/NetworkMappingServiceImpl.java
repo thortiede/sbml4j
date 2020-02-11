@@ -64,11 +64,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	FileStorageService fileStorageService;
 	GraphMLService graphMLService;
 	FlatEdgeService flatEdgeService;
-	/*private enum interactionTypes {
-		DISSOCIATION ("dissociation"),
-		
 
-	}*/
 	
 	private static int QUERY_DEPTH_ZERO = 0;
 	
@@ -537,6 +533,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				}
 				metabolicFlatEdge = this.flatEdgeService.createFlatEdge(current.getTypeOfRelation());
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(metabolicFlatEdge);
+				metabolicFlatEdge.setSymbol(startFlatSpecies.getSymbol() + "-" + current.getTypeOfRelation() + "->" + endFlatSpecies.getSymbol());
 				metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
 				metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
 				// TODO: The relationType needs to be determined in a better way.
@@ -678,10 +675,12 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					transitionFlatEdge.setInputFlatSpecies(inputFlatSpecies);
 					transitionFlatEdge.setOutputFlatSpecies(outputFlatSpecies);
 					transitionFlatEdge.addAnnotation("SBOTerm", current.getTransition().getsBaseSboTerm());
-					relationTypes.add(current.getTransition().getsBaseSboTerm());
+					
 					transitionFlatEdge.addAnnotationType("SBOTerm", "String");
 					transitionFlatEdge.addAnnotation("TransitionId", current.getTransition().getTransitionId());
 					transitionFlatEdge.addAnnotationType("TransitionId", "String");
+					transitionFlatEdge.setSymbol(inputFlatSpecies.getSymbol() + "-" + transitionFlatEdge.getTypeString() + "->" + outputFlatSpecies.getSymbol());
+					relationTypes.add(transitionFlatEdge.getTypeString());
 					transitionFlatEdge.addAnnotation("sbmlSimpleTransitionEntityUUID", current.getTransition().getEntityUUID());
 					transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
 					sbmlSimpleTransitionToFlatEdgeMap.put(current.getTransition().getEntityUUID(), transitionFlatEdge);
