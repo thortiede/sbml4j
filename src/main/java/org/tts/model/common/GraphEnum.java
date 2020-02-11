@@ -134,7 +134,11 @@ public class GraphEnum {
 		METHYLATION("SBO:0000214"),<br>
 		MOLECULARINTERACTION("SBO:0000344"),<br>
 		CONTROL("SBO:0000168");<br>
-		UNKNOWNINSOURCE("unknown");
+		UNKNOWNINSOURCE("unknown"),<br>
+		TARGETS("targets"),<br>
+		PRODUCT("product"),<br>
+		REACTANT("reactant"),<br>
+		CATALYST("catalyst");
 	 */
 	
 	public enum RelationTypes {
@@ -151,7 +155,11 @@ public class GraphEnum {
 		MOLECULARINTERACTION("SBO:0000344"),
 		CONTROL("SBO:0000168"),
 		UNKNOWNFROMSOURCE("unknownFromSource"),
-		TARGETS("targets");
+		TARGETS("targets"),
+		PRODUCT("product"),
+		REACTANT("reactant"),
+		CATALYST("catalyst");
+		
 		
 		private final String relType;
 		
