@@ -153,6 +153,26 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	}
 	
 	/**
+	 * Reset the id and version of the entity and assign new entityUUID
+	 * @param target the GraphBaseEntity for which the basic properties (entityUUID, id, version) are to be reset.
+	 */
+	void resetGraphBaseEntityProperties(GraphBaseEntity target) {
+		target.setEntityUUID(UUID.randomUUID().toString());
+		target.setId(null);
+		target.setVersion(null);
+	}
+	/**
+	 * Reset the id and version of the entity and assign an entityUUID
+	 * @param uuid The uuid to be assigned to target
+	 * @param target the GraphBaseEntity for which the basic properties (entityUUID, id, version) are to be reset.
+	 */
+	void resetGraphBaseEntityProperties(String uuid, GraphBaseEntity target) {
+		target.setEntityUUID(uuid);
+		target.setId(null);
+		target.setVersion(null);
+	}
+	
+	/**
 	 * Set Properties of SBMLSBaseEntity (or any entity derived from it)
 	 * from a jSBML SBase entity
 	 * @param sbmlSimpleModelServiceImpl TODO
