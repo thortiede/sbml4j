@@ -17,10 +17,13 @@ public class MappingNode extends WarehouseGraphNode {
 	
 	private Set<String> mappingNodeSymbols;
 	
+	private Set<String> mappingRelationSymbols;
+	
 	private String baseNetworkEntityUUID;
 	
 	private String geneSymbol;
 	
+	@Deprecated
 	private Set<String> subnetGeneSymbolSet;
 	
 	private int minSize;
@@ -105,18 +108,29 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingNodeSymbols = mappingNodeSymbols;
 	}
 	
+	public Set<String> getMappingRelationSymbols() {
+		return mappingRelationSymbols;
+	}
+
+	public void setMappingRelationSymbols(Set<String> mappingRelationSymbols) {
+		this.mappingRelationSymbols = mappingRelationSymbols;
+	}
+
 	public Set<String> getMappingNodeSymbols() {
 		return this.mappingNodeSymbols;
 	}
-
+	
+	@Deprecated
 	public Set<String> getSubnetGeneSymbolSet() {
 		return subnetGeneSymbolSet;
 	}
-
+	
+	@Deprecated
 	public void setSubnetGeneSymbolSet(Set<String> subnetGeneSymbolSet) {
 		this.subnetGeneSymbolSet = subnetGeneSymbolSet;
 	}
 	
+	@Deprecated
 	public boolean addSubnetGeneSymbol(String subnetGeneSymbol) {
 		if (this.subnetGeneSymbolSet == null) {
 			this.subnetGeneSymbolSet = new HashSet<>();
