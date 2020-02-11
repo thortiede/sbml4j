@@ -70,6 +70,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	HttpService httpService;
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	ProvenanceGraphService provenanceGraphService;
+	UtilityService utilityService;
 	
 	int SAVE_DEPTH = 1;
 
@@ -85,7 +86,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			GraphBaseEntityRepository graphBaseEntityRepository,
 			HttpService httpService,
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
-			ProvenanceGraphService provenanceGraphService) {
+			ProvenanceGraphService provenanceGraphService,
+			UtilityService utilityService) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
@@ -98,6 +100,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.httpService = httpService;
 		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
 		this.provenanceGraphService = provenanceGraphService;
+		this.utilityService = utilityService;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model, ProvenanceGraphActivityNode persistActivity) {
@@ -401,8 +404,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 			newTransitionId += tmp.getsBaseName();
 			newTransitionId += "-";
-			newTransitionId += transition.getSBOTermID();
-			newTransitionId += "-";
+			newTransitionId += this.utilityService.translateSBOString(transition.getSBOTermID());
+			newTransitionId += "->"; // TODO: Should this be directional?
 			if(transition.getListOfOutputs().size() > 1) {
 				logger.info("More than one Output in transition: " + transition.getName());
 			}
