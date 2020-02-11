@@ -21,7 +21,7 @@ public class UtilityService {
 							: (sboString.equals("Drug") 
 									? 	"Drug"
 									:	(sboString.equals("PRODUCTOF")
-											? "PRODCUTOF"
+											? "PRODUCTOF"
 											: (sboString.equals("REACTANTOF")
 													? "REACTANTOF"
 													: (sboString.equals("CATALYSES")
