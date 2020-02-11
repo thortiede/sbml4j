@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="UNCERTAINPROCESS")
 public class UncertainProcessFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "UNCERTAINPROCESS";
+	}
 }

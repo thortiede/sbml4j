@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="METHYLATION")
 public class MethylationFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "METHYLATION";
+	}
 }

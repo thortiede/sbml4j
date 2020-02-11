@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="DISSOCIATION")
 public class DissociationFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "DISSOCIATION";
+	}
 }

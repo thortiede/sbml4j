@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="REACTANTOF")
 public class ReactantFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "REACTANTOF";
+	}
 }

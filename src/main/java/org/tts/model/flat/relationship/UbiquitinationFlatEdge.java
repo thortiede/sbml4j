@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="UBIQUITINATION")
 public class UbiquitinationFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "UBIQUITINATION";
+	}
 }

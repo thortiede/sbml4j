@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="MOLECUARINTERACTION")
 public class MolecularInteractionFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "MOLECUARINTERACTION";
+	}
 }

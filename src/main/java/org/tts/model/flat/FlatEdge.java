@@ -8,13 +8,22 @@ import org.tts.model.common.ContentGraphEdge;
 @RelationshipEntity
 public class FlatEdge extends ContentGraphEdge {
 
-
+	private String symbol;
+	
 	@StartNode
 	private FlatSpecies inputFlatSpecies;
 	
 	@EndNode
 	private FlatSpecies outputFlatSpecies;
 	
+	public String getSymbol() {
+		return symbol;
+	}
+
+	public void setSymbol(String symbol) {
+		this.symbol = symbol;
+	}
+
 	public FlatSpecies getInputFlatSpecies() {
 		return inputFlatSpecies;
 	}
@@ -29,6 +38,10 @@ public class FlatEdge extends ContentGraphEdge {
 
 	public void setOutputFlatSpecies(FlatSpecies outputFlatSpecies) {
 		this.outputFlatSpecies = outputFlatSpecies;
+	}
+	
+	public String getTypeString() {
+		return "FLATEDGE";
 	}
 
 }

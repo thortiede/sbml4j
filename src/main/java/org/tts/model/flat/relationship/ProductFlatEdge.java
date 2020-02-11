@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="PRODUCTOF")
 public class ProductFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "PRODUCTOF";
+	}
 }

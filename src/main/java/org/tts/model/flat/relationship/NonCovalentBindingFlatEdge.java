@@ -5,5 +5,8 @@ import org.tts.model.flat.FlatEdge;
 
 @RelationshipEntity(type="NONCOVALENTBINDING")
 public class NonCovalentBindingFlatEdge extends FlatEdge {
-
+	@Override
+	public String getTypeString() {
+		return "NONCOVALENTBINDING";
+	}
 }

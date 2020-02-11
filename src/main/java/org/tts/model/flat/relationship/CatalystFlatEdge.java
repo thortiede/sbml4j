@@ -6,4 +6,8 @@ import org.tts.model.flat.FlatEdge;
 @RelationshipEntity(type="CATALYSES")
 public class CatalystFlatEdge extends FlatEdge {
 
+	@Override
+	public String getTypeString() {
+		return "CATALYSES";
+	}
 }
