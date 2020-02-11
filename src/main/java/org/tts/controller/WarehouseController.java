@@ -111,6 +111,42 @@ public class WarehouseController {
 		}
 		
 	}
+	
+	@RequestMapping(value="/pathwayCollection", method = RequestMethod.POST)
+	public ResponseEntity<Map<String, Integer>> createPathwayCollection(@RequestHeader("user") String username,
+										@RequestBody PathwayCollectionCreationItem pathwayCollectionCreationItem) {
+		// Need Agent
+		Map<String, Object> agentNodeProperties = new HashMap<>();
+		agentNodeProperties.put("graphagentname", username);
+		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
+		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
+		
+		// Need Activity
+		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.createKnowledgeGraph);
+		String activityName = "Create_KnowledgeGraph_for_" + pathwayCollectionCreationItem.getDatabaseEntityUUID();
+		activityNodeProvenanceProperties.put("graphactivityname", activityName); 
+		
+		ProvenanceGraphActivityNode createKnowledgeGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, userAgentNode, ProvenanceGraphEdgeType.wasAssociatedWith);
+		
+		// get databaseNode
+		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(pathwayCollectionCreationItem.getDatabaseEntityUUID());
+		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, database, ProvenanceGraphEdgeType.used);
+		
+		// create a pathwayCollectionNode
+		PathwayCollectionNode pathwayCollectionNode = this.warehouseGraphService.createPathwayCollection(pathwayCollectionCreationItem, database, createKnowledgeGraphActivityNode, userAgentNode);
+		
+		// then create the pathway to the collection by iterating over all pathways in the collection and adding them to the pathway via CONTAINS
+		PathwayNode pathwayNode = this.warehouseGraphService.createPathwayNode("CollectionPathway_of_" + pathwayCollectionNode.getEntityUUID(), "CollectionPathway_of_" + pathwayCollectionNode.getPathwayCollectionName(), database.getOrganism());
+		this.provenanceGraphService.connect(pathwayNode, pathwayCollectionNode, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(pathwayNode, createKnowledgeGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+		this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+		
+		Map<String, Integer> collectionPathwayCounterMap = this.warehouseGraphService.buildPathwayFromCollection(pathwayNode, pathwayCollectionNode, createKnowledgeGraphActivityNode, userAgentNode);
+		return new ResponseEntity<Map<String, Integer>>(collectionPathwayCounterMap, HttpStatus.OK);
+	}
+	
 	@RequestMapping(value="/mapping", method = RequestMethod.POST)
 	public ResponseEntity<WarehouseInventoryItem> createMappingFromWarehouseGraphNode(@RequestHeader("user") String username, 
 																					@RequestParam("pathwayEntityUUID") String pathwayEntityUUID, 
@@ -149,48 +185,12 @@ public class WarehouseController {
 			e.printStackTrace();
 			return new ResponseEntity<WarehouseInventoryItem>(HttpStatus.BAD_REQUEST);
 		}
-			
 		
 		// build the inventoryItem
 		WarehouseInventoryItem mappingInventoryItem = this.warehouseGraphService.getWarehouseInventoryItem(mappingNode);
 		
 		// return the inventoryItem
 		return new ResponseEntity<WarehouseInventoryItem>(mappingInventoryItem, HttpStatus.OK);
-	}
-	
-	@RequestMapping(value="/pathwayCollection", method = RequestMethod.POST)
-	public ResponseEntity<Map<String, Integer>> createPathwayCollection(@RequestHeader("user") String username,
-										@RequestBody PathwayCollectionCreationItem pathwayCollectionCreationItem) {
-		// Need Agent
-		Map<String, Object> agentNodeProperties = new HashMap<>();
-		agentNodeProperties.put("graphagentname", username);
-		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
-		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
-		
-		// Need Activity
-		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
-		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.createKnowledgeGraph);
-		String activityName = "Create_KnowledgeGraph_for_" + pathwayCollectionCreationItem.getDatabaseEntityUUID();
-		activityNodeProvenanceProperties.put("graphactivityname", activityName); 
-		
-		ProvenanceGraphActivityNode createKnowledgeGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
-		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, userAgentNode, ProvenanceGraphEdgeType.wasAssociatedWith);
-		
-		// get databaseNode
-		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(pathwayCollectionCreationItem.getDatabaseEntityUUID());
-		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, database, ProvenanceGraphEdgeType.used);
-		
-		// create a pathwayCollectionNode
-		PathwayCollectionNode pathwayCollectionNode = this.warehouseGraphService.createPathwayCollection(pathwayCollectionCreationItem, database, createKnowledgeGraphActivityNode, userAgentNode);
-		
-		// then create the pathway to the collection by iterating over all pathways in the collection and adding them to the pathway via CONTAINS
-		PathwayNode pathwayNode = this.warehouseGraphService.createPathwayNode("CollectionPathway_of_" + pathwayCollectionNode.getEntityUUID(), "CollectionPathway_of_" + pathwayCollectionNode.getPathwayCollectionName(), database.getOrganism());
-		this.provenanceGraphService.connect(pathwayNode, pathwayCollectionNode, ProvenanceGraphEdgeType.wasDerivedFrom);
-		this.provenanceGraphService.connect(pathwayNode, createKnowledgeGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-		this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-		
-		Map<String, Integer> collectionPathwayCounterMap = this.warehouseGraphService.buildPathwayFromCollection(pathwayNode, pathwayCollectionNode, createKnowledgeGraphActivityNode, userAgentNode);
-		return new ResponseEntity<Map<String, Integer>>(collectionPathwayCounterMap, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/networkInventory", method = RequestMethod.GET)
@@ -291,12 +291,12 @@ public class WarehouseController {
 																			@RequestParam(value="networkEntityUUID") String parentUUID,
 																			@RequestParam(value="step") MappingStep step,
 																			@RequestBody FilterOptions options) {
-		// for now there is no need for the user to give uuid in filterOptions, as it is part of the path
-		/*if(!parentUUID.equals(options.getMappingUuid())) {
+		// Check that we are working on the right network
+		if(!parentUUID.equals(options.getMappingUuid())) {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}*/
+		}
 		// rather I can set it here, to have it
-		options.setMappingUuid(parentUUID);
+		//options.setMappingUuid(parentUUID);
 		MappingNode parent = this.warehouseGraphService.getMappingNode(parentUUID);
 		
 		// Need Agent
@@ -314,119 +314,27 @@ public class WarehouseController {
 		Instant startTime = Instant.now();
 		// create new networkMapping that is the same as the parent one
 		// need mapingNode (name: OldName + step)
-		MappingNode newMapping = this.warehouseGraphService.createMappingNode(parent, options.getNetworkType(), parent.getMappingName() + "_" + step.name() + "_with_" + options.toString()); 
+		MappingNode newMapping = this.warehouseGraphService.createMappingNode(
+				parent, options.getNetworkType(), parent.getMappingName() + "_" + step.name() + "_with_" + options.toString()); 
 		
 		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
 		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(newMapping, createMappingActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-		// copy all Nodes with their relationships to new mapping
-		List<FlatSpecies> oldSpeciesList = this.warehouseGraphService.getNetworkNodes(parentUUID);
-		List<FlatSpecies> newSpeciesList = new ArrayList<>(oldSpeciesList.size());
-		List<String> newNodeSymbols;
-		switch (step) {
-		case COPY:
-			newSpeciesList = this.warehouseGraphService.copyFlatSpeciesList(oldSpeciesList);
-			break;
-		case FILTER:
-			newSpeciesList = this.warehouseGraphService.copyAndFilterFlatSpeciesList(oldSpeciesList, options);
-			break;
-		case ANNOTATE:
-			// same as copy, but add annotation from options (this means FilterOptions needs to be extended)
-			if(options.getAnnotationName() == null || options.getAnnotationName().equals("") || options.getAnnotation().size() < 1) {
-				//annotation information not complete
-				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-			}
-			logger.info("Adding annotation with Name: " + options.getAnnotationName());
-			newMapping.addAnnotationType(options.getAnnotationName(), options.getAnnotationType());
-			newMapping = this.warehouseGraphService.saveMappingNode(newMapping, 0);
-			
-			Map<String, Object> newAnnotation = options.getAnnotation();
-			newSpeciesList = this.warehouseGraphService.copyFlatSpeciesList(oldSpeciesList);
-			for (FlatSpecies fs : newSpeciesList) {
-				if(newAnnotation.containsKey(fs.getSymbol())) {
-					fs.addAnnotation(options.getAnnotationName(), newAnnotation.get(fs.getSymbol()));
-				}
-			}
-			break;
-		case CONTEXT:
-			newMapping.setGeneSymbol(options.getNodeSymbols().get(0));
-			newMapping.setMinSize(options.getMinSize());
-			newMapping.setMaxSize(options.getMaxSize());
-			newMapping.setBaseNetworkEntityUUID(parentUUID);
-			newMapping = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
-			// this needs one (or) more nodes in the options
-			// plus some parameters for the context search (number of relationships to travel, endpointType of travel)
-			// then calculate the context on the parentNet
-			// persist the resulting network with all relationships between contained nodes
-			List<FlatSpecies> contextSpeciesList = this.warehouseGraphService.createNetworkContext(oldSpeciesList, parentUUID, options);
-			// adjust the options here to include all the nodes that are present in the created oldSpeciesList
-			newNodeSymbols = new ArrayList<>();
-			for (FlatSpecies species : contextSpeciesList) {
-				newNodeSymbols.add(species.getSymbol());
-			}
-			options.setNodeSymbols(newNodeSymbols);
-			// then copy and filter the FlatSpecies accordingly
-			// The nodeSymbols step now guarantees, that only those nodes remain (and get referenced in relations) that are part of the network context
-			newSpeciesList = this.warehouseGraphService.copyAndFilterFlatSpeciesList(oldSpeciesList, options);
-			break;
-		case MULTIGENESUBNET:
-			newMapping.setSubnetGeneSymbolSet(options.getNodeSymbols().stream().collect(Collectors.toSet())); // subnetGeneSymbolList is a Set -> convert via Stream
-			newMapping.setMinSize(options.getMinSize());
-			newMapping.setMaxSize(options.getMaxSize());
-			newMapping.setBaseNetworkEntityUUID(parentUUID);
-			newMapping = (MappingNode) this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
-			List<FlatSpecies> subNetSpeciesList = this.warehouseGraphService.createNetworkContext(oldSpeciesList, parentUUID, options);
-			// adjust the options here to include all the nodes that are present in the created oldSpeciesList
-			newNodeSymbols = new ArrayList<>();
-			for (FlatSpecies species : subNetSpeciesList) {
-				newNodeSymbols.add(species.getSymbol());
-			}
-			options.setNodeSymbols(newNodeSymbols);
-			// then copy and filter the FlatSpecies accordingly
-			// The nodeSymbols step now guarantees, that only those nodes remain (and get referenced in relations) that are part of the network context
-			newSpeciesList = this.warehouseGraphService.copyAndFilterFlatSpeciesList(oldSpeciesList, options);
-			break;
-		default:
-			break;
-		}
 		
-		int numberOfRelations = 0;
-		int numberOfNodes = 0;
-		Set<String> nodeTypes = new HashSet<>();
-		Set<String> relationTypes = new HashSet<>();
-		Set<String> nodeSymbols = new HashSet<>();
-		for (int i = 0; i != newSpeciesList.size(); i++) {
-			FlatSpecies newSpecies = newSpeciesList.get(i);
-			if(newSpecies != null) {
-				numberOfNodes++;
-				Map<String, List<FlatEdge>> relatedSpeciesEdgeList = newSpecies.getAllRelatedSpecies();
-				
-				nodeTypes.add(newSpecies.getSboTerm());
-				if(newSpecies.getSymbol() != null) {
-					nodeSymbols.add(newSpecies.getSymbol());
-				} else if (newSpecies.getEntityUUID() != null && newSpecies.getSimpleModelEntityUUID() != null){
-					logger.info("Species with uuid: " + newSpecies.getEntityUUID() + " has no symbol set (parent: " + newSpecies.getSimpleModelEntityUUID() + ")");
-				}
-				
-				for (String key : relatedSpeciesEdgeList.keySet()) {
-					numberOfRelations += relatedSpeciesEdgeList.get(key).size();
-					relationTypes.add(key);
-				}
-				newSpecies = this.networkMappingService.persistFlatSpecies(newSpecies);
-				this.warehouseGraphService.connect(newMapping, newSpecies, WarehouseGraphEdgeType.CONTAINS);
-				this.provenanceGraphService.connect(newSpecies, oldSpeciesList.get(i), ProvenanceGraphEdgeType.wasDerivedFrom);
-				this.provenanceGraphService.connect(newSpecies, createMappingActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			}
-			
+		/**
+		 * Refactor 2020
+		 * At this point divert into the service to not have this logic in the controller
+		 * The basic operation is to copy all network nodes and edges, arrange them under the new mapping node and connect them to the old nodes
+		 * 
+		 */
+		if(step.equals(MappingStep.FILTER) || step.equals(MappingStep.ANNOTATE) || step.equals(MappingStep.COPY)) {
+			newMapping = this.warehouseGraphService.createMappingFromMappingWithOptions(parent, newMapping, options, step);
 		}
+				
 		Instant endTime = Instant.now();
 		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		newMapping.addWarehouseAnnotation("creationendtime", endTime.toString());
-		newMapping.addWarehouseAnnotation("numberofnodes",  String.valueOf(numberOfNodes));
-		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfRelations));
-		newMapping.setMappingNodeTypes(nodeTypes);
-		newMapping.setMappingRelationTypes(relationTypes);
-		newMapping.setMappingNodeSymbols(nodeSymbols);
+		
 		this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
 		return this.getNetworkInventoryDetail(newMapping.getEntityUUID());		
 	}
