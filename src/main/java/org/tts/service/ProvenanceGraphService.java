@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
