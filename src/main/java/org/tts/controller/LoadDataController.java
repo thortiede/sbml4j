@@ -48,7 +48,7 @@ import org.tts.service.WarehouseGraphService;
 public class LoadDataController {
 
 	FileCheckService fileCheckService;
-	FileStorageService fileStorageService;
+	//FileStorageService fileStorageService;
 	SBMLService sbmlService;
 	SBMLPersistenceService sbmlPersistenceService;
 	FileService fileService;
@@ -60,7 +60,7 @@ public class LoadDataController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
-	public LoadDataController(FileStorageService fileStorageService, 
+	public LoadDataController(//FileStorageService fileStorageService, 
 			FileCheckService fileCheckService, 
 			@Qualifier("SBMLSimpleModelServiceImpl") SBMLService sbmlService, 
 			SBMLPersistenceService sbmlPersistenceService,
@@ -70,7 +70,7 @@ public class LoadDataController {
 			ProvenanceGraphService provenanceGraphService,
 			WarehouseGraphService warehouseGraphService) {
 		super();
-		this.fileStorageService = fileStorageService;
+		//this.fileStorageService = fileStorageService;
 		this.fileCheckService = fileCheckService;
 		this.sbmlService = sbmlService;
 		this.sbmlPersistenceService = sbmlPersistenceService;
