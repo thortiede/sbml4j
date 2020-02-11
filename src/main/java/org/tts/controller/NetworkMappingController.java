@@ -115,6 +115,7 @@ public class NetworkMappingController {
 	 */
 	
 	//@RequestMapping(value = "/mapping", method=RequestMethod.POST)
+	@Deprecated
 	public ResponseEntity<Map<String, FilterOptions>> defineFilterOption(@RequestBody FilterOptions filterOptions){
 		if(filterOptions == null) {
 			logger.info("Serving POST /mapping, but filterOptions was null");
