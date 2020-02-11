@@ -13,6 +13,8 @@ public class FilterOptions  extends ResourceSupport {
 	
 	List<String> relationTypes;
 	
+	List<String> relationSymbols;
+	
 	List<String> nodeTypes;
 	
 	List<String> nodeSymbols;
@@ -22,11 +24,21 @@ public class FilterOptions  extends ResourceSupport {
 
 	boolean terminateAtDrug;
 	
-	Map<String, Object> annotation; // symbol to annotation map
+	// Node Annotation
+	Map<String, Object> nodeAnnotation; 
 	
-	String annotationName;
+	String nodeAnnotationName;
 	
-	String annotationType;
+	String nodeAnnotationType;
+	
+	// RelationAnnotation
+	
+	Map<String, Object> relationAnnotation;
+	
+	String relationAnnotationName;
+	
+	String relationAnnotationType;
+	
 	
 	public int getMinSize() {
 		return minSize;
@@ -63,6 +75,14 @@ public class FilterOptions  extends ResourceSupport {
 		this.relationTypes = relationTypes;
 	}
 
+	public List<String> getRelationSymbols() {
+		return relationSymbols;
+	}
+
+	public void setRelationSymbols(List<String> relationSymbols) {
+		this.relationSymbols = relationSymbols;
+	}
+
 	public List<String> getNodeTypes() {
 		return nodeTypes;
 	}
@@ -87,30 +107,64 @@ public class FilterOptions  extends ResourceSupport {
 		this.networkType = networkType;
 	}
 	
-	public Map<String, Object> getAnnotation() {
-		return annotation;
+	public Map<String, Object> getNodeAnnotation() {
+		return nodeAnnotation;
 	}
 
-	public void setAnnotation(Map<String, Object> annotation) {
-		this.annotation = annotation;
+	public void setNodeAnnotation(Map<String, Object> nodeAnnotation) {
+		this.nodeAnnotation = nodeAnnotation;
 	}
 
-	public String getAnnotationName() {
-		return annotationName;
+	public String getNodeAnnotationName() {
+		return nodeAnnotationName;
 	}
 
-	public void setAnnotationName(String annotationName) {
-		this.annotationName = annotationName;
+	public void setNodeAnnotationName(String nodeAnnotationName) {
+		this.nodeAnnotationName = nodeAnnotationName;
 	}
 
-	public String getAnnotationType() {
-		return annotationType;
+	public String getNodeAnnotationType() {
+		return nodeAnnotationType;
 	}
 
-	public void setAnnotationType(String annotationType) {
-		this.annotationType = annotationType;
+	public void setNodeAnnotationType(String nodeAnnotationType) {
+		this.nodeAnnotationType = nodeAnnotationType;
 	}
 
+	public Map<String, Object> getRelationAnnotation() {
+		return relationAnnotation;
+	}
+
+	public void setRelationAnnotation(Map<String, Object> relationAnnotation) {
+		this.relationAnnotation = relationAnnotation;
+	}
+
+	public String getRelationAnnotationName() {
+		return relationAnnotationName;
+	}
+
+	public void setRelationAnnotationName(String relationAnnotationName) {
+		this.relationAnnotationName = relationAnnotationName;
+	}
+
+	public String getRelationAnnotationType() {
+		return relationAnnotationType;
+	}
+
+	public void setRelationAnnotationType(String relationAnnotationType) {
+		this.relationAnnotationType = relationAnnotationType;
+	}
+
+	/**
+	 * TODO
+	 * Needs to also include
+	 * NodeAnnotation
+	 * RelationshipAnnotation
+	 * isTerminateAtDrug
+	 * relationSymbols
+	 * @param other
+	 * @return
+	 */
 	public String toString() {
 		String ret = "Filter options ";
 		if (this.mappingUuid != null) {
@@ -156,6 +210,17 @@ public class FilterOptions  extends ResourceSupport {
 		return ret;
 	}
 	
+	
+	/**
+	 * TODO
+	 * Needs to also include
+	 * NodeAnnotation
+	 * RelationshipAnnotation
+	 * isTerminateAtDrug
+	 * relationSymbols
+	 * @param other
+	 * @return
+	 */
 	public boolean equals(FilterOptions other) {
 		
 		if(this.mappingUuid != null && 
