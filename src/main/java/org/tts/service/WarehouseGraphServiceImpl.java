@@ -8,10 +8,12 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.ogm.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.Output.MappingReturnType;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.NodeEdgeList;
@@ -26,6 +29,7 @@ import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.OutputType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
@@ -54,6 +58,8 @@ import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.common.ContentGraphNodeRepository;
+import org.tts.repository.flat.FlatEdgeRepository;
+import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
 import org.tts.repository.warehouse.DatabaseNodeRepository;
 import org.tts.repository.warehouse.FileNodeRepository;
@@ -103,6 +109,15 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	
 	@Autowired
 	FlatSpeciesRepository flatSpeciesRepository;
+	
+	@Autowired
+	FlatNetworkMappingRepository flatNetworkMappingRepository;
+	
+	@Autowired
+	FlatEdgeRepository flatEdgeRepository;
+	
+	@Autowired
+	Session session;
 	
 	@Override
 	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
@@ -432,8 +447,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		//item.setNodeTypes(mapping.getMappingNodeTypes());
 		//item.setRelationTypes(mapping.getMappingRelationTypes());
 		if (mapping.getMappingRelationTypes() != null) {
-			for (String sboTerm : mapping.getMappingRelationTypes()) {
-				item.addRelationType(this.utilityService.translateSBOString(sboTerm));
+			for (String type : mapping.getMappingRelationTypes()) {
+				item.addRelationType(type);
 			}
 		}
 		
@@ -607,13 +622,35 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 		return this.flatSpeciesRepository.findAllNetworkNodes(entityUUID);
 	}
-
+	
+	@Override
+	public List<String> getNetworkRelationSymbols(String networkEntityUUID){
+		return this.getNetworkRelationSymbols(this.getNetworkRelations(networkEntityUUID));
+	}
+	@Override
+	public List<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges) {
+		List<String> networkRelationSymbols = new ArrayList<>();
+		for(FlatMappingReturnType edge : networkEdges) {
+			if(edge.getRelationship().getSymbol() != null) {
+				networkRelationSymbols.add(edge.getRelationship().getSymbol());
+			} else {
+				networkRelationSymbols.add(edge.getStartNode().getSymbol() + "-" + edge.getRelationshipType() + "->" + edge.getEndNode().getSymbol());
+			}
+		}
+		return networkRelationSymbols;
+	}
+	@Override
+	public Iterable<FlatMappingReturnType> getNetworkRelations(String entityUUID) {
+		return this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(entityUUID);
+	}
+	
 	@Override
 	public MappingNode getMappingNode(String entityUUID) {
 		return this.mappingNodeRepository.findByEntityUUID(entityUUID);
 	}
 
 	@Override
+	@Deprecated
 	public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original) {
 		List<FlatSpecies> newSpeciesList = new ArrayList<>(original.size());
 		Map<String, FlatSpecies> oldUUIDToNewSpeciesMap = new HashMap<>();
@@ -646,6 +683,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
+	@Deprecated
 	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options) {
 		final List<String> relationTypes = options.getRelationTypes();
 		/*List<String> nodeTypes =  new ArrayList<>();
@@ -733,12 +771,18 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		}
 		filterOptions.setNodeTypes(nodeTypes);
 		List<String> relationTypes = new ArrayList<>();
-		for (String sboTerm : mappingNode.getMappingRelationTypes()) {
-			relationTypes.add(this.utilityService.translateSBOString(sboTerm));
+		for (String type : mappingNode.getMappingRelationTypes()) {
+			relationTypes.add(type);//this.utilityService.translateSBOString(sboTerm));
 		}
 		filterOptions.setRelationTypes(relationTypes);
+		if(mappingNode.getMappingRelationSymbols() == null) {
+			filterOptions.setRelationSymbols(getNetworkRelationSymbols(mappingNode.getEntityUUID()));
+		} else {
+			filterOptions.setRelationSymbols(new ArrayList<>(mappingNode.getMappingRelationSymbols()));
+		}
 		return filterOptions;
 	}
+
 
 	@Override
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options) {
@@ -901,5 +945,253 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID) {
 		return this.pathwayNodeRepository.getAllDistinctTransitionSboTermsOfPathway(pathwayNodeEntityUUID);
+	}
+
+	@Override
+	@Deprecated
+	public MappingNode copyNetwork(MappingNode parentMapping, MappingNode newMapping) {
+		Iterable<FlatMappingReturnType> parentMappingReturnType = this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(parentMapping.getEntityUUID());		
+		FlatEdge currentEdge;
+		List<FlatEdge> newEdges = new ArrayList<>();
+		Map<String, String> newUUIDToOldUUIDMap = new HashMap<>();
+		Set<String> nodeTypes = new HashSet<>();
+		Set<String> relationTypes = new HashSet<>();
+		Set<String> nodeSymbols = new HashSet<>();
+		/**
+		 * Traverse the result set and alter the content to generate new entities
+		 * thus copying them without actually needing to copy them
+		 * save the connection through the new and old entityUUID to connect the entities with provenance edges
+		 */
+		Iterator<FlatMappingReturnType> it = parentMappingReturnType.iterator();
+		FlatMappingReturnType current;
+		while (it.hasNext()) {
+		
+			current = it.next();
+			currentEdge = current.getRelationship();
+			// 1. safe the old edge uuid
+			//String oldEdgeUUID = currentEdge.getEntityUUID();
+			
+			relationTypes.add(current.getRelationshipType());
+			
+			// reset the edge graph base properties (new entityUUID, id to null and version to null)
+			this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge);			
+			if(!newUUIDToOldUUIDMap.containsKey(currentEdge.getInputFlatSpecies().getEntityUUID())) { 
+				// we have not seen and modified this species before
+				String oldUUID = currentEdge.getInputFlatSpecies().getEntityUUID();
+				nodeTypes.add(currentEdge.getInputFlatSpecies().getSboTerm());
+				nodeSymbols.add(currentEdge.getInputFlatSpecies().getSymbol());
+				this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getInputFlatSpecies());
+				newUUIDToOldUUIDMap.put(currentEdge.getInputFlatSpecies().getEntityUUID(), oldUUID);
+			}
+			if(!newUUIDToOldUUIDMap.containsKey(currentEdge.getOutputFlatSpecies().getEntityUUID())) {
+				// we have not seen this species already
+				String oldUUID = currentEdge.getOutputFlatSpecies().getEntityUUID();
+				nodeTypes.add(currentEdge.getOutputFlatSpecies().getSboTerm());
+				nodeSymbols.add(currentEdge.getOutputFlatSpecies().getSymbol());
+				this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getOutputFlatSpecies());
+				newUUIDToOldUUIDMap.put(currentEdge.getOutputFlatSpecies().getEntityUUID(), oldUUID);
+			}
+			newEdges.add(currentEdge);
+		}
+		int numberOfEdges = newEdges.size();
+		// save the new edges in one go, thus also saving the new species linked in them
+		// this should not throw an OptimisticLockingException as it is all saved in one go
+		Iterable<FlatEdge> persistedFlatEdges = this.flatEdgeRepository.saveAll(newEdges);
+		
+		// now iterate over the persisted set to form the provenance edges
+		Iterator<FlatEdge> pfeIt = persistedFlatEdges.iterator();
+		Set<String> connectedSpeciesSet = new HashSet<>();
+		Map<String, String> oldToNewMap = new HashMap<>();
+		
+		while (pfeIt.hasNext()) {
+			FlatEdge currentPersistedEdge = pfeIt.next();
+			if(!connectedSpeciesSet.contains(currentPersistedEdge.getInputFlatSpecies().getEntityUUID())) {
+				oldToNewMap.put(
+						newUUIDToOldUUIDMap.get(currentPersistedEdge.getInputFlatSpecies().getEntityUUID()), 
+						currentPersistedEdge.getInputFlatSpecies().getEntityUUID()
+						);
+				connectedSpeciesSet.add(currentPersistedEdge.getInputFlatSpecies().getEntityUUID());
+			}
+			if(!connectedSpeciesSet.contains(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID())) {
+				oldToNewMap.put(
+						newUUIDToOldUUIDMap.get(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID()),
+						currentPersistedEdge.getOutputFlatSpecies().getEntityUUID()
+						);
+				connectedSpeciesSet.add(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID());
+			}
+		}
+		int numberOfNodes = connectedSpeciesSet.size();
+		// we need to clear the session at this point as we manipulated the entities
+		// calling for getByEntityUUID with the old EntityUUID would now retrieve the new FlatSpecies instead of the old one
+		// as the old one is still stored in the session but with the new entityUUID and a call to the old one would 
+		// result in a cache fetch and return the changed species rather than re-fetching the old one from db
+		// TODO Does this have any side effect for other threads also using this session?
+		this.session.clear();
+		
+		// now we can connect the old and new species with provenance edges and connect the new species with the mapping node
+		for (String oldUUID : oldToNewMap.keySet()) {
+			String newUUID = oldToNewMap.get(oldUUID);
+			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(newUUID);
+			this.provenanceGraphService.connect(newSpecies, oldUUID, ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.connect(newMapping, newSpecies, WarehouseGraphEdgeType.CONTAINS);
+		}
+		
+		newMapping.addWarehouseAnnotation("numberofnodes",  String.valueOf(numberOfNodes));
+		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfEdges));
+		newMapping.setMappingNodeTypes(nodeTypes);
+		newMapping.setMappingRelationTypes(relationTypes);
+		newMapping.setMappingNodeSymbols(nodeSymbols);
+		return (MappingNode) this.saveWarehouseGraphNodeEntity(newMapping, 0);
+	}
+
+	@Override
+	public MappingNode createMappingFromMappingWithOptions(MappingNode parent, MappingNode newMapping,
+			FilterOptions options, MappingStep step) {
+		Iterable<FlatMappingReturnType> parentMappingReturnType = this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(parent.getEntityUUID());		
+		FlatEdge currentEdge;
+		List<FlatEdge> newEdges = new ArrayList<>();
+		Map<String, String> newUUIDToOldUUIDMap = new HashMap<>();
+		Set<String> nodeTypes = new HashSet<>();
+		Set<String> relationTypes = new HashSet<>();
+		Set<String> nodeSymbols = new HashSet<>();
+		Set<String> relationSymbols = new HashSet<>();
+		
+		// Lists to check for Filtering
+		final List<String> relationTypesToBeIncluded = options.getRelationTypes();
+		final List<String> nodeTypesToBeIncluded = options.getNodeTypes();
+		final List<String> nodeSymbolsToBeIncluded = options.getNodeSymbols();
+		final List<String> relationSymbolsToBeIncluded = options.getRelationSymbols();
+		
+		// Do we have annotations?
+		boolean addNodeAnnotation = false;
+		boolean addRelationAnnotation = false;
+		if (step.equals(MappingStep.ANNOTATE))
+		{
+			// yes, which one?
+			if (options.getNodeAnnotation() != null && options.getNodeAnnotation().size() > 0 
+					&& options.getNodeAnnotationName() != null && !options.getNodeAnnotationName().equals("") 
+					&& options.getNodeAnnotationType() != null && !options.getNodeAnnotationType().equals("")) {
+				// nodeAnnotation with all info needed
+				addNodeAnnotation = true;
+				newMapping.addAnnotationType("node." + options.getNodeAnnotationName(), options.getNodeAnnotationType());
+			}
+			if(options.getRelationAnnotation() != null && options.getRelationAnnotation().size() > 0
+					&& options.getRelationAnnotationName() != null && !options.getRelationAnnotationName().equals("")
+					&& options.getRelationAnnotationType() != null && !options.getRelationAnnotationType().equals("")) {
+				// relationAnnotation with all info needed
+				addRelationAnnotation = true;
+				newMapping.addAnnotationType("relation." + options.getRelationAnnotationName(), options.getRelationAnnotationType());
+			}
+		}
+		
+		
+		/**
+		 * Traverse the result set and alter the content to generate new entities
+		 * thus copying them without actually needing to copy them
+		 * save the connection through the new and old entityUUID to connect the entities with provenance edges
+		 */
+		Iterator<FlatMappingReturnType> it = parentMappingReturnType.iterator();
+		FlatMappingReturnType current;
+		while (it.hasNext()) {
+		
+			current = it.next();
+			currentEdge = current.getRelationship();
+			// 1. safe the old edge uuid
+			//String oldEdgeUUID = currentEdge.getEntityUUID();
+			if(relationTypesToBeIncluded.contains(current.getRelationshipType())
+					&& relationSymbolsToBeIncluded.contains(currentEdge.getSymbol())) {
+				relationTypes.add(current.getRelationshipType());
+				relationSymbols.add(currentEdge.getSymbol());
+				// reset the edge graph base properties (new entityUUID, id to null and version to null)
+				this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge);
+				// do we have a relationshipAnnotation to add?
+				if(addRelationAnnotation && options.getRelationAnnotation().containsKey(currentEdge.getSymbol())) {
+					currentEdge.addAnnotation(options.getRelationAnnotationName(), options.getRelationAnnotation().get(currentEdge.getSymbol()));
+					currentEdge.addAnnotationType(options.getRelationAnnotationName(), options.getRelationAnnotationType());
+				}
+				if(!newUUIDToOldUUIDMap.containsKey(currentEdge.getInputFlatSpecies().getEntityUUID()) 
+						&& nodeTypesToBeIncluded.contains(this.utilityService.translateSBOString(currentEdge.getInputFlatSpecies().getSboTerm()))
+						&& nodeSymbolsToBeIncluded.contains(currentEdge.getInputFlatSpecies().getSymbol())) { 
+					// we have not seen and modified this species before
+					String oldUUID = currentEdge.getInputFlatSpecies().getEntityUUID();
+					nodeTypes.add(currentEdge.getInputFlatSpecies().getSboTerm());
+					nodeSymbols.add(currentEdge.getInputFlatSpecies().getSymbol());
+					this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getInputFlatSpecies());
+					// add annotation?
+					if(addNodeAnnotation && options.getNodeAnnotation().containsKey(currentEdge.getInputFlatSpecies().getSymbol())) {
+						currentEdge.getInputFlatSpecies().addAnnotation(options.getNodeAnnotationName(), options.getNodeAnnotation().get(currentEdge.getInputFlatSpecies().getSymbol()));
+						currentEdge.getInputFlatSpecies().addAnnotationType(options.getNodeAnnotationName(), options.getNodeAnnotationType());
+					}
+					
+					newUUIDToOldUUIDMap.put(currentEdge.getInputFlatSpecies().getEntityUUID(), oldUUID);
+				}
+				if(!newUUIDToOldUUIDMap.containsKey(currentEdge.getOutputFlatSpecies().getEntityUUID())
+						&& nodeTypesToBeIncluded.contains(this.utilityService.translateSBOString(currentEdge.getOutputFlatSpecies().getSboTerm()))
+						&& nodeSymbolsToBeIncluded.contains(currentEdge.getOutputFlatSpecies().getSymbol())) { 
+					// we have not seen this species before
+					String oldUUID = currentEdge.getOutputFlatSpecies().getEntityUUID();
+					nodeTypes.add(currentEdge.getOutputFlatSpecies().getSboTerm());
+					nodeSymbols.add(currentEdge.getOutputFlatSpecies().getSymbol());
+					this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getOutputFlatSpecies());
+					// add annotation?
+					if(addNodeAnnotation && options.getNodeAnnotation().containsKey(currentEdge.getOutputFlatSpecies().getSymbol())) {
+						currentEdge.getOutputFlatSpecies().addAnnotation(options.getNodeAnnotationName(), options.getNodeAnnotation().get(currentEdge.getOutputFlatSpecies().getSymbol()));
+						currentEdge.getOutputFlatSpecies().addAnnotationType(options.getNodeAnnotationName(), options.getNodeAnnotationType());
+					}
+					newUUIDToOldUUIDMap.put(currentEdge.getOutputFlatSpecies().getEntityUUID(), oldUUID);
+				}
+				newEdges.add(currentEdge);
+			}
+		}
+		int numberOfEdges = newEdges.size();
+		// save the new edges in one go, thus also saving the new species linked in them
+		// this should not throw an OptimisticLockingException as it is all saved in one go
+		Iterable<FlatEdge> persistedFlatEdges = this.flatEdgeRepository.saveAll(newEdges);
+		
+		// now iterate over the persisted set to form the provenance edges
+		Iterator<FlatEdge> pfeIt = persistedFlatEdges.iterator();
+		Set<String> connectedSpeciesSet = new HashSet<>();
+		Map<String, String> oldToNewMap = new HashMap<>();
+		
+		while (pfeIt.hasNext()) {
+			FlatEdge currentPersistedEdge = pfeIt.next();
+			if(!connectedSpeciesSet.contains(currentPersistedEdge.getInputFlatSpecies().getEntityUUID())) {
+				oldToNewMap.put(
+						newUUIDToOldUUIDMap.get(currentPersistedEdge.getInputFlatSpecies().getEntityUUID()), 
+						currentPersistedEdge.getInputFlatSpecies().getEntityUUID()
+						);
+				connectedSpeciesSet.add(currentPersistedEdge.getInputFlatSpecies().getEntityUUID());
+			}
+			if(!connectedSpeciesSet.contains(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID())) {
+				oldToNewMap.put(
+						newUUIDToOldUUIDMap.get(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID()),
+						currentPersistedEdge.getOutputFlatSpecies().getEntityUUID()
+						);
+				connectedSpeciesSet.add(currentPersistedEdge.getOutputFlatSpecies().getEntityUUID());
+			}
+		}
+		int numberOfNodes = connectedSpeciesSet.size();
+		// we need to clear the session at this point as we manipulated the entities
+		// calling for getByEntityUUID with the old EntityUUID would now retrieve the new FlatSpecies instead of the old one
+		// as the old one is still stored in the session but with the new entityUUID and a call to the old one would 
+		// result in a cache fetch and return the changed species rather than re-fetching the old one from db
+		// TODO Does this have any side effect for other threads also using this session?
+		this.session.clear();
+		
+		// now we can connect the old and new species with provenance edges and connect the new species with the mapping node
+		for (String oldUUID : oldToNewMap.keySet()) {
+			String newUUID = oldToNewMap.get(oldUUID);
+			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(newUUID);
+			this.provenanceGraphService.connect(newSpecies, oldUUID, ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.connect(newMapping, newSpecies, WarehouseGraphEdgeType.CONTAINS);
+		}
+		
+		newMapping.addWarehouseAnnotation("numberofnodes",  String.valueOf(numberOfNodes));
+		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfEdges));
+		newMapping.setMappingNodeTypes(nodeTypes);
+		newMapping.setMappingRelationTypes(relationTypes);
+		newMapping.setMappingNodeSymbols(nodeSymbols);
+		newMapping.setMappingRelationSymbols(relationSymbols);
+		return (MappingNode) this.saveWarehouseGraphNodeEntity(newMapping, 0);
 	}
 }

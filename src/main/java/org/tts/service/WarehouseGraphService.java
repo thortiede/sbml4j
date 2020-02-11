@@ -5,11 +5,13 @@ import java.util.Map;
 
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
+import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
@@ -113,5 +115,16 @@ public interface WarehouseGraphService {
 	public Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID);
 
 	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID);
+
+	public MappingNode copyNetwork(MappingNode parentMapping, MappingNode newMapping);
+
+	public MappingNode createMappingFromMappingWithOptions(MappingNode parent, MappingNode newMapping,
+			FilterOptions options, MappingStep step);
+
+	List<String> getNetworkRelationSymbols(String networkEntityUUID);
+
+	List<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges);
+
+	Iterable<FlatMappingReturnType> getNetworkRelations(String networkEntityUUID);
 	
 }
