@@ -4,14 +4,19 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.flat.FlatSpecies;
@@ -79,20 +84,31 @@ public class GraphBaseEntityTestController {
 	}
 	
 	
-	@RequestMapping(value = "/testMyDrug", method = RequestMethod.POST)
-	public ResponseEntity<List<FlatSpecies>> testMyDrug(@RequestHeader("user") String username,
-														@RequestParam("networkUUID") String networkUUID,
-														@RequestParam("mydrugURL") String mydrugURL,
-														@RequestParam(name = "mappingType", defaultValue = "PATHWAYMAPPING") NetworkMappingType networkMappingType,
-														@RequestParam(name = "idSystem", defaultValue = "KEGG") IDSystem idSystem) {
-															
-		
-		//this.httpService.getMyDrugCompoundsForNetwork(mydrugURL, (MappingNode) this.graphBaseEntityService.findByEntityUUID(networkUUID));
-		return new ResponseEntity<List<FlatSpecies>>(this.httpService.getMyDrugCompoundsForNetwork(mydrugURL, (MappingNode) this.graphBaseEntityService.findByEntityUUID(networkUUID)), HttpStatus.OK);
-	
-		
-		
-	}
+	/*
+	 * @RequestMapping(value = "/testMyDrug", method = RequestMethod.POST) public
+	 * ResponseEntity<List<FlatSpecies>> testMyDrug(@RequestHeader("user") String
+	 * username,
+	 * 
+	 * @RequestParam("networkUUID") String networkUUID,
+	 * 
+	 * @RequestParam("mydrugURL") String mydrugURL,
+	 * 
+	 * @RequestParam(name = "mappingType", defaultValue = "PATHWAYMAPPING")
+	 * NetworkMappingType networkMappingType,
+	 * 
+	 * @RequestParam(name = "idSystem", defaultValue = "KEGG") IDSystem idSystem) {
+	 * 
+	 * 
+	 * //this.httpService.getMyDrugCompoundsForNetwork(mydrugURL, (MappingNode)
+	 * this.graphBaseEntityService.findByEntityUUID(networkUUID)); return new
+	 * ResponseEntity<List<FlatSpecies>>(this.httpService.
+	 * getMyDrugCompoundsForNetwork(mydrugURL, (MappingNode)
+	 * this.graphBaseEntityService.findByEntityUUID(networkUUID)), HttpStatus.OK);
+	 * 
+	 * 
+	 * 
+	 * }
+	 */
 	
 	@RequestMapping(value="/testSubgrapExtract", method = RequestMethod.GET)
 	public ResponseEntity<String> testSubgraphExtract(@RequestParam("EntityUUID")String entityUUID) {
@@ -100,5 +116,57 @@ public class GraphBaseEntityTestController {
 		return new ResponseEntity<>(ret, HttpStatus.OK);
 	}
 	
+	@RequestMapping(value="/testContext", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testContext(@RequestParam("networkEntityUUID")String networkEntityUUID, 
+												@RequestParam("geneSymbol")String geneSymbol) {
+		Resource resource = this.graphBaseEntityService.testContextMethod(networkEntityUUID, geneSymbol);
+		String contentType = "application/octet-stream";
+		if(resource != null) {
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"networkContext_"+ geneSymbol + ".graphml\"") .body(resource); 
+		} else { 
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} 	}
 	
+	@RequestMapping(value="/testGetNet", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testGetNet(@RequestParam("networkEntityUUID")String networkEntityUUID) {
+		Resource resource = this.graphBaseEntityService.testGetNet(networkEntityUUID);
+		String contentType = "application/octet-stream";
+		if(resource != null) {
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"network.graphml\"") .body(resource); 
+		} else { 
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} 
+	}
+	
+	@RequestMapping(value="/testMultiGeneSubNet", method = RequestMethod.POST)
+	public ResponseEntity<Resource> testMultiGeneSubNet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+														@RequestParam("genes")List<String> genes,
+														@RequestBody FilterOptions options) {
+		String contentType = "application/octet-stream";
+		if(genes == null || genes.size() < 1) {
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} else {
+			Resource resource = this.graphBaseEntityService.testMultiGeneSubNet(networkEntityUUID, genes, options);
+			
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+					 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"test.graphml\"").body(resource) ;
+			 
+		}
+	}
+	
+	@RequestMapping(value="/testGeneSet", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testGeneSet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+												@RequestParam("genes")List<String> genes){
+													
+		Resource resource = this.graphBaseEntityService.testGetNet(networkEntityUUID, genes);
+		if(resource == null) {
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} else {
+			String contentType = "application/octet-stream";
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"geneset.graphml\"").body(resource) ;
+		} 
+	}
 }

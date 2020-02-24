@@ -1,5 +1,9 @@
 package org.tts.service;
 
+import java.util.List;
+
+import org.springframework.core.io.Resource;
+import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.common.GraphBaseEntity;
 
 public interface GraphBaseEntityService {
@@ -11,5 +15,13 @@ public interface GraphBaseEntityService {
 	Iterable<GraphBaseEntity> findAll();
 
 	String testFlatMappingExtract(String entityUUID);
+
+	Resource testContextMethod(String networkEntityUUID, String geneSymbol);
+
+	Resource testGetNet(String networkEntityUUID);
+
+	Resource testMultiGeneSubNet(String networkEntityUUID, List<String> geneList, FilterOptions options);
+
+	Resource testGetNet(String networkEntityUUID, List<String> genes);
 
 }
