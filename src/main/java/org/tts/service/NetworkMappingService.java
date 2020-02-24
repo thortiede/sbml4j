@@ -24,7 +24,7 @@ public interface NetworkMappingService {
 	
 	public Map<String, FilterOptions> getFilterOptions();
 
-	public FilterOptions addNetworkMapping(FilterOptions filterOptions);
+	//public FilterOptions addNetworkMapping(FilterOptions filterOptions);
 
 	public FilterOptions getFullFilterOptions();
 
@@ -34,7 +34,7 @@ public interface NetworkMappingService {
 
 	public FilterOptions getFilterOptions(String uuid);
 
-	public NodeEdgeList getMappingFromFilterOptions(FilterOptions filterOptionsFromId);
+	//public NodeEdgeList getMappingFromFilterOptions(FilterOptions filterOptionsFromId);
 	
 	
 	
