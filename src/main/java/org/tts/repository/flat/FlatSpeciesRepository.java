@@ -47,4 +47,28 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "RETURN fs.entityUUID")
 	String findStartNodeEntityUUID(String networkUUID, String symbol);
 
+	@Query(value="MATCH "
+			+ "(m:MappingNode{entityUUID: {0}})"
+			+ "-[:Warehouse {warehouseGraphEdgeType: \"CONTAINS\"}]-"
+			+ "(fs:FlatSpecies) "
+			+ "WHERE fs.symbol IN $nodeSymbols "
+			+ "RETURN fs")
+	Iterable<FlatSpecies> getNetworkNodes(String networkEntityUUID, List<String> nodeSymbols);
+	
+	
+//match (s:SBMLSpecies {entityUUID:"b0d96c9e-24ce-4833-810d-f0868044c439"})<-[p:PROV*1.. {provenanceGraphEdgeType:"wasDerivedFrom"}]-(f:FlatSpecies {symbol:"PPP3"})<-[w:Warehouse {warehouseGraphEdgeType:"CONTAINS"}]-(m:MappingNode {entityUUID:"410ecb59-2ec5-456b-9812-c97faef4c781"}) return s, p, f, m
+	
+	@Query("MATCH "
+			+ "(s:SBMLSpecies)"
+			+ "<-[p:PROV*1.. {provenanceGraphEdgeType:\"wasDerivedFrom\"}]-"
+			+ "(f:FlatSpecies)"
+			+ "<-[w:Warehouse]-"
+			+ "(m:MappingNode) "
+			+ "WHERE s.entityUUID = $simpleModelEntityUUID "
+			//+ "AND p.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND m.entityUUID = $networkEntityUUID "
+			+ "RETURN f")
+	FlatSpecies findBySimpleModelEntityUUIDInNetwork(String simpleModelEntityUUID, String networkEntityUUID);
+	
 }
