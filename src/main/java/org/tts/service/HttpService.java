@@ -12,5 +12,5 @@ public interface HttpService {
 
 	public ExternalResourceEntity setCompoundAnnotationFromResource(String resource, ExternalResourceEntity entity);
 	
-	public List<FlatSpecies> getMyDrugCompoundsForNetwork(String mydrugURL, MappingNode mappingNode);
+	//public List<FlatSpecies> getMyDrugCompoundsForNetwork(String mydrugURL, MappingNode mappingNode);
 }
