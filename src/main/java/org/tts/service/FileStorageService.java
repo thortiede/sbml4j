@@ -20,7 +20,8 @@ import org.tts.Exception.MyFileNotFoundException;
 import org.tts.model.api.Output.SifFile;
 import org.tts.property.FileStorageProperties;
 
-@Service
+//@Service
+@Deprecated
 public class FileStorageService {
 
     private final Path fileStorageLocation;
