@@ -16,10 +16,10 @@ public class UtilityService {
 				|| 	sboString.equals("undefined in source") 
 				|| 	sboString.equals("unknownFromSource")
 				) 	? "unknownFromSource" 
-					: (sboString.equals("targets") 
+					: (sboString.toLowerCase().equals("targets") 
 							? "targets" 
-							: (sboString.equals("Drug") 
-									? 	"Drug"
+							: (sboString.toLowerCase().equals("drug") 
+									? 	"drug"
 									:	(sboString.equals("PRODUCTOF")
 											? "PRODUCTOF"
 											: (sboString.equals("REACTANTOF")
