@@ -1,7 +1,13 @@
 package org.tts.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.ogm.session.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -16,19 +25,25 @@ import org.springframework.stereotype.Service;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.FlatMappingReturnType;
-import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.repository.common.ExternalResourceEntityRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
 import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
-import org.neo4j.ogm.session.Session;
+import org.tts.repository.warehouse.MappingNodeRepository;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
@@ -39,6 +54,9 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 	@Autowired
 	FlatNetworkMappingRepository flatNetworkMappingRepository;
 
+	@Autowired
+	MappingNodeRepository mappingNodeRepository;
+	
 	@Autowired
 	FlatEdgeRepository flatEdgeRepository;
 
@@ -55,6 +73,9 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 	GraphMLService graphMLService;
 
 	@Autowired
+	FlatEdgeService flatEdgeService;
+	
+	@Autowired
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 
 	@Autowired
@@ -66,6 +87,8 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 	@Autowired
 	Session session;
 	
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
 	/*public GraphBaseEntityServiceImpl(GraphBaseEntityRepository graphBaseEntityRepository,
 			FlatNetworkMappingRepository flatNetworkMappingRepository,
 			FlatEdgeRepository flatEdgeRepository,
@@ -341,6 +364,159 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 				}
 			}
 		}
+	}
+
+	private JsonNode runHttpRESTQuery(String baseUrl, String endpointUrl, String requestType, String matchString, String returnString) {
+		
+		try {
+			URL url = new URL(baseUrl + endpointUrl);
+			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setRequestMethod(requestType);
+			con.addRequestProperty("X-Stream", "true");
+			con.setRequestProperty("Content-Type", "application/json");//; utf-8");
+			con.setRequestProperty("Accept", "application/json");//; charset=UTF-8");
+			con.setDoOutput(true);
+			String jsonInputString = "{\"statements\" : [ { \"statement\":\"match " + matchString;
+			jsonInputString += " return ";
+			jsonInputString += returnString;
+			jsonInputString += ";\" } ]}";
+			System.out.println(jsonInputString);
+			OutputStream os = con.getOutputStream();
+			byte[] input = jsonInputString.getBytes("utf-8");
+			os.write(input, 0, input.length);
+			
+			if (con.getResponseCode() > 299) {
+				// looks like an error
+				logger.error("Could not fetch " + jsonInputString + " for " + baseUrl + endpointUrl);
+				logger.error(con.getResponseCode() + ": " + con.getResponseMessage());
+				return null;
+			} else {
+				ObjectMapper objectMapper = new ObjectMapper();
+				objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+				return objectMapper.readValue(con.getInputStream(), JsonNode.class);
+			}
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+			return null;
+		} 
+	}
+	
+	@Override
+	public Resource testMyDrug(String networkEntityUUID, String myDrugURL) {
+		MappingNode mappingNode = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID);
+		
+		String matchString = "(a)-[t:targets]->(b) where b.symbol in [";
+		String returnString = " a.name, a.midrug_id, a.drugbank_id, a.drugbank_version, a.drug_class, a.mechanism_of_action, a.indication, a.categories, b.symbol, b.gene_names, b.name";
+		for (String nodeSymbol : mappingNode.getMappingNodeSymbols()) {
+			matchString += String.format("\\\"%s\\\", ", nodeSymbol);
+		}
+		matchString = matchString.substring(0, matchString.length() - 2);
+		matchString += "]";
+		
+		JsonNode drugNodes = this.runHttpRESTQuery(myDrugURL, "/db/data/transaction/", "POST", matchString, returnString);
+		if (drugNodes == null) {
+			return null;
+		}
+		JsonNode resultsNode = drugNodes.get("results");
+		if (!resultsNode.isArray()) {
+			logger.error("Unexpected result type from mydrug query: " + resultsNode.toString());
+		}
+		Map<String, FlatSpecies> drugNameSpeciesMap = new HashMap<>();
+		
+		JsonNode columnsArrayNode = resultsNode.get(0).get("columns");
+		JsonNode dataArrayNode = resultsNode.get(0).get("data");
+		if (!dataArrayNode.isArray()) {
+			return null;
+		}
+		//List<FlatSpecies> mappingSpecies = this.mappingNodeRepository.getMappingFlatSpecies(mappingNode.getBaseNetworkEntityUUID());
+		Map<String, FlatSpecies> symbolToFlatSpceciesMap = new HashMap<>();
+		for(FlatSpecies fs : this.mappingNodeRepository.getMappingFlatSpecies(mappingNode.getEntityUUID())) {
+			symbolToFlatSpceciesMap.put(fs.getSymbol(), fs);
+		}
+		List<ProvenanceEntity> myDrugFlatSpeciesList = new ArrayList<>();
+		List<FlatEdge> myDrugFlatEdgeList = new ArrayList<>();
+		
+		
+		for (int i = 0; i!= dataArrayNode.size(); i++) {
+			FlatSpecies myDrugSpecies = new FlatSpecies();
+			FlatEdge targetsEdge = null;
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies, Arrays.asList(new String[]{"Drug"}));
+			boolean foundTarget = false;
+			boolean reusingMyDrugSpecies = false;
+		
+			JsonNode rowNode = dataArrayNode.get(i).get("row");
+			for (int j = 0; j!= rowNode.size(); j++) {
+				logger.debug(columnsArrayNode.get(j).asText() + ": " + rowNode.get(j).asText());
+				if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().equals("a.name")) {
+					if (drugNameSpeciesMap.containsKey(rowNode.get(j).asText())) {
+						logger.debug("Already created this FlatSpecies for myDrug: " + rowNode.get(j).asText() );
+						myDrugSpecies = drugNameSpeciesMap.get(rowNode.get(j).asText());
+						reusingMyDrugSpecies = true;
+					} else {
+						logger.debug("New FlatSpecies for myDrug: " + rowNode.get(j).asText() );
+						myDrugSpecies.setSymbol(rowNode.get(j).asText());
+						myDrugSpecies.setSboTerm("Drug");
+						mappingNode.addMappingNodeSymbol(rowNode.get(j).asText());
+					}
+				} else if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().startsWith("a.") && !rowNode.get(j).isNull()) {
+					myDrugSpecies.addAnnotation(columnsArrayNode.get(j).asText().substring(2), rowNode.get(j).asText());
+					myDrugSpecies.addAnnotationType(columnsArrayNode.get(j).asText().substring(2), "String");
+				} else if (!foundTarget && columnsArrayNode.get(j).asText().startsWith("b.") && !rowNode.get(j).isNull()) {
+					if(symbolToFlatSpceciesMap.keySet().contains(rowNode.get(j).asText())) {
+						targetsEdge = this.flatEdgeService.createFlatEdge("targets");
+						this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(targetsEdge);
+						targetsEdge.setInputFlatSpecies(myDrugSpecies);
+						targetsEdge.setOutputFlatSpecies(symbolToFlatSpceciesMap.get(rowNode.get(j).asText()));
+						targetsEdge.setSymbol(myDrugSpecies.getSymbol() + "-TARGETS->"
+								+ symbolToFlatSpceciesMap.get(rowNode.get(j).asText()).getSymbol());
+						//myDrugSpecies.addRelatedSpecies(symbolToFlatSpceciesMap.get(rowNode.get(j).asText()), "targets");
+						mappingNode.addMappingRelatonSymbol(targetsEdge.getSymbol());
+						foundTarget = true;
+					}
+					
+				}
+					
+			}
+			if (foundTarget) {
+				if (!reusingMyDrugSpecies) {
+					//myDrugSpecies.setSboTerm("Drug");
+					myDrugFlatSpeciesList.add(myDrugSpecies);
+					drugNameSpeciesMap.put(myDrugSpecies.getSymbol(), myDrugSpecies);
+				}
+				if (targetsEdge != null) {
+					myDrugFlatEdgeList.add(targetsEdge);
+				}
+			} else {
+				logger.debug("Could not find target for: " + myDrugSpecies.getSymbol());
+			}
+		}
+		
+		Iterable<FlatEdge> persistedMyDrugEdges = this.flatEdgeRepository.save(myDrugFlatEdgeList, 1);
+		this.warehouseGraphService.connect((ProvenanceEntity) mappingNode, myDrugFlatSpeciesList, WarehouseGraphEdgeType.CONTAINS);
+		Map<String, Object> mappingWarehouseAnnotation = mappingNode.getWarehouse();
+		if(mappingWarehouseAnnotation.containsKey("numberofnodes")) {
+			logger.debug("Updating Mapping numberOfNodes");
+			mappingWarehouseAnnotation.put("numberofnodes", String.valueOf((Integer.parseInt((String) mappingWarehouseAnnotation.get("numberofnodes")) + myDrugFlatSpeciesList.size())));
+		}
+		if(mappingWarehouseAnnotation.containsKey("numberofrelations")) {
+			logger.debug("Updating Mapping numberOfRelations");
+			mappingWarehouseAnnotation.put("numberofrelations", String.valueOf((Integer.parseInt((String) mappingWarehouseAnnotation.get("numberofrelations")) + myDrugFlatEdgeList.size())));
+		}
+		mappingNode.addMappingNodeType("drug");
+		mappingNode.addMappingRelationType("TARGETS");
+		mappingNode = this.mappingNodeRepository.save(mappingNode, 0);
+		
+		ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForFlatEdges(persistedMyDrugEdges, true);
+		String fileName = "mydrug_";
+		fileName += mappingNode.getEntityUUID();
+		fileName += ".graphml";
+		return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
 	}
 
 
