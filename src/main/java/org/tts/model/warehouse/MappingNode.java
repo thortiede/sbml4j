@@ -108,6 +108,10 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingNodeSymbols = mappingNodeSymbols;
 	}
 	
+	public void addMappingNodeSymbol(String nodeSymbol) {
+		this.mappingNodeSymbols.add(nodeSymbol);
+	}
+	
 	public Set<String> getMappingRelationSymbols() {
 		return mappingRelationSymbols;
 	}
@@ -116,6 +120,13 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingRelationSymbols = mappingRelationSymbols;
 	}
 
+	public void addMappingRelatonSymbol(String relationSymbol) {
+		if (this.mappingRelationSymbols == null) {
+			this.mappingRelationSymbols = new HashSet<>();
+		}
+		this.mappingRelationSymbols.add(relationSymbol);
+	}
+	
 	public Set<String> getMappingNodeSymbols() {
 		return this.mappingNodeSymbols;
 	}
