@@ -113,9 +113,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
-						&& existingCompartment.getSize() == compartment.getSize()
-						&& existingCompartment.getSpatialDimensions() == compartment.getSpatialDimensions()
-						&& existingCompartment.isConstant() == compartment.getConstant() ) {
+						//&& existingCompartment.getSize() == compartment.getSize()
+						//&& existingCompartment.getSpatialDimensions() == compartment.getSpatialDimensions()
+						//&& existingCompartment.isConstant() == compartment.getConstant() 
+						) {
 					// they are obviously the same, so take the one already persisted
 					//sbmlCompartment = existingCompartment;
 					sbmlCompartmentList.add(existingCompartment);
