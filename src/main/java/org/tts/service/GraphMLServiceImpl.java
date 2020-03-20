@@ -225,7 +225,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 	private void declareNodeAnnotations(ByteArrayOutputStream byteArrayOutputStream, Map<String, String> nodeAnnotations) throws IOException {
 		for(String nameString : nodeAnnotations.keySet()) {
 			String typeString = nodeAnnotations.get(nameString);
-			byteArrayOutputStream.write(String.format("\t<key id=\"v_%s\" for=\"node\" attr.name=\"%s\" attr.type=\"%s\"/>\n", nameString, nameString, typeString).getBytes());
+			byteArrayOutputStream.write(String.format("\t<key id=\"v_%s\" for=\"node\" attr.name=\"%s\" attr.type=\"%s\"/>\n", nameString, nameString, typeString.toLowerCase()).getBytes());
 		}
 	}
 	
@@ -238,7 +238,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 	private void declareEdgeAnnotations(ByteArrayOutputStream byteArrayOutputStream, Map<String, String> edgeAnnotations) throws IOException {
 		for(String nameString : edgeAnnotations.keySet()) {
 			String typeString = edgeAnnotations.get(nameString);
-			byteArrayOutputStream.write(String.format("\t<key id=\"e_%s\" for=\"edge\" attr.name=\"%s\" attr.type=\"%s\"/>\n", nameString, nameString, typeString).getBytes());
+			byteArrayOutputStream.write(String.format("\t<key id=\"e_%s\" for=\"edge\" attr.name=\"%s\" attr.type=\"%s\"/>\n", nameString, nameString, typeString.toLowerCase()).getBytes());
 		}
 	}
 	
@@ -295,8 +295,8 @@ public class GraphMLServiceImpl implements GraphMLService {
 							nodeAnnotations.put(annotationKey, annotationType);
 						}
 						break;
-					case "float":
-						float nodeAnnotationFloat = (float) nodeAnnotationMap.get(annotationKey);
+					case "double":
+						double nodeAnnotationFloat = (double) nodeAnnotationMap.get(annotationKey);
 						nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_%s\">%f</data>\n", annotationKey, nodeAnnotationFloat).getBytes());
 						if (!nodeAnnotations.containsKey(annotationKey)) {
 							nodeAnnotations.put(annotationKey, annotationType);
@@ -334,7 +334,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 			Map<String, String> nodeSymbolIdMap, List<byte[]> edgesWithAnnotation, String inputSpeciesSymbol, String outputSpeciesSymbol,
 			Map<String, Object> edgeAnnotationMap, Map<String, String> edgeAnnotationTypeMap, String edgeTypeString) {
 		
-		edgesWithAnnotation.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n", nodeSymbolIdMap.get(inputSpeciesSymbol), nodeSymbolIdMap.get(outputSpeciesSymbol), edgeTypeString).getBytes());
+		edgesWithAnnotation.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n", nodeSymbolIdMap.get(inputSpeciesSymbol), nodeSymbolIdMap.get(outputSpeciesSymbol), (edgeTypeString.equals("STIMULATION") ? "activation" : edgeTypeString.toLowerCase())).getBytes());
 		if(!edgeAnnotations.containsKey("interaction")) {
 			edgeAnnotations.put("interaction", "String");
 		}
@@ -364,8 +364,8 @@ public class GraphMLServiceImpl implements GraphMLService {
 						edgeAnnotations.put(annotationKey, annotationType);
 					}
 					break;
-				case "float":
-					float edgeAnnotationFloat = (float) edgeAnnotationMap.get(annotationKey);
+				case "double":
+					double edgeAnnotationFloat = (double) edgeAnnotationMap.get(annotationKey);
 					edgesWithAnnotation.add(String.format("\t\t\t<data key=\"e_%s\">%f</data>\n", annotationKey, edgeAnnotationFloat).getBytes());
 					if (!edgeAnnotations.containsKey(annotationKey)) {
 						edgeAnnotations.put(annotationKey, annotationType);
