@@ -135,7 +135,7 @@ public class ProvenanceGraphService {
 	 * connect two provenance entities. The entity is not returned. 
 	 * Should that be required in the future, it needs to be changed here
 	 * @param sourceEntityUUID the entityUUID of the startNode of the edge, this gets queried in the db and used for connection
-	 * @param target  the endNode of the edge
+	 * @param target the endNode of the edge
 	 * @param edgetype the provenanceGraphEdgeType
 	 */
 	public void connect (String sourceEntityUUID, ProvenanceEntity target,
@@ -154,6 +154,32 @@ public class ProvenanceGraphService {
 		this.connect(getByEntityUUID(sourceEntityUUID),
 						getByEntityUUID(targetEntityUUID), 
 						edgetype);
+	}
+	
+	/**
+	 * connect a set of source provenance entities with one target entity. The entities are not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntities the startNodes of the edges
+	 * @param target the endNode of the edge
+	 * @param edgetype the provenanceGraphEdgeType
+	 */
+	public void connect (Iterable<ProvenanceEntity> sourceEntities, ProvenanceEntity target, ProvenanceGraphEdgeType edgetype) {
+		for (ProvenanceEntity source : sourceEntities) {
+			this.connect(source, target, edgetype);
+		}
+	}
+	
+	/**
+	 * connect a source entity with a set of target provenance entities. The entities are not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntities the startNodes of the edges
+	 * @param target the endNode of the edge
+	 * @param edgetype the provenanceGraphEdgeType
+	 */
+	public void connect (ProvenanceEntity source, Iterable<ProvenanceEntity> targetEntities, ProvenanceGraphEdgeType edgetype) {
+		for (ProvenanceEntity target : targetEntities) {
+			this.connect(source, target, edgetype);
+		}
 	}
 	
 	public ProvenanceEntity getByEntityUUID(String entityUUID) {
