@@ -32,7 +32,7 @@ public class WarehouseInventoryItem extends ResourceSupport {
 	public void setEntityUUID(String entityUUID) {
 		this.entityUUID = entityUUID;
 	}
-	@JsonIgnore
+	//@JsonIgnore
 	public String getName() {
 		return name;
 	}
