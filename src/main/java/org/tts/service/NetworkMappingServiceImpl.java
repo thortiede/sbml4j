@@ -1,6 +1,5 @@
 package org.tts.service;
 
-import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,15 +16,12 @@ import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
-import org.tts.model.api.Output.SifFile;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
@@ -61,7 +57,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	ProvenanceGraphService provenanceGraphService;
 	UtilityService utilityService;
 	FileService fileService;
-	FileStorageService fileStorageService;
 	GraphMLService graphMLService;
 	FlatEdgeService flatEdgeService;
 
@@ -79,7 +74,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			FlatSpeciesRepository flatSpeciesRepository, SBMLSpeciesRepository sbmlSpeciesRepository,
 			FlatEdgeRepository flatEdgeRepository, ProvenanceEntityRepository provenanceEntityRepository,
 			WarehouseGraphService warehouseGraphService, ProvenanceGraphService provenanceGraphService,
-			UtilityService utilityService, FileService fileService, FileStorageService fileStorageService,
+			UtilityService utilityService, FileService fileService,
 			GraphMLService graphMLService, FlatEdgeService flatEdgeService) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
@@ -94,7 +89,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.provenanceGraphService = provenanceGraphService;
 		this.utilityService = utilityService;
 		this.fileService = fileService;
-		this.fileStorageService = fileStorageService;
 		this.graphMLService = graphMLService;
 		this.flatEdgeService = flatEdgeService;
 	}
@@ -558,11 +552,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				// this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(),
 				// idSystem);
 
-			} else if (type.equals(NetworkMappingType.METABOLIC)) {
-				// flatTransitionsOfPathway =
-				// this.graphBaseEntityRepository.getFlatMetabolicReactionsForPathway(pathway.getEntityUUID(),
-				// idSystem);
-
 			} else if (type.equals(NetworkMappingType.PPI)) {
 				nodeSBOTerms.add("SBO:0000252");
 				String conversionSBO = SBO.getTerm(182).getId();
@@ -722,41 +711,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
 		return persistedMappingOfPathway;
-	}
-
-	/**
-	 * Convert a NodeEdgeList to a returnable Resource Object
-	 * 
-	 * @param nodeEdgeList The nodeEdgeList to convert
-	 * @return a sifResource as ByteArrayResource
-	 */
-	@Override
-	@Deprecated
-	public Resource getResourceFromNodeEdgeList(NodeEdgeList nodeEdgeList, String type) {
-		switch (type) {
-		case "sif":
-
-			SifFile sifFile = this.fileService.getSifFromNodeEdgeList(nodeEdgeList);
-
-			// Resource resource = fileStorageService.loadFileAsResource(fileName);
-			if (sifFile != null) {
-				Resource resource = this.fileStorageService.getSifAsResource(sifFile);
-				return resource;
-			} else {
-				return null;
-			}
-		case "graphml":
-
-			ByteArrayOutputStream bo = this.graphMLService.getGraphMLByteArrayOutputStream(nodeEdgeList,
-					new ByteArrayOutputStream());
-
-			// String graphMLString = graphMLService.getGraphMLString(nodeEdgeList);
-
-			return new ByteArrayResource(bo.toByteArray(), "network.graphml");
-
-		default:
-			return null;
-		}
 	}
 
 	@Override
