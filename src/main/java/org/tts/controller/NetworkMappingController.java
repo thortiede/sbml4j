@@ -19,18 +19,16 @@ public class NetworkMappingController {
 
 	NetworkMappingService networkMappingService;
 	FileService fileService;
-	FileStorageService fileStorageService;
 	GraphMLService graphMLService;
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	public NetworkMappingController(NetworkMappingService networkMappingService, FileService fileService,
-			FileStorageService fileStorageService, GraphMLService graphMLService) {
+			 GraphMLService graphMLService) {
 		super();
 		this.networkMappingService = networkMappingService;
 		this.fileService = fileService;
-		this.fileStorageService = fileStorageService;
 		this.graphMLService = graphMLService;
 	}
 
