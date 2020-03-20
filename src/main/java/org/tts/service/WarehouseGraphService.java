@@ -2,12 +2,12 @@ package org.tts.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.Output.NetworkInventoryItem;
-import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -49,6 +49,10 @@ public interface WarehouseGraphService {
 
 	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
 
+	public void connect(Iterable<ProvenanceEntity> sourceEntities, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
+
+	public void connect(ProvenanceEntity source, Iterable<ProvenanceEntity> targetEntities, WarehouseGraphEdgeType edgetype);
+
 	public PathwayNode createPathwayNode(String idString, String nameString, Organism org);
 
 	public MappingNode createMappingNode(WarehouseGraphNode pathway, NetworkMappingType type, String mappingName);
@@ -78,7 +82,7 @@ public interface WarehouseGraphService {
 
 	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly);
 
-	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
+	//public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
 
 	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID);
 
@@ -90,11 +94,11 @@ public interface WarehouseGraphService {
 
 	public MappingNode getMappingNode(String entityUUID);
 
-	public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original);
+	//public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original);
 
 	public FilterOptions getFilterOptions(WarehouseGraphNodeType nodeType, String entityUUID);
 
-	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
+	//public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
 
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
 	
@@ -108,7 +112,7 @@ public interface WarehouseGraphService {
 
 	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
 
-	NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
+	//NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
 
 	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID);
 	
@@ -127,4 +131,9 @@ public interface WarehouseGraphService {
 
 	Iterable<FlatMappingReturnType> getNetworkRelations(String networkEntityUUID);
 	
+	public String getRelationShipApocString(FilterOptions options);
+
+	public String getRelationShipApocString(FilterOptions options, Set<String> exclude);
+
+
 }
