@@ -24,9 +24,12 @@ public class FileCheckServiceImpl implements FileCheckService {
 
 	@Override
 	public boolean isContentXML(MultipartFile file) {
-		if(file.getContentType() != null && file.getContentType().equals("application/xml")) {
+		if(file.getContentType() != null && (file.getContentType().equals("application/xml")
+												|| file.getContentType().equals("application/sbml+xml")
+												|| file.getContentType().equals("application/sbml"))) {
 			return true;
 		} else {
+			logger.info("file content type is: " + file.getContentType());
 			return false;
 		}
 	
