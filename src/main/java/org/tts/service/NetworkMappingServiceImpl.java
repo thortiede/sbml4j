@@ -707,6 +707,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.provenanceGraphService.connect(fs,
 					this.provenanceEntityRepository.findByEntityUUID(fs.getSimpleModelEntityUUID()),
 					ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.warehouseGraphService.connect(fs, this.provenanceEntityRepository.findByEntityUUID(fs.getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
