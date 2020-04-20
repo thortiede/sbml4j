@@ -174,11 +174,13 @@ public class GraphEnum {
 	}
 	/**
 	 * CONTAINS<br>
-	 * FOR
+	 * FOR<br>
+	 * DERIVEDFROM
 	 */
 	public enum WarehouseGraphEdgeType {
 		CONTAINS,
-		FOR
+		FOR,
+		DERIVEDFROM
 	}
 	
 	/**
