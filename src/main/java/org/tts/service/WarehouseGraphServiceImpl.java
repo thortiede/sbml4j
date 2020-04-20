@@ -1255,6 +1255,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			String newUUID = oldToNewMap.get(oldUUID);
 			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(newUUID);
 			this.provenanceGraphService.connect(newSpecies, oldUUID, ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.connect(newSpecies, this.provenanceGraphService.getByEntityUUID(newSpecies.getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.connect(newMapping, newSpecies, WarehouseGraphEdgeType.CONTAINS);
 		}
 
