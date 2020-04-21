@@ -733,8 +733,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			System.out.println(bq.getEndNode().getUri());
 			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) || bq.getQualifier().equals(Qualifier.BQB_IS)) {
 				String[] splitted = bq.getEndNode().getUri().split("/");
-				target.addAnnotation(splitted[splitted.length-2], splitted[splitted.length-1]);
-				target.addAnnotationType(splitted[splitted.length-2], "string");
+				target.addAnnotation(splitted[splitted.length-2].replace('.', '_'), splitted[splitted.length-1]);
+				target.addAnnotationType(splitted[splitted.length-2].replace('.', '_'), "string");
 			}
 		}
 	}
