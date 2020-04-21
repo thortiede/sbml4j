@@ -346,7 +346,7 @@ public class WarehouseController {
 		 * arrange them under the new mapping node and connect them to the old nodes
 		 * 
 		 */
-		if (step.equals(MappingStep.FILTER) || step.equals(MappingStep.ANNOTATE) || step.equals(MappingStep.COPY)) {
+		if (step.equals(MappingStep.FILTER) || step.equals(MappingStep.ANNOTATE) || step.equals(MappingStep.COPY) || step.equals(MappingStep.PATHWAYINFO)) {
 			newMapping = this.warehouseGraphService.createMappingFromMappingWithOptions(parent, newMapping, options,
 					step);
 		}
