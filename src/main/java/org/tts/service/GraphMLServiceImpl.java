@@ -272,9 +272,9 @@ public class GraphMLServiceImpl implements GraphMLService {
 			
 			if (nodeAnnotationMap != null && nodeAnnotationMap.size() != 0) {
 				for (String annotationKey : nodeAnnotationMap.keySet()) {
-					String annotationType = nodeAnnotationTypeMap.get(annotationKey);
+					String annotationType = nodeAnnotationTypeMap.get(annotationKey).toLowerCase();
 					switch (annotationType) {
-					case "String":
+					case "string":
 						String nodeAnnotation = (String) nodeAnnotationMap.get(annotationKey);
 						nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_%s\">%s</data>\n", annotationKey, nodeAnnotation).getBytes());
 						if (!nodeAnnotations.containsKey(annotationKey)) {
@@ -341,9 +341,9 @@ public class GraphMLServiceImpl implements GraphMLService {
 		// are there annotations on the edge?
 		if (edgeAnnotationMap != null && edgeAnnotationMap.size() != 0) {
 			for (String annotationKey : edgeAnnotationMap.keySet()) {
-				String annotationType = edgeAnnotationTypeMap.get(annotationKey);
+				String annotationType = edgeAnnotationTypeMap.get(annotationKey).toLowerCase();
 				switch (annotationType) {
-				case "String":
+				case "string":
 					String edgeAnnotation = (String) edgeAnnotationMap.get(annotationKey);
 					edgesWithAnnotation.add(String.format("\t\t\t<data key=\"e_%s\">%s</data>\n", annotationKey, edgeAnnotation).getBytes());
 					if (!edgeAnnotations.containsKey(annotationKey)) {
