@@ -12,6 +12,7 @@ import org.tts.model.flat.relationship.InhibitionFlatEdge;
 import org.tts.model.flat.relationship.MethylationFlatEdge;
 import org.tts.model.flat.relationship.MolecularInteractionFlatEdge;
 import org.tts.model.flat.relationship.NonCovalentBindingFlatEdge;
+import org.tts.model.flat.relationship.PathwayFlatEdge;
 import org.tts.model.flat.relationship.PhosphorylationFlatEdge;
 import org.tts.model.flat.relationship.ProductFlatEdge;
 import org.tts.model.flat.relationship.ReactantFlatEdge;
@@ -77,6 +78,9 @@ public class FlatEdgeService {
 				break;
 			case "IS_CATALYST":
 				newEdge = new CatalystFlatEdge();
+				break;
+			case "SHAREDPATHWAY":
+				newEdge = new PathwayFlatEdge();
 				break;
 			default:
 				newEdge = new UnknownFromSourceFlatEdge();
