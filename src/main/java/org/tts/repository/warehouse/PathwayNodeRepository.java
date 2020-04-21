@@ -1,5 +1,7 @@
 package org.tts.repository.warehouse;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.warehouse.PathwayNode;
@@ -45,5 +47,25 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "RETURN DISTINCT t.sBaseSboTerm")
 	Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID);
+
+
+	@Query("MATCH "
+			+ "(g1:GraphBaseEntity)"
+			+ "-[w1:Warehouse]->"
+			+ "(s1:SBMLSpecies)"
+			+ "<-[wc1:Warehouse]-"
+			+ "(p:PathwayNode)"
+			+ "-[wc2:Warehouse]->"
+			+ "(s2:SBMLSpecies)"
+			+ "<-[w2:Warehouse]-"
+			+ "(g2:GraphBaseEntity) "
+			+ "WHERE g1.entityUUID = $entity1UUID "
+			+ "AND g2.entityUUID = $entity2UUID "
+			+ "AND w1.warehouseGraphEdgeType = \"DERIVEDFROM\" "
+			+ "AND w2.warehouseGraphEdgeType = \"DERIVEDFROM\" "
+			+ "AND wc1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND wc2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN p")
+	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
 
 }
