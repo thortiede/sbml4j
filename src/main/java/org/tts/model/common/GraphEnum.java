@@ -7,7 +7,8 @@ public class GraphEnum {
 	 * ANNOTATE,<br>
 	 * FILTER,<br>
 	 * CONTEXT,<br>
-	 * MULTIGENESUBNET,
+	 * MULTIGENESUBNET,<br>
+	 * PATHWAYINFO
 	 */
 	public enum MappingStep {
 		COPY,
@@ -15,6 +16,7 @@ public class GraphEnum {
 		FILTER,
 		CONTEXT,
 		MULTIGENESUBNET,
+		PATHWAYINFO
 	}
 	
 	public enum NetworkMappingType {
