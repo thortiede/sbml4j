@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.sbml.jsbml.CVTerm.Qualifier;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
+import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
@@ -33,6 +35,7 @@ import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
+import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
@@ -59,7 +62,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	FileService fileService;
 	GraphMLService graphMLService;
 	FlatEdgeService flatEdgeService;
-
+	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
 	private static int QUERY_DEPTH_ZERO = 0;
 
 	private static int QUERY_DEPTH_TWO = 2;
@@ -75,7 +79,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			FlatEdgeRepository flatEdgeRepository, ProvenanceEntityRepository provenanceEntityRepository,
 			WarehouseGraphService warehouseGraphService, ProvenanceGraphService provenanceGraphService,
 			UtilityService utilityService, FileService fileService,
-			GraphMLService graphMLService, FlatEdgeService flatEdgeService) {
+			GraphMLService graphMLService, FlatEdgeService flatEdgeService,
+			BiomodelsQualifierRepository biomodelsQualifierRepository) {
 		super();
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
 		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
@@ -91,6 +96,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.fileService = fileService;
 		this.graphMLService = graphMLService;
 		this.flatEdgeService = flatEdgeService;
+		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 	}
 
 	@Override
@@ -624,6 +630,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					inputFlatSpecies.setSboTerm(current.getInputSpecies().getsBaseSboTerm());
 					nodeTypes.add(current.getInputSpecies().getsBaseSboTerm());
 					inputFlatSpecies.setSimpleModelEntityUUID(current.getInputSpecies().getEntityUUID());
+					getBQAnnotations(current.getInputSpecies().getEntityUUID(), inputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getInputSpecies().getEntityUUID(),
 							inputFlatSpecies);
 				}
@@ -639,6 +646,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					outputFlatSpecies.setSboTerm(current.getOutputSpecies().getsBaseSboTerm());
 					nodeTypes.add(current.getOutputSpecies().getsBaseSboTerm());
 					outputFlatSpecies.setSimpleModelEntityUUID(current.getOutputSpecies().getEntityUUID());
+					getBQAnnotations(current.getOutputSpecies().getEntityUUID(), outputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getOutputSpecies().getEntityUUID(),
 							outputFlatSpecies);
 				}
@@ -712,6 +720,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	/**
+	 * Query the biomodelsQualifierRepository for all Biomodels Qualifiers of Type HAS_VERSION and IS
+	 * @param parentEntityUUID The Node to which the Biomodels Qualifier should be fetched for
+	 * @param target The Flat Species those Qualifiers should be added as Annotations (always as type "string"
+	 */
+	private void getBQAnnotations(String parentEntityUUID, FlatSpecies target) {
+		List<BiomodelsQualifier> bqList = this.biomodelsQualifierRepository.findAllForSBMLSpecies(parentEntityUUID);
+		for(BiomodelsQualifier bq : bqList) {
+			System.out.println(bq.getEndNode().getUri());
+			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) || bq.getQualifier().equals(Qualifier.BQB_IS)) {
+				String[] splitted = bq.getEndNode().getUri().split("/");
+				target.addAnnotation(splitted[splitted.length-2], splitted[splitted.length-1]);
+				target.addAnnotationType(splitted[splitted.length-2], "string");
+			}
+		}
 	}
 
 	@Override
