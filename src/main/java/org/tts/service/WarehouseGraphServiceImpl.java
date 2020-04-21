@@ -115,6 +115,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	@Autowired
 	FlatEdgeRepository flatEdgeRepository;
+	
+	@Autowired
+	FlatEdgeService flatEdgeService;
 
 	@Autowired
 	Session session;
@@ -1248,16 +1251,50 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		// TODO Does this have any side effect for other threads also using this
 		// session?
 		this.session.clear();
-
+		List<FlatSpecies> newSpeciesList = new ArrayList<>();
+		List<FlatEdge> pathwayFlatEdges = new ArrayList<>();
 		// now we can connect the old and new species with provenance edges and connect
 		// the new species with the mapping node
 		for (String oldUUID : oldToNewMap.keySet()) {
 			String newUUID = oldToNewMap.get(oldUUID);
 			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(newUUID);
+			if (step.equals(MappingStep.PATHWAYINFO)) {
+				newSpeciesList.add(newSpecies);
+			}
 			this.provenanceGraphService.connect(newSpecies, oldUUID, ProvenanceGraphEdgeType.wasDerivedFrom);
 			this.connect(newSpecies, this.provenanceGraphService.getByEntityUUID(newSpecies.getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.connect(newMapping, newSpecies, WarehouseGraphEdgeType.CONTAINS);
 		}
+		// do we want to add pathway Information?
+		if (step.equals(MappingStep.PATHWAYINFO)) {
+			FlatEdge pathwayEdge;
+			for (int i = 0; i != newSpeciesList.size(); i++) {
+				for (int j = i+1; j != newSpeciesList.size(); j++) {
+					List<PathwayNode> sharedPathwayList = this.pathwayNodeRepository.findAllBySharedDerivedFromWarehouseEdge(newSpeciesList.get(i).getEntityUUID(), newSpeciesList.get(j).getEntityUUID());
+					if (sharedPathwayList != null && sharedPathwayList.size() > 0) {
+						pathwayEdge = this.flatEdgeService.createFlatEdge("SHAREDPATHWAY");
+						String sharedPathwayString = "";
+						for (PathwayNode pathway : sharedPathwayList) {
+							sharedPathwayString += pathway.getPathwayIdString();
+							sharedPathwayString += ", ";
+						}
+						pathwayEdge.addAnnotation("pathwayids", sharedPathwayString.substring(0, sharedPathwayString.length()-2));
+						pathwayEdge.addAnnotationType("pathwayids", "string");
+						pathwayEdge.setInputFlatSpecies(newSpeciesList.get(i));
+						pathwayEdge.setOutputFlatSpecies(newSpeciesList.get(j));
+						pathwayEdge.setSymbol(newSpeciesList.get(i).getSymbol() + "-" + pathwayEdge.getTypeString() + "-" + newSpeciesList.get(j).getSymbol());
+						pathwayFlatEdges.add(pathwayEdge);
+						numberOfEdges += 1;
+						relationTypes.add("SHAREDPATHWAY");
+						
+					}
+				}
+			}
+			if (pathwayFlatEdges.size() > 0) {
+				this.flatEdgeRepository.saveAll(pathwayFlatEdges);
+			}
+		}
+		
 
 		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(numberOfNodes));
 		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(numberOfEdges));
