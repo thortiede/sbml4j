@@ -58,6 +58,27 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "-[wc2:Warehouse]->"
 			+ "(s2:SBMLSpecies)"
 			+ "<-[w2:Warehouse]-"
+			+ "(g2:GraphBaseEntity), "
+			+ "(pc:PathwayCollectionNode) "
+			+ "WHERE g1.entityUUID = $entity1UUID "
+			+ "AND g2.entityUUID = $entity2UUID "
+			+ "AND w1.warehouseGraphEdgeType = \"DERIVEDFROM\" "
+			+ "AND w2.warehouseGraphEdgeType = \"DERIVEDFROM\" "
+			+ "AND wc1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND wc2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND NOT (p)-[:PROV {provenanceGraphEdgeType:\"wasDerivedFrom\"}]->(pc:PathwayCollectionNode) "
+			+ "RETURN p")
+	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
+	
+	/*@Query("MATCH "
+			+ "(g1:GraphBaseEntity)"
+			+ "-[w1:Warehouse]->"
+			+ "(s1:SBMLSpecies)"
+			+ "<-[wc1:Warehouse]-"
+			+ "(p:PathwayNode)"
+			+ "-[wc2:Warehouse]->"
+			+ "(s2:SBMLSpecies)"
+			+ "<-[w2:Warehouse]-"
 			+ "(g2:GraphBaseEntity) "
 			+ "WHERE g1.entityUUID = $entity1UUID "
 			+ "AND g2.entityUUID = $entity2UUID "
@@ -65,7 +86,16 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND w2.warehouseGraphEdgeType = \"DERIVEDFROM\" "
 			+ "AND wc1.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "AND wc2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND NOT p.entityUUID IN $exclusionPathwayEntityUUIDs "
 			+ "RETURN p")
-	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
+	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdgeWithExlusion(String entity1UUID, String entity2UUID, List<String> exclusionPathwayEntityUUIDs);
 
+	@Query("MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[pr:PROV]->"
+			+ "(pc:PathwayCollectionNode) "
+			+ "WHERE pr.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "RETURN p.entityUUID")
+	List<String> findAllPathwaysDirectlyDerivedFromCollections();
+*/
 }
