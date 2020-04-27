@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.RepresentationModel;
 
-public class NodeEdgeList extends ResourceSupport {
+public class NodeEdgeList extends RepresentationModel<NodeEdgeList> {
 	
 	private Long listId = null;
 	

@@ -1,11 +1,11 @@
 package org.tts.model.api.Output;
 
-import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.RepresentationModel;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public class WarehouseInventoryItem extends ResourceSupport {
+public class WarehouseInventoryItem extends RepresentationModel<WarehouseInventoryItem> {
 	private String entityUUID;
 	private boolean isActive;
 	private String name;
