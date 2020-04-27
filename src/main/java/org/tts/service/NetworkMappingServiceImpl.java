@@ -473,9 +473,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			Iterator<MetabolicPathwayReturnType> metIt = metPathwayResult.iterator();
 			MetabolicPathwayReturnType current;
 
-			List<String> flatReactionLabel = new ArrayList<>();
-			flatReactionLabel.add("FlatReaction");
-
+			String flatReactionLabel = "FlatReaction";
+			
 			boolean startFlatSpeciesExists;
 			boolean endFlatSpeciesExists;
 			while (metIt.hasNext()) {
@@ -500,8 +499,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					endFlatSpeciesExists = true;
 				} else {
 					endFlatSpecies = new FlatSpecies();
-					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(endFlatSpecies,
-							flatReactionLabel);
+					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(endFlatSpecies);
+					endFlatSpecies.addLabel(flatReactionLabel);
 					endFlatSpecies.setSymbol(current.getReaction().getsBaseName());
 					nodeSymbols.add(current.getReaction().getsBaseName());
 					endFlatSpecies.setSboTerm(current.getReaction().getsBaseSboTerm());

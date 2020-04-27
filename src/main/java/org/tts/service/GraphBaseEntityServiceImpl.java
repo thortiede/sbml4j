@@ -446,7 +446,8 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		for (int i = 0; i!= dataArrayNode.size(); i++) {
 			FlatSpecies myDrugSpecies = new FlatSpecies();
 			FlatEdge targetsEdge = null;
-			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies, Arrays.asList(new String[]{"Drug"}));
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies);
+			myDrugSpecies.addLabel("Drug");
 			boolean foundTarget = false;
 			boolean reusingMyDrugSpecies = false;
 		
