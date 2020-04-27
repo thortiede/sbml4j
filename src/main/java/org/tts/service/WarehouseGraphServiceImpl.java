@@ -1,10 +1,8 @@
 package org.tts.service;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,16 +20,12 @@ import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
-import org.tts.model.api.Output.MappingReturnType;
 import org.tts.model.api.Output.NetworkInventoryItem;
-import org.tts.model.api.Output.NodeEdgeList;
-import org.tts.model.api.Output.NodeNodeEdge;
 import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.common.GraphEnum.OutputType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
