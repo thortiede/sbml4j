@@ -459,7 +459,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		Iterable<FlatSpecies> persistedFlatSpecies;
 
 		// TODO divert here for different mapping types
-		if (type.equals(NetworkMappingType.METABOLIC)) {
+		if (type.equals(NetworkMappingType.METABOLIC) || type.equals(NetworkMappingType.PATHWAYMAPPING)) {
 
 			// gather nodeTypes
 			this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
@@ -529,81 +529,87 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								: (current.getTypeOfRelation().equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
 				allFlatEdges.add(metabolicFlatEdge);
 			}
+			
+			// do this at the end
 			// collect and persist the FlatSpecies
-			for (String entry : sbmlSpeciesEntityUUIDToFlatSpeciesMap.keySet()) {
-				allFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(entry));
-			}
+			//for (String entry : sbmlSpeciesEntityUUIDToFlatSpeciesMap.keySet()) {
+			//	allFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(entry));
+			//}
 			for (String entry : sbmlSimpleReactionToFlatSpeciesMap.keySet()) {
 				allFlatSpecies.add(sbmlSimpleReactionToFlatSpeciesMap.get(entry));
 			}
-			persistedFlatSpecies = this.persistListOfFlatSpecies(allFlatSpecies);
+			// do not persist just yet
+			//persistedFlatSpecies = this.persistListOfFlatSpecies(allFlatSpecies);
 
-			// persist the FlatEdges
-			Iterable<FlatEdge> persistedFlatEdges = flatEdgeRepository.saveAll(allFlatEdges);
+			// persist the FlatEdges - not just yet
+			//Iterable<FlatEdge> persistedFlatEdges = flatEdgeRepository.saveAll(allFlatEdges);
 
-		} else {
-			Map<String, FlatEdge> sbmlSimpleTransitionToFlatEdgeMap = new HashMap<>();
-			List<String> transitionSBOTerms = new ArrayList<>();
+		} //else {
+		
+		Map<String, FlatEdge> sbmlSimpleTransitionToFlatEdgeMap = new HashMap<>();
+		List<String> transitionSBOTerms = new ArrayList<>();
+		boolean processTransitionsNeeded = false;
+		if (type.equals(NetworkMappingType.PATHWAYMAPPING)) {
+			// gather nodeTypes
+			this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
+					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
 
-			if (type.equals(NetworkMappingType.PATHWAYMAPPING)) {
-				// gather nodeTypes
-				this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
-						.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
+			// gather transitionTypes
+			this.warehouseGraphService.getAllDistinctTransitionSboTermsOfPathway(pathway.getEntityUUID())
+					.forEach(sboTerm -> transitionSBOTerms.add(sboTerm));
 
-				// gather transitionTypes
-				this.warehouseGraphService.getAllDistinctTransitionSboTermsOfPathway(pathway.getEntityUUID())
-						.forEach(sboTerm -> transitionSBOTerms.add(sboTerm));
-
-				// flatTransitionsOfPathway =
-				// this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(),
-				// idSystem);
-
-			} else if (type.equals(NetworkMappingType.PPI)) {
-				nodeSBOTerms.add("SBO:0000252");
-				String conversionSBO = SBO.getTerm(182).getId();
-				transitionSBOTerms.add(conversionSBO);
-				for (String conversionChildSBO : this.utilityService.getAllSBOChildren(conversionSBO)) {
-					transitionSBOTerms.add(conversionChildSBO);
-				}
-				String biochemicalOrTransportReactionSBO = SBO.getTerm(167).getId();
-				transitionSBOTerms.add(biochemicalOrTransportReactionSBO);
-				for (String biochemicalOrTransportReactionChildSBO : this.utilityService
-						.getAllSBOChildren(biochemicalOrTransportReactionSBO)) {
-					transitionSBOTerms.add(biochemicalOrTransportReactionChildSBO);
-				}
-				String molecularInteractionSBO = SBO.getTerm(344).getId();
-				transitionSBOTerms.add(molecularInteractionSBO);
-				for (String molecularInteractionChildSBO : this.utilityService
-						.getAllSBOChildren(molecularInteractionSBO)) {
-					transitionSBOTerms.add(molecularInteractionChildSBO);
-				}
-
-				// flatTransitionsOfPathway =
-				// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
-				// idSystem, transitionSBOTerms);
-
-			} else if (type.equals(NetworkMappingType.REGULATORY)) {
-				nodeSBOTerms.add("SBO:0000252");
-				nodeSBOTerms.add("SBO:0000247");
-				String controlSBO = "SBO:0000168";
-				transitionSBOTerms.add(controlSBO);
-				for (String controlChildSBO : this.utilityService.getAllSBOChildren(controlSBO)) {
-					transitionSBOTerms.add(controlChildSBO);
-				}
-				// flatTransitionsOfPathway =
-				// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
-				// idSystem, transitionSBOTerms, nodeSBOTerms);
-
-			} else if (type.equals(NetworkMappingType.SIGNALLING)) {
-				nodeSBOTerms.add("SBO:0000252");
-				transitionSBOTerms.add("SBO:0000656");
-				transitionSBOTerms.add("SBO:0000170");
-				transitionSBOTerms.add("SBO:0000169");
-				// flatTransitionsOfPathway =
-				// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
-				// idSystem, transitionSBOTerms, nodeSBOTerms);
+			// flatTransitionsOfPathway =
+			// this.graphBaseEntityRepository.getAllFlatTransitionsForPathway(pathway.getEntityUUID(),
+			// idSystem);
+			processTransitionsNeeded = true;
+		} else if (type.equals(NetworkMappingType.PPI)) {
+			nodeSBOTerms.add("SBO:0000252");
+			String conversionSBO = SBO.getTerm(182).getId();
+			transitionSBOTerms.add(conversionSBO);
+			for (String conversionChildSBO : this.utilityService.getAllSBOChildren(conversionSBO)) {
+				transitionSBOTerms.add(conversionChildSBO);
+			}
+			String biochemicalOrTransportReactionSBO = SBO.getTerm(167).getId();
+			transitionSBOTerms.add(biochemicalOrTransportReactionSBO);
+			for (String biochemicalOrTransportReactionChildSBO : this.utilityService
+					.getAllSBOChildren(biochemicalOrTransportReactionSBO)) {
+				transitionSBOTerms.add(biochemicalOrTransportReactionChildSBO);
+			}
+			String molecularInteractionSBO = SBO.getTerm(344).getId();
+			transitionSBOTerms.add(molecularInteractionSBO);
+			for (String molecularInteractionChildSBO : this.utilityService
+					.getAllSBOChildren(molecularInteractionSBO)) {
+				transitionSBOTerms.add(molecularInteractionChildSBO);
 			}
 
+			// flatTransitionsOfPathway =
+			// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
+			// idSystem, transitionSBOTerms);
+			processTransitionsNeeded = true;
+		} else if (type.equals(NetworkMappingType.REGULATORY)) {
+			nodeSBOTerms.add("SBO:0000252");
+			nodeSBOTerms.add("SBO:0000247");
+			String controlSBO = "SBO:0000168";
+			transitionSBOTerms.add(controlSBO);
+			for (String controlChildSBO : this.utilityService.getAllSBOChildren(controlSBO)) {
+				transitionSBOTerms.add(controlChildSBO);
+			}
+			// flatTransitionsOfPathway =
+			// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
+			// idSystem, transitionSBOTerms, nodeSBOTerms);
+			processTransitionsNeeded = true;
+		} else if (type.equals(NetworkMappingType.SIGNALLING)) {
+			nodeSBOTerms.add("SBO:0000252");
+			transitionSBOTerms.add("SBO:0000656");
+			transitionSBOTerms.add("SBO:0000170");
+			transitionSBOTerms.add("SBO:0000169");
+			// flatTransitionsOfPathway =
+			// this.graphBaseEntityRepository.getFlatTransitionsForPathway(pathway.getEntityUUID(),
+			// idSystem, transitionSBOTerms, nodeSBOTerms);
+			processTransitionsNeeded = true;
+		}
+		// do we have non metabolic elements we need to process?
+		if (processTransitionsNeeded) {
 			Iterable<NonMetabolicPathwayReturnType> nonMetPathwayResult = this.graphBaseEntityRepository
 					.getFlatTransitionsForPathwayUsingSpecies(pathway.getEntityUUID(), idSystem, transitionSBOTerms,
 							nodeSBOTerms);
@@ -683,18 +689,17 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					sbmlSimpleTransitionToFlatEdgeMap.put(current.getTransition().getEntityUUID(), transitionFlatEdge);
 				}
 			}
-
-			for (String entry : sbmlSpeciesEntityUUIDToFlatSpeciesMap.keySet()) {
-				allFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(entry));
-			}
-			persistedFlatSpecies = this.persistListOfFlatSpecies(allFlatSpecies);
-
-			for (String entry : sbmlSimpleTransitionToFlatEdgeMap.keySet()) {
-				allFlatEdges.add(sbmlSimpleTransitionToFlatEdgeMap.get(entry));
-			}
-			Iterable<FlatEdge> persistedFlatEdges = this.flatEdgeRepository.saveAll(allFlatEdges);
-
 		}
+		for (String entry : sbmlSpeciesEntityUUIDToFlatSpeciesMap.keySet()) {
+			allFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(entry));
+		}
+		persistedFlatSpecies = this.persistListOfFlatSpecies(allFlatSpecies);
+
+		for (String entry : sbmlSimpleTransitionToFlatEdgeMap.keySet()) {
+			allFlatEdges.add(sbmlSimpleTransitionToFlatEdgeMap.get(entry));
+		}
+		Iterable<FlatEdge> persistedFlatEdges = this.flatEdgeRepository.saveAll(allFlatEdges);
+
 
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
