@@ -7,9 +7,11 @@ import org.tts.model.common.ContentGraphNode;
 public interface ContentGraphNodeRepository extends Neo4jRepository<ContentGraphNode, Long> {
 
 	@Query(value = "MATCH "
-			+ "(p:PathwayNode {entityUUID: {0}}"
-			+ "-[:Warehouse {WarehouseGraphEdgeType: \"CONTAINS\"}->"
+			+ "(p:PathwayNode}"
+			+ "-[w:Warehouse]->"
 			+ "(c:ContentGraphNode) "
+			+ "WHERE p.entityUUID = $pathwayNodeEntityUUID "
+			+ "AND w.WarehouseGraphEdgeType=\"CONTAINS\" "
 			+ "RETURN c")	
 	public Iterable<ContentGraphNode> findAllByPathwayNodeEntityUUID(String pathwayNodeEntityUUID);
 	
