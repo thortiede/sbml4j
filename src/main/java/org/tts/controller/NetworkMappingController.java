@@ -32,23 +32,7 @@ public class NetworkMappingController {
 		this.graphMLService = graphMLService;
 	}
 
-	/**
-	 * GET /filterOptions Uses custom Cypher Query to extract the types of
-	 * transitions between species are present in the model These names can be used
-	 * to filter GET /mapping/ppi
-	 * 
-	 * @return the names of the transition types found in the network in this
-	 *         database
-	 */
-	@Deprecated
-	@RequestMapping(value = "/filterOptions", method = RequestMethod.GET)
-	public ResponseEntity<FilterOptions> getFilterOptions() {
-		logger.info("Serving GET /filterOptions");
-		FilterOptions fullOptions = this.networkMappingService.getFullFilterOptions();
-		// return options
-		return new ResponseEntity<FilterOptions>(fullOptions, HttpStatus.OK);
-	}
-
+	
 	/**
 	 * GET /mapping/ppi Queries the database with custom Cypher Queries to get all
 	 * interactions between QualitativeSpecies
