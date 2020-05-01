@@ -116,7 +116,7 @@ public class ProvenanceGraphService {
 			newEdge.setStartNode(source);
 			newEdge.setEndNode(target);
 			
-			this.provenanceEntityRepository.save(newEdge, 0);
+			this.provenanceGraphEdgeRepository.save(newEdge, 0);
 		}
 	}
 
