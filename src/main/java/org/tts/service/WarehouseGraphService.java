@@ -100,7 +100,7 @@ public interface WarehouseGraphService {
 
 	//public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
 
-	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
+	//public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
 	
 	public MappingNode saveMappingNode(MappingNode node, int depth);
 
@@ -110,7 +110,7 @@ public interface WarehouseGraphService {
 
 	public String findStartNode(String baseNetworkUUID, String geneSymbol);
 
-	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
+	//List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
 
 	//NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
 

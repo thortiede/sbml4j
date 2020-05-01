@@ -819,7 +819,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return filterOptions;
 	}
 
-	@Override
+	/*@Override
 	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID,
 			FilterOptions options) {
 		List<String> sourceSpeciesForContext = options.getNodeSymbols();
@@ -866,9 +866,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		}
 
 		return contextSpeciesList;
-	}
+	}*/
 
-	private List<FlatSpecies> findMultiGeneSubnet(List<String> sourceSpeciesForContext, String relationTypesApocString,
+	/*private List<FlatSpecies> findMultiGeneSubnet(List<String> sourceSpeciesForContext, String relationTypesApocString,
 			FilterOptions options) {
 
 		if (options.isTerminateAtDrug()) {
@@ -879,7 +879,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					"+FlatSpecies", options.getMinSize(), options.getMaxSize());
 		}
 	}
-
+*/
 	/**
 	 * @param startNodeEntityUUID
 	 * @param relationTypesApocString
@@ -887,7 +887,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 * @param maxPathLength
 	 * @return
 	 */
-	@Override
+	/*@Override
 	public List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options) {
 		String relationTypesApocString = getRelationShipApocString(options);
 		List<FlatSpecies> contextSpeciesList;
@@ -900,7 +900,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		}
 		return contextSpeciesList;
 	}
-
+*/
 	/**
 	 * @param options
 	 * @return
