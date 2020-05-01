@@ -56,12 +56,39 @@ public interface FlatNetworkMappingRepository extends Neo4jRepository<FlatNetwor
 	Iterable<ApocPathReturnType> runApocPathExpandFor(String startNodeEntityUUID, String apocRelationshipString, String apocNodeString, int minDepth, int maxDepth);
 
 	@Query(value="MATCH (m:MappingNode)-[w:Warehouse]->(fs:FlatSpecies) "
-			+ "WHERE m.entityUUID = $networkEntityUUID AND w.warehouseGraphEdgeType = \"CONTAINS\" AND fs.symbol IN $startNodeSymbols "
-			+ "call apoc.path.expand(fs, {2}, {3}, {4}, {5}) yield path as pp return nodes(pp) as pathNodes, relationships(pp) as pathEdges;")
+			+ "WHERE m.entityUUID = $networkEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND fs.symbol IN $startNodeSymbols "
+			+ "call apoc.path.expand("
+			+ "fs, "
+			+ "$relationTypesApocString, "
+			+ "$nodeFilterString, "
+			+ "$minPathLength, "
+			+ "$maxPathLength) "
+			+ "YIELD "
+			+ "path as pp "
+			+ "RETURN nodes(pp) as pathNodes, "
+			+ "relationships(pp) as pathEdges;")
 	Iterable<ApocPathReturnType> findMultiNodeApocPathInNetworkFromNodeSymbols(String networkEntityUUID, List<String> startNodeSymbols, String relationTypesApocString, String nodeFilterString,
 			int minPathLength, int maxPathLength);
 	
-	@Query(value="MATCH (fs1:FlatSpecies) where fs1.entityUUID = $startNodeEntityUUID with fs1 MATCH (fs2:FlatSpecies) where fs2.entityUUID = $endNodeEntityUUID call apoc.algo.dijkstraWithDefaultWeight(fs1, fs2, {2}, {3}, {4}) yield path as pp, weight as w return nodes(pp) as pathNodes, relationships(pp) as pathEdges;")
-	Iterable<ApocPathReturnType> apocDijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, String relationTypesApocString, String propertyName, float defaultWeight);
+	@Query(value="MATCH (fs1:FlatSpecies) "
+			+ "WHERE fs1.entityUUID = $startNodeEntityUUID "
+			+ "WITH fs1 "
+			+ "MATCH (fs2:FlatSpecies) "
+			+ "WHERE fs2.entityUUID = $endNodeEntityUUID "
+			+ "CALL apoc.algo.dijkstraWithDefaultWeight("
+			+ "fs1, "
+			+ "fs2, "
+			+ "$relationTypesApocString, "
+			+ "$propertyName, "
+			+ "$defaultWeight) "
+			+ "YIELD "
+			+ "path as pp, "
+			+ "weight as w "
+			+ "RETURN nodes(pp) as pathNodes, "
+			+ "relationships(pp) as pathEdges;")
+	Iterable<ApocPathReturnType> apocDijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, 
+			String relationTypesApocString, String propertyName, float defaultWeight);
 	
 }
