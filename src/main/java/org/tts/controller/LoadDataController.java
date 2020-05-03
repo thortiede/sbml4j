@@ -40,7 +40,7 @@ import org.tts.service.FileStorageService;
 import org.tts.service.NodeEdgeListService;
 import org.tts.service.OrganismService;
 import org.tts.service.ProvenanceGraphService;
-import org.tts.service.SBMLPersistenceService;
+
 import org.tts.service.SBMLService;
 import org.tts.service.WarehouseGraphService;
 
@@ -50,7 +50,6 @@ public class LoadDataController {
 	FileCheckService fileCheckService;
 	//FileStorageService fileStorageService;
 	SBMLService sbmlService;
-	SBMLPersistenceService sbmlPersistenceService;
 	FileService fileService;
 	NodeEdgeListService nodeEdgeListService;
 	OrganismService organismService;
@@ -62,8 +61,7 @@ public class LoadDataController {
 	@Autowired
 	public LoadDataController(//FileStorageService fileStorageService, 
 			FileCheckService fileCheckService, 
-			@Qualifier("SBMLSimpleModelServiceImpl") SBMLService sbmlService, 
-			SBMLPersistenceService sbmlPersistenceService,
+			@Qualifier("SBMLSimpleModelServiceImpl") SBMLService sbmlService,
 			FileService fileService,
 			@Qualifier("simpleNodeEdgeListServiceImpl") NodeEdgeListService nodeEdgeListService,
 			OrganismService organismService,
@@ -73,7 +71,6 @@ public class LoadDataController {
 		//this.fileStorageService = fileStorageService;
 		this.fileCheckService = fileCheckService;
 		this.sbmlService = sbmlService;
-		this.sbmlPersistenceService = sbmlPersistenceService;
 		this.fileService = fileService;
 		this.nodeEdgeListService = nodeEdgeListService;
 		this.organismService = organismService;
