@@ -16,20 +16,14 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 	 */
 	@Query(value = "MATCH "
 			+ "(p:PathwayNode)"
-			+ "-[:PROV {provenanceGraphEdgeType: \"wasAttributedTo\"}]-"
-			+ "(:PROV_AGENT {graphAgentName: {0}})"
+			+ "-[pr:PROV]-"
+			+ "(pa:PROV_AGENT) "
+			+ "WHERE pr.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "AND pa.graphAgentName = $username "
 			+ "RETURN p")
 	Iterable<PathwayNode> findAllPathwaysAttributedToUser(String username);
 
 	
-	@Query(value="MATCH "
-			+ "(p:PathwayNode {entityUUID: {1}})"
-			+ "-[:PROV {provenanceGraphEdgeType: \"wasAttributedTo\"}]-"
-			+ "(:PROV_AGENT {graphAgentName: {0}})"
-			+ "RETURN p")
-	PathwayNode findPathwayAttributedToUser(String username, String entityUUID);
-
-
 	PathwayNode findByEntityUUID(String entityUUID);
 
 
@@ -66,7 +60,8 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND w2.warehouseGraphEdgeType = \"DERIVEDFROM\" "
 			+ "AND wc1.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "AND wc2.warehouseGraphEdgeType = \"CONTAINS\" "
-			+ "AND NOT (p)-[:PROV {provenanceGraphEdgeType:\"wasDerivedFrom\"}]->(pc:PathwayCollectionNode) "
+			+ "AND NOT (p)-[np:PROV]->(pc:PathwayCollectionNode) "
+			+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
 			+ "RETURN p")
 	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
 	
