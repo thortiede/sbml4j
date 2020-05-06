@@ -8,9 +8,9 @@ import org.tts.model.common.SBMLSpecies;
 @Repository
 public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long> {
 	
-	public SBMLSpecies findBySBaseName(String sBaseName);
+	public SBMLSpecies findBysBaseName(String sBaseName);
 
-	public SBMLSpecies findBySBaseId(String sBaseId);
+	public SBMLSpecies findBysBaseId(String sBaseId);
 	
 	@Query(value = "MATCH (t:SBMLSpecies) RETURN DISTINCT t.sBaseSboTerm;")
 	public Iterable<String> getNodeTypes();

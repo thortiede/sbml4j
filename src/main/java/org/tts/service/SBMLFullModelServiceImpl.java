@@ -250,7 +250,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	private SBMLDocumentEntity getSBMLDocument(Model model, String filename) {
 		
 		try {
-			SBMLDocumentEntity existingSBMLDocument = (SBMLDocumentEntity) this.sbmlSBaseEntityRepository.findBySBaseId(model.getSBMLDocument().getId(), 1);
+			SBMLDocumentEntity existingSBMLDocument = (SBMLDocumentEntity) this.sbmlSBaseEntityRepository.findBysBaseId(model.getSBMLDocument().getId(), 1);
 			if (existingSBMLDocument != null) {
 				if (existingSBMLDocument.getsBaseName().equals(model.getSBMLDocument().getName())
 						&& existingSBMLDocument.getSbmlFileName().equals(filename)) {
@@ -294,7 +294,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
 						&& existingCompartment.getSize() == compartment.getSize()
@@ -387,7 +387,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
 						&& existingCompartment.getSize() == compartment.getSize()
@@ -762,7 +762,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 					setSbaseProperties(qualSpecies, newQualSpecies);
 					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 					setQualSpeciesProperties(qualSpecies, newQualSpecies);
-					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
+					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
 					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies);
 					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				}
@@ -806,7 +806,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpeciesSbaseName));
+				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup);
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			}

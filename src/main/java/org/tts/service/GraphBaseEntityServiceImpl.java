@@ -232,7 +232,7 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		if (flatSpeciesEntityUUID == null) {
 			
 			// 1. Find SBMLSpecies with geneSymbol (or SBMLSpecies connected to externalResource with geneSymbol)
-			SBMLSpecies geneSpecies = this.sbmlSpeciesRepository.findBySBaseName(geneSymbol);
+			SBMLSpecies geneSpecies = this.sbmlSpeciesRepository.findBysBaseName(geneSymbol);
 			String simpleModelGeneEntityUUID = null;
 			if(geneSpecies != null) {
 				simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();

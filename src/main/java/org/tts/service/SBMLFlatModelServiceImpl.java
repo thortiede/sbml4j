@@ -66,7 +66,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
 						&& existingCompartment.getSize() == compartment.getSize()
