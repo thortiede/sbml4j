@@ -251,7 +251,11 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 							geneSpecies = current;
 						}
 					}
-					simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+					if(geneSpecies != null) {
+						simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+					} else {
+						return null;
+					}
 				}
 			}
 			if (simpleModelGeneEntityUUID == null) {
