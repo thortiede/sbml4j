@@ -27,7 +27,7 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			+ "(w:WarehouseGraphNode)"
 			+ "-[:FOR]->"
 			+ "(o:Organism) "
-			+ "WHERE w.entityUUID = $entityUUID"
+			+ "WHERE w.entityUUID = $entityUUID "
 			+ "RETURN o")
 	WarehouseGraphNode findOrganismForWarehouseGraphNode(String entityUUID);
 

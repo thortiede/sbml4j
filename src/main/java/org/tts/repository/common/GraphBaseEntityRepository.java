@@ -18,7 +18,7 @@ public interface GraphBaseEntityRepository extends Neo4jRepository<GraphBaseEnti
 			+ "(t:SBMLSimpleTransition) "
 			+ "WHERE p.entityUUID = $entityUUID "
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
-			+ "AND t.sBaseSboTerm IN $transitionSBOTerms"
+			+ "AND t.sBaseSboTerm IN $transitionSBOTerms "
 			+ "WITH t "
 			+ "MATCH "
 			+ "(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
