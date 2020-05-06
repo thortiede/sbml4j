@@ -6,6 +6,6 @@ import org.tts.model.simple.SBMLSimpleReaction;
 
 public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimpleReaction, Long> {
 
-	SBMLSimpleReaction findBySBaseName(String sBaseName, int depth);
+	SBMLSimpleReaction findBysBaseName(String sBaseName, int depth);
 	
 }

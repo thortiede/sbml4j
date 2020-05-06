@@ -489,7 +489,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 					case "qual":
 						SBMLQualModelExtension sbmlQualModelExtension = (SBMLQualModelExtension) sBaseExtension;
 						for(SBMLQualSpecies qualSpecies : sbmlQualModelExtension.getSbmlQualSpecies()) {
-							SBMLQualSpecies existingQualSpecies = (SBMLQualSpecies) sbmlCompartmentalizedSBaseEntityRepository.findBySBaseId(qualSpecies.getsBaseId(), 2);
+							SBMLQualSpecies existingQualSpecies = (SBMLQualSpecies) sbmlCompartmentalizedSBaseEntityRepository.findBysBaseId(qualSpecies.getsBaseId(), 2);
 							if(existingQualSpecies != null) {
 								// for now we do it the old way and only check for this attribute. might add more complex check later
 								qualSpecies.setId(existingQualSpecies.getId());
@@ -746,7 +746,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 				logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
-				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(qualSpecies.getName());
+				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName());
 				if (existingSpecies != null) {
 					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
 						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
@@ -790,12 +790,12 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 			setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(symbol);
+				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(symbol);
 				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(existingQualSpecies);
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
-			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBySBaseName(qualSpeciesSbaseName);
+			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBysBaseName(qualSpeciesSbaseName);
 			if (existingSBMLQualSpeciesGroup != null) {
 				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
 					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);

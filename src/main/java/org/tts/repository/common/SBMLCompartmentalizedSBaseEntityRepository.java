@@ -5,6 +5,6 @@ import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
 
 public interface SBMLCompartmentalizedSBaseEntityRepository extends Neo4jRepository<SBMLCompartmentalizedSBaseEntity, Long> {
 
-	SBMLCompartmentalizedSBaseEntity findBySBaseId(String sBaseId, int depth);
+	SBMLCompartmentalizedSBaseEntity findBysBaseId(String sBaseId, int depth);
 	
 }

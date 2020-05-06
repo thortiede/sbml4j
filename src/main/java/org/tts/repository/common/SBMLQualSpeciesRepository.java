@@ -7,8 +7,8 @@ import org.tts.model.common.SBMLQualSpecies;
 @Repository
 public interface SBMLQualSpeciesRepository extends Neo4jRepository<SBMLQualSpecies, Long> {
 
-	SBMLQualSpecies findBySBaseName(String sBaseName);
+	SBMLQualSpecies findBysBaseName(String sBaseName);
 
-	SBMLQualSpecies findBySBaseId(String sBaseId);
+	SBMLQualSpecies findBysBaseId(String sBaseId);
 
 }
