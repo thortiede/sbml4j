@@ -10,10 +10,10 @@ import org.tts.model.provenance.ProvenanceEntity;
 public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEntity, Long> {
 
 	@Query(value = "MATCH p=(e1:ProvenanceEntity)"
-				+ "-[p:PROV]-"
+				+ "-[pr:PROV]-"
 				+ "(e2:ProvenanceEntity) "
 				+ "WHERE e1.entityUUID = $sourceEntityUUID "
-				+ "AND p.provenanceGraphEdgeType = $edgetype "
+				+ "AND pr.provenanceGraphEdgeType = $edgetype "
 				+ "AND e2.entityUUID = $targetEntityUUID "
 				+ "RETURN count(p) > 0")
 	boolean areProvenanceEntitiesConnectedWithProvenanceEdgeType(String sourceEntityUUID, String targetEntityUUID,
