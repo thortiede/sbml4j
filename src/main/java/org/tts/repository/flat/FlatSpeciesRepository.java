@@ -17,9 +17,9 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "(fs:FlatSpecies)-[r]-(fs2:FlatSpecies)"
 			+ "-[w2:Warehouse]-"
 			+ "(m:MappingNode) "
-			+ "WHERE m.entityUUID = entityUUID "
+			+ "WHERE m.entityUUID = $entityUUID "
 			+ "AND w1.warehouseGraphEdgeType = \"CONTAINS\" "
-			+ "AND w2.warehouseGraphEdgeType = \"CONTAINS\""
+			+ "AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "RETURN fs, r, fs2")
 	List<FlatSpecies> findAllNetworkNodes(String entityUUID);
 
