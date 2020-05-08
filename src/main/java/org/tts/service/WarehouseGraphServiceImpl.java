@@ -3,6 +3,7 @@ package org.tts.service;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,10 +16,13 @@ import org.neo4j.ogm.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.Output.NetworkInventoryItem;
 import org.tts.model.api.Output.PathwayInventoryItem;
@@ -52,6 +56,7 @@ import org.tts.model.warehouse.PathwayNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.common.ContentGraphNodeRepository;
+import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
 import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
@@ -112,6 +117,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	
 	@Autowired
 	FlatEdgeService flatEdgeService;
+	
+	@Autowired
+	SBMLSpeciesRepository sbmlSpeciesRepository;
+	
+	@Autowired
+	GraphMLService graphMLService;
 
 	@Autowired
 	Session session;
@@ -905,21 +916,40 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 * @param options
 	 * @return
 	 */
-	@Override
-	public String getRelationShipApocString(FilterOptions options) {
+	
+	public String getRelationShipApocString(FilterOptions options, String direction) {
 		String relationTypesApocString = "";
 		for (String relationType : options.getRelationTypes()) {
+			if(direction.equals("upstream")) {
+				relationTypesApocString += "<";
+			}
 			relationTypesApocString += relationType;
+			if(direction.equals("downstream")) {
+				relationTypesApocString += ">";
+			}
 			relationTypesApocString += "|";
 		}
 		return relationTypesApocString.substring(0, relationTypesApocString.length() - 1);
 	}
 
+	public String getNodeApocString(FilterOptions options, boolean terminateAtDrug) {
+		String nodeTypesApocString = "";
+		for (String nodeType : options.getNodeTypes()) {
+			if (nodeType.equals("Drug") && terminateAtDrug) {
+				nodeTypesApocString += "/";
+				nodeTypesApocString += nodeType;
+				nodeTypesApocString += "|";
+			}	
+		}
+		nodeTypesApocString += "+FlatSpecies";
+		return nodeTypesApocString;
+	}
+	
 	/**
 	 * @param options
 	 * @return
 	 */
-	@Override
+	
 	public String getRelationShipApocString(FilterOptions options, Set<String> exclude) {
 		String relationTypesApocString = "";
 		boolean addedAtLeastOne = false;
@@ -1299,4 +1329,184 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return (MappingNode) this.saveWarehouseGraphNodeEntity(newMapping, 0);
 	}
 
+	@Override
+	public Resource getNetwork(String networkEntityUUID, boolean directed) {
+		Iterable<FlatEdge> networkContent = this.flatEdgeRepository.getNetworkContentsFromUUID(networkEntityUUID);
+		ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForFlatEdges(networkContent, directed);
+		return new ByteArrayResource(graphMLStream.toByteArray(), networkEntityUUID + "_network.graphml");
+	}
+
+	@Override
+	public Resource getNetwork(String networkEntityUUID, List<String> geneset, boolean directed) {
+		Iterable<FlatSpecies> geneSetFlatSpecies = this.flatSpeciesRepository.getNetworkNodes(networkEntityUUID, geneset);
+		Iterable<FlatEdge> geneSetFlatEdges = this.flatEdgeRepository.getGeneSet(networkEntityUUID, geneset);
+		Set<String> seenSymbols = new HashSet<>();
+		Iterator<FlatEdge> edgeIter = geneSetFlatEdges.iterator();
+		List<FlatSpecies> unconnectedSpecies = new ArrayList<>();
+		while(edgeIter.hasNext()) {
+			FlatEdge current = edgeIter.next();
+			seenSymbols.add(current.getInputFlatSpecies().getSymbol());
+			seenSymbols.add(current.getOutputFlatSpecies().getSymbol());
+		}
+		Iterator<FlatSpecies> speciesIter = geneSetFlatSpecies.iterator();
+		while (speciesIter.hasNext()) {
+			FlatSpecies current = speciesIter.next();
+			if(!seenSymbols.contains(current.getSymbol())) {
+				unconnectedSpecies.add(current);
+			}
+		}
+		ByteArrayOutputStream graphMLStream;
+		if(unconnectedSpecies.size() == 0) {
+			graphMLStream = this.graphMLService.getGraphMLForFlatEdges(geneSetFlatEdges, directed);
+			
+		} else {
+			for (FlatSpecies species : unconnectedSpecies) {
+				logger.debug("Found unconnected species in geneset: " + species.getSymbol() + ": " + species.getEntityUUID());
+			}
+			graphMLStream = this.graphMLService.getGraphMLForFlatEdgesAndUnconnectedFlatSpecies(geneSetFlatEdges, unconnectedSpecies, directed);
+			
+		}
+		return new ByteArrayResource(graphMLStream.toByteArray(), "geneset.graphml");
+	}
+	
+	@Override
+	public Resource getNetworkContext(String networkEntityUUID
+									, List<String> genes
+									, int minSize
+									, int maxSize
+									, boolean terminateAtDrug
+									, String direction
+									, boolean directed
+									) {
+		FilterOptions options = this.getFilterOptions(WarehouseGraphNodeType.MAPPING, networkEntityUUID);
+		String relationShipApocString = this.getRelationShipApocString(options, direction);
+		// get nodeApocString
+		String nodeApocString = this.getNodeApocString(options, terminateAtDrug);
+		if (genes == null || genes.size() < 1) {
+			// should be caught by the controller
+			return null;
+		} else if (genes.size() == 1) {
+			//resource = this.graphBaseEntityService.testContextMethod(networkEntityUUID, genes.get(0));
+			String geneSymbol = genes.get(0);
+			
+			String flatSpeciesEntityUUID = getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
+			// get relationshipApocString
+			
+			// size of network
+			// 3. getContext
+			Iterable<ApocPathReturnType> contextNet = this.flatNetworkMappingRepository.runApocPathExpandFor(flatSpeciesEntityUUID, relationShipApocString, nodeApocString, minSize, maxSize);
+			ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForApocPathReturn(contextNet, directed);
+			return new ByteArrayResource(graphMLStream.toByteArray(), "context_" + geneSymbol + ".graphml");
+		} else {
+			// multi gene context
+			List<String> networkGeneEntityUUIDs = new ArrayList<>();
+			List<FlatEdge> allEdges = new ArrayList<>();
+			Set<String> seenEdges = new HashSet<>();
+			//List<FlatSpecies> genes = new ArrayList<>();
+			for (String geneSymbol : genes) {
+				String networkGeneEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
+				if (networkGeneEntityUUID != null) {
+					networkGeneEntityUUIDs.add(networkGeneEntityUUID);
+				}
+			}
+			if (networkGeneEntityUUIDs.size() == 0) {
+				return new ByteArrayResource(null, "empty");
+			}
+			
+			Iterable<ApocPathReturnType> multiNodeApocPath = this.flatNetworkMappingRepository
+					.findMultiNodeApocPathInNetworkFromNodeEntityUUIDs(networkEntityUUID, networkGeneEntityUUIDs, relationShipApocString, nodeApocString, minSize, maxSize);
+			this.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, multiNodeApocPath);
+			for (int i = 0; i != networkGeneEntityUUIDs.size(); i++) {
+				String gene1 = networkGeneEntityUUIDs.get(i);
+				//String startNodeEntityUUID = this.flatSpeciesRepository.findStartNodeEntityUUID(networkEntityUUID, gene1);
+				for (int j = i; j != networkGeneEntityUUIDs.size(); j++) {
+					String gene2 = networkGeneEntityUUIDs.get(j);
+					//String endNodeEntityUUID = this.flatSpeciesRepository.findStartNodeEntityUUID(networkEntityUUID, gene2);
+					Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(gene1, gene2, relationShipApocString,  "weight", 1.0f);
+					extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, dijkstra);
+				}
+			}
+			ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForFlatEdges(allEdges, directed);
+			String fileName = "context_";
+			for(String geneSymbol : networkGeneEntityUUIDs) {
+				fileName += geneSymbol;
+				fileName += "-";
+			}
+			fileName = fileName.substring(0, fileName.length() - 1);
+			fileName += ".graphml";
+			return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
+		}
+	}
+
+	/**
+	 * @param networkEntityUUID
+	 * @param geneSymbol
+	 * @return
+	 */
+	private String getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
+		String flatSpeciesEntityUUID = this.flatSpeciesRepository.findStartNodeEntityUUID(networkEntityUUID, geneSymbol);
+		FlatSpecies geneSymbolSpecies;
+		// 0. Check whether we have that geneSymbol directly in the network
+		if (flatSpeciesEntityUUID == null) {
+			
+			// 1. Find SBMLSpecies with geneSymbol (or SBMLSpecies connected to externalResource with geneSymbol)
+			SBMLSpecies geneSpecies = this.sbmlSpeciesRepository.findBysBaseName(geneSymbol);
+			String simpleModelGeneEntityUUID = null;
+			if(geneSpecies != null) {
+				simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+			} else {
+				Iterable<SBMLSpecies> bqSpecies = this.sbmlSpeciesRepository.findByBQConnectionTo(geneSymbol, "KEGG");
+				if (bqSpecies == null) {
+					// we could not find that gene
+					return null;
+				} else {
+					Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
+					while (bqSpeciesIterator.hasNext()) {
+						SBMLSpecies current = bqSpeciesIterator.next();
+						logger.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
+						if(geneSpecies == null) {
+							logger.debug("Using " + current.getsBaseName());
+							geneSpecies = current;
+						}
+					}
+					if(geneSpecies != null) {
+						simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+					} else {
+						return null;
+					}
+				}
+			}
+			if (simpleModelGeneEntityUUID == null) {
+				return null;
+			}
+			// 2. Find FlatSpecies in network with networkEntityUUID to use as startPoint for context search
+			geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
+			if (geneSymbolSpecies == null) {
+				//return "Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID;
+				return null;
+			}
+			flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();;
+		}
+		return flatSpeciesEntityUUID;
+	}
+	
+	/**
+	 * @param allEdges
+	 * @param seenEdges
+	 * @param multiNodeApocPath
+	 */
+	private void extractFlatEdgesFromApocPathReturnType(List<FlatEdge> allEdges, Set<String> seenEdges,
+			Iterable<ApocPathReturnType> multiNodeApocPath) {
+		Iterator<ApocPathReturnType> iter = multiNodeApocPath.iterator();
+		while (iter.hasNext()) {
+			ApocPathReturnType current = iter.next();
+			for(FlatEdge edge : current.getPathEdges()) {
+				if(!seenEdges.contains(edge.getSymbol())) {
+					allEdges.add(edge);
+					seenEdges.add(edge.getSymbol());
+				}
+			}
+		}
+	}
+	
 }
