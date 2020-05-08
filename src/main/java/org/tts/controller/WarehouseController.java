@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -370,6 +372,67 @@ public class WarehouseController {
 		}
 	}
 
+	
+	@RequestMapping(value="/network", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testGetNet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+												@RequestParam(value = "directed", defaultValue = "false")boolean directed) {
+		Resource resource = this.warehouseGraphService.getNetwork(networkEntityUUID, directed);
+		String contentType = "application/octet-stream";
+		if(resource != null) {
+			String filename = resource.getFilename();
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"") .body(resource); 
+		} else { 
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} 
+	}
+	
+	
+	@RequestMapping(value="geneset", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testGeneSet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+												@RequestParam("genes")List<String> genes,
+												@RequestParam(value = "directed", defaultValue = "false")boolean directed) {
+													
+		Resource resource = this.warehouseGraphService.getNetwork(networkEntityUUID, genes, directed);
+		if(resource == null) {
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} else {
+			String contentType = "application/octet-stream";
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"geneset.graphml\"").body(resource) ;
+		} 
+	}
+	
+	
+	@RequestMapping(value="/context", method = RequestMethod.GET)
+	public ResponseEntity<Resource> testContext(@RequestParam("networkEntityUUID")String networkEntityUUID, 
+												@RequestParam("genes")List<String> genes,
+												@RequestParam(value = "minSize", defaultValue = "1") int minSize,
+												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize,
+												@RequestParam(value = "directed", defaultValue = "false") boolean directed,
+												//@RequestParam(value = "persist", defaultValue = "false") boolean persist,
+												//@RequestParam(value = "format", defaultValue = "graphml") String format,
+												@RequestParam(value = "terminateAtDrug", defaultValue = "false") boolean terminateAtDrug,
+												@RequestParam(value = "direction", defaultValue = "both") String direction /*upstream, downstream, both*/) {
+		String contentType = "application/octet-stream";
+		Resource resource;
+		if(genes == null || genes.size() < 1) {
+			resource = null;
+		} else {
+			resource = this.warehouseGraphService.getNetworkContext(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction, directed);
+		}
+		
+		if(resource != null) {
+			String filename = resource.getDescription().substring(21, resource.getDescription().length() - 1);
+			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"").body(resource); 
+		} else { 
+			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+		} 	
+	}
+	
+	
+	
 	/*
 	 * @RequestMapping(value="/network", method = RequestMethod.GET) public
 	 * ResponseEntity<Resource> getNetwork( @RequestParam("UUID") String
