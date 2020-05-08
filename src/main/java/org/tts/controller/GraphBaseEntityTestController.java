@@ -130,39 +130,19 @@ public class GraphBaseEntityTestController {
 		return new ResponseEntity<>(ret, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value="/testContext", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testContext(@RequestParam("networkEntityUUID")String networkEntityUUID, 
-												@RequestParam("geneSymbol")String geneSymbol) {
-		Resource resource = this.graphBaseEntityService.testContextMethod(networkEntityUUID, geneSymbol);
-		String contentType = "application/octet-stream";
-		if(resource != null) {
-			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
-				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"networkContext_"+ geneSymbol + ".graphml\"") .body(resource); 
-		} else { 
-			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
-		} 	}
 	
-	@RequestMapping(value="/net", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testGetNet(@RequestParam("networkEntityUUID")String networkEntityUUID) {
-		Resource resource = this.graphBaseEntityService.testGetNet(networkEntityUUID);
-		String contentType = "application/octet-stream";
-		if(resource != null) {
-			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
-				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"network.graphml\"") .body(resource); 
-		} else { 
-			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
-		} 
-	}
+	
 	
 	@RequestMapping(value="/multiGeneSubNet", method = RequestMethod.POST)
 	public ResponseEntity<Resource> testMultiGeneSubNet(@RequestParam("networkEntityUUID")String networkEntityUUID,
 														@RequestParam("genes")List<String> genes,
 														@RequestBody FilterOptions options) {
 		String contentType = "application/octet-stream";
+		Resource resource = null;
 		if(genes == null || genes.size() < 1) {
 			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
 		} else {
-			Resource resource = this.graphBaseEntityService.testMultiGeneSubNet(networkEntityUUID, genes, options);
+			//Resource resource = this.graphBaseEntityService.testMultiGeneSubNet(networkEntityUUID, genes, options);
 			
 			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
 					 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"test.graphml\"").body(resource) ;
@@ -170,19 +150,7 @@ public class GraphBaseEntityTestController {
 		}
 	}
 	
-	@RequestMapping(value="/testGeneSet", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testGeneSet(@RequestParam("networkEntityUUID")String networkEntityUUID,
-												@RequestParam("genes")List<String> genes){
-													
-		Resource resource = this.graphBaseEntityService.testGetNet(networkEntityUUID, genes);
-		if(resource == null) {
-			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
-		} else {
-			String contentType = "application/octet-stream";
-			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
-				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"geneset.graphml\"").body(resource) ;
-		} 
-	}
+	
 	
 	@RequestMapping(value="/testMyDrug", method=RequestMethod.GET)
 	public ResponseEntity<Resource> testMyDrug(@RequestParam("networkEntityUUID")String networkEntityUUID,
