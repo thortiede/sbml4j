@@ -22,7 +22,6 @@ public class ProvenanceGraphEdge extends ProvenanceEntity {
 
 	public void setProvenanceGraphEdgeType(ProvenanceGraphEdgeType provenanceGraphEdgeType) {
 		this.provenanceGraphEdgeType = provenanceGraphEdgeType;
-		super.addLabel(provenanceGraphEdgeType.name());
 	}
 
 	public ProvenanceEntity getStartNode() {

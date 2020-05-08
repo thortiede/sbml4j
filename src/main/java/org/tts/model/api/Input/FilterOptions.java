@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.RepresentationModel;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 
-public class FilterOptions  extends ResourceSupport {
+public class FilterOptions  extends RepresentationModel<FilterOptions> {
 	
 	String mappingUuid;
 	

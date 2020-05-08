@@ -5,5 +5,5 @@ import org.tts.model.common.SBMLSBaseEntity;
 
 public interface SBMLSBaseEntityRepository extends Neo4jRepository<SBMLSBaseEntity, Long> {
 
-	SBMLSBaseEntity findBySBaseId(String sBaseId, int depth);
+	SBMLSBaseEntity findBysBaseId(String sBaseId, int depth);
 }

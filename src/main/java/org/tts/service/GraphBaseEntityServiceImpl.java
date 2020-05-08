@@ -232,7 +232,7 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		if (flatSpeciesEntityUUID == null) {
 			
 			// 1. Find SBMLSpecies with geneSymbol (or SBMLSpecies connected to externalResource with geneSymbol)
-			SBMLSpecies geneSpecies = this.sbmlSpeciesRepository.findBySBaseName(geneSymbol);
+			SBMLSpecies geneSpecies = this.sbmlSpeciesRepository.findBysBaseName(geneSymbol);
 			String simpleModelGeneEntityUUID = null;
 			if(geneSpecies != null) {
 				simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
@@ -251,7 +251,11 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 							geneSpecies = current;
 						}
 					}
-					simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+					if(geneSpecies != null) {
+						simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+					} else {
+						return null;
+					}
 				}
 			}
 			if (simpleModelGeneEntityUUID == null) {
@@ -446,7 +450,8 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		for (int i = 0; i!= dataArrayNode.size(); i++) {
 			FlatSpecies myDrugSpecies = new FlatSpecies();
 			FlatEdge targetsEdge = null;
-			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies, Arrays.asList(new String[]{"Drug"}));
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies);
+			myDrugSpecies.addLabel("Drug");
 			boolean foundTarget = false;
 			boolean reusingMyDrugSpecies = false;
 		

@@ -22,16 +22,7 @@ public class WarehouseGraphEdge extends ProvenanceEntity {
 	}
 
 	public void setWarehouseGraphEdgeType(WarehouseGraphEdgeType warehouseGraphEdgeType) {
-		
-		if(this.warehouseGraphEdgeType != null) {
-			if(!this.warehouseGraphEdgeType.equals(warehouseGraphEdgeType)) {
-				// type was already set, is now reset to different type
-				// remove old label
-				super.removeLabel(warehouseGraphEdgeType.name());
-			}
-		}
 		this.warehouseGraphEdgeType = warehouseGraphEdgeType;
-		super.addLabel(warehouseGraphEdgeType.name());
 	}
 
 	public ProvenanceEntity getStartNode() {

@@ -10,44 +10,38 @@ import org.tts.model.warehouse.WarehouseGraphNode;
 
 public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseGraphNode, Long> {
 
-	/**
-	 * match (w:WarehouseGraphNode)-[e:Warehouse {warehouseGraphEdgeType: "CONTAINS"}]-(:WarehouseGraphNode {entityUUID: "2c841061-fe1c-439b-927a-82ddb06ea604"}) return w;
-	 * 
-	 * @param contains
-	 * @param endNode
-	 * @return
-	 */
-	@Query(value="MATCH"
-			+ "(w:WarehouseGraphNode)"
-			+ "-[e:Warehouse {warehouseGraphEdgeType: {0}}]->"
-			+ "(:WarehouseGraphNode {entityUUID: {1}})"
-			+ "RETURN w")
-	WarehouseGraphNode findByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType warehouseGraphEdgeType, String EndNodeEntityUUID);
-
+	
 	
 	@Query(value="MATCH"
-			+ "(s:WarehouseGraphNode {entityUUID: {1}})"
-			+ "-[e:Warehouse {warehouseGraphEdgeType: {0}}]->"
-			+ "(p:ProvenanceEntity)"
+			+ "(s:WarehouseGraphNode)"
+			+ "-[e:Warehouse]->"
+			+ "(p:ProvenanceEntity) "
+			+ "WHERE s.entityUUID = $startNodeEntityUUID "
+			+ "AND e.warehouseGraphEdgeType = $warehouseGraphEdgeType "
 			+ "RETURN p")
 	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType warehouseGraphEdgeType,
 			String startNodeEntityUUID);
 
 
 	@Query(value="MATCH"
-			+ "(w:WarehouseGraphNode {entityUUID: {0}})"
+			+ "(w:WarehouseGraphNode)"
 			+ "-[:FOR]->"
-			+ "(o:Organism)"
+			+ "(o:Organism) "
+			+ "WHERE w.entityUUID = $entityUUID "
 			+ "RETURN o")
 	WarehouseGraphNode findOrganismForWarehouseGraphNode(String entityUUID);
 
 	
 	
-	@Query(value = "MATCH p=(e1:ProvenanceEntity {entityUUID: {0}})-" +
-			"[:Warehouse {warehouseGraphEdgeType: {2}}]-" +
-			"(e2:ProvenanceEntity {entityUUID: {1}}) " +
-			"RETURN count(p) > 0")
+	@Query(value = "MATCH p=(e1:ProvenanceEntity)-"
+			+ "[w:Warehouse]-"
+			+ "(e2:ProvenanceEntity) "
+			+ "WHERE e1.entityUUID = $sourceEntityUUID "
+			+ "AND e2.entityUUID = $targetEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = $edgetype "
+			+ "RETURN count(p) > 0")
 	boolean areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(String sourceEntityUUID, 
 																String targetEntityUUID,
 																WarehouseGraphEdgeType edgetype);
-	}
+
+}

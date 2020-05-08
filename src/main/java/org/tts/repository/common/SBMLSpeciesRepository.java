@@ -7,9 +7,10 @@ import org.tts.model.common.SBMLSpecies;
 
 @Repository
 public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long> {
-	public SBMLSpecies findBySBaseName(String sBaseName);
+	
+	public SBMLSpecies findBysBaseName(String sBaseName);
 
-	public SBMLSpecies findBySBaseId(String sBaseId);
+	public SBMLSpecies findBysBaseId(String sBaseId);
 	
 	@Query(value = "MATCH (t:SBMLSpecies) RETURN DISTINCT t.sBaseSboTerm;")
 	public Iterable<String> getNodeTypes();
@@ -20,8 +21,8 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 			+ "(e:ExternalResourceEntity) "
 			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
 			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
-			+ "AND e.databaseFromUri = $databaseFromUri "
 			+ "AND e.name = $name "
+			+ "AND e.databaseFromUri = $databaseFromUri "
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> findByBQConnectionTo(String name, String databaseFromUri);
 

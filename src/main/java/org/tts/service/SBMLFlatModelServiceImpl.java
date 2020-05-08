@@ -66,7 +66,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
 						&& existingCompartment.getSize() == compartment.getSize()
@@ -203,7 +203,7 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 				logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
-				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(qualSpecies.getName());
+				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName());
 				if (existingSpecies != null) {
 					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
 						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
@@ -247,12 +247,12 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(symbol);
+				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(symbol);
 				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(existingQualSpecies);
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
-			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBySBaseName(qualSpeciesSbaseName);
+			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBysBaseName(qualSpeciesSbaseName);
 			if (existingSBMLQualSpeciesGroup != null) {
 				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
 					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);
@@ -289,9 +289,9 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			SBMLQualSpecies tmp = null;
 			String newTransitionId = "";
 			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
 			}
 			if(tmp == null) {
 				logger.debug("What is going on?");
@@ -301,9 +301,9 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 			newTransitionId += transition.getSBOTermID();
 			newTransitionId += "-";
 			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
 			}
 			if (tmp != null) {
 				newTransitionId += (tmp).getsBaseName();
@@ -336,8 +336,8 @@ public class SBMLFlatModelServiceImpl implements SBMLService {
 				SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
 				setSbaseProperties(transition, newSimpleTransition);
 				newSimpleTransition.setTransitionId(newTransitionId);
-				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(inputName));
-				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(outputName));
+				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(inputName));
+				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(outputName));
 				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition);
 				transitionList.add(persistedNewSimpleTransition);
 			}

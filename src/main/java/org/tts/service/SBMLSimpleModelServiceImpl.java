@@ -110,7 +110,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBySBaseId(compartment.getId(), 2);
+				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
 				if (existingCompartment != null 
 						&& existingCompartment.getsBaseName().equals(compartment.getName())
 						//&& existingCompartment.getSize() == compartment.getSize()
@@ -164,7 +164,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found group");
 				groupSpeciesList.add(species);
 			} else {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBySBaseName(species.getName());
+				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(species.getName());
 				if(existingSpecies != null) {
 					speciesList.add(existingSpecies);
 					this.provenanceGraphService.connect(activityNode, existingSpecies, ProvenanceGraphEdgeType.used);
@@ -206,12 +206,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBySBaseName(symbol);
+				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(symbol);
 				newSBMLSpeciesGroup.addSpeciesToGroup(existingSpecies);
 				speciesSbaseName += "_";
 				speciesSbaseName += symbol;
 			}
-			SBMLSpeciesGroup existingSBMLSpeciesGroup = (SBMLSpeciesGroup) sbmlSpeciesRepository.findBySBaseName(speciesSbaseName);
+			SBMLSpeciesGroup existingSBMLSpeciesGroup = (SBMLSpeciesGroup) sbmlSpeciesRepository.findBysBaseName(speciesSbaseName);
 			if (existingSBMLSpeciesGroup != null) {
 				speciesList.add(existingSBMLSpeciesGroup);
 				this.provenanceGraphService.connect(activityNode, existingSBMLSpeciesGroup, ProvenanceGraphEdgeType.used);
@@ -239,7 +239,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
 		for (Reaction reaction : listOfReactions) {
 			
-			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBySBaseName(reaction.getName(), 0);
+			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBysBaseName(reaction.getName(), 0);
 			if(existingSimpleReaction != null) {
 				// found existing Reaction
 				// TODO: Check if it is the same reaction with reactants and products
@@ -254,7 +254,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
 				// reactants
 				for (int i=0; i != reaction.getReactantCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getReactant(i).getSpecies());
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getReactant(i).getSpecies());
 					if(referencedSpecies == null) {
 						logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 					} else {
@@ -263,7 +263,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				}
 				// products
 				for (int i=0; i != reaction.getProductCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getProduct(i).getSpecies());
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getProduct(i).getSpecies());
 					if(referencedSpecies == null) {
 						logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 					} else {
@@ -272,7 +272,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				}
 				// catalysts
 				for (int i=0; i != reaction.getModifierCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBySBaseId(reaction.getModifier(i).getSpecies());
+					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getModifier(i).getSpecies());
 					if(referencedSpecies == null) {
 						logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 					} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
@@ -305,7 +305,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
-				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(qualSpecies.getName());
+				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName());
 				if (existingSpecies != null) {
 					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
 						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
@@ -324,7 +324,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					// uncomment to connect entities to compartments
 					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 					this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
-					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpecies.getName()));
+					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
 					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 					this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -352,12 +352,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBySBaseName(symbol);
+				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(symbol);
 				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(existingQualSpecies);
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
-			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBySBaseName(qualSpeciesSbaseName);
+			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBysBaseName(qualSpeciesSbaseName);
 			if (existingSBMLQualSpeciesGroup != null) {
 				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
 					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);
@@ -369,7 +369,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBySBaseName(qualSpeciesSbaseName));
+				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
 				
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
@@ -396,9 +396,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.info("More than one Input in transition: " + transition.getName());
 			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
 			}
 			if(tmp == null) {
 				logger.debug("Tmp is null!!");
@@ -411,9 +411,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.info("More than one Output in transition: " + transition.getName());
 			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBySBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
 			}
 			if (tmp != null) {
 				newTransitionId += (tmp).getsBaseName();
@@ -448,8 +448,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSimpleTransition);
 				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(transition, newSimpleTransition);
 				newSimpleTransition.setTransitionId(newTransitionId);
-				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(inputName));
-				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBySBaseId(outputName));
+				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(inputName));
+				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(outputName));
 				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition, SAVE_DEPTH);
 				transitionList.add(persistedNewSimpleTransition);
 				this.provenanceGraphService.connect(persistedNewSimpleTransition, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);

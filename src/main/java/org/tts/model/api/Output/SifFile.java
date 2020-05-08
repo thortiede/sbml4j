@@ -3,9 +3,9 @@ package org.tts.model.api.Output;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.hateoas.ResourceSupport;
+import org.springframework.hateoas.RepresentationModel;
 
-public class SifFile extends ResourceSupport {
+public class SifFile extends RepresentationModel<SifFile> {
 	
 	private Long fileId = null;
 	
