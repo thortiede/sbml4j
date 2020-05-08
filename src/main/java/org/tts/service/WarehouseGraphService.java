@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.core.io.Resource;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
@@ -131,9 +132,16 @@ public interface WarehouseGraphService {
 
 	Iterable<FlatMappingReturnType> getNetworkRelations(String networkEntityUUID);
 	
-	public String getRelationShipApocString(FilterOptions options);
+	//public String getRelationShipApocString(FilterOptions options);
 
-	public String getRelationShipApocString(FilterOptions options, Set<String> exclude);
+	//public String getRelationShipApocString(FilterOptions options, Set<String> exclude);
+
+	public Resource getNetwork(String networkEntityUUID, boolean directed);
+
+	public Resource getNetwork(String networkEntityUUID, List<String> geneset, boolean directed);
+
+	public Resource getNetworkContext(String networkEntityUUID, List<String> genes, int minSize, int maxSize,
+			boolean terminateAtDrug, String direction, boolean directed);
 
 
 }
