@@ -58,7 +58,7 @@ public interface FlatNetworkMappingRepository extends Neo4jRepository<FlatNetwor
 	@Query(value="MATCH (m:MappingNode)-[w:Warehouse]->(fs:FlatSpecies) "
 			+ "WHERE m.entityUUID = $networkEntityUUID "
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
-			+ "AND fs.symbol IN $startNodeSymbols "
+			+ "AND fs.entityUUID IN $nodeEntityUUIDs "
 			+ "call apoc.path.expand("
 			+ "fs, "
 			+ "$relationTypesApocString, "
@@ -69,7 +69,7 @@ public interface FlatNetworkMappingRepository extends Neo4jRepository<FlatNetwor
 			+ "path as pp "
 			+ "RETURN nodes(pp) as pathNodes, "
 			+ "relationships(pp) as pathEdges;")
-	Iterable<ApocPathReturnType> findMultiNodeApocPathInNetworkFromNodeSymbols(String networkEntityUUID, List<String> startNodeSymbols, String relationTypesApocString, String nodeFilterString,
+	Iterable<ApocPathReturnType> findMultiNodeApocPathInNetworkFromNodeEntityUUIDs(String networkEntityUUID, List<String> nodeEntityUUIDs, String relationTypesApocString, String nodeFilterString,
 			int minPathLength, int maxPathLength);
 	
 	@Query(value="MATCH (fs1:FlatSpecies) "
