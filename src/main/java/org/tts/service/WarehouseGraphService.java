@@ -14,6 +14,7 @@ import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 import org.tts.model.common.Organism;
@@ -87,11 +88,11 @@ public interface WarehouseGraphService {
 
 	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID);
 
-	public List<FlatSpecies> getNetworkNodes(String entityUUID);
+	public Iterable<FlatSpecies> getNetworkNodes(String entityUUID);
 
-	public List<String> getNetworkNodeSymbols(List<FlatSpecies> networkNodes);
+	public Set<String> getNetworkNodeSymbols(Iterable<FlatSpecies> networkNodes);
 
-	public List<String> getNetworkNodeSymbols(String entityUUID);
+	public Set<String> getNetworkNodeSymbols(String entityUUID);
 
 	public MappingNode getMappingNode(String entityUUID);
 
@@ -126,9 +127,9 @@ public interface WarehouseGraphService {
 	public MappingNode createMappingFromMappingWithOptions(MappingNode parent, MappingNode newMapping,
 			FilterOptions options, MappingStep step);
 
-	List<String> getNetworkRelationSymbols(String networkEntityUUID);
+	Set<String> getNetworkRelationSymbols(String networkEntityUUID);
 
-	List<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges);
+	Set<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges);
 
 	Iterable<FlatMappingReturnType> getNetworkRelations(String networkEntityUUID);
 	
@@ -142,6 +143,33 @@ public interface WarehouseGraphService {
 
 	public Resource getNetworkContext(String networkEntityUUID, List<String> genes, int minSize, int maxSize,
 			boolean terminateAtDrug, String direction, boolean directed);
+
+	public String postNetworkContext(MappingNode mappingNode, List<String> genes, int minSize, int maxSize,
+			boolean terminateAtDrug, String direction);
+
+	/**
+	 * @param username
+	 * @param parent
+	 * @param newMappingName
+	 * @param activityName
+	 * @param activityType
+	 * @param mappingType
+	 * @return
+	 */
+	MappingNode createMappingPre(String username, MappingNode parent, String newMappingName, String activityName,
+			ProvenanceGraphActivityType activityType, NetworkMappingType mappingType);
+
+	public int getNumberOfNetworkNodes(String networkEntityUUID);
+
+	public Set<String> getNetworkNodeTypes(String networkEntityUUID);
+
+	public Set<String> getNetworkRelationTypes(String networkEntityUUID);
+
+	public Set<String> getNetworkRelationTypes(Iterable<FlatMappingReturnType> networkEdges);
+
+	public int getNumberOfNetworkRelations(String networkEntityUUID);
+
+	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes);
 
 
 }

@@ -4,6 +4,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.io.ByteArrayOutputStream;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,6 +12,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 import org.neo4j.ogm.session.Session;
 import org.slf4j.Logger;
@@ -30,6 +32,8 @@ import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
@@ -524,6 +528,10 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		 * methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(),
 		 * "standard", type.name())) .withRel(type.name())); }
 		 */
+		// add link to network retrieval
+		item.add(linkTo(methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(), false))
+				.withRel("Retrieve Network contents as GraphML"));
+		
 		// add link to the item detail:
 		item.add(linkTo(methodOn(WarehouseController.class).getNetworkInventoryDetail(item.getEntityUUID()))
 				.withRel("InventoryItemDetail"));
@@ -663,13 +671,13 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 */
 
 	@Override
-	public List<String> getNetworkNodeSymbols(String entityUUID) {
+	public Set<String> getNetworkNodeSymbols(String entityUUID) {
 		return this.getNetworkNodeSymbols(this.getNetworkNodes(entityUUID));
 	}
 
 	@Override
-	public List<String> getNetworkNodeSymbols(List<FlatSpecies> networkNodes) {
-		List<String> networkNodeNames = new ArrayList<>();
+	public Set<String> getNetworkNodeSymbols(Iterable<FlatSpecies> networkNodes) {
+		Set<String> networkNodeNames = new HashSet<>();
 		for (FlatSpecies node : networkNodes) {
 			networkNodeNames.add(node.getSymbol());
 		}
@@ -677,19 +685,23 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public List<FlatSpecies> getNetworkNodes(String entityUUID) {
-
-		return this.flatSpeciesRepository.findAllNetworkNodes(entityUUID);
+	public Iterable<FlatSpecies> getNetworkNodes(String networkEntityUUID) {
+		return this.flatSpeciesRepository.findAllNetworkNodes(networkEntityUUID);
+	}
+	
+	@Override
+	public int getNumberOfNetworkNodes(String networkEntityUUID) {
+		return (int) StreamSupport.stream(this.getNetworkNodes(networkEntityUUID).spliterator(), false).count(); 
 	}
 
 	@Override
-	public List<String> getNetworkRelationSymbols(String networkEntityUUID) {
+	public Set<String> getNetworkRelationSymbols(String networkEntityUUID) {
 		return this.getNetworkRelationSymbols(this.getNetworkRelations(networkEntityUUID));
 	}
 
 	@Override
-	public List<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges) {
-		List<String> networkRelationSymbols = new ArrayList<>();
+	public Set<String> getNetworkRelationSymbols(Iterable<FlatMappingReturnType> networkEdges) {
+		Set<String> networkRelationSymbols = new HashSet<>();
 		for (FlatMappingReturnType edge : networkEdges) {
 			if (edge.getRelationship().getSymbol() != null) {
 				networkRelationSymbols.add(edge.getRelationship().getSymbol());
@@ -701,6 +713,37 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return networkRelationSymbols;
 	}
 
+	@Override
+	public Set<String> getNetworkNodeTypes(String networkEntityUUID) {
+		return this.getNetworkNodeTypes(this.getNetworkNodes(networkEntityUUID));
+	}
+	
+	@Override
+	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes) {
+		Set<String> nodeTypes = new HashSet<>();
+		for (FlatSpecies node : networkNodes) {
+			nodeTypes.add(node.getSboTerm());
+		}
+		return nodeTypes;
+	}
+	@Override
+	public Set<String> getNetworkRelationTypes(String networkEntityUUID) {
+		return this.getNetworkRelationTypes(this.getNetworkRelations(networkEntityUUID));	
+	}
+	
+	@Override
+	public Set<String> getNetworkRelationTypes(Iterable<FlatMappingReturnType> networkEdges) {
+		Set<String> networkRelationTypes = new HashSet<>();
+		for (FlatMappingReturnType edge : networkEdges) {
+			networkRelationTypes.add(edge.getRelationship().getTypeString());
+		}
+		return networkRelationTypes;
+	}
+	@Override
+	public int getNumberOfNetworkRelations(String networkEntityUUID) {
+		return (int) StreamSupport.stream(this.getNetworkRelations(networkEntityUUID).spliterator(), false).count(); 
+	}
+	
 	@Override
 	public Iterable<FlatMappingReturnType> getNetworkRelations(String entityUUID) {
 		return this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(entityUUID);
@@ -808,7 +851,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		filterOptions.setMappingUuid(mappingNode.getEntityUUID());
 		filterOptions.setNetworkType(mappingNode.getMappingType());
 		if (mappingNode.getMappingNodeSymbols() == null) {
-			filterOptions.setNodeSymbols(getNetworkNodeSymbols(mappingNode.getEntityUUID()));
+			filterOptions.setNodeSymbols(new ArrayList<>(getNetworkNodeSymbols(mappingNode.getEntityUUID())));
 		} else {
 			filterOptions.setNodeSymbols(new ArrayList<>(mappingNode.getMappingNodeSymbols()));
 		}
@@ -823,7 +866,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		}
 		filterOptions.setRelationTypes(relationTypes);
 		if (mappingNode.getMappingRelationSymbols() == null) {
-			filterOptions.setRelationSymbols(getNetworkRelationSymbols(mappingNode.getEntityUUID()));
+			filterOptions.setRelationSymbols(new ArrayList<>(getNetworkRelationSymbols(mappingNode.getEntityUUID())));
 		} else {
 			filterOptions.setRelationSymbols(new ArrayList<>(mappingNode.getMappingRelationSymbols()));
 		}
@@ -1126,6 +1169,50 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return (MappingNode) this.saveWarehouseGraphNodeEntity(newMapping, 0);
 	}
 
+	
+	/**
+	 * @param username
+	 * @param parent
+	 * @param newMappingName
+	 * @param activityName
+	 * @param activityType
+	 * @param mappingType
+	 * @return
+	 */
+	@Override
+	public MappingNode createMappingPre(String username, MappingNode parent, String newMappingName,
+			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
+		Map<String, Object> agentNodeProperties = new HashMap<>();
+		agentNodeProperties.put("graphagentname", username);
+		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
+		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
+				.createProvenanceGraphAgentNode(agentNodeProperties);
+		// Need Activity
+		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+		activityNodeProvenanceProperties.put("graphactivitytype", activityType);
+		
+		activityNodeProvenanceProperties.put("graphactivityname", activityName);
+		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
+				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+		this.provenanceGraphService.connect(createMappingActivityNode, userAgentNode,
+				ProvenanceGraphEdgeType.wasAssociatedWith);
+		Instant startTime = Instant.now();
+		// create new networkMapping that is the same as the parent one
+		// need mapingNode (name: OldName + step)
+		
+		MappingNode newMapping = this.createMappingNode(parent, mappingType,
+				newMappingName);
+		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
+		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
+				ProvenanceGraphEdgeType.wasGeneratedBy);
+		return newMapping;
+	}
+	
+	
+	
+	
 	@Override
 	public MappingNode createMappingFromMappingWithOptions(MappingNode parent, MappingNode newMapping,
 			FilterOptions options, MappingStep step) {
@@ -1180,11 +1267,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 			current = it.next();
 			currentEdge = current.getRelationship();
+			String currentRelationshipType = currentEdge.getTypeString();
 			// 1. safe the old edge uuid
 			// String oldEdgeUUID = currentEdge.getEntityUUID();
-			if (relationTypesToBeIncluded.contains(current.getRelationshipType())
+			if (relationTypesToBeIncluded.contains(currentRelationshipType)
 					&& relationSymbolsToBeIncluded.contains(currentEdge.getSymbol())) {
-				relationTypes.add(current.getRelationshipType());
+				relationTypes.add(currentRelationshipType);
 				relationSymbols.add(currentEdge.getSymbol());
 				// reset the edge graph base properties (new entityUUID, id to null and version
 				// to null)
@@ -1378,30 +1466,60 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 									, String direction
 									, boolean directed
 									) {
+		List<FlatEdge> allEdges = getNetworkContextFlatEdges(networkEntityUUID, genes, minSize, maxSize,
+				terminateAtDrug, direction);
+		
+		if (allEdges == null ) {
+			return new ByteArrayResource(null);
+		}
+		
+		String fileName = "context_";
+		for(String geneSymbol : genes) {
+			fileName += geneSymbol;
+			fileName += "-";
+		}
+		fileName = fileName.substring(0, fileName.length() - 1);
+		fileName += ".graphml";
+		
+		ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForFlatEdges(allEdges, directed);
+		return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
+	}
+
+	/**
+	 * @param networkEntityUUID
+	 * @param genes
+	 * @param minSize
+	 * @param maxSize
+	 * @param terminateAtDrug
+	 * @param direction
+	 * @return
+	 */
+	private List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction) {
 		FilterOptions options = this.getFilterOptions(WarehouseGraphNodeType.MAPPING, networkEntityUUID);
 		String relationShipApocString = this.getRelationShipApocString(options, direction);
+		List<FlatEdge> allEdges = new ArrayList<>();
+		Set<String> seenEdges = new HashSet<>();
 		// get nodeApocString
 		String nodeApocString = this.getNodeApocString(options, terminateAtDrug);
 		if (genes == null || genes.size() < 1) {
 			// should be caught by the controller
 			return null;
 		} else if (genes.size() == 1) {
-			//resource = this.graphBaseEntityService.testContextMethod(networkEntityUUID, genes.get(0));
 			String geneSymbol = genes.get(0);
+			String flatSpeciesEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
 			
-			String flatSpeciesEntityUUID = getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
-			// get relationshipApocString
-			
-			// size of network
 			// 3. getContext
 			Iterable<ApocPathReturnType> contextNet = this.flatNetworkMappingRepository.runApocPathExpandFor(flatSpeciesEntityUUID, relationShipApocString, nodeApocString, minSize, maxSize);
-			ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForApocPathReturn(contextNet, directed);
-			return new ByteArrayResource(graphMLStream.toByteArray(), "context_" + geneSymbol + ".graphml");
+			
+			//ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForApocPathReturn(contextNet, directed);
+			this.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
+			
+			//return new ByteArrayResource(graphMLStream.toByteArray(), "context_" + geneSymbol + ".graphml");
 		} else {
 			// multi gene context
 			List<String> networkGeneEntityUUIDs = new ArrayList<>();
-			List<FlatEdge> allEdges = new ArrayList<>();
-			Set<String> seenEdges = new HashSet<>();
+			
 			//List<FlatSpecies> genes = new ArrayList<>();
 			for (String geneSymbol : genes) {
 				String networkGeneEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
@@ -1410,7 +1528,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				}
 			}
 			if (networkGeneEntityUUIDs.size() == 0) {
-				return new ByteArrayResource(null, "empty");
+				return null;//new ByteArrayResource(null, "empty");
 			}
 			
 			Iterable<ApocPathReturnType> multiNodeApocPath = this.flatNetworkMappingRepository
@@ -1423,19 +1541,11 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					String gene2 = networkGeneEntityUUIDs.get(j);
 					//String endNodeEntityUUID = this.flatSpeciesRepository.findStartNodeEntityUUID(networkEntityUUID, gene2);
 					Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(gene1, gene2, relationShipApocString,  "weight", 1.0f);
-					extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, dijkstra);
+					this.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, dijkstra);
 				}
 			}
-			ByteArrayOutputStream graphMLStream = this.graphMLService.getGraphMLForFlatEdges(allEdges, directed);
-			String fileName = "context_";
-			for(String geneSymbol : networkGeneEntityUUIDs) {
-				fileName += geneSymbol;
-				fileName += "-";
-			}
-			fileName = fileName.substring(0, fileName.length() - 1);
-			fileName += ".graphml";
-			return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
 		}
+		return allEdges;
 	}
 
 	/**
@@ -1507,6 +1617,71 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				}
 			}
 		}
+	}
+
+	@Override
+	public String postNetworkContext(MappingNode mappingNode, List<String> genes, int minSize, int maxSize,
+			boolean terminateAtDrug, String direction) {
+		
+		// 1. get the context
+		List<FlatEdge> contextFlatEdges = this.getNetworkContextFlatEdges(this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasDerivedFrom, mappingNode.getEntityUUID()).getEntityUUID(),
+																genes, minSize, maxSize, terminateAtDrug, direction);
+		if(contextFlatEdges == null) {
+			return null;
+		}
+		// 2. persist the context
+		Map<String, String> newUUIDToOldUUIDMap = this.duplicateFlatEdgesInDb(contextFlatEdges);
+		
+		// clear the cached entities in the session
+		this.session.clear();
+		// 3. connect old to new
+		for (String key : newUUIDToOldUUIDMap.keySet()) {
+			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(key);
+			this.provenanceGraphService.connect(newSpecies, newUUIDToOldUUIDMap.get(key), ProvenanceGraphEdgeType.wasDerivedFrom);
+			this.connect(newSpecies, this.provenanceGraphService.getByEntityUUID(this.flatSpeciesRepository.findByEntityUUID(key).getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
+			this.connect(mappingNode, newSpecies, WarehouseGraphEdgeType.CONTAINS);
+		}
+		// 4. update mappingNode
+		this.updateMappingNode(mappingNode);
+				
+		// 5. return mappingNode entityUUID
+		return mappingNode.getEntityUUID();
+	}
+	
+	
+	private void updateMappingNode(MappingNode mappingNode) {
+		String networkNodeEntityUUID = mappingNode.getEntityUUID();
+		mappingNode.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkNodeEntityUUID)));
+		mappingNode.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkNodeEntityUUID)));
+		mappingNode.setMappingNodeTypes(this.getNetworkNodeTypes(networkNodeEntityUUID));
+		mappingNode.setMappingRelationTypes(this.getNetworkRelationTypes(networkNodeEntityUUID));
+		mappingNode.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkNodeEntityUUID));
+		mappingNode.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkNodeEntityUUID));
+		this.mappingNodeRepository.save(mappingNode, 0);
+	}
+
+	private Map<String, String> duplicateFlatEdgesInDb(List<FlatEdge> edges) {
+		
+		Map<String, String> newUUIDToOldUUIDMap = new HashMap<>();
+		List<FlatEdge> changedEdges = new ArrayList<>();
+		for (FlatEdge currentEdge : edges) {
+			if (!newUUIDToOldUUIDMap.containsKey(currentEdge.getInputFlatSpecies().getEntityUUID())) {
+				String oldUUID = currentEdge.getInputFlatSpecies().getEntityUUID();
+				this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getInputFlatSpecies());
+				newUUIDToOldUUIDMap.put(currentEdge.getInputFlatSpecies().getEntityUUID(), oldUUID);
+			}
+			if (!newUUIDToOldUUIDMap.containsKey(currentEdge.getOutputFlatSpecies().getEntityUUID())) {
+				String oldUUID = currentEdge.getOutputFlatSpecies().getEntityUUID();
+				this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge.getOutputFlatSpecies());
+				newUUIDToOldUUIDMap.put(currentEdge.getOutputFlatSpecies().getEntityUUID(), oldUUID);
+			}
+			this.sbmlSimpleModelUtilityServiceImpl.resetGraphBaseEntityProperties(currentEdge);
+			changedEdges.add(currentEdge);
+		}
+		this.flatEdgeRepository.save(changedEdges, 1);
+		
+		return newUUIDToOldUUIDMap;
+		
 	}
 	
 }

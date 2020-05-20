@@ -1,6 +1,7 @@
 package org.tts.controller;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -215,7 +216,7 @@ public class WarehouseController {
 	public ResponseEntity<NetworkInventoryItemDetail> getNetworkInventoryDetail(@PathVariable String entityUUID) {
 		NetworkInventoryItemDetail networkInventoryItemDetail = new NetworkInventoryItemDetail(
 				this.warehouseGraphService.getNetworkInventoryItem(entityUUID));
-		networkInventoryItemDetail.setNodes(this.warehouseGraphService.getNetworkNodeSymbols(entityUUID));
+		networkInventoryItemDetail.setNodes(new ArrayList<>(this.warehouseGraphService.getNetworkNodeSymbols(entityUUID)));
 		return new ResponseEntity<NetworkInventoryItemDetail>(networkInventoryItemDetail, HttpStatus.OK);
 	}
 
@@ -305,42 +306,27 @@ public class WarehouseController {
 	
 	@RequestMapping(value = "/network", method = RequestMethod.POST)
 	public ResponseEntity<NetworkInventoryItemDetail> createMappingFromMappingWithOptions(
-			@RequestHeader("user") String username, @RequestParam(value = "networkEntityUUID") String parentUUID,
-			@RequestParam(value = "step") MappingStep step, @RequestBody FilterOptions options) {
+											  @RequestHeader("user") String username
+											, @RequestParam(value = "networkEntityUUID") String parentUUID
+											, @RequestParam(value = "step") MappingStep step
+											, @RequestBody FilterOptions options) {
 		// Check that we are working on the right network
 		if (!parentUUID.equals(options.getMappingUuid())) {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
+		
+		
 		// rather I can set it here, to have it
 		// options.setMappingUuid(parentUUID);
 		MappingNode parent = this.warehouseGraphService.getMappingNode(parentUUID);
-
-		// Need Agent
-		Map<String, Object> agentNodeProperties = new HashMap<>();
-		agentNodeProperties.put("graphagentname", username);
-		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
-		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
-				.createProvenanceGraphAgentNode(agentNodeProperties);
-		// Need Activity
-		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
-		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.createMapping);
+		String newMappingName = parent.getMappingName() + "_" + step.name() + "_with_" + options.toString();
 		String activityName = "Create_Mapping_from_" + parentUUID + "_byApplyingStep_" + step.name() + "_with_"
 				+ options.toString();
-		activityNodeProvenanceProperties.put("graphactivityname", activityName);
-		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
-				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
-		this.provenanceGraphService.connect(createMappingActivityNode, userAgentNode,
-				ProvenanceGraphEdgeType.wasAssociatedWith);
-		Instant startTime = Instant.now();
-		// create new networkMapping that is the same as the parent one
-		// need mapingNode (name: OldName + step)
-		MappingNode newMapping = this.warehouseGraphService.createMappingNode(parent, options.getNetworkType(),
-				parent.getMappingName() + "_" + step.name() + "_with_" + options.toString());
-
-		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
-		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
-				ProvenanceGraphEdgeType.wasGeneratedBy);
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		NetworkMappingType mappingType = options.getNetworkType();
+		// Need Agent
+		MappingNode newMapping = this.warehouseGraphService.createMappingPre(username, parent, newMappingName, activityName, activityType,
+				mappingType);
 
 		/**
 		 * Refactor 2020 At this point divert into the service to not have this logic in
@@ -354,12 +340,14 @@ public class WarehouseController {
 		}
 
 		Instant endTime = Instant.now();
-		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
+		
 		newMapping.addWarehouseAnnotation("creationendtime", endTime.toString());
 
 		this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
 		return this.getNetworkInventoryDetail(newMapping.getEntityUUID());
 	}
+
+	
 
 	@RequestMapping(value = "/network", method = RequestMethod.DELETE)
 	public ResponseEntity<NetworkInventoryItem> deactivateNetwork(@RequestParam("UUID") String mappingNodeEntityUUID) {
@@ -374,7 +362,7 @@ public class WarehouseController {
 
 	
 	@RequestMapping(value="/network", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testGetNet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+	public ResponseEntity<Resource> getNetwork(@RequestParam("networkEntityUUID")String networkEntityUUID,
 												@RequestParam(value = "directed", defaultValue = "false")boolean directed) {
 		Resource resource = this.warehouseGraphService.getNetwork(networkEntityUUID, directed);
 		String contentType = "application/octet-stream";
@@ -389,7 +377,7 @@ public class WarehouseController {
 	
 	
 	@RequestMapping(value="geneset", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testGeneSet(@RequestParam("networkEntityUUID")String networkEntityUUID,
+	public ResponseEntity<Resource> getGeneset(@RequestParam("networkEntityUUID")String networkEntityUUID,
 												@RequestParam("genes")List<String> genes,
 												@RequestParam(value = "directed", defaultValue = "false")boolean directed) {
 													
@@ -405,7 +393,7 @@ public class WarehouseController {
 	
 	
 	@RequestMapping(value="/context", method = RequestMethod.GET)
-	public ResponseEntity<Resource> testContext(@RequestParam("networkEntityUUID")String networkEntityUUID, 
+	public ResponseEntity<Resource> getContext(@RequestParam("networkEntityUUID")String networkEntityUUID, 
 												@RequestParam("genes")List<String> genes,
 												@RequestParam(value = "minSize", defaultValue = "1") int minSize,
 												@RequestParam(value = "maxSize", defaultValue = "3") int maxSize,
@@ -431,7 +419,65 @@ public class WarehouseController {
 		} 	
 	}
 	
-	
+	@RequestMapping(value="/context", method = RequestMethod.POST)
+	public ResponseEntity<String> postContext(	  @RequestHeader(value = "user") String username
+												, @RequestParam("networkEntityUUID")String networkEntityUUID
+												, @RequestParam("genes")List<String> genes
+												, @RequestParam(value = "minSize", defaultValue = "1") int minSize
+												, @RequestParam(value = "maxSize", defaultValue = "3") int maxSize
+												//, @RequestParam(value = "directed", defaultValue = "false") boolean directed
+												//, @RequestParam(value = "persist", defaultValue = "false") boolean persist
+												//, @RequestParam(value = "format", defaultValue = "graphml") String format
+												, @RequestParam(value = "terminateAtDrug", defaultValue = "false") boolean terminateAtDrug
+												, @RequestParam(value = "direction", defaultValue = "both") String direction /*upstream, downstream, both*/
+												, @RequestParam(value = "contextName", defaultValue = "") String contextName) {
+		
+		String contextNetworkEntityUUID;
+		MappingNode parent = this.warehouseGraphService.getMappingNode(networkEntityUUID);
+		if(genes == null || genes.size() < 1) {
+			contextNetworkEntityUUID = null;
+		} else {
+			/**
+			 * get all needed parameters for the pre function
+			 */
+			String newMappingName = "";
+			String geneString = "";
+			if (contextName.equals("")) {
+				newMappingName = "Context_derived_from_" + networkEntityUUID + "_for_gene";
+				
+				if (genes.size() > 1 ) {
+					geneString += "s";
+				}
+				for (String gene : genes) {
+					geneString += "_";
+					geneString += gene;
+				}
+				newMappingName += geneString;
+			} else {
+				newMappingName = contextName;
+			}
+			String activityName = "Create_Context_from_" + networkEntityUUID + "_for_gene" + geneString;
+			
+			ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
+			NetworkMappingType mappingType = parent.getMappingType();
+			
+			MappingNode contextMappingNode = this.warehouseGraphService.createMappingPre(username, 
+																			parent, 
+																			newMappingName,
+																			activityName, 
+																			activityType, 
+																			mappingType);
+			// then create the context and attach the nodes to this new mapping node (as in createMappingFromMappingWithOptions)
+			contextNetworkEntityUUID = this.warehouseGraphService.postNetworkContext(contextMappingNode, genes, minSize, maxSize, terminateAtDrug, direction);
+		}
+		
+		if(contextNetworkEntityUUID != null) {
+			
+			return new ResponseEntity<String>(contextNetworkEntityUUID, HttpStatus.OK); 
+		} else { 
+			return new ResponseEntity<String>(HttpStatus.NO_CONTENT); 
+		} 	
+	}
 	
 	/*
 	 * @RequestMapping(value="/network", method = RequestMethod.GET) public
