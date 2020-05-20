@@ -81,9 +81,9 @@ public class GraphEnum {
 	}
 	
 	/**
-	 * Entity<br>
-	 * Activity<br>
-	 * Agent<br>
+	 * PROV_ENTITY<br>
+	 * PROV_ACTIVITY<br>
+	 * PROV_AGENT<br>
 	 */
 	public enum ProvenanceGraphNodeType {
 		PROV_ENTITY, PROV_ACTIVITY, PROV_AGENT
@@ -93,7 +93,10 @@ public class GraphEnum {
 	 * 	persistFile,<br>
 		createMapping,<br>
 		mapAnnotations,<br>
-		runAlgorithm<br>
+		runAlgorithm,<br>
+		createKnowledgeGraph,<br>
+		addMyDrugNodes,<br>
+		createContext
 	 */
 	public enum ProvenanceGraphActivityType {
 		persistFile,
@@ -101,7 +104,8 @@ public class GraphEnum {
 		mapAnnotations,
 		runAlgorithm,
 		createKnowledgeGraph,
-		addMyDrugNodes
+		addMyDrugNodes,
+		createContext
 	}
 	
 	/**
