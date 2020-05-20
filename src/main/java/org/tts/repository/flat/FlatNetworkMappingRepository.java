@@ -8,6 +8,7 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
 import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.FlatMappingReturnType;
+import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatNetworkMapping;
 
 @Repository
@@ -33,6 +34,19 @@ public interface FlatNetworkMappingRepository extends Neo4jRepository<FlatNetwor
 			+ "startNode(r) as startNode,"
 			+ "endNode(r) as endNode")
 	Iterable<FlatMappingReturnType> getNodesAndRelationshipsForMapping(String entityUUID);
+	
+	@Query("match (m:MappingNode) "
+			+ "WHERE  m.entityUUID = $entityUUID "
+			+ "WITH m MATCH "
+			+ "(m)"
+			+ "-[w1:Warehouse]->"
+			+ "(s:FlatSpecies)-[r]->(s2:FlatSpecies)"
+			+ "<-[w2:Warehouse]-"
+			+ "(m) "
+			+ "WHERE w1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN s, r, s2")
+	Iterable<FlatEdge> getNodesAndRelationshipsForMappingAsFlatEdge(String entityUUID);
 	
 	
 	@Query("MATCH "
