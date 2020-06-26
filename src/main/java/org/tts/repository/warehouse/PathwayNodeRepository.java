@@ -1,6 +1,7 @@
 package org.tts.repository.warehouse;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -93,4 +94,46 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN p.entityUUID")
 	List<String> findAllPathwaysDirectlyDerivedFromCollections();
 */
+	
+	/* match (m:MappingNode)-[wm:Warehouse]->(f:FlatSpecies) 
+	 * where m.entityUUID = "2f5b5686-c877-4043-9164-1047cf839816" and wm.warehouseGraphEdgeType = "CONTAINS" and f.symbol = "BRCA1" 
+	 * with f match (s)<-[w:Warehouse]-(p:PathwayNode) 
+	 * where w.warehouseGraphEdgeType = "CONTAINS" and s.entityUUID = f.simpleModelEntityUUID return p;
+	 * 
+	 */
+	@Query(""
+			+ "MATCH "
+			+ "(m:MappingNode)"
+			+ "-[wm:Warehouse]->"
+			+ "(f:FlatSpecies) "
+				+ "WHERE m.entityUUID = $mappingEntityUUID "
+				+ "AND wm.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "AND f.symbol = $flatSpeciesSymbol "
+			+ "WITH f MATCH "
+				+ "(s)"
+				+ "<-[wp:Warehouse]-"
+				+ "(p:PathwayNode) "
+					+ "WHERE s.entityUUID = f.simpleModelEntityUUID "
+					+ "AND wp.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN p.entityUUID")
+	List<String> findAllForFlatSpeciesSymbolInMapping(String flatSpeciesSymbol, String mappingEntityUUID);
+
+
+	@Query(""
+			+ "MATCH "
+			+ "(g1:SBase)<-[w1:Warehouse]-(p1:PathwayNode)-[w2:Warehouse]->(x:SBase)<-[w3:Warehouse]-(p2:PathwayNode)-[w4:Warehouse]->(g2:SBase) "
+			+ "WHERE w1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w3.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w4.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND p1.entityUUID = $pathway1UUID "
+			+ "  AND p2.entityUUID = $pathway2UUID "
+			+ "  AND g1.sBaseName = $geneOfPathway1 "
+			+ "  AND g2.sBaseName in $genesOfPathway2 "
+			+ "RETURN count(x) " + 
+			"")
+	int findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(String pathway1UUID, String pathway2UUID,
+			String geneOfPathway1, Set<String> genesOfPathway2);
+	
+	
 }
