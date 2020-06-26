@@ -1485,6 +1485,127 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
 	}
 
+	
+	/**
+	 * use shared pathway search to find the multigene-context
+	 */
+	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction){
+		
+		List<FlatEdge> ret = new ArrayList<>();
+		Set<String> usedPathwayEntityUUIDSet = new HashSet<>();
+		Set<String> usedGenes = new HashSet<>();
+		
+		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
+		for (String gene : genes) {
+			List<String> genePathways = this.pathwayNodeRepository.findAllForFlatSpeciesSymbolInMapping(gene, networkEntityUUID);
+			for (String pathwayUUID : genePathways) {
+				if (pathwayGeneMap.containsKey(pathwayUUID)) {
+					pathwayGeneMap.get(pathwayUUID).add(gene);
+				} else {
+					Set<String> pathwayGeneSet = new HashSet<>();
+					pathwayGeneSet.add(gene);
+					pathwayGeneMap.put(pathwayUUID, pathwayGeneSet);
+				}
+			}
+		}
+		// now we have a map for all pathways with their respective genes from our geneset
+		// find the pathway that contains most genes / get an ordering of them
+		Map<String, Integer> pathwayGeneNumberMap = new HashMap<>();
+		pathwayGeneMap.forEach((key, value)-> {
+			pathwayGeneNumberMap.put(key, value.size());
+		});
+		
+		boolean isFirst = true;
+		
+		while (pathwayGeneNumberMap.keySet().size() > 0) {
+			int biggest = 0;
+			String biggestPW = null;
+			for (String pathway : pathwayGeneNumberMap.keySet()) {
+				if (pathwayGeneNumberMap.get(pathway) > biggest) {
+					biggestPW = pathway;
+					biggest = pathwayGeneNumberMap.get(pathway);
+				}
+			}
+			if (biggest == 1) {
+				// we only have one gene in the biggest pathway 
+				// remove it from our check list
+				pathwayGeneNumberMap.remove(biggestPW);
+				if (!genes.containsAll(pathwayGeneMap.get(biggestPW))) {
+					// is that gene already contained in another pathway, i.e it is not in the genes list anymore
+					// we don't need that pathway anymore
+					pathwayGeneMap.remove(biggestPW);
+				}
+			}
+				
+			if (biggest > 1 && biggestPW != null) {
+				usedPathwayEntityUUIDSet.add(biggestPW);
+				boolean hasConnectingGene = false;
+				for (String gene : pathwayGeneMap.get(biggestPW)) {
+					if (!genes.remove(gene)) {
+						hasConnectingGene = true;
+					} else {
+						usedGenes.add(gene);
+					}
+				}
+				pathwayGeneNumberMap.remove(biggestPW);
+				if (isFirst || hasConnectingGene) {
+					isFirst = false;
+					pathwayGeneMap.remove(biggestPW);
+				}
+				if (genes.size() == 0) {
+					break;
+				}
+			}
+		}
+		
+		// now pathwayGeneMap contains all the pathways that hold one or more items and those items have not been dealt with
+		// deal with those
+		// they are not directly connected through pathways to the other genes
+		// 1.a for the pathway they are in, look at the genes and see if those are part of our gene set
+		// 1.b if not, we can try to find those genes in the other pathways
+		// 2.  otherwise do a single source shortest path to the already used genes.
+		
+		Iterator<Map.Entry<String, Set<String>> > 
+        iterator = pathwayGeneMap.entrySet().iterator(); 
+		
+		while (iterator.hasNext()) {
+			Map.Entry<String, Set<String>> entry = iterator.next();
+			boolean connectedPathway = false;
+			for (String gene : entry.getValue()) {
+				if (usedGenes.contains(gene)) {
+					continue;
+				} else {
+					for (String otherPathwayUUID : usedPathwayEntityUUIDSet) {
+						int numConnectingGenes = this.pathwayNodeRepository.findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(entry.getKey(), otherPathwayUUID, gene, usedGenes);
+						if (numConnectingGenes > 0) {
+							// we found connecting genes, this means that the pathway with pathwayUUID contains a gene that is also contained in the pathway with uuid otherPathwayUUID
+							usedGenes.add(gene);
+							genes.remove(gene);
+							usedPathwayEntityUUIDSet.add(entry.getKey());
+							connectedPathway = true;
+							iterator.remove();
+							break;
+						}
+					}
+					if (connectedPathway) {
+						break;
+					}
+				}
+			}
+		}
+		
+		// now we have to connect the remaining genes with shortest paths
+		if (genes.size() > 0) {
+			// yes, these genes
+			// we should also have pathways for them in pathwayGeneMap
+			
+		}
+		
+		return ret;
+		
+	}
+	
 	/**
 	 * @param networkEntityUUID
 	 * @param genes
