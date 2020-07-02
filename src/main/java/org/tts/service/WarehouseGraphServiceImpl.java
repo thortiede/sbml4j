@@ -66,6 +66,7 @@ import org.tts.repository.flat.FlatNetworkMappingRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
 import org.tts.repository.warehouse.DatabaseNodeRepository;
 import org.tts.repository.warehouse.FileNodeRepository;
+import org.tts.repository.warehouse.GDSRepository;
 import org.tts.repository.warehouse.MappingNodeRepository;
 import org.tts.repository.warehouse.PathwayCollectionNodeRepository;
 import org.tts.repository.warehouse.PathwayNodeRepository;
@@ -100,6 +101,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	@Autowired
 	WarehouseGraphEdgeRepository warehouseGraphEdgeRepository;
+	
+	@Autowired
+	GDSRepository gdsRepository;
 
 	@Autowired
 	UtilityService utilityService;
@@ -994,9 +998,14 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 */
 	
 	public String getRelationShipApocString(FilterOptions options, Set<String> exclude) {
+		
+		return this.getRelationShipOrString(options.getRelationTypes(), exclude);
+	}
+
+	private String getRelationShipOrString(Iterable<String> relationshipTypes, Set<String> exclude) {
 		String relationTypesApocString = "";
 		boolean addedAtLeastOne = false;
-		for (String relationType : options.getRelationTypes()) {
+		for (String relationType : relationshipTypes) {
 			if (!exclude.contains(relationType)) {
 				addedAtLeastOne = true;
 				relationTypesApocString += relationType;
@@ -1006,7 +1015,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return addedAtLeastOne ? relationTypesApocString.substring(0, relationTypesApocString.length() - 1)
 				: relationTypesApocString;
 	}
-
+	
 	@Override
 	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize) {
 		MappingNode mappingNode = this.mappingNodeRepository
@@ -1492,13 +1501,15 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
 			int maxSize, boolean terminateAtDrug, String direction){
 		
-		List<FlatEdge> ret = new ArrayList<>();
+		List<FlatEdge> allFlatEdges = new ArrayList<>();
+		Set<String> seenEdges = new HashSet<>();
 		Set<String> usedPathwayEntityUUIDSet = new HashSet<>();
 		Set<String> usedGenes = new HashSet<>();
 		
 		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
 		for (String gene : genes) {
-			List<String> genePathways = this.pathwayNodeRepository.findAllForFlatSpeciesSymbolInMapping(gene, networkEntityUUID);
+			String geneFlatSpeciesEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			List<String> genePathways = this.pathwayNodeRepository.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
 			for (String pathwayUUID : genePathways) {
 				if (pathwayGeneMap.containsKey(pathwayUUID)) {
 					pathwayGeneMap.get(pathwayUUID).add(gene);
@@ -1518,10 +1529,28 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 		boolean isFirst = true;
 		
-		while (pathwayGeneNumberMap.keySet().size() > 0) {
+		int numberOfPathways = pathwayGeneNumberMap.keySet().size();
+		while (numberOfPathways > 0) {
+			Iterator<Map.Entry<String, Integer> > pathwayGeneNumberIterator = pathwayGeneNumberMap.entrySet().iterator();
+			
 			int biggest = 0;
 			String biggestPW = null;
-			for (String pathway : pathwayGeneNumberMap.keySet()) {
+			while(pathwayGeneNumberIterator.hasNext()) {
+				String pathway = pathwayGeneNumberIterator.next().getKey();
+				boolean pathwayContainsAtLeastOneGeneStillOfInterest = false;
+				for (String gene : genes) {
+					if (pathwayGeneMap.get(pathway).contains(gene)) {
+						pathwayContainsAtLeastOneGeneStillOfInterest = true;
+						break;
+					}
+				}
+				if(!pathwayContainsAtLeastOneGeneStillOfInterest) {
+					pathwayGeneNumberIterator.remove();
+					numberOfPathways --;
+					pathwayGeneMap.remove(pathway);
+					continue;
+				}
+				
 				if (pathwayGeneNumberMap.get(pathway) > biggest) {
 					biggestPW = pathway;
 					biggest = pathwayGeneNumberMap.get(pathway);
@@ -1531,6 +1560,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				// we only have one gene in the biggest pathway 
 				// remove it from our check list
 				pathwayGeneNumberMap.remove(biggestPW);
+				numberOfPathways --;
 				if (!genes.containsAll(pathwayGeneMap.get(biggestPW))) {
 					// is that gene already contained in another pathway, i.e it is not in the genes list anymore
 					// we don't need that pathway anymore
@@ -1549,6 +1579,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					}
 				}
 				pathwayGeneNumberMap.remove(biggestPW);
+				numberOfPathways --;
 				if (isFirst || hasConnectingGene) {
 					isFirst = false;
 					pathwayGeneMap.remove(biggestPW);
@@ -1558,6 +1589,10 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				}
 			}
 		}
+		System.out.println("Connecting genes with pathways: " + usedGenes.toString());
+		
+		
+		
 		
 		// now pathwayGeneMap contains all the pathways that hold one or more items and those items have not been dealt with
 		// deal with those
@@ -1582,6 +1617,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 							// we found connecting genes, this means that the pathway with pathwayUUID contains a gene that is also contained in the pathway with uuid otherPathwayUUID
 							usedGenes.add(gene);
 							genes.remove(gene);
+							// one could also do:
+							// don't add the whole pathway to the set, but rather
+							// find the shortest path in that pathway only between the current gene and all known genes.
 							usedPathwayEntityUUIDSet.add(entry.getKey());
 							connectedPathway = true;
 							iterator.remove();
@@ -1595,15 +1633,122 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			}
 		}
 		
-		// now we have to connect the remaining genes with shortest paths
-		if (genes.size() > 0) {
-			// yes, these genes
-			// we should also have pathways for them in pathwayGeneMap
-			
+		System.out.println("Pathways: " + usedPathwayEntityUUIDSet.toString());
+		// for the pathways in usedPathwayEntityUUIDSet gather all nodes and relationships
+		// possibly using:
+		/*
+		 * match (p:PathwayNode) where p.pathwayIdString = "path_hsa05200" with p match (p)-[w:Warehouse]->(sb:SBase) where w.warehouseGraphEdgeType = "CONTAINS" with [sb.entityUUID] as simpleModelUUIDs MATCH (m:MappingNode)-[wm:Warehouse]->(fs:FlatSpecies) where m.entityUUID = "2f5b5686-c877-4043-9164-1047cf839816" and wm.warehouseGraphEdgeType = "CONTAINS" and fs.simpleModelEntityUUID in simpleModelUUIDs return fs
+		 * This however only gets the nodes and not the relationships to the nodes. But the query also getting the relationships does not return any result
+		 */
+		// suppose we have all nodes and relationships of the pathways (something we should be able to deliver in general)
+		// have a list of them or something
+		
+		for (String pathwayUUID : usedPathwayEntityUUIDSet) {
+			// 1. get all sBase entityUUIDs of the pathway nodes
+			List<String> sBaseUUIDList = this.pathwayNodeRepository.getSBaseUUIDsOfPathwayNodes(pathwayUUID);
+			// 2. find those pathway uuids in the simpleModelUUIDs of the mapping and return their flatEdges
+			Iterable<FlatEdge> pathwayFlatEdges = this.flatEdgeRepository.getGeneSetFromSBaseUUIDs(networkEntityUUID, sBaseUUIDList);
+			pathwayFlatEdges.forEach(edge -> {
+				if (!allFlatEdges.contains(edge)) {
+					allFlatEdges.add(edge);
+					seenEdges.add(edge.getSymbol());
+				}
+			});
 		}
 		
-		return ret;
+		// now we have to connect the remaining genes with shortest paths
+		List<ApocPathReturnType> allPathReturns = new ArrayList<>();
+		if (genes.size() > 0) {
+			// yes, these genes
+			if(!this.gdsRepository.gdsGraphExists(networkEntityUUID)) {
+				// There is no gds graph for the network yet
+				MappingNode baseNetwork = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID);
+				String relationshipString = this.getRelationShipOrString(baseNetwork.getMappingRelationTypes(), new HashSet<>());
+				//int nodeCount = this.gdsRepository.createGdsGraphForMapping(networkEntityUUID, networkEntityUUID, relationshipString);
+				int nodeCount = this.gdsRepository.createGdsGraphForMappingUsingQueries(String.format("%s",  networkEntityUUID), this.getGdsNodeQuery(networkEntityUUID), this.getGdsRelationshipQuery(networkEntityUUID, relationshipString)); //(this.buildCreateGdsGraphQuery(networkEntityUUID, networkEntityUUID, relationshipString));
+				if (nodeCount < 1) {
+					// creation did not work
+					logger.error("Creation of gds graph for mapping with uuid " + networkEntityUUID + " failed.");
+				}
+			}
+			List<String> targetNodeUUIDs = new ArrayList<>();
+			for (String usedGeneSymbol : usedGenes) {
+				targetNodeUUIDs.add(this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, usedGeneSymbol));
+			}
+			for (String gene : genes) {
+				String geneEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+				if(geneEntityUUID != null) {
+					//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
+					//this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, bfsPath);
+					Map<String, List<FlatEdge>> targetToNumEdges = new HashMap<>();
+					for (String targetUUID : targetNodeUUIDs) {
+						Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(geneEntityUUID, targetUUID, this.getRelationShipOrString(this.mappingNodeRepository.findByEntityUUID(networkEntityUUID).getMappingRelationTypes(), new HashSet<>()),  "weight", 1.0f);
+						List<FlatEdge> targetFlatEdgeList = new ArrayList<>();
+						this.extractFlatEdgesFromApocPathReturnType(targetFlatEdgeList, seenEdges, dijkstra);
+						targetToNumEdges.put(targetUUID, targetFlatEdgeList);
+					}
+					int maxNum = 10000000;
+					String lowestTargetGeneUUID = null;
+					for (String targetGeneUUID : targetToNumEdges.keySet()) {
+						int targetNum = targetToNumEdges.get(targetGeneUUID).size();
+						if (targetNum > 0 && targetNum < maxNum) {
+							maxNum = targetNum;
+							lowestTargetGeneUUID = targetGeneUUID;
+						}
+					}
+					System.out.println("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
+					for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
+						if (!allFlatEdges.contains(edge)) {
+							allFlatEdges.add(edge);
+						}
+					}
+					targetNodeUUIDs.add(lowestTargetGeneUUID);
+				} else {
+					System.out.println("Could not find gene " + gene);
+				}
+				
+				//bfsPath.forEach(allPathReturns::add);
+			}
+		}
 		
+		return allFlatEdges;
+		
+	}
+	
+	private String getGdsNodeQuery(String mappingEntityUUID) {
+		return String.format("MATCH (m:MappingNode)-[w:Warehouse]->(f:FlatSpecies) "
+				+ "  WHERE m.entityUUID = \"%s\" "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as id", mappingEntityUUID);
+	}
+	private String getGdsRelationshipQuery(String mappingEntityUUID, String relationshipString) {
+		return String.format("MATCH 	(m:MappingNode)-[w:Warehouse]->(f:FlatSpecies)-[r:%s]-"
+				+ "			(f2:FlatSpecies)<-[w2:Warehouse]-(m:MappingNode) "
+				+ "	 WHERE m.entityUUID = \"%s\" "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "    AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as source, id(f2) as target", relationshipString, mappingEntityUUID);
+	}
+	
+	private String buildCreateGdsGraphQuery(String graphName, String baseMappingUUID, String relationshipString) {
+		String query = String.format("CALL gds.graph.create.cypher"
+				+ "("
+				+ "'%s', "
+				+ "'MATCH (m:MappingNode)-[w:Warehouse]->(f:FlatSpecies) "
+				+ "  WHERE m.entityUUID = %s "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as id', "
+				+ "'MATCH 	(m:MappingNode)-[w:Warehouse]->(f:FlatSpecies)-[r:%s]-"
+				+ "			(f2:FlatSpecies)<-[w2:Warehouse]-(m:MappingNode) "
+				+ "	 WHERE m.entityUUID = %s "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "    AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as source), id(f2) as target'"
+				+ ") "
+				+ "YIELD graphName, nodeCount, relationshipCount, createMillis "
+				+ "RETURN nodeCount", graphName, baseMappingUUID, relationshipString, baseMappingUUID);
+		logger.debug(query);
+		return query;
 	}
 	
 	/**
@@ -1639,7 +1784,10 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			//return new ByteArrayResource(graphMLStream.toByteArray(), "context_" + geneSymbol + ".graphml");
 		} else {
 			// multi gene context
-			List<String> networkGeneEntityUUIDs = new ArrayList<>();
+			/*
+			 * old get context using dijkstra
+			 * 
+			 List<String> networkGeneEntityUUIDs = new ArrayList<>();
 			
 			//List<FlatSpecies> genes = new ArrayList<>();
 			for (String geneSymbol : genes) {
@@ -1665,6 +1813,10 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					this.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, dijkstra);
 				}
 			}
+			*/
+			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction);
+			
+			
 		}
 		return allEdges;
 	}
