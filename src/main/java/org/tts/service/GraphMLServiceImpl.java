@@ -81,7 +81,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 					String inputSpeciesSymbol = edge.getInputFlatSpecies().getSymbol();
 					String outputSpeciesSymbol = edge.getOutputFlatSpecies().getSymbol();
 					String edgeType = edge.getTypeString();
-					System.out.println(edgeSymbol + ": " + inputSpeciesSymbol + "-[" + edgeType + "]->" + outputSpeciesSymbol);
+					//System.out.println(edgeSymbol + ": " + inputSpeciesSymbol + "-[" + edgeType + "]->" + outputSpeciesSymbol);
 					
 					// get Annotations from InputSpecies
 					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation,
