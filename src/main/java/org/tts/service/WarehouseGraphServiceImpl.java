@@ -222,7 +222,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype) {
 
-		if (this.warehouseGraphNodeRepository.areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(
+		return this.connect(source, target, edgetype, true);
+	}
+	
+	@Override
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype, boolean doCheck) {
+		if (doCheck && this.warehouseGraphNodeRepository.areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(
 				source.getEntityUUID(), target.getEntityUUID(), edgetype)) {
 			return false;
 		}
@@ -1910,9 +1915,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		// 3. connect old to new
 		for (String key : newUUIDToOldUUIDMap.keySet()) {
 			FlatSpecies newSpecies = this.flatSpeciesRepository.findByEntityUUID(key);
-			this.provenanceGraphService.connect(newSpecies, newUUIDToOldUUIDMap.get(key), ProvenanceGraphEdgeType.wasDerivedFrom);
-			this.connect(newSpecies, this.provenanceGraphService.getByEntityUUID(this.flatSpeciesRepository.findByEntityUUID(key).getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
-			this.connect(mappingNode, newSpecies, WarehouseGraphEdgeType.CONTAINS);
+			//this.provenanceGraphService.connect(newSpecies, newUUIDToOldUUIDMap.get(key), ProvenanceGraphEdgeType.wasDerivedFrom);
+			//this.connect(newSpecies, this.provenanceGraphService.getByEntityUUID(this.flatSpeciesRepository.findByEntityUUID(key).getSimpleModelEntityUUID()), WarehouseGraphEdgeType.DERIVEDFROM);
+			this.connect(mappingNode, newSpecies, WarehouseGraphEdgeType.CONTAINS, false);
 		}
 		// 4. update mappingNode
 		this.updateMappingNode(mappingNode);
