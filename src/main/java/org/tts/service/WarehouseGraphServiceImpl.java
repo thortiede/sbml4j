@@ -1510,9 +1510,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		Set<String> seenEdges = new HashSet<>();
 		Set<String> usedPathwayEntityUUIDSet = new HashSet<>();
 		Set<String> usedGenes = new HashSet<>();
-		
+		List<String> geneList = new ArrayList<>(genes);
 		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
-		for (String gene : genes) {
+		for (String gene : geneList) {
 			String geneFlatSpeciesEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 			List<String> genePathways = this.pathwayNodeRepository.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
 			for (String pathwayUUID : genePathways) {
@@ -1543,7 +1543,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			while(pathwayGeneNumberIterator.hasNext()) {
 				String pathway = pathwayGeneNumberIterator.next().getKey();
 				boolean pathwayContainsAtLeastOneGeneStillOfInterest = false;
-				for (String gene : genes) {
+				for (String gene : geneList) {
 					if (pathwayGeneMap.get(pathway).contains(gene)) {
 						pathwayContainsAtLeastOneGeneStillOfInterest = true;
 						break;
@@ -1566,7 +1566,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				// remove it from our check list
 				pathwayGeneNumberMap.remove(biggestPW);
 				numberOfPathways --;
-				if (!genes.containsAll(pathwayGeneMap.get(biggestPW))) {
+				if (!geneList.containsAll(pathwayGeneMap.get(biggestPW))) {
 					// is that gene already contained in another pathway, i.e it is not in the genes list anymore
 					// we don't need that pathway anymore
 					pathwayGeneMap.remove(biggestPW);
@@ -1577,7 +1577,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				usedPathwayEntityUUIDSet.add(biggestPW);
 				boolean hasConnectingGene = false;
 				for (String gene : pathwayGeneMap.get(biggestPW)) {
-					if (!genes.remove(gene)) {
+					if (!geneList.remove(gene)) {
 						hasConnectingGene = true;
 					} else {
 						usedGenes.add(gene);
@@ -1589,7 +1589,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					isFirst = false;
 					pathwayGeneMap.remove(biggestPW);
 				}
-				if (genes.size() == 0) {
+				if (geneList.size() == 0) {
 					break;
 				}
 			}
@@ -1621,7 +1621,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 						if (numConnectingGenes > 0) {
 							// we found connecting genes, this means that the pathway with pathwayUUID contains a gene that is also contained in the pathway with uuid otherPathwayUUID
 							usedGenes.add(gene);
-							genes.remove(gene);
+							geneList.remove(gene);
 							// one could also do:
 							// don't add the whole pathway to the set, but rather
 							// find the shortest path in that pathway only between the current gene and all known genes.
@@ -1663,7 +1663,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		
 		// now we have to connect the remaining genes with shortest paths
 		List<ApocPathReturnType> allPathReturns = new ArrayList<>();
-		if (genes.size() > 0) {
+		if (geneList.size() > 0) {
 			// yes, these genes
 			if(!this.gdsRepository.gdsGraphExists(networkEntityUUID)) {
 				// There is no gds graph for the network yet
@@ -1680,7 +1680,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			for (String usedGeneSymbol : usedGenes) {
 				targetNodeUUIDs.add(this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, usedGeneSymbol));
 			}
-			for (String gene : genes) {
+			for (String gene : geneList) {
+				System.out.println("Searching connectiong for gene: " + gene);
 				String geneEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 				if(geneEntityUUID != null) {
 					//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
@@ -1868,7 +1869,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				return null;
 			}
 			// 2. Find FlatSpecies in network with networkEntityUUID to use as startPoint for context search
-			geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
+			//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
+			geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUID(simpleModelGeneEntityUUID, networkEntityUUID);
 			if (geneSymbolSpecies == null) {
 				//return "Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID;
 				return null;
@@ -1959,6 +1961,28 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		this.flatEdgeRepository.save(changedEdges, 1);
 		
 		return newUUIDToOldUUIDMap;
+		
+	}
+
+	@Override
+	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes) {
+
+		List<FlatSpecies> annotatedSpecies = new ArrayList<>();
+		for (String geneSymbol : genes) {
+			String flatSpeciesEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
+			FlatSpecies flatSpecies = this.flatSpeciesRepository.findByEntityUUID(flatSpeciesEntityUUID);
+			if (flatSpecies != null) {
+			flatSpecies.addAnnotation("drivergene", true);
+				flatSpecies.addAnnotationType("drivergene", "boolean");
+				annotatedSpecies.add(flatSpecies);
+			}
+		}
+		this.flatSpeciesRepository.save(annotatedSpecies, 0);
+		MappingNode mappingNode = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID);
+		mappingNode.addAnnotationType("node.drivergenes",
+				"boolean");
+		MappingNode savedMappingNode = this.mappingNodeRepository.save(mappingNode, 0);
+		return savedMappingNode.getEntityUUID();
 		
 	}
 	

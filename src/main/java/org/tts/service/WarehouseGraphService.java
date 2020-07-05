@@ -173,6 +173,8 @@ public interface WarehouseGraphService {
 
 	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes);
 
+	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
+
 
 
 }
