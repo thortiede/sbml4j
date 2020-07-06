@@ -33,6 +33,7 @@ import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
 import org.tts.repository.provenance.ProvenanceEntityRepository;
+import org.tts.repository.warehouse.PathwayNodeRepository;
 
 @Service
 public class NetworkMappingServiceImpl implements NetworkMappingService {
@@ -66,6 +67,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 	@Autowired
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	@Autowired
+	PathwayNodeRepository pathwayNodeRepository;
 	
 	private static int QUERY_DEPTH_ZERO = 0;
 
@@ -277,6 +281,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					nodeTypes.add(current.getInputSpecies().getsBaseSboTerm());
 					inputFlatSpecies.setSimpleModelEntityUUID(current.getInputSpecies().getEntityUUID());
 					getBQAnnotations(current.getInputSpecies().getEntityUUID(), inputFlatSpecies);
+					getPathwayAnnotations(current.getInputSpecies().getEntityUUID(), inputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getInputSpecies().getEntityUUID(),
 							inputFlatSpecies);
 				}
@@ -292,6 +297,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					nodeTypes.add(current.getOutputSpecies().getsBaseSboTerm());
 					outputFlatSpecies.setSimpleModelEntityUUID(current.getOutputSpecies().getEntityUUID());
 					getBQAnnotations(current.getOutputSpecies().getEntityUUID(), outputFlatSpecies);
+					getPathwayAnnotations(current.getOutputSpecies().getEntityUUID(), outputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getOutputSpecies().getEntityUUID(),
 							outputFlatSpecies);
 				}
@@ -383,6 +389,22 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		}
 	}
 
-	
+	private void getPathwayAnnotations(String parentEntityUUID, FlatSpecies target) {
+		List<String> pathwayUUIDs = this.pathwayNodeRepository.getPathwayNodeUUIDsOfSBase(parentEntityUUID);
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (String pathwayUUID : pathwayUUIDs) {
+			if (!first) {
+				sb.append(", ");
+			}
+			sb.append(pathwayUUID);
+			if (first) {
+				first = false;
+			}
+			
+		}
+		target.addAnnotation("pathways", sb.toString());
+		target.addAnnotationType("pathways", "string");
+	}
 
 }
