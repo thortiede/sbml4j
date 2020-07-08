@@ -381,23 +381,33 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		List<BiomodelsQualifier> bqList = this.biomodelsQualifierRepository.findAllForSBMLSpecies(parentEntityUUID);
 		for(BiomodelsQualifier bq : bqList) {
 			System.out.println(bq.getEndNode().getUri());
-			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) || bq.getQualifier().equals(Qualifier.BQB_IS)) {
+			
+			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) 
+					|| bq.getQualifier().equals(Qualifier.BQB_IS)
+					|| bq.getQualifier().equals(Qualifier.BQB_HAS_PROPERTY)
+					|| bq.getQualifier().equals(Qualifier.BQB_IS_ENCODED_BY)
+				) {
 				String[] splitted = bq.getEndNode().getUri().split("/");
 				target.addAnnotation(splitted[splitted.length-2].replace('.', '_'), splitted[splitted.length-1]);
 				target.addAnnotationType(splitted[splitted.length-2].replace('.', '_'), "string");
-			}
+			}	
 		}
 	}
 
 	private void getPathwayAnnotations(String parentEntityUUID, FlatSpecies target) {
-		List<String> pathwayUUIDs = this.pathwayNodeRepository.getPathwayNodeUUIDsOfSBase(parentEntityUUID);
+		List<PathwayNode> pathwayUUIDs = this.pathwayNodeRepository.getPathwayNodeUUIDsOfSBase(parentEntityUUID);
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (String pathwayUUID : pathwayUUIDs) {
+		for (PathwayNode pathway : pathwayUUIDs) {
 			if (!first) {
 				sb.append(", ");
 			}
-			sb.append(pathwayUUID);
+			try {
+				sb.append(pathway.getPathwayIdString().split("_")[1]);
+			} catch (Exception e) {
+				logger.warn("Pathway with uuid " + pathway.getEntityUUID() + " has abnormal pathwayIdString " + pathway.getPathwayIdString());
+				sb.append(pathway.getPathwayIdString());
+			}
 			if (first) {
 				first = false;
 			}
