@@ -1080,6 +1080,38 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
+	public boolean deleteNetwork(String mappingNodeEntityUUID) {
+		
+		try {
+			List<FlatSpecies> flatSpeciesToDelete = this.mappingNodeRepository.getMappingFlatSpecies(mappingNodeEntityUUID);
+			if (flatSpeciesToDelete != null) {
+				this.flatSpeciesRepository.deleteAll(flatSpeciesToDelete);
+			}
+			List<FlatSpecies> notDeletedFlatSpecies = this.mappingNodeRepository.getMappingFlatSpecies(mappingNodeEntityUUID);
+			if (notDeletedFlatSpecies != null && notDeletedFlatSpecies.size() > 0) {
+				return false;
+			}
+			// get the activity connected to the mappingNode with wasGeneratedBy
+			ProvenanceEntity generatorActivity = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, mappingNodeEntityUUID);
+			if(generatorActivity != null) {
+				this.provenanceGraphService.deleteProvenanceEntity(generatorActivity);
+			}
+			// get the user connected with wasAttributedTo
+			ProvenanceEntity attributedToAgent = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mappingNodeEntityUUID);
+			if (attributedToAgent != null) {
+				this.provenanceGraphService.deleteProvenanceEntity(attributedToAgent);
+			}
+			// then delete the mapping node
+			this.provenanceGraphService.deleteProvenanceEntity(this.mappingNodeRepository.findByEntityUUID(mappingNodeEntityUUID));
+		} catch (Exception e) {
+			logger.warn("Could not cleanly delete Mapping with uuid: " + mappingNodeEntityUUID);
+			return false;
+		}
+		
+		return true;
+	}
+	
+	@Override
 	public Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID) {
 		return this.pathwayNodeRepository.getAllDistinctSpeciesSboTermsOfPathway(pathwayNodeEntityUUID);
 	}

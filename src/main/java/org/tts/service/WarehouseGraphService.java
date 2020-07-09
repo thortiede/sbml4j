@@ -175,6 +175,8 @@ public interface WarehouseGraphService {
 
 	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
 
+	boolean deleteNetwork(String mappingNodeEntityUUID);
+
 
 
 }
