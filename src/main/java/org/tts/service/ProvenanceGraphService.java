@@ -210,6 +210,12 @@ public class ProvenanceGraphService {
 			String endNodeEntityUUID) {
 		return this.provenanceEntityRepository.findAllByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);
 	}
+
+
+	public void deleteProvenanceEntity(ProvenanceEntity entity) {
+		this.provenanceEntityRepository.delete(entity);
+		
+	}
 	
 	
 }
