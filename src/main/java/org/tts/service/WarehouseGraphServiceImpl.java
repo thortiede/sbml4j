@@ -970,38 +970,35 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return contextSpeciesList;
 	}
 */
+	
+	public String getNodeApocString(FilterOptions options, boolean terminateAtDrug) {
+		return this.getNodeOrString(options.getNodeTypes(), terminateAtDrug);
+	}
+	
+	private String getNodeOrString(Iterable<String> nodeTypes, boolean terminateAtDrug) {
+		StringBuilder sb = new StringBuilder();
+		for (String nodeType : nodeTypes) {
+			if (nodeType.equals("Drug") && terminateAtDrug) {
+				sb.append("/");
+				sb.append(nodeType);
+				sb.append("|");
+			}	
+		}
+		sb.append("+FlatSpecies");
+		return sb.toString();
+	}
+	 
 	/**
 	 * @param options
 	 * @return
 	 */
 	
 	public String getRelationShipApocString(FilterOptions options, String direction) {
-		String relationTypesApocString = "";
-		for (String relationType : options.getRelationTypes()) {
-			if(direction.equals("upstream")) {
-				relationTypesApocString += "<";
-			}
-			relationTypesApocString += relationType;
-			if(direction.equals("downstream")) {
-				relationTypesApocString += ">";
-			}
-			relationTypesApocString += "|";
-		}
-		return relationTypesApocString.substring(0, relationTypesApocString.length() - 1);
+		return this.getRelationShipOrString(options.getRelationTypes(), new HashSet<>(), direction);
 	}
 
-	public String getNodeApocString(FilterOptions options, boolean terminateAtDrug) {
-		String nodeTypesApocString = "";
-		for (String nodeType : options.getNodeTypes()) {
-			if (nodeType.equals("Drug") && terminateAtDrug) {
-				nodeTypesApocString += "/";
-				nodeTypesApocString += nodeType;
-				nodeTypesApocString += "|";
-			}	
-		}
-		nodeTypesApocString += "+FlatSpecies";
-		return nodeTypesApocString;
-	}
+	
+	
 	
 	/**
 	 * @param options
@@ -1010,21 +1007,28 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	
 	public String getRelationShipApocString(FilterOptions options, Set<String> exclude) {
 		
-		return this.getRelationShipOrString(options.getRelationTypes(), exclude);
+		return this.getRelationShipOrString(options.getRelationTypes(), exclude, "both");
 	}
 
-	private String getRelationShipOrString(Iterable<String> relationshipTypes, Set<String> exclude) {
-		String relationTypesApocString = "";
-		boolean addedAtLeastOne = false;
+	private String getRelationShipOrString(Iterable<String> relationshipTypes, Set<String> exclude, String direction) {
+		StringBuilder sb = new StringBuilder();
+		boolean isFirst = true;
 		for (String relationType : relationshipTypes) {
+			if (!isFirst) {
+				sb.append("|");
+			}
 			if (!exclude.contains(relationType)) {
-				addedAtLeastOne = true;
-				relationTypesApocString += relationType;
-				relationTypesApocString += "|";
+				if(direction.equals("upstream")) {
+					sb.append("<");
+				}
+				isFirst = false;
+				sb.append(relationType);
+				if(direction.equals("downstream")) {
+					sb.append(">");
+				}	
 			}
 		}
-		return addedAtLeastOne ? relationTypesApocString.substring(0, relationTypesApocString.length() - 1)
-				: relationTypesApocString;
+		return sb.toString();
 	}
 	
 	@Override
@@ -1517,10 +1521,15 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		Set<String> usedPathwayEntityUUIDSet = new HashSet<>();
 		Set<String> usedGenes = new HashSet<>();
 		List<String> geneList = new ArrayList<>(genes);
+		Set<String> targetGeneUUIDSet = new HashSet<>();
 		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
-		
+		Set<String> networkRelationTypes = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID).getMappingRelationTypes();
+		Set<String> networkNodeTypes = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID).getMappingNodeTypes();
 		for (String gene : geneList) {
 			String geneFlatSpeciesEntityUUID = this.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (geneFlatSpeciesEntityUUID != null) {
+				targetGeneUUIDSet.add(geneFlatSpeciesEntityUUID);
+			}
 			List<String> genePathways = this.pathwayNodeRepository.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
 			for (String pathwayUUID : genePathways) {
 				if (pathwayGeneMap.containsKey(pathwayUUID)) {
@@ -1532,6 +1541,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				}
 			}
 		}
+		
 		// now we have a map for all pathways with their respective genes from our geneset
 		if (vcfConfig.getVcfConfigProperties().isUseSharedPathwaySearch()) {
 		// find the pathway that contains most genes / get an ordering of them
@@ -1680,7 +1690,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 					// TODO do something
 					return null;
 				} else {
-					Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(gene1UUID, gene2UUID, this.getRelationShipOrString(this.mappingNodeRepository.findByEntityUUID(networkEntityUUID).getMappingRelationTypes(), new HashSet<>()),  "weight", 1.0f);
+					Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(gene1UUID, gene2UUID, this.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction),  "weight", 1.0f);
 					this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, dijkstra);
 					for (FlatEdge edge : allFlatEdges) {
 						usedGenes.add(edge.getInputFlatSpecies().getSymbol());
@@ -1800,7 +1810,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 							isIdenticalNode = true;
 							break;
 						}
-						Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(geneEntityUUID, targetUUID, this.getRelationShipOrString(this.mappingNodeRepository.findByEntityUUID(networkEntityUUID).getMappingRelationTypes(), new HashSet<>()),  "weight", 1.0f);
+						Iterable<ApocPathReturnType> dijkstra = this.flatNetworkMappingRepository.apocDijkstraWithDefaultWeight(geneEntityUUID, targetUUID, this.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction),  "weight", 1.0f);
 						List<FlatEdge> targetFlatEdgeList = new ArrayList<>();
 						this.extractFlatEdgesFromApocPathReturnTypeWithoutSideeffect(targetFlatEdgeList, seenEdges, dijkstra);
 						targetToNumEdges.put(targetUUID, targetFlatEdgeList);
@@ -1836,7 +1846,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				//bfsPath.forEach(allPathReturns::add);
 			}
 		}
-		
+		// now add the context around the target genes
+		for (String geneFlatSpeciesEntityUUID : targetGeneUUIDSet) {
+			// get the sourroundings of the gene
+			Iterable<ApocPathReturnType> geneContextNet = this.flatNetworkMappingRepository.runApocPathExpandFor(geneFlatSpeciesEntityUUID, this.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), this.getNodeOrString(networkNodeTypes, terminateAtDrug), minSize, maxSize);
+			this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, geneContextNet);
+		}
 		return allFlatEdges;
 		
 	}
