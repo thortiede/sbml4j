@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.tts.config.SBML4jConfig;
 import org.tts.config.VcfConfig;
 import org.tts.model.api.Input.Drivergenes;
 import org.tts.model.api.Input.FilterOptions;
@@ -69,6 +70,9 @@ public class WarehouseController {
 
 	@Autowired
 	VcfConfig vcfConfig;
+	
+	@Autowired
+	SBML4jConfig sbml4jConfig;
 	
 	Map<String, Map<String, Resource>> networkResources = new HashMap<>();
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -355,13 +359,17 @@ public class WarehouseController {
 	
 
 	@RequestMapping(value = "/network", method = RequestMethod.DELETE)
-	public ResponseEntity<NetworkInventoryItem> deactivateNetwork(@RequestParam("UUID") String mappingNodeEntityUUID) {
+	public ResponseEntity<Boolean> deactivateNetwork(@RequestParam("UUID") String mappingNodeEntityUUID) {
 
-		NetworkInventoryItem networkInventoryItem = this.warehouseGraphService.deactivateNetwork(mappingNodeEntityUUID);
-		if (networkInventoryItem != null) {
-			return new ResponseEntity<NetworkInventoryItem>(networkInventoryItem, HttpStatus.OK);
+		if(sbml4jConfig.getNetworkConfigProperties().isHardDelete()) {
+			return new ResponseEntity<Boolean>(this.warehouseGraphService.deleteNetwork(mappingNodeEntityUUID), HttpStatus.OK);
 		} else {
-			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.BAD_REQUEST);
+			NetworkInventoryItem networkInventoryItem = this.warehouseGraphService.deactivateNetwork(mappingNodeEntityUUID);
+			if (networkInventoryItem != null) {
+				return new ResponseEntity<Boolean>(true, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<Boolean>(HttpStatus.BAD_REQUEST);
+			}
 		}
 	}
 
