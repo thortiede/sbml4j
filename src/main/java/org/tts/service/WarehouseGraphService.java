@@ -51,6 +51,8 @@ public interface WarehouseGraphService {
 
 	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
 
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype, boolean doCheck);
+
 	public void connect(Iterable<ProvenanceEntity> sourceEntities, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
 
 	public void connect(ProvenanceEntity source, Iterable<ProvenanceEntity> targetEntities, WarehouseGraphEdgeType edgetype);
@@ -170,6 +172,9 @@ public interface WarehouseGraphService {
 	public int getNumberOfNetworkRelations(String networkEntityUUID);
 
 	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes);
+
+	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
+
 
 
 }

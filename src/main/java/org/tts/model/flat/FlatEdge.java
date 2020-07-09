@@ -43,5 +43,9 @@ public class FlatEdge extends ContentGraphEdge {
 	public String getTypeString() {
 		return "FLATEDGE";
 	}
+	
+	public boolean equals(FlatEdge other) {
+		return this.getEntityUUID().equals(other.getEntityUUID());
+	}
 
 }

@@ -40,4 +40,18 @@ public interface FlatEdgeRepository extends Neo4jRepository<FlatEdge, Long> {
 	Iterable<FlatEdge> getGeneSet(String networkEntityUUID, List<String> geneSymbols);
 	
 	
+	@Query("match (m:MappingNode) "
+			+ "WHERE m.entityUUID = $networkEntityUUID "
+			+ "WITH m MATCH "
+			+ "(m)"
+			+ "-[w1:Warehouse]->"
+			+ "(s:FlatSpecies)-[r]->(s2:FlatSpecies)"
+			+ "<-[w2:Warehouse]-"
+			+ "(m) "
+			+ "WHERE w1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND s.simpleModelEntityUUID IN $simpleModelUUIDs "
+			+ "AND s2.simpleModelEntityUUID IN $simpleModelUUIDs "
+			+ "RETURN s, r, s2")
+	Iterable<FlatEdge> getGeneSetFromSBaseUUIDs(String networkEntityUUID, List<String> simpleModelUUIDs);
 }

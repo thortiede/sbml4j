@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.tts.config.VcfConfig;
+import org.tts.model.api.Input.Drivergenes;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.NetworkInventoryItem;
@@ -65,6 +67,9 @@ public class WarehouseController {
 	@Autowired
 	HttpService httpService;
 
+	@Autowired
+	VcfConfig vcfConfig;
+	
 	Map<String, Map<String, Resource>> networkResources = new HashMap<>();
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -551,6 +556,33 @@ public class WarehouseController {
 		return this.warehouseGraphService.mappingForPathwayExists(entityUUID);
 	}
 
+	@RequestMapping(value = "/drivergenes", method = RequestMethod.POST)
+	public ResponseEntity<String> createDriverGeneNetwork(
+													@RequestHeader(value = "user") String username,
+													@RequestBody Drivergenes drivergenes) {
+		if (drivergenes.getGenes() == null) {
+			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+		}
+		
+		ResponseEntity<String> contextMappingResponse = this.postContext(username
+				, (drivergenes.getBaseNetworkUUID() != null) ? drivergenes.getBaseNetworkUUID() : this.vcfConfig.getVcfDefaultProperties().getBaseNetworkUUID()
+				, drivergenes.getGenes()
+				, this.vcfConfig.getVcfDefaultProperties().getMaxSize()
+				, this.vcfConfig.getVcfDefaultProperties().getMaxSize()
+				, this.vcfConfig.getVcfDefaultProperties().isTerminateAtDrug()
+				, this.vcfConfig.getVcfDefaultProperties().getDirection()
+				, username + "_" + drivergenes.toSingleLineString());
+		
+		
+		if(contextMappingResponse.getStatusCode().is2xxSuccessful()) {
+			// add inlineAnnotation
+			String networkEntityUUID = this.warehouseGraphService.addAnnotationToNetwork(contextMappingResponse.getBody(), drivergenes.getGenes());
+			return new ResponseEntity<String>(networkEntityUUID, HttpStatus.CREATED);
+		} else {
+			return contextMappingResponse;
+		}
+	}
+	
 	/*
 	 * @RequestMapping(value = "/mydrug", method=RequestMethod.POST) public
 	 * ResponseEntity<NetworkInventoryItem>
@@ -679,4 +711,6 @@ public class WarehouseController {
 	 * }
 	 */
 
+	
+	
 }

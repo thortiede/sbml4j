@@ -79,4 +79,14 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "RETURN f")
 	FlatSpecies findBySimpleModelEntityUUIDInNetwork(String simpleModelEntityUUID, String networkEntityUUID);
 	
+	@Query("MATCH "
+			+ "(f:FlatSpecies)"
+			+ "<-[w:Warehouse]-"
+			+ "(m:MappingNode) "
+			+ "WHERE w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND m.entityUUID = $networkEntityUUID "
+			+ "AND f.simpleModelEntityUUID = $simpleModelEntityUUID "
+			+ "RETURN f")
+	FlatSpecies findBySimpleModelEntityUUID(String simpleModelEntityUUID, String networkEntityUUID);
+	
 }

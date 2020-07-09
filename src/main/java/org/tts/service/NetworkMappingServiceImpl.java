@@ -33,6 +33,7 @@ import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;
 import org.tts.repository.provenance.ProvenanceEntityRepository;
+import org.tts.repository.warehouse.PathwayNodeRepository;
 
 @Service
 public class NetworkMappingServiceImpl implements NetworkMappingService {
@@ -66,6 +67,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 	@Autowired
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	@Autowired
+	PathwayNodeRepository pathwayNodeRepository;
 	
 	private static int QUERY_DEPTH_ZERO = 0;
 
@@ -277,6 +281,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					nodeTypes.add(current.getInputSpecies().getsBaseSboTerm());
 					inputFlatSpecies.setSimpleModelEntityUUID(current.getInputSpecies().getEntityUUID());
 					getBQAnnotations(current.getInputSpecies().getEntityUUID(), inputFlatSpecies);
+					getPathwayAnnotations(current.getInputSpecies().getEntityUUID(), inputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getInputSpecies().getEntityUUID(),
 							inputFlatSpecies);
 				}
@@ -292,6 +297,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					nodeTypes.add(current.getOutputSpecies().getsBaseSboTerm());
 					outputFlatSpecies.setSimpleModelEntityUUID(current.getOutputSpecies().getEntityUUID());
 					getBQAnnotations(current.getOutputSpecies().getEntityUUID(), outputFlatSpecies);
+					getPathwayAnnotations(current.getOutputSpecies().getEntityUUID(), outputFlatSpecies);
 					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getOutputSpecies().getEntityUUID(),
 							outputFlatSpecies);
 				}
@@ -375,14 +381,40 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		List<BiomodelsQualifier> bqList = this.biomodelsQualifierRepository.findAllForSBMLSpecies(parentEntityUUID);
 		for(BiomodelsQualifier bq : bqList) {
 			System.out.println(bq.getEndNode().getUri());
-			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) || bq.getQualifier().equals(Qualifier.BQB_IS)) {
+			
+			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) 
+					|| bq.getQualifier().equals(Qualifier.BQB_IS)
+					|| bq.getQualifier().equals(Qualifier.BQB_HAS_PROPERTY)
+					|| bq.getQualifier().equals(Qualifier.BQB_IS_ENCODED_BY)
+				) {
 				String[] splitted = bq.getEndNode().getUri().split("/");
 				target.addAnnotation(splitted[splitted.length-2].replace('.', '_'), splitted[splitted.length-1]);
 				target.addAnnotationType(splitted[splitted.length-2].replace('.', '_'), "string");
-			}
+			}	
 		}
 	}
 
-	
+	private void getPathwayAnnotations(String parentEntityUUID, FlatSpecies target) {
+		List<PathwayNode> pathwayUUIDs = this.pathwayNodeRepository.getPathwayNodeUUIDsOfSBase(parentEntityUUID);
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (PathwayNode pathway : pathwayUUIDs) {
+			if (!first) {
+				sb.append(", ");
+			}
+			try {
+				sb.append(pathway.getPathwayIdString().split("_")[1]);
+			} catch (Exception e) {
+				logger.warn("Pathway with uuid " + pathway.getEntityUUID() + " has abnormal pathwayIdString " + pathway.getPathwayIdString());
+				sb.append(pathway.getPathwayIdString());
+			}
+			if (first) {
+				first = false;
+			}
+			
+		}
+		target.addAnnotation("pathways", sb.toString());
+		target.addAnnotationType("pathways", "string");
+	}
 
 }

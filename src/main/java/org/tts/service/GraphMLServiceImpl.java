@@ -12,7 +12,9 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.NodeEdgeList;
 import org.tts.model.api.Output.NodeNodeEdge;
@@ -24,6 +26,9 @@ public class GraphMLServiceImpl implements GraphMLService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+	@Autowired
+	SBML4jConfig sbml4jConfig;
+	
 	public GraphMLServiceImpl() {
 		super();
 	}
@@ -81,7 +86,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 					String inputSpeciesSymbol = edge.getInputFlatSpecies().getSymbol();
 					String outputSpeciesSymbol = edge.getOutputFlatSpecies().getSymbol();
 					String edgeType = edge.getTypeString();
-					System.out.println(edgeSymbol + ": " + inputSpeciesSymbol + "-[" + edgeType + "]->" + outputSpeciesSymbol);
+					//System.out.println(edgeSymbol + ": " + inputSpeciesSymbol + "-[" + edgeType + "]->" + outputSpeciesSymbol);
 					
 					// get Annotations from InputSpecies
 					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation,
@@ -338,9 +343,11 @@ public class GraphMLServiceImpl implements GraphMLService {
 		if(!edgeAnnotations.containsKey("interaction")) {
 			edgeAnnotations.put("interaction", "String");
 		}
+		boolean hideModelUUIDs = sbml4jConfig.getOutputConfigProperties().isHideModelUUIDs();
 		// are there annotations on the edge?
 		if (edgeAnnotationMap != null && edgeAnnotationMap.size() != 0) {
 			for (String annotationKey : edgeAnnotationMap.keySet()) {
+				if (hideModelUUIDs && annotationKey.toLowerCase().contains("uuid")) continue;
 				String annotationType = edgeAnnotationTypeMap.get(annotationKey).toLowerCase();
 				switch (annotationType) {
 				case "string":

@@ -1,6 +1,7 @@
 package org.tts.repository.warehouse;
 
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -60,8 +61,10 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND w2.warehouseGraphEdgeType = \"DERIVEDFROM\" "
 			+ "AND wc1.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "AND wc2.warehouseGraphEdgeType = \"CONTAINS\" "
-			+ "AND NOT (p)-[np:PROV]->(pc:PathwayCollectionNode) "
-			+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "AND NOT EXISTS {"
+				+ "(p)-[np:PROV]->(pc:PathwayCollectionNode) "
+				+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "}"
 			+ "RETURN p")
 	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
 	
@@ -93,4 +96,70 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN p.entityUUID")
 	List<String> findAllPathwaysDirectlyDerivedFromCollections();
 */
+	
+	/* match (m:MappingNode)-[wm:Warehouse]->(f:FlatSpecies) 
+	 * where m.entityUUID = "2f5b5686-c877-4043-9164-1047cf839816" and wm.warehouseGraphEdgeType = "CONTAINS" and f.symbol = "BRCA1" 
+	 * with f match (s)<-[w:Warehouse]-(p:PathwayNode) 
+	 * where w.warehouseGraphEdgeType = "CONTAINS" and s.entityUUID = f.simpleModelEntityUUID return p;
+	 * 
+	 */
+	@Query(""
+			+ "MATCH "
+			+ "(m:MappingNode)"
+			+ "-[wm:Warehouse]->"
+			+ "(f:FlatSpecies) "
+				+ "WHERE m.entityUUID = $mappingEntityUUID "
+				+ "AND wm.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "AND f.entityUUID = $flatSpeciesEntityUUID "
+			+ "WITH f MATCH "
+				+ "(s)"
+				+ "<-[wp:Warehouse]-"
+				+ "(p:PathwayNode) "
+					+ "WHERE s.entityUUID = f.simpleModelEntityUUID "
+					+ "AND wp.warehouseGraphEdgeType = \"CONTAINS\" "
+					+ "AND NOT EXISTS { "
+						+ "MATCH (p)-[np:PROV]->(pc:PathwayCollectionNode) "
+						+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+					+ "} "
+			+ "RETURN p.entityUUID")
+	List<String> findAllForFlatSpeciesEntityUUIDInMapping(String flatSpeciesEntityUUID, String mappingEntityUUID);
+
+
+	@Query(""
+			+ "MATCH "
+			+ "(g1:SBase)<-[w1:Warehouse]-(p1:PathwayNode)-[w2:Warehouse]->(x:SBase)<-[w3:Warehouse]-(p2:PathwayNode)-[w4:Warehouse]->(g2:SBase) "
+			+ "WHERE w1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w3.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND w4.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "  AND p1.entityUUID = $pathway1UUID "
+			+ "  AND p2.entityUUID = $pathway2UUID "
+			+ "  AND g1.sBaseName = $geneOfPathway1 "
+			+ "  AND g2.sBaseName in $genesOfPathway2 "
+			+ "RETURN count(x) " + 
+			"")
+	int findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(String pathway1UUID, String pathway2UUID,
+			String geneOfPathway1, Set<String> genesOfPathway2);
+	
+	
+	/*
+	 * match (p:PathwayNode) where p.pathwayIdString = "path_hsa05200" 
+	 * with p match (p)-[w:Warehouse]->(sb:SBase) 
+	 * where w.warehouseGraphEdgeType = "CONTAINS" 
+	 * with sb.entityUUID as simpleModelUUIDs MATCH (m:MappingNode) where m.entityUUID = "2f5b5686-c877-4043-9164-1047cf839816" return simpleModelUUIDs
+	 * 
+	 */
+	@Query("MATCH "
+		+ "(p:PathwayNode)-[w:Warehouse]->(sb:SBase) "
+		+ "WHERE p.entityUUID = $pathwayUUID "
+		+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+		+ "RETURN sb.entityUUID")
+	List<String> getSBaseUUIDsOfPathwayNodes(String pathwayUUID);
+	
+	@Query("MATCH "
+			+ "(p:PathwayNode)-[w:Warehouse]->(sb:SBase) "
+			+ "WHERE sb.entityUUID = $sBaseEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "RETURN p")
+	List<PathwayNode> getPathwayNodeUUIDsOfSBase(String sBaseEntityUUID);
 }
