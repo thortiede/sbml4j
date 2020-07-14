@@ -7,7 +7,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,13 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.Input.FilterOptions;
-import org.tts.model.api.Output.ApocPathReturnType;
+import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.GraphEnum.AnnotationName;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
@@ -74,6 +72,9 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 
 	@Autowired
 	FlatEdgeService flatEdgeService;
+	
+	@Autowired
+	SBML4jConfig sbml4jConfig;
 	
 	@Autowired
 	SBMLSpeciesRepository sbmlSpeciesRepository;
@@ -378,6 +379,31 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
 	}
 
-
+	@Override
+	public GraphBaseEntity addAnnotation(GraphBaseEntity entity, String annotationName, String annotationType, Object annotationValue,
+			boolean appendExisting) {
+		if(annotationType.equals("string")) {
+			String newAnnotationValue = (String) annotationValue;
+			if(appendExisting) {
+				String separator = ", "; // this is the default separator
+				if (entity.getAnnotation().containsKey(annotationName)) {
+					if (this.sbml4jConfig.getAnnotationConfigProperties().isSetSeparator(AnnotationName.get(annotationName))) {
+						separator = sbml4jConfig.getAnnotationConfigProperties().getSeparator(AnnotationName.get(annotationName));
+					}
+					String existingAnnotationString = (String) entity.getAnnotation().get(annotationName);
+					newAnnotationValue = existingAnnotationString + separator + (String) annotationValue;
+				}
+			}
+			entity.addAnnotation(annotationName, newAnnotationValue);
+			entity.addAnnotationType(annotationName, annotationType);
+		} else {
+			// differnt type than string, nothing we can append to at this point
+			if(entity.getAnnotation().get(annotationName) == null || !this.sbml4jConfig.getAnnotationConfigProperties().isKeepFirst()) {
+				entity.addAnnotation(annotationName, annotationValue);
+				entity.addAnnotationType(annotationName, annotationType);
+			}
+		}
+		return entity;
+	}
 	
 }
