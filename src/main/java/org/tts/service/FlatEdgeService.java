@@ -15,6 +15,7 @@ import org.tts.model.flat.relationship.NonCovalentBindingFlatEdge;
 import org.tts.model.flat.relationship.PathwayFlatEdge;
 import org.tts.model.flat.relationship.PhosphorylationFlatEdge;
 import org.tts.model.flat.relationship.ProductFlatEdge;
+import org.tts.model.flat.relationship.ProteinComplexFormationEdge;
 import org.tts.model.flat.relationship.ReactantFlatEdge;
 import org.tts.model.flat.relationship.StimulationFlatEdge;
 import org.tts.model.flat.relationship.TargetsFlatEdge;
@@ -63,6 +64,9 @@ public class FlatEdgeService {
 				break;
 			case "SBO:0000168":
 				newEdge = new ControlFlatEdge();
+				break;
+			case "SBO:0000526":
+				newEdge = new ProteinComplexFormationEdge();
 				break;
 			case "targets":
 				newEdge = new TargetsFlatEdge();
