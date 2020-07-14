@@ -26,4 +26,23 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> findByBQConnectionTo(String name, String databaseFromUri);
 
+	@Query("MATCH "
+			+ "(g:SBMLSpeciesGroup)"
+			+ "-[h:HAS_GROUP_MEMBER]->"
+			+ "(s:SBMLSpecies) "
+			+ "WHERE g.entityUUID = $groupEntityUUID "
+			+ "RETURN s")
+	public Iterable<SBMLSpecies> getSBMLSpeciesOfGroup(String groupEntityUUID);
+	
+	/*@Query("MATCH "
+			+ "(s:SBMLSpecies)"
+			+ "-[w:Warehouse]-"
+			+ "(p:PathwayNode) "
+			+ "WHERE p.entityUUID = $pathwayEntityUUID "
+			+ "AND NOT EXISTS {"
+			+ " MATCH (s)-[c]-(e:GraphBaseEntity) "
+			+ "WHERE type(c) <> warehouseGraphEdge"
+			+ "")
+	public Iterable<SBMLSpecies> getAllUnconnectedSpeciesOfPathway(String pathwayEntityUUID);
+	*/
 }
