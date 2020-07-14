@@ -1,5 +1,8 @@
 package org.tts.model.common;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GraphEnum {
 	
 	/**
@@ -219,4 +222,51 @@ public class GraphEnum {
 		OTHER
 	}
 	
+	
+	public enum AnnotationName {
+		KEGGGENES("kegg_genes"),
+		NAME("name"),
+		ECCODE("ec-code"),
+		ENSEMBL("ensembl"),
+		HGNC("hgnc"),
+		OMIM("omim"),
+		ENTREZGENE("entrez_gene"),
+		PATHWAYS("pathways"),
+		SECONDARYNAMES("seconday_names"),
+		UNIPROT("uniprot"),
+		OBOECO("obo_eco");
+		
+		private final String annotationName;
+		
+		AnnotationName(String name) {
+			this.annotationName = name;
+		}
+		
+		public String getAnnotationName() {
+			return this.annotationName;
+		}
+		
+		
+		 //****** Reverse Lookup Implementation************//
+		 
+	    //Lookup table
+	    private static final Map<String, AnnotationName> lookup = new HashMap<>();
+	  
+	    //Populate the lookup table on loading time
+	    static
+	    {
+	        for(AnnotationName name : AnnotationName.values())
+	        {
+	            lookup.put(name.getAnnotationName(), name);
+	        }
+	    }
+	  
+	    //This method can be used for reverse lookup purpose
+	    public static AnnotationName get(String name) 
+	    {
+	        return lookup.get(name);
+	    }
+		
+		
+	}
 }
