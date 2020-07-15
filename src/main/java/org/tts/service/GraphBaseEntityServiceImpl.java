@@ -124,6 +124,19 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		return graphBaseEntityRepository.findAll();
 	}
 
+	@Override
+	public boolean deleteEntity(GraphBaseEntity entity) {
+		if (entity == null) {
+			return false;
+		}
+		this.graphBaseEntityRepository.delete(entity);
+		if (this.graphBaseEntityRepository.findByEntityUUID(entity.getEntityUUID()) == null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	public Map<String, String> cloneAndPersistNetworkAndReturnOldToNewMap(String entityUUID) {
 		Iterable<FlatMappingReturnType> ret = this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(entityUUID);		
 		FlatEdge currentEdge;

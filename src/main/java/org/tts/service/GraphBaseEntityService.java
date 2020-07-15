@@ -18,4 +18,6 @@ public interface GraphBaseEntityService {
 
 	Resource testMyDrug(String networkEntityUUID, String myDrugURL);
 
+	boolean deleteEntity(GraphBaseEntity entity);
+
 }
