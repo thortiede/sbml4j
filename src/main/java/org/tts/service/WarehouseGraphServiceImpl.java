@@ -22,6 +22,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.tts.config.VcfConfig;
 import org.tts.controller.WarehouseController;
@@ -544,7 +548,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		 * "standard", type.name())) .withRel(type.name())); }
 		 */
 		// add link to network retrieval
-		item.add(linkTo(methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(), false))
+		String user = ((ProvenanceGraphAgentNode) this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mapping.getEntityUUID())).getGraphAgentName();
+		item.add(linkTo(methodOn(WarehouseController.class).getNetwork(user, item.getEntityUUID(), false))
 				.withRel("Retrieve Network contents as GraphML"));
 		
 		// add link to the item detail:
@@ -1473,6 +1478,24 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return (MappingNode) this.saveWarehouseGraphNodeEntity(newMapping, 0);
 	}
 
+	@Override
+	public ResponseEntity<Resource> getNetwork(String networkEntityUUID, boolean directed, String username) {
+		ProvenanceGraphAgentNode agent = (ProvenanceGraphAgentNode) this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, networkEntityUUID);
+		if (agent != null && agent.getGraphAgentName().equals(username)) {
+			String contentType = "application/octet-stream";
+			Resource resource = this.getNetwork(networkEntityUUID, directed);
+			if(resource != null) {
+				String filename = resource.getFilename();
+				return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
+					 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"") .body(resource); 
+			} else {
+				return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
+			}
+		} else {
+			return new ResponseEntity<Resource>(HttpStatus.BAD_REQUEST);
+		}
+	}
+	
 	@Override
 	public Resource getNetwork(String networkEntityUUID, boolean directed) {
 		Iterable<FlatEdge> networkContent = this.flatEdgeRepository.getNetworkContentsFromUUID(networkEntityUUID);

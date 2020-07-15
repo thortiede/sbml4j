@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
@@ -139,6 +140,8 @@ public interface WarehouseGraphService {
 
 	//public String getRelationShipApocString(FilterOptions options, Set<String> exclude);
 
+	ResponseEntity<Resource> getNetwork(String networkEntityUUID, boolean directed, String username);
+	
 	public Resource getNetwork(String networkEntityUUID, boolean directed);
 
 	public Resource getNetwork(String networkEntityUUID, List<String> geneset, boolean directed);
@@ -176,6 +179,8 @@ public interface WarehouseGraphService {
 	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
 
 	boolean deleteNetwork(String mappingNodeEntityUUID);
+
+	
 
 
 
