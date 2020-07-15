@@ -375,17 +375,10 @@ public class WarehouseController {
 
 	
 	@RequestMapping(value="/network", method = RequestMethod.GET)
-	public ResponseEntity<Resource> getNetwork(@RequestParam("networkEntityUUID")String networkEntityUUID,
+	public ResponseEntity<Resource> getNetwork(@RequestHeader(value = "user") String username,
+												@RequestParam(value = "UUID")String networkEntityUUID,
 												@RequestParam(value = "directed", defaultValue = "false")boolean directed) {
-		Resource resource = this.warehouseGraphService.getNetwork(networkEntityUUID, directed);
-		String contentType = "application/octet-stream";
-		if(resource != null) {
-			String filename = resource.getFilename();
-			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
-				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"") .body(resource); 
-		} else { 
-			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
-		} 
+		return this.warehouseGraphService.getNetwork(networkEntityUUID, directed, username);
 	}
 	
 	
