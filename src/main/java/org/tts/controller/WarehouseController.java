@@ -316,12 +316,17 @@ public class WarehouseController {
 	@RequestMapping(value = "/network", method = RequestMethod.POST)
 	public ResponseEntity<NetworkInventoryItemDetail> createMappingFromMappingWithOptions(
 											  @RequestHeader("user") String username
-											, @RequestParam(value = "networkEntityUUID") String parentUUID
+											, @RequestParam(value = "parentUUID") String parentUUID
 											, @RequestParam(value = "step") MappingStep step
 											, @RequestBody FilterOptions options) {
 		// Check that we are working on the right network
 		if (!parentUUID.equals(options.getMappingUuid())) {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			return ResponseEntity.status(405)
+						.header("reason", "parentUUID in query and body must match").build();//new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		if (!(step.equals(MappingStep.FILTER) || step.equals(MappingStep.ANNOTATE) || step.equals(MappingStep.COPY) || step.equals(MappingStep.PATHWAYINFO))) {
+			return ResponseEntity.status(405)
+					.header("reason", "MappingStep not supported").build();
 		}
 		
 		
