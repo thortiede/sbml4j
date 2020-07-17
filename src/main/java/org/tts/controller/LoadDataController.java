@@ -145,14 +145,14 @@ public class LoadDataController {
 			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		
+		
+		
 		/*
 		 * Create Provenance Nodes
 		 */
 		
 		
-		// Potentially read out header information to get the user that uploads this file
 		// Create a ProvenanceGraph.Agent Node with it (using the timestamp to make it unique?) - or find Agent in DB and use it
-		// String username = "Thor"; // TODO: Grab this from the header
 		Map<String, Object> agentNodeProperties = new HashMap<>();
 		agentNodeProperties.put("graphagentname", username);
 		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
