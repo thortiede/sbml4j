@@ -416,7 +416,7 @@ public class WarehouseController {
 		String contentType = "application/octet-stream";
 		Resource resource;
 		if(genes == null || genes.size() < 1) {
-			resource = null;
+			return ResponseEntity.badRequest().build();
 		} else {
 			resource = this.warehouseGraphService.getNetworkContext(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction, directed);
 		}
@@ -446,7 +446,7 @@ public class WarehouseController {
 		String contextNetworkEntityUUID;
 		MappingNode parent = this.warehouseGraphService.getMappingNode(networkEntityUUID);
 		if(genes == null || genes.size() < 1) {
-			contextNetworkEntityUUID = null;
+			return ResponseEntity.badRequest().build();
 		} else {
 			/**
 			 * get all needed parameters for the pre function
