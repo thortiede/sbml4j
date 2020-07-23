@@ -6,7 +6,7 @@ public class PathwayCollectionCreationItem {
 
 	private String name;
 	
-	private String pathwayNodeIdString;
+	private String description;
 	
 	private List<String> sourcePathwayEntityUUIDs;
 	
@@ -36,12 +36,12 @@ public class PathwayCollectionCreationItem {
 		this.databaseEntityUUID = databaseEntityUUID;
 	}
 
-	public String getPathwayNodeIdString() {
-		return pathwayNodeIdString;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setPathwayNodeIdString(String pathwayNodeIdString) {
-		this.pathwayNodeIdString = pathwayNodeIdString;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	
 }
