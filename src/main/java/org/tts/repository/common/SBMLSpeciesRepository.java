@@ -12,6 +12,8 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 
 	public SBMLSpecies findBysBaseId(String sBaseId);
 	
+	public SBMLSpecies findByEntityUUID(String entityUUID);
+	
 	@Query(value = "MATCH (t:SBMLSpecies) RETURN DISTINCT t.sBaseSboTerm;")
 	public Iterable<String> getNodeTypes();
 
@@ -33,6 +35,7 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 			+ "WHERE g.entityUUID = $groupEntityUUID "
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> getSBMLSpeciesOfGroup(String groupEntityUUID);
+
 	
 	/*@Query("MATCH "
 			+ "(s:SBMLSpecies)"
