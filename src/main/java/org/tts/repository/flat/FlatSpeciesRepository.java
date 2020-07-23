@@ -50,7 +50,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "AND fs.symbol = $symbol "
 			+ "AND w.warehouseGraphEdgeType=\"CONTAINS\" "
 			+ "RETURN fs.entityUUID")
-	String findStartNodeEntityUUID(String networkUUID, String symbol);
+	String findEntityUUIDForSymbolInNetwork(String networkUUID, String symbol);
 
 	@Query(value="MATCH "
 			+ "(m:MappingNode)"
