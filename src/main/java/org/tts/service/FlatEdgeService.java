@@ -1,6 +1,7 @@
 package org.tts.service;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.relationship.CatalystFlatEdge;
@@ -22,10 +23,19 @@ import org.tts.model.flat.relationship.TargetsFlatEdge;
 import org.tts.model.flat.relationship.UbiquitinationFlatEdge;
 import org.tts.model.flat.relationship.UncertainProcessFlatEdge;
 import org.tts.model.flat.relationship.UnknownFromSourceFlatEdge;
+import org.tts.repository.flat.FlatEdgeRepository;
 
 @Service
 public class FlatEdgeService {
 
+	@Autowired
+	FlatEdgeRepository flatEdgeRepository;
+	
+	
+	public Iterable<FlatEdge> persistAll(Iterable<FlatEdge> edges, int depth) {
+		return this.flatEdgeRepository.save(edges, depth);
+	}
+	
 	public FlatEdge createFlatEdge(String sboTermString) {
 		FlatEdge newEdge;
 		switch (sboTermString) {
