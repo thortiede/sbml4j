@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.model.api.Output.PathwayInventoryItem;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
@@ -36,7 +37,6 @@ import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.FileCheckService;
 import org.tts.service.FileService;
-import org.tts.service.FileStorageService;
 import org.tts.service.NodeEdgeListService;
 import org.tts.service.OrganismService;
 import org.tts.service.ProvenanceGraphService;
@@ -114,7 +114,7 @@ public class LoadDataController {
 	 * @return all Entities as they were persisted (or connected if already present) as a result of persisting the model
 	 */
 	@RequestMapping(value = "/sbml", method=RequestMethod.POST)
-	public ResponseEntity<List<ProvenanceEntity>> uploadSBML(@RequestParam("file") MultipartFile file,
+	public ResponseEntity<PathwayInventoryItem> uploadSBML(@RequestParam("file") MultipartFile file,
 															@RequestParam("organism") String organism,
 															@RequestParam("matchingAttribute") String matchingAttribute,
 															@RequestParam("source") String source,
@@ -133,16 +133,16 @@ public class LoadDataController {
 		if(!fileCheckService.isFileReadable(file)) {
 			defaultReturnEntity.setEntityUUID("Filename or content-type not accessible");
 			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "Filename or content-type not accessible").build();
+			//return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 		}
 		
 		logger.info("Serving POST /sbml for File " + file.getOriginalFilename());
 		
 		// is Content Type xml?
 		if(!fileCheckService.isContentXML(file)) {
-			defaultReturnEntity.setEntityUUID("File ContentType is not application/xml");
-			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "File ContentType is not application/xml").build();
+			
 		}
 		
 		
@@ -178,18 +178,14 @@ public class LoadDataController {
 				this.provenanceGraphService.connect(persistGraphActivityNode, org, ProvenanceGraphEdgeType.used);
 			} else {
 				if(organism.length() != 3) {
-					defaultReturnEntity.setEntityUUID("Organism needs to be threeLetter Organsim Code (i.e. hsa). You priovided: " + organism);
-					returnList.add(defaultReturnEntity);
-					return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+					return ResponseEntity.badRequest().header("reason", "Organism needs to be threeLetter Organsim Code (i.e. hsa). You priovided: " + organism).build();
 				} else {
 					org = this.organismService.createOrganism(organism);
 					this.provenanceGraphService.connect(org, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				}
 			}
 		} else { // organism is null
-			defaultReturnEntity.setEntityUUID("Need to provide organsim in three Letter Code");
-			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "Need to provide organsim in three Letter Code").build();
 			// one could potentially read the organism from the file, but for now lets have the uploader provide it!
 		}
 		// now we can link all created Nodes based on GraphBaseEntity to this organism
@@ -236,10 +232,7 @@ public class LoadDataController {
 				sbmlFileNode = this.warehouseGraphService.createFileNode(FileNodeType.SBML, org, file.getOriginalFilename(), file.getBytes());
 				this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				defaultReturnEntity.setEntityUUID("Cannot extract content of file " + file.getOriginalFilename());
-				returnList.add(defaultReturnEntity);
-				return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+				return ResponseEntity.badRequest().header("reason", "Cannot extract content of file " + file.getOriginalFilename()).build();
 			}
 			
 		} else {
@@ -260,20 +253,14 @@ public class LoadDataController {
 		} catch (XMLStreamException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			defaultReturnEntity.setEntityUUID("XMLStreamException while extracting SBMLModel from file");
-			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "XMLStreamException while extracting SBMLModel from file").build();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			defaultReturnEntity.setEntityUUID("IOException while extracting SBMLModel from file");
-			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "IOException while extracting SBMLModel from file").build();
 		}
 		if(sbmlModel == null) {
-			defaultReturnEntity.setEntityUUID("Could not extract an sbmlModel");
-			returnList.add(defaultReturnEntity);
-			return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "Could not extract an sbmlModel").build();
 		}
 		// create a Pathway Node for the model
 		// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
@@ -298,7 +285,9 @@ public class LoadDataController {
 		//this.warehouseGraphService.connect(sbmlFileNode, pathwayNode, WarehouseGraphEdgeType.CONTAINS);
 		this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 		
-		return new ResponseEntity<List<ProvenanceEntity>>(resultSet, HttpStatus.OK);
+		
+		
+		return new ResponseEntity<PathwayInventoryItem>(this.warehouseGraphService.getPathwayInventoryItem(username, pathwayNode), HttpStatus.CREATED);
 	}
 	
 }
