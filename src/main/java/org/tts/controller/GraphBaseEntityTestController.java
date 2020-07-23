@@ -74,7 +74,7 @@ public class GraphBaseEntityTestController {
 	public GraphBaseEntity createNewBaseEntity() {
 		GraphBaseEntity newEntity = new GraphBaseEntity();
 		newEntity.setEntityUUID(UUID.randomUUID().toString());
-		return graphBaseEntityService.persistEntity(newEntity);
+		return graphBaseEntityService.persistEntity(newEntity, 0);
 	}
 	
 	/**
@@ -89,7 +89,7 @@ public class GraphBaseEntityTestController {
 		newEntity.setEntityUUID(UUID.randomUUID().toString());
 		newEntity.setsBaseId(sBaseId);
 		newEntity.setsBaseName(sBaseName);
-		return graphBaseEntityService.persistEntity(newEntity);
+		return graphBaseEntityService.persistEntity(newEntity, 0);
 	}
 	
 	@RequestMapping(value = "/testSBase/{uuid}", method=RequestMethod.GET)
