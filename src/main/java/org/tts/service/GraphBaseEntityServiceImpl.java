@@ -109,8 +109,8 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 	}*/
 
 	@Override
-	public GraphBaseEntity persistEntity(GraphBaseEntity newEntity) {
-		return this.graphBaseEntityRepository.save(newEntity);
+	public GraphBaseEntity persistEntity(GraphBaseEntity newEntity, int depth) {
+		return this.graphBaseEntityRepository.save(newEntity, depth);
 	}
 
 	@Override

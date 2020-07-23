@@ -2,11 +2,10 @@ package org.tts.service;
 
 import org.springframework.core.io.Resource;
 import org.tts.model.common.GraphBaseEntity;
-import org.tts.model.common.GraphEnum.AnnotationName;
+
 
 public interface GraphBaseEntityService {
 
-	GraphBaseEntity persistEntity(GraphBaseEntity newEntity);
 
 	GraphBaseEntity findByEntityUUID(String entityUuid);
 
@@ -19,5 +18,7 @@ public interface GraphBaseEntityService {
 	Resource testMyDrug(String networkEntityUUID, String myDrugURL);
 
 	boolean deleteEntity(GraphBaseEntity entity);
+
+	GraphBaseEntity persistEntity(GraphBaseEntity newEntity, int depth);
 
 }

@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.service.GraphBaseEntityService;
 
 
-@Controller
+@RestController
 public class DocumentationController {
 
 	@Autowired
@@ -42,7 +42,7 @@ public class DocumentationController {
 		try {
 			GraphBaseEntity newEntity = new GraphBaseEntity();
 			newEntity.setEntityUUID(UUID.randomUUID().toString());
-			GraphBaseEntity testEntity =  this.graphBaseEntityService.persistEntity(newEntity);
+			GraphBaseEntity testEntity =  this.graphBaseEntityService.persistEntity(newEntity, 0);
 			if (testEntity != null) {
 				GraphBaseEntity controlTestEntity = this.graphBaseEntityService.findByEntityUUID(testEntity.getEntityUUID());
 				if (controlTestEntity != null) {
