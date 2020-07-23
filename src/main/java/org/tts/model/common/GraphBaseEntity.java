@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Version;
 
@@ -23,6 +24,7 @@ public class GraphBaseEntity {
 	 * The unique identifier of every entity in this application
 	 * Entities shall reference other entities only by this UUID
 	 */
+	@Index(unique=true)
 	private String entityUUID;
 	
 	/**
