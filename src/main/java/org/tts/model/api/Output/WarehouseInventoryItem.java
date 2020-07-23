@@ -4,6 +4,7 @@ import org.springframework.hateoas.RepresentationModel;
 import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class WarehouseInventoryItem extends RepresentationModel<WarehouseInventoryItem> {
 	private String entityUUID;
@@ -26,6 +27,7 @@ public class WarehouseInventoryItem extends RepresentationModel<WarehouseInvento
 		this.sourceVersion = item.getSourceVersion();
 		this.warehouseGraphNodeType = item.getWarehouseGraphNodeType();
 	}
+	@JsonProperty("UUID")
 	public String getEntityUUID() {
 		return entityUUID;
 	}
