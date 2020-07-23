@@ -20,4 +20,8 @@ public class FlatSpeciesService {
 	public FlatSpecies persistFlatSpecies(FlatSpecies species) {
 		return this.flatSpeciesRepository.save(species, 1);
 	}
+	
+	public FlatSpecies findByEntityUUID(String entityUUID) {
+		return this.flatSpeciesRepository.findByEntityUUID(entityUUID);
+	}
 }
