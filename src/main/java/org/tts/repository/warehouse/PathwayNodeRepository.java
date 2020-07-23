@@ -23,6 +23,19 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND pa.graphAgentName = $username "
 			+ "RETURN p")
 	Iterable<PathwayNode> findAllPathwaysAttributedToUser(String username);
+	
+	@Query(value = "MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[pr:PROV]-"
+			+ "(pa:PROV_AGENT) "
+			+ "WHERE pr.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "AND pa.graphAgentName = $username "
+			+ "AND NOT EXISTS {"
+			  + "(p)-[np:PROV]->(pc:PathwayCollectionNode) "
+			   + "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+		    + "} "
+			+ "RETURN p")
+	Iterable<PathwayNode> findNonCollectionPathwaysAttributedToUser(String username);
 
 	
 	PathwayNode findByEntityUUID(String entityUUID);
@@ -64,7 +77,7 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "AND NOT EXISTS {"
 				+ "(p)-[np:PROV]->(pc:PathwayCollectionNode) "
 				+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
-			+ "}"
+			+ "} "
 			+ "RETURN p")
 	List<PathwayNode> findAllBySharedDerivedFromWarehouseEdge(String entity1UUID, String entity2UUID);
 	
