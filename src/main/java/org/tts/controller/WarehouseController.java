@@ -77,17 +77,18 @@ public class WarehouseController {
 	Map<String, Map<String, Resource>> networkResources = new HashMap<>();
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-	@RequestMapping(value = "/pathwayInventory", method = RequestMethod.GET)
-	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(@RequestHeader("user") String username) {
+	@RequestMapping(value = "/pathways", method = RequestMethod.GET)
+	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(@RequestHeader("user") String username,
+																		@RequestParam(value = "hideCollections", defaultValue = "false") boolean hideCollections) {
 		logger.debug("Serving PathwayInventory for user " + username);
 		return new ResponseEntity<List<PathwayInventoryItem>>(
-				this.warehouseGraphService.getListofPathwayInventory(username), HttpStatus.OK);
-
+				this.warehouseGraphService.getListofPathwayInventory(username, hideCollections), HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/pathwayUUIDs", method = RequestMethod.GET)
-	public ResponseEntity<List<String>> getPathwayUUIDs() {
-		return new ResponseEntity<List<String>>(this.warehouseGraphService.getListofPathwayUUIDs(), HttpStatus.OK);
+	public ResponseEntity<List<String>> listAllPathwayUUIDs(@RequestHeader("user") String username,
+			@RequestParam(value = "hideCollections", defaultValue = "false") boolean hideCollections) {
+		return new ResponseEntity<List<String>>(this.warehouseGraphService.getListofPathwayUUIDs(username, hideCollections), HttpStatus.OK);
 	}
 
 	@RequestMapping(value = "/databaseUUID", method = RequestMethod.GET)
@@ -119,7 +120,7 @@ public class WarehouseController {
 	}
 
 	@RequestMapping(value = "/pathwayCollection", method = RequestMethod.POST)
-	public ResponseEntity<Map<String, Integer>> createPathwayCollection(@RequestHeader("user") String username,
+	public ResponseEntity<String> createPathwayCollection(@RequestHeader("user") String username,
 			@RequestBody PathwayCollectionCreationItem pathwayCollectionCreationItem) {
 		// Need Agent
 		Map<String, Object> agentNodeProperties = new HashMap<>();
@@ -158,15 +159,15 @@ public class WarehouseController {
 				ProvenanceGraphEdgeType.wasGeneratedBy);
 		this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 
-		Map<String, Integer> collectionPathwayCounterMap = this.warehouseGraphService.buildPathwayFromCollection(
+		pathwayNode = this.warehouseGraphService.buildPathwayFromCollection(
 				pathwayNode, pathwayCollectionNode, createKnowledgeGraphActivityNode, userAgentNode);
-		return new ResponseEntity<Map<String, Integer>>(collectionPathwayCounterMap, HttpStatus.OK);
+		return new ResponseEntity<String>(pathwayNode.getEntityUUID(), HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/mapping", method = RequestMethod.POST)
 	public ResponseEntity<WarehouseInventoryItem> createMappingFromWarehouseGraphNode(
 			@RequestHeader("user") String username, @RequestParam("pathwayEntityUUID") String pathwayEntityUUID,
-			@RequestParam("mappingType") String mappingType, @RequestParam("idSystem") String idSystem) {
+			@RequestParam("mappingType") String mappingType, @RequestParam(value = "idSystem", defaultValue = "KEGG") String idSystem) {
 
 		// Need Agent
 		Map<String, Object> agentNodeProperties = new HashMap<>();
@@ -190,7 +191,7 @@ public class WarehouseController {
 		// need the pathwayNode
 		PathwayNode pathway = this.warehouseGraphService.getPathwayNode(username, pathwayEntityUUID);
 		if (pathway == null) {
-			return new ResponseEntity<WarehouseInventoryItem>(HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "UUID did not denote a valid pathway, or pathway could not be accessed by user").build();
 		}
 		this.provenanceGraphService.connect(createMappingActivityNode, pathway, ProvenanceGraphEdgeType.used);
 		// create the mappingNode
@@ -203,14 +204,14 @@ public class WarehouseController {
 			// TODO Auto-generated catch block
 			logger.info(e.getMessage());
 			e.printStackTrace();
-			return new ResponseEntity<WarehouseInventoryItem>(HttpStatus.BAD_REQUEST);
+			return ResponseEntity.badRequest().header("reason", "Failed to create Mapping from pathway").build();
 		}
 
 		// build the inventoryItem
 		WarehouseInventoryItem mappingInventoryItem = this.warehouseGraphService.getWarehouseInventoryItem(mappingNode);
 
 		// return the inventoryItem
-		return new ResponseEntity<WarehouseInventoryItem>(mappingInventoryItem, HttpStatus.OK);
+		return new ResponseEntity<WarehouseInventoryItem>(mappingInventoryItem, HttpStatus.CREATED);
 	}
 
 	@RequestMapping(value = "/networkInventory", method = RequestMethod.GET)
@@ -321,11 +322,11 @@ public class WarehouseController {
 											, @RequestBody FilterOptions options) {
 		// Check that we are working on the right network
 		if (!parentUUID.equals(options.getMappingUuid())) {
-			return ResponseEntity.status(405)
+			return ResponseEntity.status(400)
 						.header("reason", "parentUUID in query and body must match").build();//new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
 		if (!(step.equals(MappingStep.FILTER) || step.equals(MappingStep.ANNOTATE) || step.equals(MappingStep.COPY) || step.equals(MappingStep.PATHWAYINFO))) {
-			return ResponseEntity.status(405)
+			return ResponseEntity.status(400)
 					.header("reason", "MappingStep not supported").build();
 		}
 		
