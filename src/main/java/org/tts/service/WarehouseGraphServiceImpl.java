@@ -311,55 +311,66 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public List<PathwayInventoryItem> getListofPathwayInventory(String username) {
+	public List<PathwayInventoryItem> getListofPathwayInventory(String username, boolean hideCollections) {
 		List<PathwayInventoryItem> pathwayInventoryItemList = new ArrayList<>();
-		for (PathwayNode pathwayNode : this.pathwayNodeRepository.findAllPathwaysAttributedToUser(username)) {
-			PathwayInventoryItem item = new PathwayInventoryItem();
-			item.setEntityUUID(pathwayNode.getEntityUUID());
-			item.setPathwayId(pathwayNode.getPathwayIdString());
-			item.setName(pathwayNode.getPathwayNameString());
-			item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
-					.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
-			// DatabaseNode sourceEntity = this.findSource(pathwayNode);
-			// item.setSource(sourceEntity.getSource());
-			// item.setSourceVersion(sourceEntity.getSourceVersion());
-			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
-			List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository
-					.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
-							pathwayNode.getEntityUUID());
-			// item.setNumberOfNodes(pathwayNodes.size());
-
-			for (ProvenanceEntity node : pathwayNodes) {
-				if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
-					item.addNodeType(
-							this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
-					item.increaseNodeCounter();
-				} else if (node.getClass() == SBMLSimpleTransition.class) {
-					item.addTransitionType(
-							this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
-					item.increaseTransitionCounter();
-				} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
-					item.increaseReactionCounter();
-				} else if (node.getClass() == SBMLCompartment.class) {
-					item.addCompartment(((SBMLCompartment) node).getsBaseName());
-					item.increaseComparmentCounter();
-				} else if (node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
-					// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can
-					// ignore those
-					logger.debug("Found QualSpecies or QualSpeciesGroup, ignoring");
-				} else {
-					logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
-				}
-			}
-			// now add a link
-			item.add(linkTo(
-					methodOn(WarehouseController.class).getPathwayContents(username, pathwayNode.getEntityUUID()))
-							.withSelfRel());
-
+		Iterable<PathwayNode> pathways;
+		if(hideCollections) {
+			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(username);
+		} else {
+			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(username);
+		}
+		for (PathwayNode pathwayNode : pathways) {
+			PathwayInventoryItem item = getPathwayInventoryItem(username, pathwayNode);
 			pathwayInventoryItemList.add(item);
 		}
 
 		return pathwayInventoryItemList;
+	}
+
+	@Override
+	public PathwayInventoryItem getPathwayInventoryItem(String username, PathwayNode pathwayNode) {
+		PathwayInventoryItem item = new PathwayInventoryItem();
+		item.setEntityUUID(pathwayNode.getEntityUUID());
+		item.setPathwayId(pathwayNode.getPathwayIdString());
+		item.setName(pathwayNode.getPathwayNameString());
+		item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
+				.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID())).getOrgCode());
+		// DatabaseNode sourceEntity = this.findSource(pathwayNode);
+		// item.setSource(sourceEntity.getSource());
+		// item.setSourceVersion(sourceEntity.getSourceVersion());
+		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
+		List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository
+				.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
+						pathwayNode.getEntityUUID());
+		// item.setNumberOfNodes(pathwayNodes.size());
+
+		for (ProvenanceEntity node : pathwayNodes) {
+			if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
+				item.addNodeType(
+						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				item.increaseNodeCounter();
+			} else if (node.getClass() == SBMLSimpleTransition.class) {
+				item.addTransitionType(
+						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				item.increaseTransitionCounter();
+			} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
+				item.increaseReactionCounter();
+			} else if (node.getClass() == SBMLCompartment.class) {
+				item.addCompartment(((SBMLCompartment) node).getsBaseName());
+				item.increaseComparmentCounter();
+			} else if (node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
+				// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can
+				// ignore those
+				logger.debug("Found QualSpecies or QualSpeciesGroup, ignoring");
+			} else {
+				logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
+			}
+		}
+		// now add a link
+		item.add(linkTo(
+				methodOn(WarehouseController.class).getPathwayContents(username, pathwayNode.getEntityUUID()))
+						.withSelfRel());
+		return item;
 	}
 
 	@Override
@@ -413,7 +424,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			ProvenanceGraphAgentNode agentNode) {
 		// create knowledgeGraph Node
 		PathwayCollectionNode pathwayCollectionNode = this.createPathwayCollectionNode(
-				pathwayCollectionCreationItem.getPathwayNodeIdString(), pathwayCollectionCreationItem.getName(),
+				pathwayCollectionCreationItem.getName(), pathwayCollectionCreationItem.getDescription(),
 				databaseNode.getOrganism());
 		// TODO how to mark it as a collection?
 
@@ -456,7 +467,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode,
+	public PathwayNode buildPathwayFromCollection(PathwayNode pathwayNode,
 			PathwayCollectionNode pathwayCollectionNode,
 			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode) {
 
@@ -487,18 +498,25 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				}
 			}
 		}
-		Map<String, Integer> counterMap = new HashMap<>();
-		counterMap.put("entity", entityCounter);
-		counterMap.put("connection", connectionCounter);
-		return counterMap;
+		logger.info("Created pathwayCollection with " + String.valueOf(entityCounter) + " entities and " + String.valueOf(connectionCounter) + " connections");
+		//Map<String, Integer> counterMap = new HashMap<>();
+		//counterMap.put("entity", entityCounter);
+		//counterMap.put("connection", connectionCounter);
+		return pathwayNode;
 
 	}
 
 	@Override
-	public List<String> getListofPathwayUUIDs() {
+	public List<String> getListofPathwayUUIDs(String username, boolean hideCollections) {
 		List<String> uuids = new ArrayList<>();
-		for (PathwayNode node : this.pathwayNodeRepository.findAll()) {
-			uuids.add(node.getEntityUUID());
+		Iterable<PathwayNode> pathways;
+		if(hideCollections) {
+			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(username);
+		} else {
+			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(username);
+		}
+		for (PathwayNode pathwayNode : pathways) {
+			uuids.add(pathwayNode.getEntityUUID());
 		}
 		return uuids;
 	}
@@ -1062,8 +1080,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public String findStartNode(String baseNetworkUUID, String geneSymbol) {
-		return this.flatSpeciesRepository.findStartNodeEntityUUID(baseNetworkUUID, geneSymbol);
+	public String getEntityUUIDForSymbolInNetwork(String baseNetworkUUID, String geneSymbol) {
+		return this.flatSpeciesRepository.findEntityUUIDForSymbolInNetwork(baseNetworkUUID, geneSymbol);
 	}
 
 	@Override
@@ -2023,7 +2041,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	 * @return
 	 */
 	private String getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
-		String flatSpeciesEntityUUID = this.flatSpeciesRepository.findStartNodeEntityUUID(networkEntityUUID, geneSymbol);
+		String flatSpeciesEntityUUID = this.getEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
 		FlatSpecies geneSymbolSpecies;
 		// 0. Check whether we have that geneSymbol directly in the network
 		if (flatSpeciesEntityUUID == null) {

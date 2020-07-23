@@ -61,8 +61,10 @@ public interface WarehouseGraphService {
 	public PathwayNode createPathwayNode(String idString, String nameString, Organism org);
 
 	public MappingNode createMappingNode(WarehouseGraphNode pathway, NetworkMappingType type, String mappingName);
-
-	public List<PathwayInventoryItem> getListofPathwayInventory(String username);
+	
+	public PathwayInventoryItem getPathwayInventoryItem(String username, PathwayNode pathwayNode);
+	
+	public List<PathwayInventoryItem> getListofPathwayInventory(String username, boolean hideCollections);
 
 	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID);
 
@@ -78,10 +80,10 @@ public interface WarehouseGraphService {
 	public PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
 			Organism organism);
 
-	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
+	public PathwayNode buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
 			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode);
 
-	public List<String> getListofPathwayUUIDs();
+	public List<String> getListofPathwayUUIDs(String username, boolean hideCollections);
 
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
@@ -113,7 +115,7 @@ public interface WarehouseGraphService {
 
 	public boolean mappingForPathwayExists(String entityUUID);
 
-	public String findStartNode(String baseNetworkUUID, String geneSymbol);
+	public String getEntityUUIDForSymbolInNetwork(String baseNetworkUUID, String geneSymbol);
 
 	//List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
 
@@ -179,6 +181,8 @@ public interface WarehouseGraphService {
 	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
 
 	boolean deleteNetwork(String mappingNodeEntityUUID);
+
+	
 
 	
 
