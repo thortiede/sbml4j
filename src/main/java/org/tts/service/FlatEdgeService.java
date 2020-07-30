@@ -1,5 +1,30 @@
+/*
+ * ----------------------------------------------------------------------------
+	Copyright 2020 University of Tuebingen 	
+
+	This file is part of SBML4j.
+
+    SBML4j is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    SBML4j is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with SBML4j.  If not, see <https://www.gnu.org/licenses/>.
+ * ---------------------------------------------------------------------------- 
+ */
+
 package org.tts.service;
 
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,17 +50,35 @@ import org.tts.model.flat.relationship.UncertainProcessFlatEdge;
 import org.tts.model.flat.relationship.UnknownFromSourceFlatEdge;
 import org.tts.repository.flat.FlatEdgeRepository;
 
+/**
+ * Handles the creation and persistence of FlatEdge entities
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
 @Service
 public class FlatEdgeService {
 
 	@Autowired
 	FlatEdgeRepository flatEdgeRepository;
 	
-	
+	/**
+	 * Writes the <a href="#{@link}">{@link FlatEdge}</a> into the database
+	 * 
+	 * @param edges An Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities that are to be persisted
+	 * @param depth The save depth to be used (0 for only persisting the edge, 1 for also persisting start- and end-node)
+	 * @return the persisted <a href="#{@link}">{@link FlatEdge}</a> entities
+	 */
 	public Iterable<FlatEdge> persistAll(Iterable<FlatEdge> edges, int depth) {
 		return this.flatEdgeRepository.save(edges, depth);
 	}
 	
+	/**
+	 * Creates a new <a href="#{@link}">{@link FlatEdge}</a> corresponding to the given sboTerm
+	 * 
+	 * @param sboTermString The sbo-Term string representation of the Edge to be created
+	 * @return a subclass of FlatEdge corresponding to the given sboTerm.
+	 */
 	public FlatEdge createFlatEdge(String sboTermString) {
 		FlatEdge newEdge;
 		switch (sboTermString) {
@@ -102,4 +145,17 @@ public class FlatEdgeService {
 			}
 		return newEdge;
 	}
+	
+	/**
+	 * Returns the geneSet for nodeUUIDs in network with UUID networkEntityUUID.
+	 * Searches for direct connections between pairs of <a href="#{@link}">{@link FlatSpecies}</a> in the List nodeUUIDs
+	 * 
+	 * @param networkEntityUUID The entityUUID of the network to search in
+	 * @param nodeUUIDs List of entityUUIDs of <a href="#{@link}">{@link FlatSpecies}</a> to include
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> connecting the searched <a href="#{@link}">{@link FlatSpecies}</a>
+	 */
+	public Iterable<FlatEdge> getGeneSet(String networkEntityUUID, List<String> nodeUUIDs) {
+		return this.flatEdgeRepository.getGeneSet(networkEntityUUID.toString(), nodeUUIDs);
+	}
+	
 }
