@@ -1,19 +1,21 @@
 package org.tts.controller;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.tts.api.DocumentationApi;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.service.GraphBaseEntityService;
 
 
-@RestController
-public class DocumentationController {
+@Controller
+public class DocumentationApiController implements DocumentationApi {
 
 	@Autowired
 	private Environment environment;
@@ -21,23 +23,21 @@ public class DocumentationController {
 	@Autowired
 	private GraphBaseEntityService graphBaseEntityService;
 	
-	@GetMapping("/help")
-	public String getBaseDocumentation() {
-		return "index";
+	
+	public ResponseEntity<Object> getBaseDocumentation() {
+		return new ResponseEntity<>("index", HttpStatus.OK);
 	}
 	
-	@GetMapping("/version")
+	
 	public ResponseEntity<String> getVersion() {
 		return new ResponseEntity<String>("0.0.26-SNAPSHOT", HttpStatus.OK);
 	}
 	
-	@GetMapping("/profile")
-	public ResponseEntity<String[]> getProfile() {
-		String[] activeProfiles = environment.getActiveProfiles();
-		return new ResponseEntity<String[]>(activeProfiles, HttpStatus.OK);
+	public ResponseEntity<List<String>> getProfile() {
+		List<String> activeProfiles =  Arrays.asList(environment.getActiveProfiles());
+		return new ResponseEntity<>(activeProfiles, HttpStatus.OK);
 	}
 	
-	@GetMapping("/dbStatus")
 	public ResponseEntity<String> getDbStatus() {
 		try {
 			GraphBaseEntity newEntity = new GraphBaseEntity();
