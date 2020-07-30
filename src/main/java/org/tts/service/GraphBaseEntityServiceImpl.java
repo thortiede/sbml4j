@@ -44,11 +44,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
+@Deprecated
+public class GraphBaseEntityServiceImpl {
 
-	@Autowired
-	GraphBaseEntityRepository graphBaseEntityRepository;
-
+	
 	@Autowired
 	FlatNetworkMappingRepository flatNetworkMappingRepository;
 
@@ -73,8 +72,7 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 	@Autowired
 	FlatEdgeService flatEdgeService;
 	
-	@Autowired
-	SBML4jConfig sbml4jConfig;
+	
 	
 	@Autowired
 	SBMLSpeciesRepository sbmlSpeciesRepository;
@@ -108,34 +106,6 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		this.session = session;
 	}*/
 
-	@Override
-	public GraphBaseEntity persistEntity(GraphBaseEntity newEntity, int depth) {
-		return this.graphBaseEntityRepository.save(newEntity, depth);
-	}
-
-	@Override
-	public GraphBaseEntity findByEntityUUID(String entityUuid) {
-		return graphBaseEntityRepository.findByEntityUUID(entityUuid);
-	}
-
-	@Override
-	public Iterable<GraphBaseEntity> findAll() {
-		// TODO Auto-generated method stub
-		return graphBaseEntityRepository.findAll();
-	}
-
-	@Override
-	public boolean deleteEntity(GraphBaseEntity entity) {
-		if (entity == null) {
-			return false;
-		}
-		this.graphBaseEntityRepository.delete(entity);
-		if (this.graphBaseEntityRepository.findByEntityUUID(entity.getEntityUUID()) == null) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 	
 	public Map<String, String> cloneAndPersistNetworkAndReturnOldToNewMap(String entityUUID) {
 		Iterable<FlatMappingReturnType> ret = this.flatNetworkMappingRepository.getNodesAndRelationshipsForMapping(entityUUID);		
@@ -203,7 +173,7 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		return oldToNewMap;
 	}
 	
-	@Override
+	
 	public String testFlatMappingExtract(String entityUUID) {
 		
 		Map<String, String> oldToNewMap = this.cloneAndPersistNetworkAndReturnOldToNewMap(entityUUID);
@@ -279,7 +249,7 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		} 
 	}
 	
-	@Override
+	
 	public Resource testMyDrug(String networkEntityUUID, String myDrugURL) {
 		MappingNode mappingNode = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID);
 		
@@ -392,31 +362,6 @@ public class GraphBaseEntityServiceImpl implements GraphBaseEntityService {
 		return new ByteArrayResource(graphMLStream.toByteArray(), fileName);
 	}
 
-	@Override
-	public GraphBaseEntity addAnnotation(GraphBaseEntity entity, String annotationName, String annotationType, Object annotationValue,
-			boolean appendExisting) {
-		if(annotationType.equals("string")) {
-			String newAnnotationValue = (String) annotationValue;
-			if(appendExisting) {
-				String separator = ", "; // this is the default separator
-				if (entity.getAnnotation().containsKey(annotationName)) {
-					if (this.sbml4jConfig.getAnnotationConfigProperties().isSetSeparator(AnnotationName.get(annotationName))) {
-						separator = sbml4jConfig.getAnnotationConfigProperties().getSeparator(AnnotationName.get(annotationName));
-					}
-					String existingAnnotationString = (String) entity.getAnnotation().get(annotationName);
-					newAnnotationValue = existingAnnotationString + separator + (String) annotationValue;
-				}
-			}
-			entity.addAnnotation(annotationName, newAnnotationValue);
-			entity.addAnnotationType(annotationName, annotationType);
-		} else {
-			// differnt type than string, nothing we can append to at this point
-			if(entity.getAnnotation().get(annotationName) == null || !this.sbml4jConfig.getAnnotationConfigProperties().isKeepFirst()) {
-				entity.addAnnotation(annotationName, annotationValue);
-				entity.addAnnotationType(annotationName, annotationType);
-			}
-		}
-		return entity;
-	}
+
 	
 }
