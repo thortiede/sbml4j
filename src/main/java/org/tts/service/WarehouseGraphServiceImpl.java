@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -33,8 +34,8 @@ import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.FlatMappingReturnType;
-import org.tts.model.api.Output.NetworkInventoryItem;
-import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.api.NetworkInventoryItem;
+import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
@@ -145,9 +146,94 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Autowired
 	Session session;
 
+	
+/************************************************************* NetworkInventoryItem **********************************************/	
+	
+	/**
+	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * 
+	 * @param entityUUID The entityUUID of the MappingNode to get the <a href="#{@link}">{@link NetworkInventoryItem}</a> for
+	 * @return <a href="#{@link}">{@link NetworkInventoryItem}</a>
+	 */
 	@Override
-	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes) {
+	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID) {
+		MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(entityUUID);
+		return getNetworkIventoryItem(mapping);
+	}
+
+	/**
+	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> mapping
+	 * 
+	 * @param mapping The MappingNode to get the <a href="#{@link}">{@link NetworkInventoryItem}</a> for
+	 * @return <a href="#{@link}">{@link NetworkInventoryItem}</a>
+	 */
+	private NetworkInventoryItem getNetworkIventoryItem(MappingNode mapping) {
+		NetworkInventoryItem item = new NetworkInventoryItem();
+		//item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
+		item.setUUID(UUID.fromString(mapping.getEntityUUID()));
+		//item.setActive(mapping.isActive());
+		// item.setSource(findSource(mapping).getSource());
+		// item.setSourceVersion(findSource(mapping).getSourceVersion());
+		item.setName(mapping.getMappingName());
+		item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
+				.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
+		item.setNetworkMappingType(mapping.getMappingType());
+		if (mapping.getMappingNodeTypes() != null) {
+			for (String sboTerm : mapping.getMappingNodeTypes()) {
+				item.addNodeTypesItem(this.utilityService.translateSBOString(sboTerm));
+			}
+		}
+		// item.setNodeTypes(mapping.getMappingNodeTypes());
+		// item.setRelationTypes(mapping.getMappingRelationTypes());
+		if (mapping.getMappingRelationTypes() != null) {
+			for (String type : mapping.getMappingRelationTypes()) {
+				item.addRelationTypesItem(type);
+			}
+		}
+
+		try {
+			Map<String, Object> warehouseMap = mapping.getWarehouse();
+			item.setNumberOfNodes(Integer.valueOf(((String) warehouseMap.get("numberofnodes"))));
+			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
+		} catch (Exception e) {
+			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
+					+ ") does not have the warehouse-Properties set");
+		}
+		/*
+		 * for (OutputType type : OutputType.values()) { item.add(linkTo(
+		 * methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(),
+		 * "standard", type.name())) .withRel(type.name())); }
+		 */
+		// add link to network retrieval
+		String user = ((ProvenanceGraphAgentNode) this.provenanceGraphService
+				.findByProvenanceGraphEdgeTypeAndStartNode(	ProvenanceGraphEdgeType.wasAttributedTo, 
+															mapping.getEntityUUID()))
+				.getGraphAgentName();
+		item.add(linkTo(methodOn(WarehouseController.class).getNetwork(user, item.getUUID().toString(), false))
+				.withRel("Retrieve Network contents as GraphML"));
+		
+		// add link to the item FilterOptions
+		item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(item.getUUID().toString()))
+				.withRel("FilterOptions"));
+
+		// add link to deleting the item (setting isactive = false
+		item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.getUUID().toString()))
+				.withRel("Delete Mapping").withType("DELETE"));
+		return item;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@Override
+	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org) {
 		List<DatabaseNode> databaseNodeList = this.databaseNodeRepository.findBySourceAndSourceVersion(source,
 				sourceVersion);
 		if (databaseNodeList.isEmpty()) {
@@ -165,8 +251,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes) {
+	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org) {
 		DatabaseNode database = new DatabaseNode();
 		sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(database);
 		database.setOrganism(org);
@@ -330,7 +415,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public PathwayInventoryItem getPathwayInventoryItem(String username, PathwayNode pathwayNode) {
 		PathwayInventoryItem item = new PathwayInventoryItem();
-		item.setEntityUUID(pathwayNode.getEntityUUID());
+		item.setUUID(UUID.fromString(pathwayNode.getEntityUUID()));
 		item.setPathwayId(pathwayNode.getPathwayIdString());
 		item.setName(pathwayNode.getPathwayNameString());
 		item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
@@ -338,26 +423,29 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		// DatabaseNode sourceEntity = this.findSource(pathwayNode);
 		// item.setSource(sourceEntity.getSource());
 		// item.setSourceVersion(sourceEntity.getSourceVersion());
-		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
+		//item.setWarehouseGraphNodeType(WarehouseGraphNodeType.PATHWAY);
 		List<ProvenanceEntity> pathwayNodes = this.warehouseGraphNodeRepository
 				.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
 						pathwayNode.getEntityUUID());
 		// item.setNumberOfNodes(pathwayNodes.size());
 
+		int nodeCounter = 0;
+		int transitionCounter = 0;
+		int reactionCounter = 0;
+		List<String> compartmentList = new ArrayList<>();
 		for (ProvenanceEntity node : pathwayNodes) {
 			if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
-				item.addNodeType(
+				item.addNodeTypesItem(
 						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
-				item.increaseNodeCounter();
+				nodeCounter++;
 			} else if (node.getClass() == SBMLSimpleTransition.class) {
-				item.addTransitionType(
+				item.addTransitionTypesItem(
 						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
-				item.increaseTransitionCounter();
+				transitionCounter++;
 			} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
-				item.increaseReactionCounter();
+				reactionCounter++;
 			} else if (node.getClass() == SBMLCompartment.class) {
-				item.addCompartment(((SBMLCompartment) node).getsBaseName());
-				item.increaseComparmentCounter();
+				compartmentList.add(((SBMLCompartment) node).getsBaseName());
 			} else if (node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
 				// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can
 				// ignore those
@@ -366,10 +454,15 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
 			}
 		}
+		item.setCompartments(compartmentList);
+		item.setNumberOfNodes(nodeCounter);
+		item.setNumberOfTransitions(transitionCounter);
+		item.setNumberOfReactions(reactionCounter);
+	
 		// now add a link
-		item.add(linkTo(
-				methodOn(WarehouseController.class).getPathwayContents(username, pathwayNode.getEntityUUID()))
-						.withSelfRel());
+		//item.addLinksItem(linkTo(
+		//		methodOn(WarehouseController.class).getPathwayContents(username, pathwayNode.getEntityUUID()))
+		//				.withSelfRel());
 		return item;
 	}
 
@@ -521,68 +614,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return uuids;
 	}
 
-	@Override
-	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID) {
-		MappingNode mapping = this.mappingNodeRepository.findByEntityUUID(entityUUID);
-		return getNetworkIventoryItem(mapping);
-	}
-
-	private NetworkInventoryItem getNetworkIventoryItem(MappingNode mapping) {
-		NetworkInventoryItem item = new NetworkInventoryItem();
-		item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
-		item.setEntityUUID(mapping.getEntityUUID());
-		item.setActive(mapping.isActive());
-		// item.setSource(findSource(mapping).getSource());
-		// item.setSourceVersion(findSource(mapping).getSourceVersion());
-		item.setName(mapping.getMappingName());
-		item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
-				.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
-		item.setNetworkMappingType(mapping.getMappingType());
-		if (mapping.getMappingNodeTypes() != null) {
-			for (String sboTerm : mapping.getMappingNodeTypes()) {
-				item.addNodeType(this.utilityService.translateSBOString(sboTerm));
-			}
-		}
-		// item.setNodeTypes(mapping.getMappingNodeTypes());
-		// item.setRelationTypes(mapping.getMappingRelationTypes());
-		if (mapping.getMappingRelationTypes() != null) {
-			for (String type : mapping.getMappingRelationTypes()) {
-				item.addRelationType(type);
-			}
-		}
-
-		try {
-			Map<String, Object> warehouseMap = mapping.getWarehouse();
-
-			item.setNumberOfNodes(Integer.valueOf(((String) warehouseMap.get("numberofnodes"))));
-			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
-		} catch (Exception e) {
-			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
-					+ ") does not have the warehouse-Properties set");
-		}
-		/*
-		 * for (OutputType type : OutputType.values()) { item.add(linkTo(
-		 * methodOn(WarehouseController.class).getNetwork(item.getEntityUUID(),
-		 * "standard", type.name())) .withRel(type.name())); }
-		 */
-		// add link to network retrieval
-		String user = ((ProvenanceGraphAgentNode) this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mapping.getEntityUUID())).getGraphAgentName();
-		item.add(linkTo(methodOn(WarehouseController.class).getNetwork(user, item.getEntityUUID(), false))
-				.withRel("Retrieve Network contents as GraphML"));
-		
-		// add link to the item detail:
-		item.add(linkTo(methodOn(WarehouseController.class).getNetworkInventoryDetail(item.getEntityUUID()))
-				.withRel("InventoryItemDetail"));
-
-		// add link to the item FilterOptions
-		item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(item.getEntityUUID()))
-				.withRel("FilterOptions"));
-
-		// add link to deleting the item (setting isactive = false
-		item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.getEntityUUID()))
-				.withRel("Delete Mapping").withType("DELETE"));
-		return item;
-	}
+	
 
 	@Override
 	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly) {
@@ -2214,5 +2246,68 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 		return savedMappingNode.getEntityUUID();
 		
 	}
+	
+	/**
+	 * Create a new network that is a context for nodes in genes.
+	 * 
+	 * @param user The user that requests the context creation
+	 * @param networkEntityUUID The entityUUID of the Network to derive from
+	 * @param genes The List of gene-symbols that the context should be created for
+	 * @param minSize The minimum number of steps to search for the context around a gene
+	 * @param maxSize The maximum number of steps to search for the context around a gene
+	 * @param terminateAtDrug Whether to terminate the context extension at a drug-Node (requires MyDrug Nodes in the network)
+	 * @param direction The search direction for the context (upstream, downstream, both)
+	 * @param contextName The desired name for the network
+	 * @return String representation of the entityUUID of the created context network
+	 */
+	@Override
+	public ResponseEntity<String> postContext(String user, String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction, String contextName) {
+		String contextNetworkEntityUUID;
+		MappingNode parent = this.getMappingNode(networkEntityUUID);
+		if(genes == null || genes.size() < 1) {
+			return ResponseEntity.badRequest().build();
+		} else {
+			/**
+			 * get all needed parameters for the pre function
+			 */
+			String newMappingName = "";
+			String geneString = "";
+			if (contextName.equals("")) {
+				newMappingName = "Context_derived_from_" + networkEntityUUID + "_for_gene";
+				
+				if (genes.size() > 1 ) {
+					geneString += "s";
+				}
+				for (String gene : genes) {
+					geneString += "_";
+					geneString += gene;
+				}
+				newMappingName += geneString;
+			} else {
+				newMappingName = contextName;
+			}
+			String activityName = "Create_Context_from_" + networkEntityUUID + "_for_gene" + geneString;
+			
+			ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
+			NetworkMappingType mappingType = parent.getMappingType();
+			
+			MappingNode contextMappingNode = this.createMappingPre(user, 
+																			parent, 
+																			newMappingName,
+																			activityName, 
+																			activityType, 
+																			mappingType);
+			// then create the context and attach the nodes to this new mapping node (as in createMappingFromMappingWithOptions)
+			contextNetworkEntityUUID = this.postNetworkContext(contextMappingNode, genes, minSize, maxSize, terminateAtDrug, direction);
+		}
+		if(contextNetworkEntityUUID != null) {
+			
+			return new ResponseEntity<String>(contextNetworkEntityUUID, HttpStatus.CREATED); 
+		} else { 
+			return new ResponseEntity<String>(HttpStatus.NO_CONTENT); 
+		}
+	}
+	
 	
 }

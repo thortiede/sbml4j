@@ -26,9 +26,9 @@ import org.tts.config.VcfConfig;
 import org.tts.model.api.Input.Drivergenes;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
-import org.tts.model.api.Output.NetworkInventoryItem;
+import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.Output.NetworkInventoryItemDetail;
-import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.MappingStep;
@@ -46,9 +46,9 @@ import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.HttpService;
 import org.tts.service.NetworkMappingService;
-import org.tts.service.OrganismService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
+import org.tts.service.warehouse.OrganismService;
 
 @RestController
 public class WarehouseController {
@@ -95,10 +95,9 @@ public class WarehouseController {
 	public ResponseEntity<String> getDatabaseUUID(@RequestParam("source") String source,
 			@RequestParam("version") String version, @RequestParam("organism") String orgCode,
 			@RequestParam("matchingAttribute") String matchingAttribute) {
-		Map<String, String> matchingAttributeMap = new HashMap<>();
-		matchingAttributeMap.put("Default", matchingAttribute);
+		
 		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(source, version,
-				this.organismService.getOrgansimByOrgCode(orgCode), matchingAttributeMap);
+				this.organismService.getOrgansimByOrgCode(orgCode));
 		if (database != null) {
 			return new ResponseEntity<String>(database.getEntityUUID(), HttpStatus.OK);
 		} else {
@@ -222,14 +221,7 @@ public class WarehouseController {
 		return new ResponseEntity<List<NetworkInventoryItem>>(networkInventory, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/networkInventory/{entityUUID}", method = RequestMethod.GET)
-	public ResponseEntity<NetworkInventoryItemDetail> getNetworkInventoryDetail(@PathVariable String entityUUID) {
-		NetworkInventoryItemDetail networkInventoryItemDetail = new NetworkInventoryItemDetail(
-				this.warehouseGraphService.getNetworkInventoryItem(entityUUID));
-		networkInventoryItemDetail.setNodes(new ArrayList<>(this.warehouseGraphService.getNetworkNodeSymbols(entityUUID)));
-		return new ResponseEntity<NetworkInventoryItemDetail>(networkInventoryItemDetail, HttpStatus.OK);
-	}
-
+	
 	/*
 	 * @RequestMapping(value = "/context", method = RequestMethod.GET) public
 	 * ResponseEntity<Resource> getContext(@RequestHeader("user") String username,
@@ -315,7 +307,7 @@ public class WarehouseController {
 	
 	
 	@RequestMapping(value = "/network", method = RequestMethod.POST)
-	public ResponseEntity<NetworkInventoryItemDetail> createMappingFromMappingWithOptions(
+	public ResponseEntity<NetworkInventoryItem> createMappingFromMappingWithOptions(
 											  @RequestHeader("user") String username
 											, @RequestParam(value = "parentUUID") String parentUUID
 											, @RequestParam(value = "step") MappingStep step
@@ -359,7 +351,7 @@ public class WarehouseController {
 		newMapping.addWarehouseAnnotation("creationendtime", endTime.toString());
 
 		this.warehouseGraphService.saveWarehouseGraphNodeEntity(newMapping, 0);
-		return this.getNetworkInventoryDetail(newMapping.getEntityUUID());
+		return new ResponseEntity<>(this.warehouseGraphService.getNetworkInventoryItem(newMapping.getEntityUUID()), HttpStatus.CREATED);
 	}
 
 	
@@ -444,52 +436,13 @@ public class WarehouseController {
 												, @RequestParam(value = "direction", defaultValue = "both") String direction /*upstream, downstream, both*/
 												, @RequestParam(value = "contextName", defaultValue = "") String contextName) {
 		
-		String contextNetworkEntityUUID;
-		MappingNode parent = this.warehouseGraphService.getMappingNode(networkEntityUUID);
-		if(genes == null || genes.size() < 1) {
-			return ResponseEntity.badRequest().build();
-		} else {
-			/**
-			 * get all needed parameters for the pre function
-			 */
-			String newMappingName = "";
-			String geneString = "";
-			if (contextName.equals("")) {
-				newMappingName = "Context_derived_from_" + networkEntityUUID + "_for_gene";
-				
-				if (genes.size() > 1 ) {
-					geneString += "s";
-				}
-				for (String gene : genes) {
-					geneString += "_";
-					geneString += gene;
-				}
-				newMappingName += geneString;
-			} else {
-				newMappingName = contextName;
-			}
-			String activityName = "Create_Context_from_" + networkEntityUUID + "_for_gene" + geneString;
-			
-			ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
-			NetworkMappingType mappingType = parent.getMappingType();
-			
-			MappingNode contextMappingNode = this.warehouseGraphService.createMappingPre(username, 
-																			parent, 
-																			newMappingName,
-																			activityName, 
-																			activityType, 
-																			mappingType);
-			// then create the context and attach the nodes to this new mapping node (as in createMappingFromMappingWithOptions)
-			contextNetworkEntityUUID = this.warehouseGraphService.postNetworkContext(contextMappingNode, genes, minSize, maxSize, terminateAtDrug, direction);
-		}
-		
-		if(contextNetworkEntityUUID != null) {
-			
-			return new ResponseEntity<String>(contextNetworkEntityUUID, HttpStatus.OK); 
-		} else { 
-			return new ResponseEntity<String>(HttpStatus.NO_CONTENT); 
-		} 	
+		return this.warehouseGraphService.postContext(username, networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction,
+				contextName); 	
 	}
+
+	
+		
+		
 	
 	/*
 	 * @RequestMapping(value="/network", method = RequestMethod.GET) public

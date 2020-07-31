@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
-import org.tts.model.api.Output.NetworkInventoryItem;
-import org.tts.model.api.Output.PathwayInventoryItem;
+import org.tts.model.api.NetworkInventoryItem;
+import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
@@ -38,11 +38,9 @@ public interface WarehouseGraphService {
 
 	public boolean warehouseGraphNodeExists(WarehouseGraphNodeType warehouseGraphNodeType, String source, String sourceVersion, Organism org, Map<String, String> entityKeyMap);
 */
-	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes);
+	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org);
 
-	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes);
+	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org);
 
 	public boolean fileNodeExists(FileNodeType fileNodeType, Organism org, String filename);
 
@@ -181,6 +179,22 @@ public interface WarehouseGraphService {
 	public String addAnnotationToNetwork(String networkEntityUUID, List<String> genes);
 
 	boolean deleteNetwork(String mappingNodeEntityUUID);
+	
+	/**
+	 * Create a new network that is a context for nodes in genes.
+	 * 
+	 * @param user The user that requests the context creation
+	 * @param networkEntityUUID The entityUUID of the Network to derive from
+	 * @param genes The List of gene-symbols that the context should be created for
+	 * @param minSize The minimum number of steps to search for the context around a gene
+	 * @param maxSize The maximum number of steps to search for the context around a gene
+	 * @param terminateAtDrug Whether to terminate the context extension at a drug-Node (requires MyDrug Nodes in the network)
+	 * @param direction The search direction for the context (upstream, downstream, both)
+	 * @param contextName The desired name for the network
+	 * @return String representation of the entityUUID of the created context network
+	 */
+	ResponseEntity<String> postContext(String user, String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction, String contextName);
 
 	
 
