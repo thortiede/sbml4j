@@ -21,6 +21,8 @@
 
 package org.tts.service;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.config.SBML4jConfig;
@@ -66,12 +68,11 @@ public class GraphBaseEntityService {
 	}
 
 	/**
-	 * find All <a href="#{@link}">{@link GraphBaseEntity}</a> entities.
+	 * Find All <a href="#{@link}">{@link GraphBaseEntity}</a> entities.
 	 * 
 	 * @return Iterable with all <a href="#{@link}">{@link GraphBaseEntity}</a> in the database
 	 */
 	public Iterable<GraphBaseEntity> findAll() {
-		// TODO Auto-generated method stub
 		return graphBaseEntityRepository.findAll();
 	}
 
@@ -130,5 +131,37 @@ public class GraphBaseEntityService {
 		}
 		return entity;
 	}
+	
+	/**
+	 * Set Properties of <a href="#{@link}">{@link GraphBaseEntity}</a>.
+	 * This is only the EntityUUID so far and no source entity is needed to copy properties from.
+	 * 
+	 * @param target the <a href="#{@link}">{@link GraphBaseEntity}</a> for which the basic properties (entityUUID) are to be set.
+	 */
+	public void setGraphBaseEntityProperties(GraphBaseEntity target) {
+		target.setEntityUUID(this.getNewUUID());
+		target.setActive(true);
+	}
+	
+	/**
+	 * Reset the id and version of the <a href="#{@link}">{@link GraphBaseEntity}</a> and assign new entityUUID
+	 * 
+	 * @param target the <a href="#{@link}">{@link GraphBaseEntity}</a> for which the basic properties (entityUUID, id, version) are to be reset.
+	 */
+	public void resetGraphBaseEntityProperties(GraphBaseEntity target) {
+		target.setEntityUUID(this.getNewUUID());
+		target.setId(null);
+		target.setVersion(null);
+	}
 
+	/**
+	 * This is the one point where a new entityUUID is generated.
+	 * 
+	 * The current method is just random. Change this here, if another generationMethod is needed.
+	 * @return String representing the newly generated UUID
+	 */
+	private String getNewUUID() {
+		return UUID.randomUUID().toString();
+	}
+	
 }
