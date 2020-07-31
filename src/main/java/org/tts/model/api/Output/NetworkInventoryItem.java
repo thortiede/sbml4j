@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.tts.model.common.GraphEnum.NetworkMappingType;
-
+@Deprecated
 public class NetworkInventoryItem extends WarehouseInventoryItem {
 
 	private int numberOfNodes;
