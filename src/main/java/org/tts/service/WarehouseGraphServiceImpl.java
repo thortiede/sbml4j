@@ -233,7 +233,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	
 	
 	@Override
-	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org) {
+	public DatabaseNode getDatabaseNode(String source, String sourceVersion, String org) {
+		
 		List<DatabaseNode> databaseNodeList = this.databaseNodeRepository.findBySourceAndSourceVersion(source,
 				sourceVersion);
 		if (databaseNodeList.isEmpty()) {
@@ -242,7 +243,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			return databaseNodeList.get(0);
 		} else {
 			for (DatabaseNode database : databaseNodeList) {
-				if (database.getOrganism().getOrgCode().equals(org.getOrgCode())) {
+				if (database.getOrganism().getOrgCode().equals(org)) {
 					return database;
 				}
 			}

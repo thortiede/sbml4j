@@ -38,7 +38,7 @@ public interface WarehouseGraphService {
 
 	public boolean warehouseGraphNodeExists(WarehouseGraphNodeType warehouseGraphNodeType, String source, String sourceVersion, Organism org, Map<String, String> entityKeyMap);
 */
-	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org);
+	public DatabaseNode getDatabaseNode(String source, String sourceVersion, String org);
 
 	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org);
 

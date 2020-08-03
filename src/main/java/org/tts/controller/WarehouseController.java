@@ -1,7 +1,6 @@
 package org.tts.controller;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +22,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.tts.config.SBML4jConfig;
 import org.tts.config.VcfConfig;
+import org.tts.model.api.NetworkInventoryItem;
+import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Input.Drivergenes;
 import org.tts.model.api.Input.FilterOptions;
 import org.tts.model.api.Input.PathwayCollectionCreationItem;
-import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.api.Output.NetworkInventoryItemDetail;
-import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Output.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.IDSystem;
 import org.tts.model.common.GraphEnum.MappingStep;
@@ -96,8 +94,7 @@ public class WarehouseController {
 			@RequestParam("version") String version, @RequestParam("organism") String orgCode,
 			@RequestParam("matchingAttribute") String matchingAttribute) {
 		
-		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(source, version,
-				this.organismService.getOrgansimByOrgCode(orgCode));
+		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(source, version, orgCode);
 		if (database != null) {
 			return new ResponseEntity<String>(database.getEntityUUID(), HttpStatus.OK);
 		} else {
