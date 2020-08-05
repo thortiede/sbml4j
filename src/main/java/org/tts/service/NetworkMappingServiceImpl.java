@@ -56,7 +56,6 @@ import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
-import org.tts.repository.common.GraphBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.flat.FlatEdgeRepository;
 import org.tts.repository.flat.FlatSpeciesRepository;

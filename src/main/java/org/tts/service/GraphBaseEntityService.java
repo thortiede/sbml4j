@@ -21,13 +21,11 @@
 
 package org.tts.service;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.config.SBML4jConfig;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.AnnotationName;
 import org.tts.repository.common.GraphBaseEntityRepository;
