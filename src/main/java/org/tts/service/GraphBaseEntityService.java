@@ -21,11 +21,13 @@
 
 package org.tts.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.config.SBML4jConfig;
+import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.AnnotationName;
 import org.tts.repository.common.GraphBaseEntityRepository;
@@ -46,53 +48,6 @@ public class GraphBaseEntityService {
 	@Autowired
 	SBML4jConfig sbml4jConfig;
 	
-	/**
-	 * Save a single <a href="#{@link}">{@link GraphBaseEntity}</a> in the database
-	 * 
-	 * @param newEntity The <a href="#{@link}">{@link GraphBaseEntity}</a> to save
-	 * @param depth The save-depth to use
-	 * @return The persisted <a href="#{@link}">{@link GraphBaseEntity}</a>
-	 */
-	public GraphBaseEntity persistEntity(GraphBaseEntity newEntity, int depth) {
-		return this.graphBaseEntityRepository.save(newEntity, depth);
-	}
-
-	/**
-	 * Find a <a href="#{@link}">{@link GraphBaseEntity}</a> by its entityUUID attribute
-	 * 
-	 * @param entityUUID The entityUUID of the entity to find
-	 * @return The <a href="#{@link}">{@link GraphBaseEntity}</a> found for the entityUUID attribute.
-	 */
-	public GraphBaseEntity findByEntityUUID(String entityUUID) {
-		return graphBaseEntityRepository.findByEntityUUID(entityUUID);
-	}
-
-	/**
-	 * Find All <a href="#{@link}">{@link GraphBaseEntity}</a> entities.
-	 * 
-	 * @return Iterable with all <a href="#{@link}">{@link GraphBaseEntity}</a> in the database
-	 */
-	public Iterable<GraphBaseEntity> findAll() {
-		return graphBaseEntityRepository.findAll();
-	}
-
-	/**
-	 * Delete a GraphBaseEntity
-	 * 
-	 * @param entity The <a href="#{@link}">{@link GraphBaseEntity}</a> to be deleted
-	 * @return true if deleting was successful (if the entity is not present in database), false otherwise
-	 */
-	public boolean deleteEntity(GraphBaseEntity entity) {
-		if (entity == null) {
-			return false;
-		}
-		this.graphBaseEntityRepository.delete(entity);
-		if (this.graphBaseEntityRepository.findByEntityUUID(entity.getEntityUUID()) == null) {
-			return true;
-		} else {
-			return false;
-		}
-	}
 	
 	/**
 	 * Add annotation to a <a href="#{@link}">{@link GraphBaseEntity}</a>
@@ -132,6 +87,66 @@ public class GraphBaseEntityService {
 		return entity;
 	}
 	
+
+	/**
+	 * Delete a GraphBaseEntity
+	 * 
+	 * @param entity The <a href="#{@link}">{@link GraphBaseEntity}</a> to be deleted
+	 * @return true if deleting was successful (if the entity is not present in database), false otherwise
+	 */
+	public boolean deleteEntity(GraphBaseEntity entity) {
+		if (entity == null) {
+			return false;
+		}
+		this.graphBaseEntityRepository.delete(entity);
+		if (this.graphBaseEntityRepository.findByEntityUUID(entity.getEntityUUID()) == null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	/**
+	 * Find All <a href="#{@link}">{@link GraphBaseEntity}</a> entities.
+	 * 
+	 * @return Iterable with all <a href="#{@link}">{@link GraphBaseEntity}</a> in the database
+	 */
+	public Iterable<GraphBaseEntity> findAll() {
+		return graphBaseEntityRepository.findAll();
+	}
+
+	/**
+	 * Find a <a href="#{@link}">{@link GraphBaseEntity}</a> by its entityUUID attribute
+	 * 
+	 * @param entityUUID The entityUUID of the entity to find
+	 * @return The <a href="#{@link}">{@link GraphBaseEntity}</a> found for the entityUUID attribute.
+	 */
+	public GraphBaseEntity findByEntityUUID(String entityUUID) {
+		return graphBaseEntityRepository.findByEntityUUID(entityUUID);
+	}
+
+	/**
+	 * Save a single <a href="#{@link}">{@link GraphBaseEntity}</a> in the database
+	 * 
+	 * @param newEntity The <a href="#{@link}">{@link GraphBaseEntity}</a> to save
+	 * @param depth The save-depth to use
+	 * @return The persisted <a href="#{@link}">{@link GraphBaseEntity}</a>
+	 */
+	public GraphBaseEntity persistEntity(GraphBaseEntity newEntity, int depth) {
+		return this.graphBaseEntityRepository.save(newEntity, depth);
+	}
+
+	/**
+	 * Reset the id and version of the <a href="#{@link}">{@link GraphBaseEntity}</a> and assign new entityUUID
+	 * 
+	 * @param target the <a href="#{@link}">{@link GraphBaseEntity}</a> for which the basic properties (entityUUID, id, version) are to be reset.
+	 */
+	public void resetGraphBaseEntityProperties(GraphBaseEntity target) {
+		target.setEntityUUID(this.getNewUUID());
+		target.setId(null);
+		target.setVersion(null);
+	}
+	
 	/**
 	 * Set Properties of <a href="#{@link}">{@link GraphBaseEntity}</a>.
 	 * This is only the EntityUUID so far and no source entity is needed to copy properties from.
@@ -143,17 +158,6 @@ public class GraphBaseEntityService {
 		target.setActive(true);
 	}
 	
-	/**
-	 * Reset the id and version of the <a href="#{@link}">{@link GraphBaseEntity}</a> and assign new entityUUID
-	 * 
-	 * @param target the <a href="#{@link}">{@link GraphBaseEntity}</a> for which the basic properties (entityUUID, id, version) are to be reset.
-	 */
-	public void resetGraphBaseEntityProperties(GraphBaseEntity target) {
-		target.setEntityUUID(this.getNewUUID());
-		target.setId(null);
-		target.setVersion(null);
-	}
-
 	/**
 	 * This is the one point where a new entityUUID is generated.
 	 * 
