@@ -31,12 +31,12 @@ import org.springframework.stereotype.Service;
 import org.tts.config.VcfConfig;
 import org.tts.controller.WarehouseController;
 import org.tts.model.api.Input.FilterOptions;
-import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.ApocPathReturnType;
 import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.api.Output.WarehouseInventoryItem;
+import org.tts.model.api.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -486,13 +486,12 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	@Override
 	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
 		WarehouseInventoryItem item = new WarehouseInventoryItem();
-		item.setEntityUUID(warehouseGraphNode.getEntityUUID());
+		item.setUUID(UUID.fromString(warehouseGraphNode.getEntityUUID()));
 		// item.setSource(findSource(warehouseGraphNode).getSource());
 		// item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
 		item.setOrganismCode(((Organism) this.warehouseGraphNodeRepository
 				.findOrganismForWarehouseGraphNode(warehouseGraphNode.getEntityUUID())).getOrgCode());
 		if (warehouseGraphNode.getClass() == MappingNode.class) {
-			item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
 			item.setName(((MappingNode) warehouseGraphNode).getMappingName());
 		}
 		return item;
@@ -529,9 +528,9 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 				ProvenanceGraphEdgeType.wasGeneratedBy);
 		this.provenanceGraphService.connect(pathwayCollectionNode, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		// take all listed pathways
-		for (String pathwayEntityUUID : pathwayCollectionCreationItem.getSourcePathwayEntityUUIDs()) {
+		for (UUID pathwayEntityUUID : pathwayCollectionCreationItem.getSourcePathwayUUIDs()) {
 			// add entities of pathway to knowledgegraphNode
-			PathwayNode pathway = this.pathwayNodeRepository.findByEntityUUID(pathwayEntityUUID);
+			PathwayNode pathway = this.pathwayNodeRepository.findByEntityUUID(pathwayEntityUUID.toString());
 			if (pathway != null) {// && findSource(pathway).getEntityUUID() == databaseNode.getEntityUUID()) {
 				this.provenanceGraphService.connect(pathwayCollectionNode, pathway, ProvenanceGraphEdgeType.hadMember);
 				this.provenanceGraphService.connect(createPathwayCollectionGraphActivityNode, pathway,
@@ -601,8 +600,8 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 	}
 
 	@Override
-	public List<String> getListofPathwayUUIDs(String username, boolean hideCollections) {
-		List<String> uuids = new ArrayList<>();
+	public List<UUID> getListofPathwayUUIDs(String username, boolean hideCollections) {
+		List<UUID> uuids = new ArrayList<>();
 		Iterable<PathwayNode> pathways;
 		if(hideCollections) {
 			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(username);
@@ -610,7 +609,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(username);
 		}
 		for (PathwayNode pathwayNode : pathways) {
-			uuids.add(pathwayNode.getEntityUUID());
+			uuids.add(UUID.fromString(pathwayNode.getEntityUUID()));
 		}
 		return uuids;
 	}
@@ -1283,6 +1282,7 @@ public class WarehouseGraphServiceImpl implements WarehouseGraphService {
 
 	
 	/**
+	 * Create necessary warehouse items for adding a new MappingNode
 	 * @param username
 	 * @param parent
 	 * @param newMappingName

@@ -1,17 +1,17 @@
 package org.tts.service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.tts.model.api.Input.FilterOptions;
-import org.tts.model.api.Input.PathwayCollectionCreationItem;
+import org.tts.model.api.PathwayCollectionCreationItem;
 import org.tts.model.api.Output.FlatMappingReturnType;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.api.Output.WarehouseInventoryItem;
+import org.tts.model.api.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.MappingStep;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
@@ -81,7 +81,7 @@ public interface WarehouseGraphService {
 	public PathwayNode buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
 			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode);
 
-	public List<String> getListofPathwayUUIDs(String username, boolean hideCollections);
+	public List<UUID> getListofPathwayUUIDs(String username, boolean hideCollections);
 
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
 
