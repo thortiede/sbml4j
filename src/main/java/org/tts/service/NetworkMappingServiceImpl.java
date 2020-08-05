@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.sbml.jsbml.CVTerm.Qualifier;
 import org.sbml.jsbml.SBO;
@@ -73,7 +74,7 @@ import org.tts.repository.warehouse.PathwayNodeRepository;
 public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 	@Autowired
-	GraphBaseEntityRepository graphBaseEntityRepository;
+	PathwayService pathwayService;
 	
 	@Autowired
 	FlatSpeciesRepository flatSpeciesRepository;
@@ -161,8 +162,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			// gather nodeTypes
 			this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
-			Iterable<MetabolicPathwayReturnType> metPathwayResult = this.graphBaseEntityRepository
-					.getAllMetabolicPathwayReturnTypes(pathway.getEntityUUID(), nodeSBOTerms);
+			Iterable<MetabolicPathwayReturnType> metPathwayResult = this.pathwayService
+					.getAllMetabolicPathwayReturnTypes(UUID.fromString(pathway.getEntityUUID()), nodeSBOTerms);
 
 			FlatSpecies startFlatSpecies;
 			FlatSpecies endFlatSpecies;
@@ -309,7 +310,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		}
 		// do we have non metabolic elements we need to process?
 		if (processTransitionsNeeded) {
-			Iterable<NonMetabolicPathwayReturnType> nonMetPathwayResult = this.graphBaseEntityRepository
+			Iterable<NonMetabolicPathwayReturnType> nonMetPathwayResult = this.pathwayNodeRepository
 					.getFlatTransitionsForPathwayUsingSpecies(pathway.getEntityUUID(), transitionSBOTerms,
 							nodeSBOTerms);
 
@@ -611,7 +612,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		
 		newFlatSpecies.setSimpleModelEntityUUID(sbmlSpecies.getEntityUUID());
 		getBQAnnotations(sbmlSpecies.getEntityUUID(), newFlatSpecies);
-		getPathwayAnnotations(sbmlSpecies.getEntityUUID(), newFlatSpecies);
+		getPathwayAnnotations(UUID.fromString(sbmlSpecies.getEntityUUID()), newFlatSpecies);
 		return newFlatSpecies;
 	}
 
@@ -668,8 +669,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 * @param parentEntityUUID The entityUUID of the entity to get the pathways from
 	 * @param target The <a href="#{@link}">{@link FlatSpecies}</a> to add the pathway names to
 	 */
-	private void getPathwayAnnotations(String parentEntityUUID, FlatSpecies target) {
-		List<PathwayNode> pathwayUUIDs = this.pathwayNodeRepository.getPathwayNodeUUIDsOfSBase(parentEntityUUID);
+	private void getPathwayAnnotations(UUID parentEntityUUID, FlatSpecies target) {
+		List<PathwayNode> pathwayUUIDs = this.pathwayService.getPathwayNodesOfSBase(parentEntityUUID);
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
 		for (PathwayNode pathway : pathwayUUIDs) {
