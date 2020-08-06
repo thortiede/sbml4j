@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
@@ -36,6 +37,7 @@ import org.tts.model.flat.FlatSpecies;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
+import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * 
@@ -57,6 +59,9 @@ public class NetworkService {
 	
 	@Autowired
 	FlatEdgeService flatEdgeService;
+	
+	@Autowired
+	MappingNodeService mappingNodeService;
 	
 	@Autowired
 	SBMLSpeciesService sbmlSpeciesService;
@@ -148,6 +153,21 @@ public class NetworkService {
 			flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
 		}
 		return flatSpeciesEntityUUID;
+	}
+	
+	
+	/**
+	 * Get the <a href="#{@link}">{@link NetworkOptions}</a> for the <a href="#{@link}">{@link MappingNode}</a> with entityUUId networkEntityUuid
+	 * @param networkEntityUuid The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param user The user that is attributed to the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The <a href="#{@link}">{@link NetworkOptions}</a> with default values for this network, if the user is attributed to the <a href="#{@link}">{@link MappingNode}</a>, an empty <a href="#{@link}">{@link NetworkOptions}</a> otherwise
+	 */
+	public NetworkOptions getNetworkOptions(String networkEntityUuid, String user) {
+		if (this.mappingNodeService.isMappingNodeAttributedToUser(networkEntityUuid, user)) {
+			return this.mappingNodeService.getNetworkOptions(networkEntityUuid);
+		} else {
+			return new NetworkOptions();
+		}
 	}
 	
 	/**
