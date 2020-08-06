@@ -4,6 +4,7 @@ import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.common.ContentGraphNode;
 
+@Deprecated
 public interface ContentGraphNodeRepository extends Neo4jRepository<ContentGraphNode, Long> {
 
 	@Query(value = "MATCH "
