@@ -20,6 +20,7 @@
  */
 package org.tts.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
 import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.warehouse.PathwayNodeRepository;
 
@@ -71,4 +73,26 @@ public class PathwayService {
 	public List<PathwayNode> getPathwayNodesOfSBase(UUID sBaseEntityUUID) {
 		return this.pathwayNodeRepository.getPathwayNodesOfSBase(sBaseEntityUUID.toString());
 	}
+	
+	
+	/**
+	 * Get a List of UUIDs of pathways associated with a user
+	 * @param user The user the pathways are associated with
+	 * @param hideCollections Do not include <a href="#{@link}">{@link PathwayCollectionNode}</a> entities (true), or include them (false)
+	 * @return List of UUIDs of Pathways associated with the user
+	 */
+	public List<UUID> getListofPathwayUUIDs(String user, boolean hideCollections) {
+		List<UUID> uuids = new ArrayList<>();
+		Iterable<PathwayNode> pathways;
+		if(hideCollections) {
+			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
+		} else {
+			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
+		}
+		for (PathwayNode pathwayNode : pathways) {
+			uuids.add(UUID.fromString(pathwayNode.getEntityUUID()));
+		}
+		return uuids;
+	}
+
 }
