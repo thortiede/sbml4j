@@ -22,13 +22,12 @@
 package org.tts.service;
 
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.flat.FlatEdge;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.flat.relationship.CatalystFlatEdge;
 import org.tts.model.flat.relationship.ControlFlatEdge;
 import org.tts.model.flat.relationship.DephosphorylationFlatEdge;
@@ -156,6 +155,16 @@ public class FlatEdgeService {
 	 */
 	public Iterable<FlatEdge> getGeneSet(String networkEntityUUID, List<String> nodeUUIDs) {
 		return this.flatEdgeRepository.getGeneSet(networkEntityUUID.toString(), nodeUUIDs);
+	}
+	
+	/**
+	 * Save a collection of <a href="#{@link}">{@link FlatEdge}</a>
+	 * @param entities Iterable of <a href="#{@link}">{@link FlatEdge}</a> to persist
+	 * @param depth The save depth to use
+	 * @return The persisted entities
+	 */
+	public Iterable<FlatEdge> save(Iterable<FlatEdge> entities, int depth) {
+		return this.flatEdgeRepository.save(entities, depth);
 	}
 	
 }

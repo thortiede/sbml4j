@@ -70,4 +70,14 @@ public class FlatSpeciesService {
 		return this.flatSpeciesRepository.findBySimpleModelEntityUUID(simpleModelGeneEntityUUID, baseNetworkUUID);
 	}
 	
+	/**
+	 * Save a collection of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param entities Iterable of <a href="#{@link}">{@link FlatSpecies}</a> to persist
+	 * @param depth The save depth to use
+	 * @return The persisted entities
+	 */
+	public Iterable<FlatSpecies> save(Iterable<FlatSpecies> entities, int depth) {
+		return this.flatSpeciesRepository.save(entities, depth);
+	}
+	
 }
