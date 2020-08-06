@@ -24,8 +24,9 @@ package org.tts.service.SimpleSBML;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.common.SBMLSpecies;
+import org.tts.model.common.SBMLSpeciesGroup;
 import org.tts.repository.common.SBMLSpeciesRepository;
-import org.tts.service.FlatEdgeService;
+
 
 /**
  * Service to handle loading and persisting SBMLSpecies
@@ -39,11 +40,19 @@ public class SBMLSpeciesService {
 	@Autowired
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 	
+	/**
+	 * Get the <a href="#{@link}">{@link SBMLSpecies}</a> that are part of the group with UUID groupEntityUUID
+	 * @param groupEntityUUID The UUID of the  <a href="#{@link}">{@link SBMLSpeciesGroup}</a>
+	 * @return
+	 */
+	public Iterable<SBMLSpecies> getSBMLSpeciesOfGroup(String groupEntityUUID) {
+		return this.sbmlSpeciesRepository.getSBMLSpeciesOfGroup(groupEntityUUID);
+	}
 	
 	/**
-	 * find a SBMLSpecies by its sBaseName (which must be unique)
+	 * Find a SBMLSpecies by its sBaseName (which must be unique)
 	 * 
-	 * @param sBaseName The sBaseName attribute to find the <a href="#{@link}">{@link FlatEdgeService}</a>SBMLSpecies for
+	 * @param sBaseName The sBaseName attribute of the <a href="#{@link}">{@link SBMLSpecies}</a> to find
 	 * @return The SBMLSpecies with sBaseName fetched from the database
 	 */
 	public SBMLSpecies findBysBaseName(String sBaseName) {
