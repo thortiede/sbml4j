@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class NetworkConfigProperties {
 
 	private boolean hardDelete;
+	
+	private boolean showInactiveNetworks;
 
 	public boolean isHardDelete() {
 		return hardDelete;
@@ -13,5 +15,13 @@ public class NetworkConfigProperties {
 
 	public void setHardDelete(boolean hardDelete) {
 		this.hardDelete = hardDelete;
+	}
+
+	public boolean isShowInactiveNetworks() {
+		return showInactiveNetworks;
+	}
+
+	public void setShowInactiveNetworks(boolean showInactiveNetworks) {
+		this.showInactiveNetworks = showInactiveNetworks;
 	}
 }
