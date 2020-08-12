@@ -21,6 +21,7 @@
 
 package org.tts.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.tts.api.NetworksApi;
+import org.tts.config.SBML4jConfig;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
@@ -40,7 +42,10 @@ import org.tts.model.api.NetworkOptions;
 import org.tts.model.api.NodeList;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.networks.NetworkService;
 import org.tts.service.warehouse.MappingNodeService;
@@ -62,7 +67,13 @@ public class NetworksApiController implements NetworksApi {
 	NetworkService networkService;
 	
 	@Autowired
+	ProvenanceGraphService provenanceGraphService;
+	
+	@Autowired
 	WarehouseGraphService warehouseGraphService;
+	
+	@Autowired
+	SBML4jConfig sbml4jConfig;
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> addAnnotationToNetwork(@Valid AnnotationItem body, String user,
@@ -143,8 +154,18 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(String user) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.listAllNetworks(user);
+		// does user exist?
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null) {
+			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+		}
+		List<NetworkInventoryItem> userNetworkInventoryItems = new ArrayList<>();
+		List<MappingNode> userNetworks = this.mappingNodeService.findAllFromUser(user, !this.sbml4jConfig.getNetworkConfigProperties().isShowInactiveNetworks());
+		for (MappingNode userMap : userNetworks) {
+			NetworkInventoryItem item = this.networkService.getNetworkInventoryItem(userMap.getEntityUUID());
+			userNetworkInventoryItems.add(item);
+		}
+		return ResponseEntity.ok(userNetworkInventoryItems);
 	}
 	
 	@Override
