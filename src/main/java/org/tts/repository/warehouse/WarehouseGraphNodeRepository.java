@@ -23,14 +23,6 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			String startNodeEntityUUID);
 
 
-	@Query(value="MATCH"
-			+ "(w:WarehouseGraphNode)"
-			+ "-[:FOR]->"
-			+ "(o:Organism) "
-			+ "WHERE w.entityUUID = $entityUUID "
-			+ "RETURN o")
-	WarehouseGraphNode findOrganismForWarehouseGraphNode(String entityUUID);
-
 	
 	
 	@Query(value = "MATCH p=(e1:ProvenanceEntity)-"

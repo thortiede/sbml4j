@@ -21,8 +21,10 @@
 
 package org.tts.repository.common;
 
+import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.common.Organism;
+import org.tts.model.warehouse.WarehouseGraphNode;
 
 /**
  * Repository for loading and persisting <a href="#{@link}">{@link Organism}</a>s
@@ -39,5 +41,18 @@ public interface OrganismRepository extends Neo4jRepository<Organism, Long> {
 	 * @return The <a href="#{@link}">{@link Organism}</a> entity for the orgCode
 	 */
 	Organism findByOrgCode(String orgCode);
+
+	/**
+	 * Find the <a href="#{@link}">{@link Organism}</a> that is attached to a <a href="#{@link}">{@link WarehouseGraphNode}</a> via the FOR relationship
+	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link w:WarehouseGraphNode}</a>
+	 * @return The <a href="#{@link}">{@link Organism}</a> found using the query
+	 */
+	@Query(value="MATCH"
+			+ "(w:WarehouseGraphNode)"
+			+ "-[:FOR]->"
+			+ "(o:Organism) "
+			+ "WHERE w.entityUUID = $entityUUID "
+			+ "RETURN o")
+	Organism findOrganismForWarehouseGraphNode(String entityUUID);
 
 }
