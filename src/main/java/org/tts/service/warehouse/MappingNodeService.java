@@ -54,6 +54,18 @@ public class MappingNodeService {
 	 * @param activeOnly Only retrieve active <a href="#{@link}">{@link MappingNode}</a> (true), or inactive also (false)
 	 * @return List of <a href="#{@link}">{@link MappingNode}</a> that are associated with users
 	 */
+	public List<MappingNode> findAllFromUser(String user, boolean activeOnly) {
+		List<String> users = new ArrayList<>();
+		users.add(user);
+		return this.findAllFromUsers(users, activeOnly);
+	}
+	
+	/**
+	 * Find all <a href="#{@link}">{@link MappingNode}</a> that are associated with the user user
+	 * @param users List of users that are associated with the <a href="#{@link}">{@link MappingNode}</a> to get
+	 * @param activeOnly Only retrieve active <a href="#{@link}">{@link MappingNode}</a> (true), or inactive also (false)
+	 * @return List of <a href="#{@link}">{@link MappingNode}</a> that are associated with users
+	 */
 	public List<MappingNode> findAllFromUsers(List<String> users, boolean activeOnly) {
 		if (activeOnly) {
 			return this.mappingNodeRepository.findAllActiveFromUsers(users);
