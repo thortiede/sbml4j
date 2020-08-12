@@ -24,20 +24,26 @@ package org.tts.service.networks;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
+import org.tts.model.warehouse.MappingNode;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
+import org.tts.service.UtilityService;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
 import org.tts.service.warehouse.MappingNodeService;
+import org.tts.service.warehouse.OrganismService;
 
 /**
  * 
@@ -65,6 +71,12 @@ public class NetworkService {
 	
 	@Autowired
 	SBMLSpeciesService sbmlSpeciesService;
+	
+	@Autowired
+	OrganismService organismService;
+	
+	@Autowired
+	UtilityService utilityService;
 	
 	Logger log = LoggerFactory.getLogger(NetworkService.class);
 	
@@ -183,6 +195,72 @@ public class NetworkService {
 		return this.flatSpeciesService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
 	}
 
+/************************************************************* NetworkInventoryItem **********************************************/	
 	
-	
+	/**
+	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * 
+	 * @param entityUUID The entityUUID of the MappingNode to get the <a href="#{@link}">{@link NetworkInventoryItem}</a> for
+	 * @return <a href="#{@link}">{@link NetworkInventoryItem}</a>
+	 */
+	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID) {
+		MappingNode mapping = this.mappingNodeService.findByEntityUUID(entityUUID);
+		return getNetworkIventoryItem(mapping);
+	}
+
+	/**
+	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> mapping
+	 * 
+	 * @param mapping The MappingNode to get the <a href="#{@link}">{@link NetworkInventoryItem}</a> for
+	 * @return <a href="#{@link}">{@link NetworkInventoryItem}</a>
+	 */
+	private NetworkInventoryItem getNetworkIventoryItem(MappingNode mapping) {
+		NetworkInventoryItem item = new NetworkInventoryItem();
+		//item.setWarehouseGraphNodeType(WarehouseGraphNodeType.MAPPING);
+		item.setUUID(UUID.fromString(mapping.getEntityUUID()));
+		//item.setActive(mapping.isActive());
+		// item.setSource(findSource(mapping).getSource());
+		// item.setSourceVersion(findSource(mapping).getSourceVersion());
+		item.setName(mapping.getMappingName());
+		item.setOrganismCode((this.organismService.findOrgansimForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
+		item.setNetworkMappingType(mapping.getMappingType());
+		if (mapping.getMappingNodeTypes() != null) {
+			for (String sboTerm : mapping.getMappingNodeTypes()) {
+				item.addNodeTypesItem(this.utilityService.translateSBOString(sboTerm));
+			}
+		}
+		if (mapping.getMappingRelationTypes() != null) {
+			for (String type : mapping.getMappingRelationTypes()) {
+				item.addRelationTypesItem(type);
+			}
+		}
+
+		try {
+			Map<String, Object> warehouseMap = mapping.getWarehouse();
+			item.setNumberOfNodes(Integer.valueOf(((String) warehouseMap.get("numberofnodes"))));
+			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
+		} catch (Exception e) {
+			log.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
+					+ ") does not have the warehouse-Properties set");
+		}
+		
+		/*
+		 * // add link to network retrieval String user = ((ProvenanceGraphAgentNode)
+		 * this.provenanceGraphService .findByProvenanceGraphEdgeTypeAndStartNode(
+		 * ProvenanceGraphEdgeType.wasAttributedTo, mapping.getEntityUUID()))
+		 * .getGraphAgentName();
+		 * item.add(linkTo(methodOn(WarehouseController.class).getNetwork(user,
+		 * item.getUUID().toString(), false))
+		 * .withRel("Retrieve Network contents as GraphML"));
+		 * 
+		 * // add link to the item FilterOptions
+		 * item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(
+		 * item.getUUID().toString())) .withRel("FilterOptions"));
+		 * 
+		 * // add link to deleting the item (setting isactive = false
+		 * item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.
+		 * getUUID().toString())) .withRel("Delete Mapping").withType("DELETE"));
+		 */
+		return item;
+	}
 }
