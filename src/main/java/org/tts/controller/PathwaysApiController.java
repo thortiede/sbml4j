@@ -50,6 +50,7 @@ import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.NetworkMappingService;
+import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
 
@@ -64,6 +65,9 @@ import org.tts.service.WarehouseGraphService;
 public class PathwaysApiController implements PathwaysApi {
 
 	@Autowired
+	PathwayService pathwayService;
+	
+	@Autowired
 	WarehouseGraphService warehouseGraphService;
 	
 	@Autowired
@@ -71,6 +75,8 @@ public class PathwaysApiController implements PathwaysApi {
 	
 	@Autowired
 	NetworkMappingService networkMappingService;
+	
+	
 	
 	Logger log = LoggerFactory.getLogger(PathwaysApiController.class);
 	
@@ -147,7 +153,7 @@ public class PathwaysApiController implements PathwaysApi {
     */
    @Override
 	public ResponseEntity<List<UUID>> listAllPathwayUUIDs(String user, @Valid Boolean hideCollections) {
-	   return new ResponseEntity<List<UUID>>(this.warehouseGraphService.getListofPathwayUUIDs(user, hideCollections), HttpStatus.OK);
+	   return new ResponseEntity<List<UUID>>(this.pathwayService.getListofPathwayUUIDs(user, hideCollections), HttpStatus.OK);
 	}
    
    
