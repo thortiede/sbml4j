@@ -8,7 +8,9 @@ public class NetworkConfigProperties {
 	private boolean hardDelete;
 	
 	private boolean showInactiveNetworks;
-
+	
+	private boolean useSharedPathwaySearch;
+	
 	public boolean isHardDelete() {
 		return hardDelete;
 	}
@@ -23,5 +25,13 @@ public class NetworkConfigProperties {
 
 	public void setShowInactiveNetworks(boolean showInactiveNetworks) {
 		this.showInactiveNetworks = showInactiveNetworks;
+	}
+	
+	public boolean isUseSharedPathwaySearch() {
+		return useSharedPathwaySearch;
+	}
+
+	public void setUseSharedPathwaySearch(boolean useSharedPathwaySearch) {
+		this.useSharedPathwaySearch = useSharedPathwaySearch;
 	}
 }
