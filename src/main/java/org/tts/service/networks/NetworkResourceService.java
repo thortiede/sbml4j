@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ import org.tts.service.GraphMLService;
 
 /**
  * This service class handles requests from controllers to get Resources containing networks
- * It depends on resource-creating service (like graphMLService) and network-extracting services
+ * It depends on resource-creating services (like graphMLService) and network-extracting services
  * like networkService.
  */
 @Service
@@ -57,7 +56,7 @@ public class NetworkResourceService {
 	
 	/**
 	 * Delegates the extraction of network nodes and relationships and the subsequently
-	 * the geneartion of a graphML-Resource contining those nodes and relationships.
+	 * the generation of a graphML-Resource containing those nodes and relationships.
 	 * 
 	 * @param uuid The uuid of the network to extract
 	 * @param geneSet The set of node symbols (here genes-symbols) that should be extracted with their directly connecting relationships
@@ -79,15 +78,45 @@ public class NetworkResourceService {
 		
 		Iterable<FlatSpecies> geneSetFlatSpecies = this.networkService.getNetworkNodes(flatSpeciesUUIDs);
 		Iterable<FlatEdge> geneSetFlatEdges = this.networkService.getGeneSet(uuid, flatSpeciesUUIDs);
+		ByteArrayOutputStream graphMLStream = getByteArrayOutputStreamOfNetworkContents(directed, geneSetFlatSpecies,
+				geneSetFlatEdges);
+		return new ByteArrayResource(graphMLStream.toByteArray(), "geneset.graphml");
+	}
+
+	/**
+	 * Delegates the extraction of network nodes and relationships and the subsequently
+	 * the generation of a graphML-Resource containing those nodes and relationships.
+	 * 
+	 * @param uuid The uuid of the network to extract
+	 * @param geneSet The set of node symbols (here genes-symbols) that should be extracted with their directly connecting relationships
+	 * @return ByteArrayResource containing the GraphML representation of the network
+	 */
+	public Resource getNetwork(String uuid, boolean directed) {
+		Iterable<FlatSpecies> networkSpecies = this.networkService.getNetworkNodes(uuid);
+		Iterable<FlatEdge> networkEdges = this.networkService.getNetworkRelations(uuid);
+		ByteArrayOutputStream graphMLStream = getByteArrayOutputStreamOfNetworkContents(directed, networkSpecies,
+				networkEdges);
+		return new ByteArrayResource(graphMLStream.toByteArray(), "network_" + uuid + ".graphml");
+	}
+	
+	/**
+	 * Create a ByteArrayOutputStream from FlatEdge and FlatSpecies entities in graphML format
+	 * @param directed whether the Graph should be directed (true) or not (false)
+	 * @param flatSpecies Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities 
+	 * @param flatEdges Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities 
+	 * @return ByteArrayOutputStream with GraphML content
+	 */
+	private ByteArrayOutputStream getByteArrayOutputStreamOfNetworkContents(boolean directed,
+			Iterable<FlatSpecies> flatSpecies, Iterable<FlatEdge> flatEdges) {
 		Set<String> seenSymbols = new HashSet<>();
-		Iterator<FlatEdge> edgeIter = geneSetFlatEdges.iterator();
+		Iterator<FlatEdge> edgeIter = flatEdges.iterator();
 		List<FlatSpecies> unconnectedSpecies = new ArrayList<>();
 		while(edgeIter.hasNext()) {
 			FlatEdge current = edgeIter.next();
 			seenSymbols.add(current.getInputFlatSpecies().getSymbol());
 			seenSymbols.add(current.getOutputFlatSpecies().getSymbol());
 		}
-		Iterator<FlatSpecies> speciesIter = geneSetFlatSpecies.iterator();
+		Iterator<FlatSpecies> speciesIter = flatSpecies.iterator();
 		while (speciesIter.hasNext()) {
 			FlatSpecies current = speciesIter.next();
 			if(!seenSymbols.contains(current.getSymbol())) {
@@ -96,17 +125,16 @@ public class NetworkResourceService {
 		}
 		ByteArrayOutputStream graphMLStream;
 		if(unconnectedSpecies.size() == 0) {
-			graphMLStream = this.graphMLService.getGraphMLForFlatEdges(geneSetFlatEdges, directed);
+			graphMLStream = this.graphMLService.getGraphMLForFlatEdges(flatEdges, directed);
 			
 		} else {
 			for (FlatSpecies species : unconnectedSpecies) {
 				log.debug("Found unconnected species in geneset: " + species.getSymbol() + ": " + species.getEntityUUID());
 			}
-			graphMLStream = this.graphMLService.getGraphMLForFlatEdgesAndUnconnectedFlatSpecies(geneSetFlatEdges, unconnectedSpecies, directed);
+			graphMLStream = this.graphMLService.getGraphMLForFlatEdgesAndUnconnectedFlatSpecies(flatEdges, unconnectedSpecies, directed);
 			
 		}
-		return new ByteArrayResource(graphMLStream.toByteArray(), "geneset.graphml");
+		return graphMLStream;
 	}
-	
 	
 }

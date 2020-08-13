@@ -95,6 +95,24 @@ public class NetworkService {
 	}
 	
 	/**
+	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	public Iterable<FlatSpecies> getNetworkNodes(String networkEntityUUID) {
+		return this.mappingNodeService.getMappingFlatSpecies(networkEntityUUID);
+	}
+	
+	/**
+	 * Retrieve <a href="#{@link}">{@link FlatEdge}</a> entities of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	public Iterable<FlatEdge> getNetworkRelations(String networkEntityUUID) {
+		return this.flatEdgeService.getNetworkFlatEdges(networkEntityUUID);
+	}
+	
+	/**
 	 * Returns the geneSet for nodeUUIDs in network with UUID networkEntityUUID.
 	 * Searches for direct connections between pairs of <a href="#{@link}">{@link FlatSpecies}</a> in the List nodeUUIDs
 	 * 

@@ -47,6 +47,7 @@ import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
+import org.tts.service.networks.NetworkResourceService;
 import org.tts.service.networks.NetworkService;
 import org.tts.service.warehouse.MappingNodeService;
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
@@ -65,6 +66,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Autowired
 	NetworkService networkService;
+	
+	@Autowired
+	NetworkResourceService networkResourceService;
 	
 	@Autowired
 	ProvenanceGraphService provenanceGraphService;
@@ -136,8 +140,20 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<Resource> getNetwork(String user, UUID UUID, @Valid boolean directed) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.getNetwork(user, UUID, directed);
+		
+		// does user exist?
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null) {
+			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+		}
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<Resource>(HttpStatus.FORBIDDEN);
+		}
+		Resource networkResource = this.networkResourceService.getNetwork(UUID.toString(), directed);
+		if (networkResource == null) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.ok(networkResource);
 	}
 	
 	@Override
