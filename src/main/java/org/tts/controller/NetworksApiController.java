@@ -22,6 +22,7 @@
 package org.tts.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,8 +44,10 @@ import org.tts.model.api.NodeList;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.tts.model.flat.FlatEdge;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ContextService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.networks.NetworkResourceService;
@@ -61,6 +64,9 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class NetworksApiController implements NetworksApi {
 
+	@Autowired
+	ContextService contextService;
+	
 	@Autowired
 	MappingNodeService mappingNodeService;
 	
@@ -133,9 +139,37 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<Resource> getContext(String user, UUID UUID, @NotNull @Valid String genes,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.getContext(user, UUID, genes, minSize, maxSize, terminateAtDrug);
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction, @Valid boolean directed) {
+		
+		// 1. Is the user allowed to work on that network?
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<Resource>(HttpStatus.FORBIDDEN);
+		}
+		// 2. Extract the genes
+		List<String> geneNames = Arrays.asList(genes.split(", "));
+		if(geneNames.size() < 1) {
+			return ResponseEntity.badRequest().header("reason", "Must give at least on gene").build();
+		}
+		
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAtDrug, direction);
+		if(contextFlatEdges == null) {
+			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
+		}
+		StringBuilder filename = new StringBuilder();
+		filename.append("context");
+		for (String gene : geneNames) {
+			filename.append("_");
+			filename.append(gene);
+		}
+		filename.append("_IN_");
+		filename.append(UUID.toString());
+		filename.append(".graphml");
+		Resource contextResource = this.networkResourceService.getNetworkForFlatEdges(contextFlatEdges, directed, filename.toString());
+		if(contextResource == null) {
+			return ResponseEntity.badRequest().header("reason", "Failed to create graphML resource").build();
+		}
+		
+		return ResponseEntity.ok(contextResource);
 	}
 	
 	@Override
@@ -186,9 +220,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> postContext(@Valid NodeList body, String user, UUID UUID,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug) {
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction) {
 		// TODO Auto-generated method stub
-		return NetworksApi.super.postContext(body, user, UUID, minSize, maxSize, terminateAtDrug);
+		return NetworksApi.super.postContext(body, user, UUID, minSize, maxSize, terminateAtDrug, direction);
 	}
 	
 	
