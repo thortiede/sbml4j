@@ -106,4 +106,13 @@ public class PathwayService {
 		return uuids;
 	}
 
+	/**
+	 * Find a <a href="#{@link}">{@link PathwayNode}</a> by its entityUUID
+	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a> 
+	 * @return The found <a href="#{@link}">{@link PathwayNode}</a> 
+	 */
+	public PathwayNode findByEntityUUID(String entityUUID) {
+		return this.pathwayNodeRepository.findByEntityUUID(entityUUID);
+	}
+	
 }
