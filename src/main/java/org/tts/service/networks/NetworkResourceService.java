@@ -100,6 +100,19 @@ public class NetworkResourceService {
 	}
 	
 	/**
+	 * Creates a ByteArrayOutputResource for a set of <a href="#{@link}">{@link FlatEdge}</a> entities 
+	 * @param flatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities  to build the resource from
+	 * @param directed Whether the resulting graphML Graph should be directed
+	 * @param filename The filename for the Resource
+	 * @return ByteArrayResource containing the graphML graph
+	 */
+	public Resource getNetworkForFlatEdges(Iterable<FlatEdge> flatEdges, boolean directed, String filename) {
+		ByteArrayOutputStream graphMLStream = getByteArrayOutputStreamOfNetworkContents(directed, null,
+				flatEdges);
+		return new ByteArrayResource(graphMLStream.toByteArray(), filename);
+	}
+	
+	/**
 	 * Create a ByteArrayOutputStream from FlatEdge and FlatSpecies entities in graphML format
 	 * @param directed whether the Graph should be directed (true) or not (false)
 	 * @param flatSpecies Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities 
@@ -116,11 +129,13 @@ public class NetworkResourceService {
 			seenSymbols.add(current.getInputFlatSpecies().getSymbol());
 			seenSymbols.add(current.getOutputFlatSpecies().getSymbol());
 		}
-		Iterator<FlatSpecies> speciesIter = flatSpecies.iterator();
-		while (speciesIter.hasNext()) {
-			FlatSpecies current = speciesIter.next();
-			if(!seenSymbols.contains(current.getSymbol())) {
-				unconnectedSpecies.add(current);
+		if (flatSpecies != null) {
+			Iterator<FlatSpecies> speciesIter = flatSpecies.iterator();
+			while (speciesIter.hasNext()) {
+				FlatSpecies current = speciesIter.next();
+				if(!seenSymbols.contains(current.getSymbol())) {
+					unconnectedSpecies.add(current);
+				}
 			}
 		}
 		ByteArrayOutputStream graphMLStream;
