@@ -264,6 +264,7 @@ public interface NetworksApi {
 ,@ApiParam(value = "The maximum depth of the context search", defaultValue = "3") @Valid @RequestParam(value = "maxSize", required = false, defaultValue="3") Integer maxSize
 ,@ApiParam(value = "allows to restrict the context search to only show paths that end in a drug node (MyDrug annotations are required for this)", defaultValue = "false") @Valid @RequestParam(value = "terminateAtDrug", required = false, defaultValue="false") Boolean terminateAtDrug
 ,@ApiParam(value = "The direction of the context expansion (upstream, downstream, both)", allowableValues = "upstream, downstream, both", defaultValue = "both") @Valid @RequestParam(value = "direction", required = false, defaultValue="both") String direction
+,@ApiParam(value = "Denotes whether the return network graph is directed", defaultValue = "false") @Valid @RequestParam(value = "directed", required = false, defaultValue="false") boolean directed
 ) {
         if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
             if (getAcceptHeader().get().contains("application/json")) {
