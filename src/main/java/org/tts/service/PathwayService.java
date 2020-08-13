@@ -42,6 +42,17 @@ public class PathwayService {
 
 	@Autowired
 	PathwayNodeRepository pathwayNodeRepository;
+	
+	/**
+	 * Find all <a href="#{@link}">{@link PathwayNode}</a> names for a <a href="#{@link}">{@link FlatSpecies}</a> in a <a href="#{@link}">{@link MappingNode}</a>
+	 * @param flatSpeciesEntityUUID The entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param mappingNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return List of String as Names of pathways
+	 */
+	public List<String> findAllForFlatSpeciesEntityUUIDInMapping(String flatSpeciesEntityUUID, String mappingNodeEntityUUID) {
+		return this.pathwayNodeRepository.findAllForFlatSpeciesEntityUUIDInMapping(flatSpeciesEntityUUID, mappingNodeEntityUUID);
+	}
+	
 	/**
 	 * Get all <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> for reactions in a pathway
 	 * 
