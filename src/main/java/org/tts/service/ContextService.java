@@ -1,0 +1,485 @@
+/*
+ * ----------------------------------------------------------------------------
+	Copyright 2020 University of Tuebingen 	
+
+	This file is part of SBML4j.
+
+    SBML4j is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    SBML4j is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with SBML4j.  If not, see <https://www.gnu.org/licenses/>.
+ * ---------------------------------------------------------------------------- 
+ */
+
+package org.tts.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.tts.config.SBML4jConfig;
+import org.tts.model.api.FilterOptions;
+import org.tts.model.api.Output.ApocPathReturnType;
+import org.tts.model.flat.FlatEdge;
+import org.tts.model.warehouse.MappingNode;
+import org.tts.service.networks.NetworkService;
+import org.tts.service.warehouse.MappingNodeService;
+
+/**
+ * Service for creating context networks for genes and geneSets
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
+@Service
+public class ContextService {
+
+	@Autowired
+	ApocService apocService;
+	
+	@Autowired
+	FlatEdgeService flatEdgeService;
+	
+	@Autowired
+	MappingNodeService mappingNodeService;
+	
+	@Autowired
+	NetworkService networkService;
+	
+	@Autowired
+	PathwayService pathwayService;
+	
+	@Autowired
+	SBML4jConfig sbml4jConfig;
+	
+	/**
+	 * Get List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the gene context in a network around a set of input genes
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param genes A List of gene names to find the context for
+	 * @param minSize The minimal step size to take for a context path
+	 * @param maxSize The maximal step size to take for a context path
+	 * @param terminateAtDrug Whether the context should always terminate in a Drug node (yes), or in any node (false). Attn: Requires MyDrug Nodes in the Network
+	 * @param direction The direction to expand the context to (one of upstream, downstream, both)
+	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
+	 */
+	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction) {
+		
+		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
+		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
+		List<FlatEdge> allEdges = new ArrayList<>();
+		Set<String> seenEdges = new HashSet<>();
+		// get nodeApocString
+		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
+		if (genes == null || genes.size() < 1) {
+			// should be caught by the controller
+			return null;
+		} else if (genes.size() == 1) {
+			String geneSymbol = genes.get(0);
+			String flatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
+			if (flatSpeciesEntityUUID == null) {
+				return null;
+			}
+			// 3. getContext
+			Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(flatSpeciesEntityUUID, relationShipApocString, nodeApocString, minSize, maxSize);
+
+			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
+			
+
+		} else {
+			// multi gene context
+			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction);
+			
+			
+		}
+		return allEdges;
+	}
+	
+	/**
+	 * Calculate the multi-gene context using shared pathway search. 
+	 * Looks for the one pathway that contains the most number of genes in the input and uses that as base for the context. 
+	 * The other genes get added to that base via APOC Dijkstra searches.
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search the context in
+	 * @param genes The List of genenames to find the context for
+	 * @param minSize The minimal step size to take for a context path
+	 * @param maxSizeThe maximal step size to take for a context path
+	 * @param terminateAtDrug Whether the context should always terminate in a Drug node (yes), or in any node (false). Attn: Requires MyDrug Nodes in the Network
+	 * @param direction The direction to expand the context to (one of upstream, downstream, both)
+	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
+	 */
+	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, boolean terminateAtDrug, String direction){
+		
+ 		List<FlatEdge> allFlatEdges = new ArrayList<>();
+		Set<String> seenEdges = new HashSet<>();
+		Set<String> usedPathwayEntityUUIDSet = new HashSet<>();
+		Set<String> usedGenes = new HashSet<>();
+		List<String> geneList = new ArrayList<>(genes);
+		Set<String> targetGeneUUIDSet = new HashSet<>();
+		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
+		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		Set<String> networkRelationTypes = mappingNode.getMappingRelationTypes();
+		Set<String> networkNodeTypes = mappingNode.getMappingNodeTypes();
+		for (String gene : geneList) {
+			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (geneFlatSpeciesEntityUUID != null) {
+				targetGeneUUIDSet.add(geneFlatSpeciesEntityUUID);
+			}
+			List<String> genePathways = this.pathwayService.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
+			for (String pathwayUUID : genePathways) {
+				if (pathwayGeneMap.containsKey(pathwayUUID)) {
+					pathwayGeneMap.get(pathwayUUID).add(gene);
+				} else {
+					Set<String> pathwayGeneSet = new HashSet<>();
+					pathwayGeneSet.add(gene);
+					pathwayGeneMap.put(pathwayUUID, pathwayGeneSet);
+				}
+			}
+		}
+		
+		// now we have a map for all pathways with their respective genes from our geneset
+		if (sbml4jConfig.getNetworkConfigProperties().isUseSharedPathwaySearch()) {
+		// find the pathway that contains most genes / get an ordering of them
+			Map<String, Integer> pathwayGeneNumberMap = new HashMap<>();
+			pathwayGeneMap.forEach((key, value)-> {
+				pathwayGeneNumberMap.put(key, value.size());
+			});
+			
+			boolean isFirst = true;
+			
+			int numberOfPathways = pathwayGeneNumberMap.keySet().size();
+			while (numberOfPathways > 0) {
+				Iterator<Map.Entry<String, Integer> > pathwayGeneNumberIterator = pathwayGeneNumberMap.entrySet().iterator();
+				
+				int biggest = 0;
+				String biggestPW = null;
+				while(pathwayGeneNumberIterator.hasNext()) {
+					String pathway = pathwayGeneNumberIterator.next().getKey();
+					boolean pathwayContainsAtLeastOneGeneStillOfInterest = false;
+					for (String gene : geneList) {
+						if (pathwayGeneMap.get(pathway).contains(gene)) {
+							pathwayContainsAtLeastOneGeneStillOfInterest = true;
+							break;
+						}
+					}
+					if(!pathwayContainsAtLeastOneGeneStillOfInterest) {
+						pathwayGeneNumberIterator.remove();
+						numberOfPathways --;
+						pathwayGeneMap.remove(pathway);
+						continue;
+					}
+					
+					if (pathwayGeneNumberMap.get(pathway) > biggest) {
+						biggestPW = pathway;
+						biggest = pathwayGeneNumberMap.get(pathway);
+					} else if (pathwayGeneNumberMap.get(pathway) == biggest && 
+							this.pathwayService.findByEntityUUID(pathway).getPathwayIdString().compareToIgnoreCase(
+													this.pathwayService.findByEntityUUID(biggestPW).getPathwayIdString()) < 0) {
+						biggestPW = pathway;
+						biggest = pathwayGeneNumberMap.get(pathway);
+					}
+				}
+				if (biggest == 1) {
+					// we only have one gene in the biggest pathway 
+					// remove it from our check list
+					pathwayGeneNumberMap.remove(biggestPW);
+					numberOfPathways --;
+					if (!geneList.containsAll(pathwayGeneMap.get(biggestPW))) {
+						// is that gene already contained in another pathway, i.e it is not in the genes list anymore
+						// we don't need that pathway anymore
+						pathwayGeneMap.remove(biggestPW);
+					}
+				}
+					
+				if (biggest > 1 && biggestPW != null) {
+					usedPathwayEntityUUIDSet.add(biggestPW);
+					boolean hasConnectingGene = false;
+					for (String gene : pathwayGeneMap.get(biggestPW)) {
+						if (!geneList.remove(gene)) {
+							hasConnectingGene = true;
+						} else {
+							usedGenes.add(gene);
+						}
+					}
+					pathwayGeneNumberMap.remove(biggestPW);
+					numberOfPathways --;
+					if (isFirst || hasConnectingGene) {
+						isFirst = false;
+						pathwayGeneMap.remove(biggestPW);
+					}
+					if (geneList.size() == 0) {
+						break;
+					}
+				}
+			}
+		}
+		if (!sbml4jConfig.getNetworkConfigProperties().isUseSharedPathwaySearch() || usedGenes.size() < 1) {
+			// we haven't found a pathway connecting at least two genes.
+			/* Strategy:
+			 * 
+			 * Look at the genes again and order by the number of pathways they are in
+			 * consider that the more pathways a gene is part of, the more important it is.
+			 * Take the top 2 genes in that ranking and find a shortest path between them.
+			 * if all the genes have the same amount of pathways
+			 * ideally pick two that are in a cancer pathway
+			 * for now pick the two that are lexically lowest?
+			 * Then 
+			 */
+			Iterator<Map.Entry<String, Set<String>> > pathwayGeneMapIterator = pathwayGeneMap.entrySet().iterator();
+			Map<String, Integer> geneNumberMap = new HashMap<>();
+			while (pathwayGeneMapIterator.hasNext()) {
+				String pathwayEntityUUID = pathwayGeneMapIterator.next().getKey();
+				for (String gene : pathwayGeneMap.get(pathwayEntityUUID)) {
+					if(!geneNumberMap.keySet().contains(gene)) {
+						geneNumberMap.put(gene, 1);
+					} else {
+						int currentNum = geneNumberMap.get(gene).intValue();
+						++currentNum;
+						geneNumberMap.put(gene, currentNum);
+					}
+				}
+			}
+			// possible non-deterministic point here: if more than two pathways are the highest or second highest, it is not determined how the ordering works.
+			// TODO might need additional ordering for that case
+			final Map<String, Integer> sortedByCount = geneNumberMap.entrySet()
+	                .stream()
+	                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+	                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+			if (sortedByCount.keySet().size() < 2) {
+				// something went wrong, we should have at least two differnt genes in here
+				// TODO do something
+				System.out.println("Could not find two different genes after sorting.. Abort..");
+				return null;
+			} else {
+				System.out.println("Connecting two most common genes...");
+				// now take the top two genes and get a shortest path between them
+				Iterator<Map.Entry<String, Integer>> sortedByCountIterator = sortedByCount.entrySet().iterator();
+				String gene1UUID = null;
+				String gene2UUID = null;
+				boolean isGene1 = true;
+				while (sortedByCountIterator.hasNext()) {
+					if (isGene1) {
+						String gene1 = sortedByCountIterator.next().getKey();
+						System.out.println("Gene1: " + gene1);
+						gene1UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID,gene1);
+						if (gene1UUID != null) {
+							usedGenes.add(gene1);
+							geneList.remove(gene1);
+						}
+						
+						isGene1 = false;
+					} else {
+						String gene2 = sortedByCountIterator.next().getKey();
+						System.out.println("Gene2: " + gene2);
+						gene2UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene2);
+						if (gene2UUID != null) {
+							usedGenes.add(gene2);
+							geneList.remove(gene2);
+						}
+						break;
+					}
+				}
+				if (gene1UUID == null || gene2UUID == null) {
+					// again something went wrong
+					// TODO do something
+					return null;
+				} else {
+					Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
+							gene1UUID, 
+							gene2UUID, 
+							this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
+							"weight", 
+							1.0f);
+					this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, dijkstra);
+					for (FlatEdge edge : allFlatEdges) {
+						usedGenes.add(edge.getInputFlatSpecies().getSymbol());
+						usedGenes.add(edge.getOutputFlatSpecies().getSymbol());
+					}
+				}
+			}
+
+		} else {
+			System.out.println("Connecting genes with pathways: " + usedGenes.toString());
+			
+			
+		
+			
+			// add a check here if we didn't find a pathway connecting at least two genes. 
+			// what to do then?
+			
+			
+			// now pathwayGeneMap contains all the pathways that hold one or more items and those items have not been dealt with
+			// deal with those
+			// they are not directly connected through pathways to the other genes
+			// 1.a for the pathway they are in, look at the genes and see if those are part of our gene set
+			// 1.b if not, we can try to find those genes in the other pathways
+			// 2.  otherwise do a single source shortest path to the already used genes.
+			
+			Iterator<Map.Entry<String, Set<String>> > 
+	        iterator = pathwayGeneMap.entrySet().iterator(); 
+			
+			while (iterator.hasNext()) {
+				Map.Entry<String, Set<String>> entry = iterator.next();
+				boolean connectedPathway = false;
+				for (String gene : entry.getValue()) {
+					if (usedGenes.contains(gene)) {
+						continue;
+					} else {
+						for (String otherPathwayUUID : usedPathwayEntityUUIDSet) {
+							int numConnectingGenes = this.pathwayService.findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(entry.getKey(), otherPathwayUUID, gene, usedGenes);
+							if (numConnectingGenes > 0) {
+								// we found connecting genes, this means that the pathway with pathwayUUID contains a gene that is also contained in the pathway with uuid otherPathwayUUID
+								usedGenes.add(gene);
+								geneList.remove(gene);
+								// one could also do:
+								// don't add the whole pathway to the set, but rather
+								// find the shortest path in that pathway only between the current gene and all known genes.
+								usedPathwayEntityUUIDSet.add(entry.getKey());
+								connectedPathway = true;
+								iterator.remove();
+								break;
+							}
+						}
+						if (connectedPathway) {
+							break;
+						}
+					}
+				}
+			}
+			
+			System.out.println("Pathways: " + usedPathwayEntityUUIDSet.toString());
+			
+			// for the pathways in usedPathwayEntityUUIDSet gather all nodes and relationships
+			// possibly using:
+			/*
+			 * match (p:PathwayNode) where p.pathwayIdString = "path_hsa05200" with p match (p)-[w:Warehouse]->(sb:SBase) where w.warehouseGraphEdgeType = "CONTAINS" with [sb.entityUUID] as simpleModelUUIDs MATCH (m:MappingNode)-[wm:Warehouse]->(fs:FlatSpecies) where m.entityUUID = "2f5b5686-c877-4043-9164-1047cf839816" and wm.warehouseGraphEdgeType = "CONTAINS" and fs.simpleModelEntityUUID in simpleModelUUIDs return fs
+			 * This however only gets the nodes and not the relationships to the nodes. But the query also getting the relationships does not return any result
+			 */
+			// suppose we have all nodes and relationships of the pathways (something we should be able to deliver in general)
+			// have a list of them or something
+			
+			for (String pathwayUUID : usedPathwayEntityUUIDSet) {
+				// 1. get all sBase entityUUIDs of the pathway nodes
+				List<String> sBaseUUIDList = this.pathwayService.getSBaseUUIDsOfPathwayNodes(pathwayUUID);
+				// 2. find those pathway uuids in the simpleModelUUIDs of the mapping and return their flatEdges
+				Iterable<FlatEdge> pathwayFlatEdges = this.flatEdgeService.getGeneSetFromSBaseUUIDs(networkEntityUUID, sBaseUUIDList);
+				pathwayFlatEdges.forEach(edge -> {
+					if (!allFlatEdges.contains(edge)) {
+						allFlatEdges.add(edge);
+						seenEdges.add(edge.getSymbol());
+					}
+				});
+			}
+		}
+		System.out.println("Connecting remaining genes..");
+		
+		// now we have to connect the remaining genes with shortest paths
+		//List<ApocPathReturnType> allPathReturns = new ArrayList<>();
+		if (geneList.size() > 0) {
+			// yes, these genes
+			/* Don't use gds for now
+			 * if(!this.gdsRepository.gdsGraphExists(networkEntityUUID)) {
+				// There is no gds graph for the network yet
+				MappingNode baseNetwork = this.mappingNodeRepository.findByEntityUUID(networkEntityUUID);
+				String relationshipString = this.getRelationShipOrString(baseNetwork.getMappingRelationTypes(), new HashSet<>());
+				//int nodeCount = this.gdsRepository.createGdsGraphForMapping(networkEntityUUID, networkEntityUUID, relationshipString);
+				int nodeCount = this.gdsRepository.createGdsGraphForMappingUsingQueries(String.format("%s",  networkEntityUUID), this.getGdsNodeQuery(networkEntityUUID), this.getGdsRelationshipQuery(networkEntityUUID, relationshipString)); //(this.buildCreateGdsGraphQuery(networkEntityUUID, networkEntityUUID, relationshipString));
+				if (nodeCount < 1) {
+					// creation did not work
+					logger.error("Creation of gds graph for mapping with uuid " + networkEntityUUID + " failed.");
+				}
+			}*/
+			
+			Set<String> targetNodeUUIDs = new HashSet<>();
+			for (String usedGeneSymbol : usedGenes) {
+				targetNodeUUIDs.add(this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, usedGeneSymbol));
+			}
+			for (String gene : geneList) {
+				boolean isIdenticalNode = false;
+				System.out.println("Searching connection for gene: " + gene);
+				String geneEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+				if(geneEntityUUID != null) {
+					//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
+					//this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, bfsPath);
+					Map<String, List<FlatEdge>> targetToNumEdges = new HashMap<>();
+					for (String targetUUID : targetNodeUUIDs) {
+						if (targetUUID.equals(geneEntityUUID)) {
+							// it is the same gene, we don't need to connect it. 
+							System.out.println("Gene " + gene + " is identical to gene with uuid " + targetUUID);
+							isIdenticalNode = true;
+							break;
+						}
+						Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
+								geneEntityUUID, 
+								targetUUID, 
+								this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction),  
+								"weight", 
+								1.0f);
+						List<FlatEdge> targetFlatEdgeList = new ArrayList<>();
+						this.apocService.extractFlatEdgesFromApocPathReturnTypeWithoutSideeffect(targetFlatEdgeList, seenEdges, dijkstra);
+						targetToNumEdges.put(targetUUID, targetFlatEdgeList);
+					}
+					if(isIdenticalNode) {
+						continue;
+					}
+					int maxNum = 10000000;
+					String lowestTargetGeneUUID = null;
+					for (String targetGeneUUID : targetToNumEdges.keySet()) {
+						int targetNum = targetToNumEdges.get(targetGeneUUID).size();
+						if (targetNum > 0 && targetNum < maxNum) {
+							maxNum = targetNum;
+							lowestTargetGeneUUID = targetGeneUUID;
+						}
+					}
+					if (lowestTargetGeneUUID == null) {
+						System.out.println("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
+					} else {
+						System.out.println("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
+						for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
+							if (!allFlatEdges.contains(edge)) {
+								allFlatEdges.add(edge);
+								seenEdges.add(edge.getSymbol());
+							}
+						}
+						targetNodeUUIDs.add(geneEntityUUID);
+					}
+				} else {
+					System.out.println("Could not find gene " + gene);
+				}
+				
+				//bfsPath.forEach(allPathReturns::add);
+			}
+		}
+		// now add the context around the target genes
+		for (String geneFlatSpeciesEntityUUID : targetGeneUUIDSet) {
+			// get the sourroundings of the gene
+			Iterable<ApocPathReturnType> geneContextNet = this.apocService.pathExpand(
+					geneFlatSpeciesEntityUUID, 
+					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
+					this.apocService.getNodeOrString(networkNodeTypes, terminateAtDrug),
+					minSize, 
+					maxSize);
+			this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, geneContextNet);
+		}
+		return allFlatEdges;
+		
+	}
+	
+}
