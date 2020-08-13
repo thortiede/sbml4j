@@ -22,6 +22,7 @@ package org.tts.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,4 +116,25 @@ public class PathwayService {
 		return this.pathwayNodeRepository.findByEntityUUID(entityUUID);
 	}
 	
+	/**
+	 * Find the number of connecting nodes that share a pathway connection with two input nodes
+	 * @param pathway1UUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a> of node 1
+	 * @param pathway2UUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a> of node 2
+	 * @param geneOfPathway1 The symbol of the node 1
+	 * @param genesOfPathway2 The symbol of the node 2
+	 * @return number of connection nodes
+	 */
+	public int findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(String pathway1UUID, String pathway2UUID,
+			String geneOfPathway1, Set<String> genesOfPathway2) {
+		return this.pathwayNodeRepository.findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(pathway1UUID, pathway2UUID, geneOfPathway1, genesOfPathway2);
+	}
+	
+	/**
+	 * Get a List of entityUUIDs of <a href="#{@link}">{@link SBMLSBaseEntity}</a> that are in a pathway
+	 * @param pathwayUUID The entiyUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return List of Strings of entityUUIDs
+	 */
+	List<String> getSBaseUUIDsOfPathwayNodes(String pathwayUUID) {
+		return this.pathwayNodeRepository.getSBaseUUIDsOfPathwayNodes(pathwayUUID);
+	}
 }

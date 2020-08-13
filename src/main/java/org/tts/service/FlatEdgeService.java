@@ -156,6 +156,25 @@ public class FlatEdgeService {
 	public Iterable<FlatEdge> getGeneSet(String networkEntityUUID, List<String> nodeUUIDs) {
 		return this.flatEdgeRepository.getGeneSet(networkEntityUUID.toString(), nodeUUIDs);
 	}
+
+	/**
+	 * Get an Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities in a Iterable of <a href="#{@link}">{@link MappingNode}</a> using Iterable of <a href="#{@link}">{@link SBMLSBaseEntity}</a> entityUUIDs
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param simpleModelUUIDs The entityUUIDs of the <a href="#{@link}">{@link SBMLSBaseEntity}</a> entities to find in the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities found
+	 */
+	public Iterable<FlatEdge> getGeneSetFromSBaseUUIDs(String networkEntityUUID, List<String> simpleModelUUIDs) {
+		return this.flatEdgeRepository.getGeneSetFromSBaseUUIDs(networkEntityUUID, simpleModelUUIDs);
+	}
+	
+	/**
+	 * Get all <a href="#{@link}">{@link FlatEdge}</a> entities of a network with enitityUUID
+ 	 * @param entityUUID The entityUUID of a <a href="#{@link}">{@link MappingNode}</a> that contains the requested <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 */
+	public Iterable<FlatEdge> getNetworkFlatEdges(String entityUUID) {
+		return this.flatEdgeRepository.getNetworkContentsFromUUID(entityUUID);
+	}
 	
 	/**
 	 * Save a collection of <a href="#{@link}">{@link FlatEdge}</a>
