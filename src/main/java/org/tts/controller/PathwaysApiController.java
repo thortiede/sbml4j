@@ -53,6 +53,8 @@ import org.tts.service.NetworkMappingService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
+import org.tts.service.warehouse.DatabaseNodeService;
+import org.tts.service.warehouse.PathwayCollectionNodeService;
 
 /**
  * Controller for handling Pathway requests
@@ -63,19 +65,24 @@ import org.tts.service.WarehouseGraphService;
  */
 @Controller
 public class PathwaysApiController implements PathwaysApi {
+	
+	@Autowired
+	PathwayCollectionNodeService pathwayCollectionNodeService;
 
 	@Autowired
-	PathwayService pathwayService;
-	
-	@Autowired
-	WarehouseGraphService warehouseGraphService;
-	
-	@Autowired
-	ProvenanceGraphService provenanceGraphService;
+	DatabaseNodeService databaseNodeService;
 	
 	@Autowired
 	NetworkMappingService networkMappingService;
 	
+	@Autowired
+	PathwayService pathwayService;
+	
+	@Autowired
+	ProvenanceGraphService provenanceGraphService;
+
+	@Autowired
+	WarehouseGraphService warehouseGraphService;
 	
 	
 	Logger log = LoggerFactory.getLogger(PathwaysApiController.class);
@@ -107,12 +114,12 @@ public class PathwaysApiController implements PathwaysApi {
 				ProvenanceGraphEdgeType.wasAssociatedWith);
 
 		// get databaseNode
-		DatabaseNode database = this.warehouseGraphService
-				.getDatabaseNode(body.getDatabaseUUID().toString());
+		DatabaseNode database = this.databaseNodeService
+				.findByEntityUUID(body.getDatabaseUUID().toString());
 		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, database, ProvenanceGraphEdgeType.used);
 
 		// create a pathwayCollectionNode
-		PathwayCollectionNode pathwayCollectionNode = this.warehouseGraphService.createPathwayCollection(
+		PathwayCollectionNode pathwayCollectionNode = this.pathwayCollectionNodeService.createPathwayCollection(
 				body, database, createKnowledgeGraphActivityNode, userAgentNode);
 
 		// then create the pathway to the collection by iterating over all pathways in
@@ -125,7 +132,7 @@ public class PathwaysApiController implements PathwaysApi {
 				ProvenanceGraphEdgeType.wasGeneratedBy);
 		this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 
-		pathwayNode = this.warehouseGraphService.buildPathwayFromCollection(
+		pathwayNode = this.pathwayCollectionNodeService.buildPathwayFromCollection(
 				pathwayNode, pathwayCollectionNode, createKnowledgeGraphActivityNode, userAgentNode);
 		return new ResponseEntity<UUID>(UUID.fromString(pathwayNode.getEntityUUID()), HttpStatus.CREATED);
    }
@@ -188,7 +195,7 @@ public class PathwaysApiController implements PathwaysApi {
 					ProvenanceGraphEdgeType.wasAssociatedWith);
 
 			// need the pathwayNode
-			PathwayNode pathway = this.warehouseGraphService.getPathwayNode(user, uuid.toString());
+			PathwayNode pathway = this.pathwayService.findByEntityUUID(uuid.toString());
 			if (pathway == null) {
 				return ResponseEntity.badRequest().header("reason", "UUID did not denote a valid pathway, or pathway could not be accessed by user").build();
 			}
