@@ -30,10 +30,13 @@ import org.springframework.stereotype.Service;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkOptions;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.warehouse.MappingNodeRepository;
+import org.tts.service.GraphBaseEntityService;
 
 /**
  * Service for handling requests to and from the MappingNodeRepository
@@ -47,6 +50,25 @@ public class MappingNodeService {
 
 	@Autowired
 	MappingNodeRepository mappingNodeRepository;
+	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	/**
+	 * Creates a new <a href="#{@link}">{@link MappingNode}</a>
+	 * @param parent The  <a href="#{@link}">{@link WarehouseGraphNode}</a> that the new <a href="#{@link}">{@link MappingNode}</a> is derived from
+	 * @param type The <a href="#{@link}">{@link NetworkMappingType}</a> of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingName The name of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The newly created and persisted <a href="#{@link}">{@link MappingNode}</a>
+	 */
+	public MappingNode createMappingNode(WarehouseGraphNode parent, NetworkMappingType type, String mappingName) {
+		MappingNode newMappingNode = new MappingNode();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newMappingNode);
+		newMappingNode.setOrganism(parent.getOrganism());
+		newMappingNode.setMappingType(type);
+		newMappingNode.setMappingName(mappingName);
+		return this.save(newMappingNode, 0);
+	}
 	
 	/**
 	 * Find all <a href="#{@link}">{@link MappingNode}</a> that are associated with the user user
@@ -141,7 +163,7 @@ public class MappingNodeService {
 	public List<FlatSpecies> getMappingFlatSpecies(String entityUUID) {
 		return this.mappingNodeRepository.getMappingFlatSpecies(entityUUID);
 	}
-
+	
 	/**
 	 * Check whether a <a href="#{@link}">{@link MappingNode}</a> is Attributed to a <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> of user
 	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to check
@@ -152,4 +174,13 @@ public class MappingNodeService {
 		return this.mappingNodeRepository.isMappingNodeAttributedToUser(entityUUID, user);
 	}
 	
+	/**
+	 * Persist a <a href="#{@link}">{@link MappingNode}</a>
+	 * @param node The <a href="#{@link}">{@link MappingNode}</a> to persist
+	 * @param depth The depth to use for persisting (0 means only this node, 1 means also the connected nodes, larger values propagate through child nodes)
+	 * @return The persisted MappingNode
+	 */
+	public MappingNode save(MappingNode node, int depth) {
+		return this.mappingNodeRepository.save(node, depth);
+	}
 }
