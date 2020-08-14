@@ -163,7 +163,8 @@ public interface NetworksApi {
             })    }, tags={ "networks", })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "network copied", response = NetworkInventoryItem.class, responseContainer = "List"),
-        @ApiResponse(code = 400, message = "Invalid input") })
+        @ApiResponse(code = 400, message = "Invalid input"),
+    	@ApiResponse(code = 403, message = "The current user is forbidden from accessing this data") })
     @RequestMapping(value = "/networks/{UUID}",
         produces = { "application/json" }, 
         method = RequestMethod.POST)
