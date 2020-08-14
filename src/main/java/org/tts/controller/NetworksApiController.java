@@ -89,7 +89,7 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<List<NetworkInventoryItem>> addAnnotationToNetwork(@Valid AnnotationItem body, String user,
 			UUID UUID) {
 		
-		MappingNode parent = this.warehouseGraphService.getMappingNode(UUID.toString());
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(UUID.toString());
 		String newMappingName = parent.getMappingName() + "_annotate_with" + 
 				(body.getNodeAnnotationName() != null ? "_nodeAnnotation:" + body.getNodeAnnotationName() : "") + 
 				(body.getRelationAnnotationName() != null ? "_relationAnnotation:" + body.getRelationAnnotationName() : "");
@@ -121,14 +121,37 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> copyNetwork(String user, UUID UUID) {
+		// 1. Is the user allowed to work on that network?
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString());
 		// TODO Auto-generated method stub
 		return NetworksApi.super.copyNetwork(user, UUID);
 	}
 	
 	@Override
 	public ResponseEntity<Void> deleteNetwork(String user, UUID UUID) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.deleteNetwork(user, UUID);
+		// 1. Does the network exist?
+		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+			return ResponseEntity.notFound().build();
+		}
+		// 2. Is the user allowed to work on that network?
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<Void>(HttpStatus.FORBIDDEN);
+		}
+		// 3. Delete network / Deactivate network
+		boolean isDeleted = false;
+		if (sbml4jConfig.getNetworkConfigProperties().isHardDelete()) {
+			isDeleted = this.networkService.deleteNetwork(UUID.toString());
+		} else {
+			isDeleted = this.networkService.deactivateNetwork(UUID.toString());
+		}
+		if(isDeleted) {
+			return ResponseEntity.noContent().build();
+		} else {
+			return ResponseEntity.badRequest().header("reason", "Found network associated to user, but failed to delete it").build();
+		}
 	}
 	
 	@Override
