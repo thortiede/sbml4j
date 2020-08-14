@@ -28,6 +28,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
+import org.tts.model.common.Organism;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
@@ -43,6 +44,25 @@ public class PathwayService {
 
 	@Autowired
 	PathwayNodeRepository pathwayNodeRepository;
+	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	/**
+	 * Create a new <a href="#{@link}">{@link PathwayNode}</a>
+	 * @param idString The idString to set
+	 * @param nameString The nameString to set
+	 * @param org The organism this <a href="#{@link}">{@link PathwayNode}</a> is for
+	 * @return The newly created and persisted <a href="#{@link}">{@link PathwayNode}</a>
+	 */
+	public PathwayNode createPathwayNode(String idString, String nameString, Organism org) {
+		PathwayNode newPathwayNode = new PathwayNode();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newPathwayNode);
+		newPathwayNode.setOrganism(org);
+		newPathwayNode.setPathwayIdString(idString);
+		newPathwayNode.setPathwayNameString(nameString);
+		return this.pathwayNodeRepository.save(newPathwayNode);
+	}
 	
 	/**
 	 * Find all <a href="#{@link}">{@link PathwayNode}</a> names for a <a href="#{@link}">{@link FlatSpecies}</a> in a <a href="#{@link}">{@link MappingNode}</a>
