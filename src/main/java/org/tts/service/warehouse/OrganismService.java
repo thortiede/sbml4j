@@ -91,7 +91,7 @@ public class OrganismService {
 	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link w:WarehouseGraphNode}</a>
 	 * @return The <a href="#{@link}">{@link Organism}</a> found using the query
 	 */
-	public Organism findOrgansimForWarehouseGraphNode(String entityUUID) {
+	public Organism findOrganismForWarehouseGraphNode(String entityUUID) {
 		return this.organismRepository.findOrganismForWarehouseGraphNode(entityUUID);
 	}
 }
