@@ -42,8 +42,18 @@ public class FlatSpeciesService {
 	@Autowired
 	FlatSpeciesRepository flatSpeciesRepository;
 	
-	public Iterable<FlatSpecies> persistListOfFlatSpecies(List<FlatSpecies> flatSpeciesList) {
-		return this.flatSpeciesRepository.save(flatSpeciesList, 1);
+	/**
+	 * Delete a List of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param speciesToDelete The List of <a href="#{@link}">{@link FlatSpecies}</a> to delete
+	 * @return true if the <a href="#{@link}">{@link FlatSpecies}</a> were deleted, false if an error occured
+	 */
+	public boolean deleteAll(List<FlatSpecies> speciesToDelete) {
+		try {
+			this.flatSpeciesRepository.deleteAll(speciesToDelete);
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
 	}
 	
 	/**
@@ -68,6 +78,15 @@ public class FlatSpeciesService {
 
 	public FlatSpecies findBySimpleModelEntityUUID(String baseNetworkUUID, String simpleModelGeneEntityUUID) {
 		return this.flatSpeciesRepository.findBySimpleModelEntityUUID(simpleModelGeneEntityUUID, baseNetworkUUID);
+	}
+	
+	/**
+	 * Persist a List of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param flatSpeciesList The List of <a href="#{@link}">{@link FlatSpecies}</a> to persist
+	 * @return An Iterable of the persisted <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	public Iterable<FlatSpecies> persistListOfFlatSpecies(List<FlatSpecies> flatSpeciesList) {
+		return this.flatSpeciesRepository.save(flatSpeciesList, 1);
 	}
 	
 	/**
