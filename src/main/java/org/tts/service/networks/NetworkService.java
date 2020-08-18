@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
@@ -111,6 +112,52 @@ public class NetworkService {
 	
 	
 	/**
+	 * Copy a network in the database and associate it to a user
+	 * Takes all <a href="#{@link}">{@link FlatEdge}</a> entities and <a href="#{@link}">{@link FlatSpecies}</a> entities and creates copies of them in the database
+	 * Adds the copied entities to the List of CONTAINED entities in the newly created <a href="#{@link}">{@link MappingNode}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to copy
+	 * @param user The user to associate the newly created <a href="#{@link}">{@link MappingNode}</a> with
+	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
+	 */
+	public MappingNode copyNetwork(String networkEntityUUID, String user) {
+		// Activity
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		String newMappingName = "CopyOf_" + parent.getMappingName();
+		String activityName = "Create_copy_of_" + networkEntityUUID;
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		NetworkMappingType mappingType = parent.getMappingType();
+		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
+		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
+				mappingType);
+		// Get all FlatSpecies of the network to copy
+		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(networkEntityUUID);
+		
+		// Get and reset all he new <a href="#{@link}">{@link FlatEdge}</a> entities
+		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
+		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
+		// reset any remaining unconnected species
+		Iterable<FlatSpecies> unconnectedSpecies = resetFlatSpecies(networkSpecies);
+		
+		// clear the session to re-fetch all entities on request and not reuse old ids
+		this.session.clear();
+		
+		// save the new Edges
+		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
+		// save the unconnected Species
+		Iterable<FlatSpecies> newFlatSpecies = this.flatSpeciesService.save(unconnectedSpecies, 0);
+		
+		connectContains(newMapping, newFlatEdges, newFlatSpecies);
+		
+		// update MappingNode
+		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
+		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
+		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
+		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
+		
+		return this.mappingNodeService.save(newMapping, 0);
+	}
+
+	/**
 	 * Create necessary warehouse items for adding a new MappingNode
 	 * 
 	 * @param user The user to associate with the network
@@ -121,7 +168,6 @@ public class NetworkService {
 	 * @param mappingType The <a href="#{@link}">{@link NetworkMappingType}</a> of the new <a href="#{@link}">{@link MappingNode}</a>
 	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
 	 */
-	
 	public MappingNode createMappingPre(String user, MappingNode parent, String newMappingName,
 			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
 		// AgentNode
@@ -206,148 +252,84 @@ public class NetworkService {
 	}
 	
 	/**
-	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a list of entityUUIDs
-	 * 
-	 * @param nodeUUIDs List of entityUUIDs for the nodes to get
-	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * Filter a network according to the <a href="#{@link}">{@link FilterOptions}</a> given
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to filter
+	 * @param filterOptions The <a href="#{@link}">{@link FilterOptions}</a> to apply
+	 * @param user The user to associate the filtered network to
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> of the filtered network
 	 */
-	public List<FlatSpecies> getNetworkNodes(List<String> nodeUUIDs) {
-		List<FlatSpecies> species = new ArrayList<>();
-		for (String nodeUUID : nodeUUIDs) {
-			species.add(this.flatSpeciesService.findByEntityUUID(nodeUUID));
-		}
-		return species;
-	}
-	
-	/**
-	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
-	 */
-	public Iterable<FlatSpecies> getNetworkNodes(String networkEntityUUID) {
-		return this.mappingNodeService.getMappingFlatSpecies(networkEntityUUID);
-	}
-	
-/************************************************************* NetworkNodes and NetworkNodeTypes ***********************************************/
-	
-	/**
-	 * Get the node symbols of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
-	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Set of Strings with node symbols
-	 */
-	public Set<String> getNetworkNodeSymbols(String entityUUID) {
-		return this.getNetworkNodeSymbols(this.getNetworkNodes(entityUUID));
-	}
+	public MappingNode filterNetwork(String networkEntityUUID, FilterOptions filterOptions, String user) {
+		// Activity
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		String newMappingName = "Filter_network_" + parent.getMappingName();
+		String activityName = "Filter_network_" + networkEntityUUID;
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		NetworkMappingType mappingType = parent.getMappingType();
+		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
+		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
+				mappingType);
 
-	/**
-	 * Get the node symbols of a collection of <a href="#{@link}">{@link FlatSpecies}</a> 
-	 * @param networkNodes The collection of <a href="#{@link}">{@link FlatSpecies}</a> 
-	 * @return Set of Strings with node symbols
-	 */
-	public Set<String> getNetworkNodeSymbols(Iterable<FlatSpecies> networkNodes) {
-		Set<String> networkNodeNames = new HashSet<>();
-		for (FlatSpecies node : networkNodes) {
-			networkNodeNames.add(node.getSymbol());
-		}
-		return networkNodeNames;
-	}
-	
-	/**
-	 * Get the number of nodes in a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return The number of nodes
-	 */
-	public int getNumberOfNetworkNodes(String networkEntityUUID) {
-		return (int) StreamSupport.stream(this.getNetworkNodes(networkEntityUUID).spliterator(), false).count(); 
-	}
-	
-	/**
-	 * Get the node types of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Set of Strings with node types
-	 */
-	public Set<String> getNetworkNodeTypes(String networkEntityUUID) {
-		return this.getNetworkNodeTypes(this.getNetworkNodes(networkEntityUUID));
-	}
-	
-	/**
-	 * Get the node types of a collection of <a href="#{@link}">{@link FlatSpecies}</a> 
-	 * @param networkNodes The collection of <a href="#{@link}">{@link FlatSpecies}</a> 
-	 * @return Set of Strings with node types
-	 */
-	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes) {
-		Set<String> nodeTypes = new HashSet<>();
-		for (FlatSpecies node : networkNodes) {
-			nodeTypes.add(node.getSboTerm());
-		}
-		return nodeTypes;
-	}
-
-/************************************************************* NetworkRelations and NetworkRelationTypes ***********************************************/
-	
-	/**
-	 * Retrieve <a href="#{@link}">{@link FlatEdge}</a> entities of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
-	 */
-	public Iterable<FlatEdge> getNetworkRelations(String networkEntityUUID) {
-		return this.flatEdgeService.getNetworkFlatEdges(networkEntityUUID);
-	}
-
-	/**
-	 * Get the relation symbols of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Set of String with relation symbols
-	 */
-	public Set<String> getNetworkRelationSymbols(String networkEntityUUID) {
-		return this.getNetworkRelationSymbols(this.getNetworkRelations(networkEntityUUID));
-	}
-
-	/**
-	 * Get the relation symbols of a collection of <a href="#{@link}">{@link FlatEdge}</a> entities
-	 * @param networkRelations The collection of <a href="#{@link}">{@link FlatEdge}</a> entities
-	 * @return Set of String with relation symbols
-	 */
-	public Set<String> getNetworkRelationSymbols(Iterable<FlatEdge> networkRelations) {
-		Set<String> relationSymbols = new HashSet<>();
-		for (FlatEdge edge : networkRelations) {
-			relationSymbols.add(edge.getSymbol());
-		}
-		return relationSymbols;
-	}
+		// Lists to check for Filtering
+		final List<String> relationTypesToBeIncluded = filterOptions.getRelationTypes();
+		final List<String> nodeTypesToBeIncluded = filterOptions.getNodeTypes();
+		final List<String> nodeSymbolsToBeIncluded = filterOptions.getNodeSymbols();
+		final List<String> relationSymbolsToBeIncluded = filterOptions.getRelationSymbols();
 		
-	/**
-	 * Get the relation types of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return Set of String with relation types
-	 */
-	public Set<String> getNetworkRelationTypes(String networkEntityUUID) {
-		return this.getNetworkRelationTypes(this.getNetworkRelations(networkEntityUUID));	
-	}
-	
-	/**
-	 * Get the relation types of a collection of <a href="#{@link}">{@link FlatEdge}</a> entities
-	 * @param networkRelations The collection of <a href="#{@link}">{@link FlatEdge}</a> entities
-	 * @return Set of String with relation relations
-	 */
-	public Set<String> getNetworkRelationTypes(Iterable<FlatEdge> networkRelations) {
-		Set<String> networkRelationTypes = new HashSet<>();
-		for (FlatEdge edge : networkRelations) {
-			networkRelationTypes.add(edge.getTypeString());
+		// Get the network contents
+		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
+		
+		Iterator<FlatEdge> relationIterator = networkRelations.iterator();
+		while (relationIterator.hasNext()) {
+			FlatEdge currentEdge = relationIterator.next();
+			if (!relationSymbolsToBeIncluded.contains(currentEdge.getSymbol()) ||
+				!relationTypesToBeIncluded.contains(currentEdge.getTypeString()) ||
+				!nodeSymbolsToBeIncluded.contains(currentEdge.getInputFlatSpecies().getSymbol()) ||
+				!nodeTypesToBeIncluded.contains(this.utilityService.translateSBOString(currentEdge.getInputFlatSpecies().getSboTerm())) ||
+				!nodeSymbolsToBeIncluded.contains(currentEdge.getOutputFlatSpecies().getSymbol()) ||
+				!nodeTypesToBeIncluded.contains(this.utilityService.translateSBOString(currentEdge.getOutputFlatSpecies().getSboTerm()))
+				) {
+				relationIterator.remove();
+			} else {
+				this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge);
+				this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge.getInputFlatSpecies());
+				this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge.getOutputFlatSpecies());
+			}
 		}
-		return networkRelationTypes;
+		
+		this.session.clear();
+		
+		// Persist the FlatEdge entities
+		Iterable<FlatEdge> persistedFlatEdges = this.flatEdgeService.save(networkRelations, 1);
+		// connect to MappingNode
+		connectContainsFlatEdgeSpecies(newMapping, persistedFlatEdges);
+		
+		
+		// update MappingNode
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		String newMappingEntityUUID = newMapping.getEntityUUID();
+		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
+		newMapping.setMappingNodeSymbols(this.getNetworkNodeSymbols(newMappingEntityUUID));
+		newMapping.setMappingNodeTypes(this.getNetworkNodeTypes(newMappingEntityUUID));
+		newMapping.setMappingRelationSymbols(this.getNetworkRelationSymbols(newMappingEntityUUID));
+		newMapping.setMappingRelationTypes(this.getNetworkRelationTypes(newMappingEntityUUID));
+		
+		return this.mappingNodeService.save(newMapping, 0);
 	}
 	
 	/**
-	 * Get the number of relations of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return The number of relations
+	 * Finds the entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> with geneSymbol in network.
+	 * Only returns a entityUUID when there is a <a href="#{@link}">{@link FlatSpecies}</a> in network that 
+	 * does have the symbol geneSymbol 
+	 * 
+	 * @param networkEntityUUID The network to search in
+	 * @param geneSymbol The symbol to search
+	 * @return UUID of the <a href="#{@link}">{@link FlatSpecies}</a> with symbol geneSymbol
 	 */
-	public int getNumberOfNetworkRelations(String networkEntityUUID) {
-		return (int) StreamSupport.stream(this.getNetworkRelations(networkEntityUUID).spliterator(), false).count(); 
+	public String findEntityUUIDForSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
+		return this.flatSpeciesService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
 	}
-	
-	
+
 	/**
 	 * Returns the geneSet for nodeUUIDs in network with UUID networkEntityUUID.
 	 * Searches for direct connections between pairs of <a href="#{@link}">{@link FlatSpecies}</a> in the List nodeUUIDs
@@ -421,7 +403,144 @@ public class NetworkService {
 		return flatSpeciesEntityUUID;
 	}
 	
+	/**
+	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a list of entityUUIDs
+	 * 
+	 * @param nodeUUIDs List of entityUUIDs for the nodes to get
+	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a>
+	 */
+	public List<FlatSpecies> getNetworkNodes(List<String> nodeUUIDs) {
+		List<FlatSpecies> species = new ArrayList<>();
+		for (String nodeUUID : nodeUUIDs) {
+			species.add(this.flatSpeciesService.findByEntityUUID(nodeUUID));
+		}
+		return species;
+	}
 	
+	/**
+	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	public Iterable<FlatSpecies> getNetworkNodes(String networkEntityUUID) {
+		return this.mappingNodeService.getMappingFlatSpecies(networkEntityUUID);
+	}
+
+	/**
+	 * Get the node symbols of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Set of Strings with node symbols
+	 */
+	public Set<String> getNetworkNodeSymbols(String entityUUID) {
+		return this.getNetworkNodeSymbols(this.getNetworkNodes(entityUUID));
+	}
+
+	/**
+	 * Get the node symbols of a collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @param networkNodes The collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @return Set of Strings with node symbols
+	 */
+	public Set<String> getNetworkNodeSymbols(Iterable<FlatSpecies> networkNodes) {
+		Set<String> networkNodeNames = new HashSet<>();
+		for (FlatSpecies node : networkNodes) {
+			networkNodeNames.add(node.getSymbol());
+		}
+		return networkNodeNames;
+	}
+	
+	/**
+	 * Get the number of nodes in a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The number of nodes
+	 */
+	public int getNumberOfNetworkNodes(String networkEntityUUID) {
+		return (int) StreamSupport.stream(this.getNetworkNodes(networkEntityUUID).spliterator(), false).count(); 
+	}
+	
+	/**
+	 * Get the node types of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Set of Strings with node types
+	 */
+	public Set<String> getNetworkNodeTypes(String networkEntityUUID) {
+		return this.getNetworkNodeTypes(this.getNetworkNodes(networkEntityUUID));
+	}
+	
+	/**
+	 * Get the node types of a collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @param networkNodes The collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @return Set of Strings with node types
+	 */
+	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes) {
+		Set<String> nodeTypes = new HashSet<>();
+		for (FlatSpecies node : networkNodes) {
+			nodeTypes.add(node.getSboTerm());
+		}
+		return nodeTypes;
+	}
+	
+	/**
+	 * Retrieve <a href="#{@link}">{@link FlatEdge}</a> entities of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	public Iterable<FlatEdge> getNetworkRelations(String networkEntityUUID) {
+		return this.flatEdgeService.getNetworkFlatEdges(networkEntityUUID);
+	}
+
+	/**
+	 * Get the relation symbols of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Set of String with relation symbols
+	 */
+	public Set<String> getNetworkRelationSymbols(String networkEntityUUID) {
+		return this.getNetworkRelationSymbols(this.getNetworkRelations(networkEntityUUID));
+	}
+
+	/**
+	 * Get the relation symbols of a collection of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @param networkRelations The collection of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @return Set of String with relation symbols
+	 */
+	public Set<String> getNetworkRelationSymbols(Iterable<FlatEdge> networkRelations) {
+		Set<String> relationSymbols = new HashSet<>();
+		for (FlatEdge edge : networkRelations) {
+			relationSymbols.add(edge.getSymbol());
+		}
+		return relationSymbols;
+	}
+		
+	/**
+	 * Get the relation types of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Set of String with relation types
+	 */
+	public Set<String> getNetworkRelationTypes(String networkEntityUUID) {
+		return this.getNetworkRelationTypes(this.getNetworkRelations(networkEntityUUID));	
+	}
+	
+	/**
+	 * Get the relation types of a collection of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @param networkRelations The collection of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @return Set of String with relation relations
+	 */
+	public Set<String> getNetworkRelationTypes(Iterable<FlatEdge> networkRelations) {
+		Set<String> networkRelationTypes = new HashSet<>();
+		for (FlatEdge edge : networkRelations) {
+			networkRelationTypes.add(edge.getTypeString());
+		}
+		return networkRelationTypes;
+	}
+	
+	/**
+	 * Get the number of relations of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The number of relations
+	 */
+	public int getNumberOfNetworkRelations(String networkEntityUUID) {
+		return (int) StreamSupport.stream(this.getNetworkRelations(networkEntityUUID).spliterator(), false).count(); 
+	}
+		
 	/**
 	 * Get the <a href="#{@link}">{@link NetworkOptions}</a> for the <a href="#{@link}">{@link MappingNode}</a> with entityUUId networkEntityUuid
 	 * @param networkEntityUuid The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
@@ -437,21 +556,6 @@ public class NetworkService {
 	}
 	
 	/**
-	 * Finds the entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> with geneSymbol in network.
-	 * Only returns a entityUUID when there is a <a href="#{@link}">{@link FlatSpecies}</a> in network that 
-	 * does have the symbol geneSymbol 
-	 * 
-	 * @param networkEntityUUID The network to search in
-	 * @param geneSymbol The symbol to search
-	 * @return UUID of the <a href="#{@link}">{@link FlatSpecies}</a> with symbol geneSymbol
-	 */
-	public String findEntityUUIDForSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
-		return this.flatSpeciesService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
-	}
-
-/************************************************************* NetworkInventoryItem **********************************************/	
-	
-	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> with entityUUID
 	 * 
 	 * @param entityUUID The entityUUID of the MappingNode to get the <a href="#{@link}">{@link NetworkInventoryItem}</a> for
@@ -462,6 +566,37 @@ public class NetworkService {
 		return getNetworkIventoryItem(mapping);
 	}
 
+	/**
+	 * Connect a set of <a href="#{@link}">{@link FlatEdge}</a> entities (or rather the <a href="#{@link}">{@link FlatSpecies}</a> within) to a <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingNode The <a href="#{@link}">{@link MappingNode}</a> to connect to
+	 * @param flatEdges The Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities to connect
+	 * @param flatSpecies Additionally connect those <a href="#{@link}">{@link FlatSpecies}</a> entities
+	 */
+	private void connectContains(MappingNode mappingNode, Iterable<FlatEdge> flatEdges,
+			Iterable<FlatSpecies> flatSpecies) {
+		// now connect the new entities to the MappingNode
+		connectContainsFlatEdgeSpecies(mappingNode, flatEdges);
+		// connect the unconnected species
+		Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
+		while (newFlatSpeciesIterator.hasNext()) {
+			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS);
+		}
+	}
+
+	/**
+	 * Connect a set of <a href="#{@link}">{@link FlatEdge}</a> entities (or rather the <a href="#{@link}">{@link FlatSpecies}</a> within) to a <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingNode The <a href="#{@link}">{@link MappingNode}</a> to connect to
+	 * @param flatEdges The Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities to connect
+	 */
+	private void connectContainsFlatEdgeSpecies(MappingNode mappingNode, Iterable<FlatEdge> flatEdges) {
+		Iterator<FlatEdge> newFlatEdgeIterator = flatEdges.iterator();
+		while (newFlatEdgeIterator.hasNext()) {
+			FlatEdge currentEdge = newFlatEdgeIterator.next();
+			this.warehouseGraphService.connect(mappingNode, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(mappingNode, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
+		}
+	}
+	
 	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> mapping
 	 * 
@@ -517,77 +652,25 @@ public class NetworkService {
 		 */
 		return item;
 	}
-
-	/**
-	 * Copy a network in the database and associate it to a user
-	 * Takes all <a href="#{@link}">{@link FlatEdge}</a> entities and <a href="#{@link}">{@link FlatSpecies}</a> entities and creates copies of them in the database
-	 * Adds the copied entities to the List of CONTAINED entities in the newly created <a href="#{@link}">{@link MappingNode}</a>
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to copy
-	 * @param user The user to associate the newly created <a href="#{@link}">{@link MappingNode}</a> with
-	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
+	
+	/** 
+	 * Reset the entityUUID (draw a new UUID) and set id and version to null of the given <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param flatSpecies The <a href="#{@link}">{@link FlatSpecies}</a> to reset
+	 * @return Iterable of resetted FlatSpecies
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user) {
-		// Activity
-		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		String newMappingName = "CopyOf_" + parent.getMappingName();
-		String activityName = "Create_copy_of_" + networkEntityUUID;
-		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
-		NetworkMappingType mappingType = parent.getMappingType();
-		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
-		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
-				mappingType);
-		// Get all FlatSpecies of the network to copy
-		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(networkEntityUUID);
-		// Get and reset all he new <a href="#{@link}">{@link FlatEdge}</a> entities
-		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
-		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
-		// reset any remaining unconnected species
-		List<FlatSpecies> unconnectedSpecies = resetFlatSpecies(networkSpecies);
-		// clear the session to re-fetch all entities on request and not reuse old ids
-		this.session.clear();
-		// save the new Edges
-		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
-		// save the unconnected Species
-		Iterable<FlatSpecies> newFlatSpecies = this.flatSpeciesService.save(unconnectedSpecies, 0);
-		
-		// now connect the new entities to the MappingNode
-		Iterator<FlatEdge> newFlatEdgeIterator = newFlatEdges.iterator();
-		while (newFlatEdgeIterator.hasNext()) {
-			FlatEdge currentEdge = newFlatEdgeIterator.next();
-			this.warehouseGraphService.connect(newMapping, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
-			this.warehouseGraphService.connect(newMapping, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
-		}
-		// connect the unconnected species
-		Iterator<FlatSpecies> newFlatSpeciesIterator = newFlatSpecies.iterator();
-		while (newFlatEdgeIterator.hasNext()) {
-			this.warehouseGraphService.connect(newMapping, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS);
-		}
-		// update MappingNode
-		newMapping.setAnnotation(parent.getAnnotation());
-		newMapping.setAnnotationType(parent.getAnnotationType());
-		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
-		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
-		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
-		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		
-		return this.mappingNodeService.save(newMapping, 0);
-	}
-
-
-	private List<FlatSpecies> resetFlatSpecies(Iterable<FlatSpecies> flatSpecies) {
-		List<FlatSpecies> resettedSpecies = new ArrayList<>();
+	private Iterable<FlatSpecies> resetFlatSpecies(Iterable<FlatSpecies> flatSpecies) {
 		Iterator<FlatSpecies> speciesIterator = flatSpecies.iterator();
 		while (speciesIterator.hasNext()) {
-			FlatSpecies currentSpecies = speciesIterator.next();
-			if (currentSpecies.getId() != null) {
-				// reset the FlatSpecies if it has an id set
-				this.graphBaseEntityService.resetGraphBaseEntityProperties(currentSpecies);
-				resettedSpecies.add(currentSpecies);
-			}
+			this.graphBaseEntityService.resetGraphBaseEntityProperties(speciesIterator.next());
 		}
-		return resettedSpecies;
+		return flatSpecies;
 	}
 
+	/**
+	 * Reset the entityUUID (draw a new UUID) and set id and version to null of the given <a href="#{@link}">{@link FlatEdges}</a> as well as the contained <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param flatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities to reset
+	 * @return Iterable of resetted FlatEdges
+	 */
 	private Iterable<FlatEdge> resetFlatEdges(Iterable<FlatEdge> flatEdges) {
 		Iterator<FlatEdge> edgeIterator = flatEdges.iterator();
 		while (edgeIterator.hasNext()) {
@@ -598,4 +681,5 @@ public class NetworkService {
 		}
 		return flatEdges;
 	}
+
 }
