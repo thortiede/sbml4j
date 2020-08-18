@@ -21,7 +21,9 @@
 
 package org.tts.service.networks;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -39,15 +41,23 @@ import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.SBMLSpecies;
+import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphActivityNode;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
+import org.tts.service.GraphBaseEntityService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.UtilityService;
+import org.tts.service.WarehouseGraphService;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
 import org.tts.service.warehouse.MappingNodeService;
 import org.tts.service.warehouse.OrganismService;
@@ -74,16 +84,19 @@ public class NetworkService {
 	FlatEdgeService flatEdgeService;
 	
 	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
 	MappingNodeService mappingNodeService;
 	
 	@Autowired
 	ProvenanceGraphService provenanceGraphService;
+
+	@Autowired
+	OrganismService organismService;
 	
 	@Autowired
 	SBMLSpeciesService sbmlSpeciesService;
-	
-	@Autowired
-	OrganismService organismService;
 	
 	@Autowired
 	Session session;
@@ -91,7 +104,55 @@ public class NetworkService {
 	@Autowired
 	UtilityService utilityService;
 	
+	@Autowired
+	WarehouseGraphService warehouseGraphService;
+	
 	Logger logger = LoggerFactory.getLogger(NetworkService.class);
+	
+	
+	/**
+	 * Create necessary warehouse items for adding a new MappingNode
+	 * 
+	 * @param user The user to associate with the network
+	 * @param parent The parent <a href="#{@link}">{@link MappingNode}</a> for this operation
+	 * @param newMappingName The name of the new <a href="#{@link}">{@link MappingNode}</a> to create
+	 * @param activityName The name of the <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> that creates this <a href="#{@link}">{@link MappingNode}</a>
+	 * @param activityType The <a href="#{@link}">{@link ProvenanceGraphActivityType}</a> of the <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> that creates this <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingType The <a href="#{@link}">{@link NetworkMappingType}</a> of the new <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
+	 */
+	
+	public MappingNode createMappingPre(String user, MappingNode parent, String newMappingName,
+			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
+		// AgentNode
+		Map<String, Object> agentNodeProperties = new HashMap<>();
+		agentNodeProperties.put("graphagentname", user);
+		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
+		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
+				.createProvenanceGraphAgentNode(agentNodeProperties);
+		// Need Activity
+		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+		activityNodeProvenanceProperties.put("graphactivitytype", activityType);
+		
+		activityNodeProvenanceProperties.put("graphactivityname", activityName);
+		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
+				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+		this.provenanceGraphService.connect(createMappingActivityNode, userAgentNode,
+				ProvenanceGraphEdgeType.wasAssociatedWith);
+		Instant startTime = Instant.now();
+		
+		// create new networkMapping that is the same as the parent one
+		// need mapingNode (name: OldName + step)
+		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
+				newMappingName);
+		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
+		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
+				ProvenanceGraphEdgeType.wasGeneratedBy);
+		return newMapping;
+	}
+	
 	
 	/**
 	 * Deactivate a <a href="#{@link}">{@link MappingNode}</a>
@@ -458,11 +519,83 @@ public class NetworkService {
 	}
 
 	/**
-	 * @param string
-	 * @return
+	 * Copy a network in the database and associate it to a user
+	 * Takes all <a href="#{@link}">{@link FlatEdge}</a> entities and <a href="#{@link}">{@link FlatSpecies}</a> entities and creates copies of them in the database
+	 * Adds the copied entities to the List of CONTAINED entities in the newly created <a href="#{@link}">{@link MappingNode}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to copy
+	 * @param user The user to associate the newly created <a href="#{@link}">{@link MappingNode}</a> with
+	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
 	 */
-	public MappingNode copyNetwork(String string) {
-		// TODO Auto-generated method stub
-		return null;
+	public MappingNode copyNetwork(String networkEntityUUID, String user) {
+		// Activity
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		String newMappingName = "CopyOf_" + parent.getMappingName();
+		String activityName = "Create_copy_of_" + networkEntityUUID;
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		NetworkMappingType mappingType = parent.getMappingType();
+		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
+		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
+				mappingType);
+		// Get all FlatSpecies of the network to copy
+		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(networkEntityUUID);
+		// Get and reset all he new <a href="#{@link}">{@link FlatEdge}</a> entities
+		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
+		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
+		// reset any remaining unconnected species
+		List<FlatSpecies> unconnectedSpecies = resetFlatSpecies(networkSpecies);
+		// clear the session to re-fetch all entities on request and not reuse old ids
+		this.session.clear();
+		// save the new Edges
+		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
+		// save the unconnected Species
+		Iterable<FlatSpecies> newFlatSpecies = this.flatSpeciesService.save(unconnectedSpecies, 0);
+		
+		// now connect the new entities to the MappingNode
+		Iterator<FlatEdge> newFlatEdgeIterator = newFlatEdges.iterator();
+		while (newFlatEdgeIterator.hasNext()) {
+			FlatEdge currentEdge = newFlatEdgeIterator.next();
+			this.warehouseGraphService.connect(newMapping, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(newMapping, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
+		}
+		// connect the unconnected species
+		Iterator<FlatSpecies> newFlatSpeciesIterator = newFlatSpecies.iterator();
+		while (newFlatEdgeIterator.hasNext()) {
+			this.warehouseGraphService.connect(newMapping, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS);
+		}
+		// update MappingNode
+		newMapping.setAnnotation(parent.getAnnotation());
+		newMapping.setAnnotationType(parent.getAnnotationType());
+		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
+		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
+		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
+		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
+		
+		return this.mappingNodeService.save(newMapping, 0);
+	}
+
+
+	private List<FlatSpecies> resetFlatSpecies(Iterable<FlatSpecies> flatSpecies) {
+		List<FlatSpecies> resettedSpecies = new ArrayList<>();
+		Iterator<FlatSpecies> speciesIterator = flatSpecies.iterator();
+		while (speciesIterator.hasNext()) {
+			FlatSpecies currentSpecies = speciesIterator.next();
+			if (currentSpecies.getId() != null) {
+				// reset the FlatSpecies if it has an id set
+				this.graphBaseEntityService.resetGraphBaseEntityProperties(currentSpecies);
+				resettedSpecies.add(currentSpecies);
+			}
+		}
+		return resettedSpecies;
+	}
+
+	private Iterable<FlatEdge> resetFlatEdges(Iterable<FlatEdge> flatEdges) {
+		Iterator<FlatEdge> edgeIterator = flatEdges.iterator();
+		while (edgeIterator.hasNext()) {
+			FlatEdge currentEdge = edgeIterator.next();
+			this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge);
+			this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge.getInputFlatSpecies());
+			this.graphBaseEntityService.resetGraphBaseEntityProperties(currentEdge.getOutputFlatSpecies());
+		}
+		return flatEdges;
 	}
 }
