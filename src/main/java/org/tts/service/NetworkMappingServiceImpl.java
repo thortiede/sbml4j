@@ -57,6 +57,7 @@ import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
+import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Service for creating <a href="#{@link}">{@link MappingNpde}</a>s from <a href="#{@link}">{@link PathwayNodes}</a>
@@ -76,6 +77,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
+	MappingNodeService mappingNodeService;
 	
 	@Autowired
 	PathwayService pathwayService;
@@ -119,7 +123,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// need a Warehouse Node of Type Mapping, set NetworkMappingTypes
 		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString();
 
-		MappingNode mappingFromPathway = this.warehouseGraphService.createMappingNode(pathway, type, mappingName);
+		MappingNode mappingFromPathway = this.mappingNodeService.createMappingNode(pathway, type, mappingName);
 		logger.info("Created MappingNode with uuid:" + mappingFromPathway.getEntityUUID());
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
