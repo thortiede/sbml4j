@@ -161,9 +161,23 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
-	public ResponseEntity<List<NetworkInventoryItem>> filterNetwork(@Valid FilterOptions body, String user, UUID UUID) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.filterNetwork(body, user, UUID);
+	public ResponseEntity<NetworkInventoryItem> filterNetwork(@Valid FilterOptions body, String user, UUID UUID) {
+		// 1. Does the network exist?
+		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		}
+		// 2. Is the user allowed to work on that network?
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
+		}
+		MappingNode filteredNetwork = this.networkService.filterNetwork(UUID.toString(), body, user);
+		
+		// 3. Network not created?
+		if (filteredNetwork == null) {
+			return ResponseEntity.badRequest().header("reason", "There has been an error filtering the network with entityUUID: " + UUID.toString()).build();
+		}
+		// 4. Return the InventoryItem of the new Network
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(filteredNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
 	@Override
