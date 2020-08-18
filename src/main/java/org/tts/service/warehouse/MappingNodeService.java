@@ -20,6 +20,7 @@
  */
 package org.tts.service.warehouse;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +68,7 @@ public class MappingNodeService {
 		newMappingNode.setOrganism(parent.getOrganism());
 		newMappingNode.setMappingType(type);
 		newMappingNode.setMappingName(mappingName);
+		newMappingNode.addWarehouseAnnotation("creationstarttime", Instant.now());
 		return this.save(newMappingNode, 0);
 	}
 	
