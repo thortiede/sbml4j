@@ -101,7 +101,7 @@ public class NetworksApiController implements NetworksApi {
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
 		NetworkMappingType mappingType = parent.getMappingType();
 		
-		MappingNode newMapping = this.warehouseGraphService.createMappingPre(user, parent, newMappingName, activityName, activityType,
+		MappingNode newMapping = this.networkService.createMappingPre(user, parent, newMappingName, activityName, activityType,
 				mappingType);
 
 		//newMapping = this.warehouseGraphService.createMappingFromMappingWithOptions(parent, newMapping, options, step);
@@ -120,14 +120,20 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
-	public ResponseEntity<List<NetworkInventoryItem>> copyNetwork(String user, UUID UUID) {
+	public ResponseEntity<NetworkInventoryItem> copyNetwork(String user, UUID UUID) {
 		// 1. Is the user allowed to work on that network?
 		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
-		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString());
-		// TODO Auto-generated method stub
-		return NetworksApi.super.copyNetwork(user, UUID);
+		// 2. Copy the network
+		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user);
+		// 3. Network not created?
+		if (networkCopy == null) {
+			return ResponseEntity.badRequest().header("reason", "There has been an error creating a copy of the network with entityUUID: " + UUID.toString()).build();
+		}
+		// 4. Return the InventoryItem of the new Network
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(networkCopy.getEntityUUID()), HttpStatus.CREATED);
+		
 	}
 	
 	@Override
