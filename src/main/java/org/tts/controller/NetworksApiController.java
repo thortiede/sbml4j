@@ -336,7 +336,6 @@ public class NetworksApiController implements NetworksApi {
 		}
 		networkName.append("_IN_");
 		networkName.append(UUID.toString());
-		networkName.append(".graphml");
 		// 6. Create the mapping holding the context
 		MappingNode contextNetwork = this.networkService.createMappingFromFlatEdges(user, UUID.toString(), contextFlatEdges, networkName.toString());
 		// 7. Return the InventoryItem of the new Network
