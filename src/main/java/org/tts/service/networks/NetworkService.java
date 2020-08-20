@@ -113,12 +113,35 @@ public class NetworkService {
 	
 	Logger logger = LoggerFactory.getLogger(NetworkService.class);
 	
+	/**
+	 * Takes the FlatEdges and adds the given annotation to nodes in those edges
+	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdges}</a>  entities to scan for <a href="#{@link}">{@link FlatSpecies}</a>  to annotate
+	 * @param annotationName The name of the annotation
+	 * @param annotationType The type of the annotation as a string
+	 * @param nodeAnnotation Map of node symbols to annotation
+	 */
+	public void addInlineNodeAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
+			String annotationType, Map<String, Object> nodeAnnotation) {
+		Iterator<FlatEdge> flatEdgeIterator = flatEdges.iterator();
+		while (flatEdgeIterator.hasNext()) {
+			FlatEdge currentEdge = flatEdgeIterator.next();
+			if(nodeAnnotation.containsKey(currentEdge.getInputFlatSpecies().getSymbol())) {
+				this.graphBaseEntityService.addAnnotation(currentEdge.getInputFlatSpecies(), annotationName, annotationType, nodeAnnotation.get(currentEdge.getInputFlatSpecies().getSymbol()), false);
+				nodeAnnotation.remove(currentEdge.getInputFlatSpecies().getSymbol());
+			}
+			if(nodeAnnotation.containsKey(currentEdge.getOutputFlatSpecies().getSymbol())) {
+				this.graphBaseEntityService.addAnnotation(currentEdge.getOutputFlatSpecies(), annotationName, annotationType, nodeAnnotation.get(currentEdge.getOutputFlatSpecies().getSymbol()), false);
+				nodeAnnotation.remove(currentEdge.getOutputFlatSpecies().getSymbol());
+			}		
+		}
+	}
 
 	/**
-	 * @param user
-	 * @param annotationItem
-	 * @param networkEntityUUID
-	 * @return
+	 * Create a new <a href="#{@link}">{@link MappingNode}</a> and annotate the created mapping
+	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
+	 * @param annotationItem The <a href="#{@link}">{@link AnnotationItem}</a> that holds the annotation to add
+	 * @param networkEntityUUID The base network to derive the annotated <a href="#{@link}">{@link MappingNode}</a> from
+	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
 	 */
 	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID) {
 		
