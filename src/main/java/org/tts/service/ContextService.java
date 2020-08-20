@@ -100,13 +100,9 @@ public class ContextService {
 			Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(flatSpeciesEntityUUID, relationShipApocString, nodeApocString, minSize, maxSize);
 
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
-			
-
 		} else {
 			// multi gene context
 			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction);
-			
-			
 		}
 		return allEdges;
 	}
