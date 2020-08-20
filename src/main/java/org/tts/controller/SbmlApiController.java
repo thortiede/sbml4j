@@ -59,6 +59,8 @@ import org.tts.service.ProvenanceGraphService;
 import org.tts.service.SBMLService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.utility.FileCheckService;
+import org.tts.service.warehouse.DatabaseNodeService;
+import org.tts.service.warehouse.FileNodeService;
 import org.tts.service.warehouse.OrganismService;
 
 /**
@@ -71,7 +73,13 @@ import org.tts.service.warehouse.OrganismService;
 public class SbmlApiController implements SbmlApi {
 
 	@Autowired
+	DatabaseNodeService databaseNodeService;
+	
+	@Autowired
 	FileCheckService fileCheckService;
+	
+	@Autowired
+	FileNodeService fileNodeService;
 	
 	@Autowired
 	OrganismService organismService;
@@ -167,11 +175,11 @@ public class SbmlApiController implements SbmlApi {
 			}
 					
 			// DatabaseNode has source, version info
-			DatabaseNode database = this.warehouseGraphService.getDatabaseNode(source, version, org.getOrgCode());
+			DatabaseNode database = this.databaseNodeService.getDatabaseNode(source, version, org.getOrgCode());
 			if(database == null) {
 				// should be only the first time
 				logger.info("Creating DatabaseNode for source: " + source + " with version " + version + " and organism " + org.getOrgCode());
-				database = this.warehouseGraphService.createDatabaseNode(source, version, org);
+				database = this.databaseNodeService.createDatabaseNode(source, version, org);
 				this.provenanceGraphService.connect(database, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			} else {
 				this.provenanceGraphService.connect(persistGraphActivityNode, database, ProvenanceGraphEdgeType.used);
@@ -180,12 +188,12 @@ public class SbmlApiController implements SbmlApi {
 			FileNode sbmlFileNode = null;
 			// Does node with this filename already exist?
 			// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
-			if(!this.warehouseGraphService.fileNodeExists(FileNodeType.SBML, org, file.getOriginalFilename())) {
+			if(!this.fileNodeService.fileNodeExists(FileNodeType.SBML, org, file.getOriginalFilename())) {
 				// does not exist -> create
-				sbmlFileNode = this.warehouseGraphService.createFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
+				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
 				this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			} else {
-				sbmlFileNode = this.warehouseGraphService.getFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
+				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
 				this.provenanceGraphService.connect(persistGraphActivityNode, sbmlFileNode, ProvenanceGraphEdgeType.used);
 			}
 			
