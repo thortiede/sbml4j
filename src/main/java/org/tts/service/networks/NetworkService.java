@@ -32,11 +32,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
+import javax.validation.Valid;
+
 import org.neo4j.ogm.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
@@ -110,7 +113,93 @@ public class NetworkService {
 	
 	Logger logger = LoggerFactory.getLogger(NetworkService.class);
 	
-	
+
+	/**
+	 * @param user
+	 * @param annotationItem
+	 * @param networkEntityUUID
+	 * @return
+	 */
+	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID) {
+		
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		String newMappingName = parent.getMappingName() + "_annotate_with" + 
+				(annotationItem.getNodeAnnotationName() != null ? "_nodeAnnotation:" + annotationItem.getNodeAnnotationName() : "") + 
+				(annotationItem.getRelationAnnotationName() != null ? "_relationAnnotation:" + annotationItem.getRelationAnnotationName() : "");
+		
+		String activityName = "Add_annotation_to_mapping_" + networkEntityUUID + 
+				(annotationItem.getNodeAnnotationName() != null ? "_nodeAnnotation:" + annotationItem.getNodeAnnotationName() : "") + 
+				(annotationItem.getRelationAnnotationName() != null ? "_relationAnnotation:" + annotationItem.getRelationAnnotationName() : "");
+		
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		NetworkMappingType mappingType = parent.getMappingType();
+		
+		
+		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
+				mappingType);
+
+		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
+		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
+		Iterator<FlatEdge> resettedEdgeIterator = resettedEdges.iterator();
+		
+		this.session.clear();
+		
+		boolean addNodeAnnotation = false;
+		Map<String, Object> nodeSymbolsToAnnotation = annotationItem.getNodeAnnotation();
+		String nodeAnnotationName = annotationItem.getNodeAnnotationName();
+		String nodeAnnotationType = annotationItem.getNodeAnnotationType();
+		if(nodeSymbolsToAnnotation != null && nodeSymbolsToAnnotation.size() > 0 && nodeAnnotationName != null && nodeAnnotationType != null) {
+			addNodeAnnotation = true;
+		}
+		boolean addEdgeAnnotation = false;
+		Map<String, Object> edgeSymbolsToAnnotation = annotationItem.getRelationAnnotation();
+		String edgeAnnotationName = annotationItem.getRelationAnnotationName();
+		String edgeAnnotationType = annotationItem.getRelationAnnotationType();
+		if(edgeSymbolsToAnnotation != null && nodeSymbolsToAnnotation.size() > 0 && edgeAnnotationName != null && edgeAnnotationType != null) {
+			addEdgeAnnotation = true;
+		}
+		Set<String> annotatedFlatSpeciesUUID = new HashSet<>();
+		while (resettedEdgeIterator.hasNext()) {
+			FlatEdge currentEdge = resettedEdgeIterator.next();
+			if (addEdgeAnnotation && edgeSymbolsToAnnotation.containsKey(currentEdge.getSymbol())) {
+				// add annotation to this edge
+				this.graphBaseEntityService.addAnnotation(currentEdge, edgeAnnotationName, edgeAnnotationType, edgeSymbolsToAnnotation.get(currentEdge.getSymbol()), false);
+			}
+			if (addNodeAnnotation && !annotatedFlatSpeciesUUID.contains(currentEdge.getInputFlatSpecies().getEntityUUID())
+						&& nodeSymbolsToAnnotation.containsKey(currentEdge.getInputFlatSpecies().getSymbol())) {
+				this.graphBaseEntityService.addAnnotation(currentEdge.getInputFlatSpecies(), nodeAnnotationName, nodeAnnotationType, 
+						nodeSymbolsToAnnotation.get(currentEdge.getInputFlatSpecies().getSymbol()), false);
+			}
+			if (addNodeAnnotation && !annotatedFlatSpeciesUUID.contains(currentEdge.getOutputFlatSpecies().getEntityUUID())
+					&& nodeSymbolsToAnnotation.containsKey(currentEdge.getOutputFlatSpecies().getSymbol())) {
+				this.graphBaseEntityService.addAnnotation(currentEdge.getOutputFlatSpecies(), nodeAnnotationName, nodeAnnotationType, 
+					nodeSymbolsToAnnotation.get(currentEdge.getOutputFlatSpecies().getSymbol()), false);
+			}
+		}
+		Iterable<FlatEdge> persistedEdges = this.flatEdgeService.save(resettedEdges, 1);
+		this.connectContainsFlatEdgeSpecies(newMapping, persistedEdges);
+		
+		// update MappingNode
+		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
+		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
+		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
+		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		String newMappingEntityUUID = newMapping.getEntityUUID();
+		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
+		
+		if(addNodeAnnotation) {
+			newMapping.addAnnotationType("node." + nodeAnnotationName,
+					nodeAnnotationType);
+		}
+		if(addEdgeAnnotation) {
+			newMapping.addAnnotationType("relation." + edgeAnnotationName, edgeAnnotationType);
+		}
+		
+		return this.mappingNodeService.save(newMapping, 0);
+	}
+
 	/**
 	 * Copy a network in the database and associate it to a user
 	 * Takes all <a href="#{@link}">{@link FlatEdge}</a> entities and <a href="#{@link}">{@link FlatSpecies}</a> entities and creates copies of them in the database
@@ -132,7 +221,7 @@ public class NetworkService {
 		// Get all FlatSpecies of the network to copy
 		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(networkEntityUUID);
 		
-		// Get and reset all he new <a href="#{@link}">{@link FlatEdge}</a> entities
+		// Get and reset all the new <a href="#{@link}">{@link FlatEdge}</a> entities
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
 		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
 		// reset any remaining unconnected species
@@ -153,8 +242,45 @@ public class NetworkService {
 		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
 		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
 		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		String newMappingEntityUUID = newMapping.getEntityUUID();
+		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
 		return this.mappingNodeService.save(newMapping, 0);
+	}
+	
+	/**
+	 * Create a new <a href="#{@link}">{@link MappingNode}</a> that contains the given <a href="#{@link}">{@link FlatEdge}</a> entities as content
+	 * @param user The user to associate with the network
+	 * @param baseNetworkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> this mapping is derived from
+	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities that make up the network
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> that was created and contains the network
+	 */
+	public MappingNode createMappingFromFlatEdges(String user, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, String networkName) {
+		MappingNode parent = this.mappingNodeService.findByEntityUUID(baseNetworkEntityUUID);
+		String activityName = "Create_" + networkName;
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
+		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
+		MappingNode contextMappingNode = this.createMappingPre(user, parent, networkName, activityName, activityType, parent.getMappingType());
+		Iterable<FlatEdge> resettedEdges = resetFlatEdges(flatEdges);
+		// clear the session to re-fetch all entities on request and not reuse old ids
+		this.session.clear();
+		
+		// save the new Edges
+		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
+		
+		connectContainsFlatEdgeSpecies(contextMappingNode, newFlatEdges);
+		
+		// updateMappingNode
+		String networkEntityUUID = contextMappingNode.getEntityUUID();
+		contextMappingNode.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
+		contextMappingNode.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
+		contextMappingNode.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
+		contextMappingNode.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
+		contextMappingNode.addWarehouseAnnotation("creationendtime", Instant.now());
+		contextMappingNode.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(networkEntityUUID));
+		contextMappingNode.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(networkEntityUUID));
+		return this.mappingNodeService.save(contextMappingNode, 0);
 	}
 
 	/**
@@ -681,5 +807,4 @@ public class NetworkService {
 		}
 		return flatEdges;
 	}
-
 }
