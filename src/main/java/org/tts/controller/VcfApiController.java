@@ -21,6 +21,10 @@
 
 package org.tts.controller;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +35,14 @@ import org.tts.api.VcfApi;
 import org.tts.config.VcfConfig;
 import org.tts.model.api.Drivergenes;
 import org.tts.model.api.NetworkInventoryItem;
-import org.tts.service.WarehouseGraphService;
+import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.tts.model.flat.FlatEdge;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ContextService;
+import org.tts.service.ProvenanceGraphService;
+import org.tts.service.networks.NetworkService;
+import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Controller for handling of VCF analysis tasks
@@ -42,9 +53,17 @@ import org.tts.service.WarehouseGraphService;
 @Controller
 public class VcfApiController implements VcfApi {
 
+	@Autowired
+	ContextService contextService;
 	
 	@Autowired
-	WarehouseGraphService warehouseGraphService;
+	ProvenanceGraphService provenanceGraphService;
+	
+	@Autowired
+	MappingNodeService mappingNodeService;
+	
+	@Autowired
+	NetworkService networkService;
 	
 	@Autowired
 	VcfConfig vcfConfig;
@@ -54,26 +73,55 @@ public class VcfApiController implements VcfApi {
 	 */
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid Drivergenes drivergenes, String user) {
-		if (drivergenes.getGenes() == null) {
-			return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+		// 0. Does user exist?
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null) {
+			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
 		}
-		
-		ResponseEntity<String> contextMappingResponse = this.warehouseGraphService.postContext(user
-				, (drivergenes.getBaseNetworkUUID() != null) ? drivergenes.getBaseNetworkUUID().toString() : this.vcfConfig.getVcfDefaultProperties().getBaseNetworkUUID()
-				, drivergenes.getGenes()
-				, this.vcfConfig.getVcfDefaultProperties().getMaxSize()
-				, this.vcfConfig.getVcfDefaultProperties().getMaxSize()
-				, this.vcfConfig.getVcfDefaultProperties().isTerminateAtDrug()
-				, this.vcfConfig.getVcfDefaultProperties().getDirection()
-				, user + "_" + drivergenes.toSingleLineString());
-		
-		
-		if(contextMappingResponse.getStatusCode().is2xxSuccessful()) {
-			// add inlineAnnotation
-			String networkEntityUUID = this.warehouseGraphService.addAnnotationToNetwork(contextMappingResponse.getBody(), drivergenes.getGenes());
-			return new ResponseEntity<NetworkInventoryItem>(this.warehouseGraphService.getNetworkInventoryItem(networkEntityUUID), HttpStatus.CREATED);
-		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		// 1. BaseNetworkUUID provided?
+		String networkEntityUUID = drivergenes.getBaseNetworkUUID().toString();
+		if (networkEntityUUID == null) {
+			networkEntityUUID = this.vcfConfig.getVcfDefaultProperties().getBaseNetworkUUID();
 		}
+		// 2. Does the network exist?
+		if (this.mappingNodeService.findByEntityUUID(networkEntityUUID) == null) {
+			return ResponseEntity.notFound().build();
+		}
+		// 3. We skip the check whether the user can access the baseNetwork for now. 
+		// For this scenario, the user can take any network and create a driver gene network from it
+		List<String> geneNames = drivergenes.getGenes();
+		if (geneNames == null) {
+			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
+		}
+		// 4. Get the FlatEdges making up the context
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(
+											  networkEntityUUID
+											, geneNames 
+											, this.vcfConfig.getVcfDefaultProperties().getMinSize()
+											, this.vcfConfig.getVcfDefaultProperties().getMaxSize()
+											, this.vcfConfig.getVcfDefaultProperties().isTerminateAtDrug()
+											, this.vcfConfig.getVcfDefaultProperties().getDirection());
+		if(contextFlatEdges == null) {
+			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
+		}
+		Map<String, Object> nodeAnnotation = new HashMap<>();
+		for (String geneName : geneNames) {
+			nodeAnnotation.put(geneName, true);
+		}
+		// 5. Add the drivergen annotation inline
+		this.networkService.addInlineNodeAnnotation(contextFlatEdges, "drivergene", "boolean", nodeAnnotation);
+		// 6. Create a networkName for the new network file
+		StringBuilder networkName = new StringBuilder();
+		networkName.append("drivergene-network");
+		for (String gene : geneNames) {
+			networkName.append("_");
+			networkName.append(gene);
+		}
+		networkName.append("_IN_");
+		networkName.append(networkEntityUUID);
+		// 7. Create a new mapping with the FlatEdges
+		MappingNode drivergeneNetwork = this.networkService.createMappingFromFlatEdges(user, networkEntityUUID, contextFlatEdges, networkName.toString());
+		// 8. Return the InventoryItem of the new Network
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(drivergeneNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 }
