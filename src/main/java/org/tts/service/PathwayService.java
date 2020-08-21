@@ -25,14 +25,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
 import org.tts.model.common.Organism;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLQualSpeciesGroup;
 import org.tts.model.common.SBMLSBaseEntity;
+import org.tts.model.common.SBMLSpecies;
+import org.tts.model.common.SBMLSpeciesGroup;
+import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.full.SBMLReaction;
+import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.simple.SBMLSimpleReaction;
+import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.PathwayCollectionNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.warehouse.PathwayNodeRepository;
+import org.tts.service.networks.NetworkService;
+import org.tts.service.warehouse.OrganismService;
 
 /**
  * Description
@@ -43,10 +58,21 @@ import org.tts.repository.warehouse.PathwayNodeRepository;
 public class PathwayService {
 
 	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
+	OrganismService organismService;
+	
+	@Autowired
 	PathwayNodeRepository pathwayNodeRepository;
 	
 	@Autowired
-	GraphBaseEntityService graphBaseEntityService;
+	UtilityService utilityService;
+	
+	@Autowired
+	WarehouseGraphService warehouseGraphService;
+	
+	private final Logger logger = LoggerFactory.getLogger(NetworkService.class);
 	
 	/**
 	 * Create a new <a href="#{@link}">{@link PathwayNode}</a>
@@ -174,5 +200,78 @@ public class PathwayService {
 	 */
 	List<String> getSBaseUUIDsOfPathwayNodes(String pathwayUUID) {
 		return this.pathwayNodeRepository.getSBaseUUIDsOfPathwayNodes(pathwayUUID);
+	}
+	
+/************************************************************* PathwayInventory ***********************************************/	
+	
+	/**
+	 * Get a list of <a href="#{@link}">{@link PathwayInventoryItem}</a> for Pathways associated to a user
+	 * @param user The user to find the pathways for
+	 * @param hideCollections Hide Collection pathways (true) or show them (false)
+	 * @return List of <a href="#{@link}">{@link PathwayInventoryItem}</a> for user
+	 */
+	public List<PathwayInventoryItem> getListofPathwayInventory(String user, boolean hideCollections) {
+		List<PathwayInventoryItem> pathwayInventoryItemList = new ArrayList<>();
+		Iterable<PathwayNode> pathways;
+		if(hideCollections) {
+			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
+		} else {
+			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
+		}
+		for (PathwayNode pathwayNode : pathways) {
+			PathwayInventoryItem item = getPathwayInventoryItem(user, pathwayNode);
+			pathwayInventoryItemList.add(item);
+		}
+
+		return pathwayInventoryItemList;
+	}
+
+	/**
+	 * Get a <a href="#{@link}">{@link PathwayInventoryItem}</a> for a <a href="#{@link}">{@link PathwayNode}</a>
+	 * @param user The user that the <a href="#{@link}">{@link PathwayNode}</a> is associated with
+	 * @param pathwayNode The <a href="#{@link}">{@link PathwayNode}</a> to get the <a href="#{@link}">{@link PathwayInventoryItem}</a> for
+	 * @return The <a href="#{@link}">{@link PathwayInventoryItem}</a>
+	 */
+	public PathwayInventoryItem getPathwayInventoryItem(String user, PathwayNode pathwayNode) {
+		PathwayInventoryItem item = new PathwayInventoryItem();
+		item.setUUID(UUID.fromString(pathwayNode.getEntityUUID()));
+		item.setPathwayId(pathwayNode.getPathwayIdString());
+		item.setName(pathwayNode.getPathwayNameString());
+		item.setOrganismCode(this.organismService
+				.findOrganismForWarehouseGraphNode(pathwayNode.getEntityUUID()).getOrgCode());
+		List<ProvenanceEntity> pathwayNodes = this.warehouseGraphService
+				.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
+						pathwayNode.getEntityUUID());
+		int nodeCounter = 0;
+		int transitionCounter = 0;
+		int reactionCounter = 0;
+		List<String> compartmentList = new ArrayList<>();
+		for (ProvenanceEntity node : pathwayNodes) {
+			if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
+				item.addNodeTypesItem(
+						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				nodeCounter++;
+			} else if (node.getClass() == SBMLSimpleTransition.class) {
+				item.addTransitionTypesItem(
+						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				transitionCounter++;
+			} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
+				reactionCounter++;
+			} else if (node.getClass() == SBMLCompartment.class) {
+				compartmentList.add(((SBMLCompartment) node).getsBaseName());
+			} else if (node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
+				// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can
+				// ignore those
+				logger.debug("Found QualSpecies or QualSpeciesGroup, ignoring");
+			} else {
+				logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
+			}
+		}
+		item.setCompartments(compartmentList);
+		item.setNumberOfNodes(nodeCounter);
+		item.setNumberOfTransitions(transitionCounter);
+		item.setNumberOfReactions(reactionCounter);
+	
+		return item;
 	}
 }
