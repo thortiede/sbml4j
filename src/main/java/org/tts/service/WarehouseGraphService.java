@@ -15,6 +15,12 @@ import org.tts.repository.warehouse.WarehouseGraphEdgeRepository;
 import org.tts.repository.warehouse.WarehouseGraphNodeRepository;
 import org.tts.service.warehouse.OrganismService;
 
+/**
+ * Service for handling Warehouse specific tasks
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
 @Service
 public class WarehouseGraphService {
 
@@ -36,11 +42,22 @@ public class WarehouseGraphService {
 	
 /************************************************************* Repository Methods *************************************************/		
 	
-	
+	/**
+	 * Save a <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 * @param node The <a href="#{@link}">{@link WarehouseGraphNode}</a> to save
+	 * @param depth The depth to use
+	 * @return The persisted <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 */
 	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth) {
 		return this.warehouseGraphNodeRepository.save(node, depth);
 	}
 	
+	/**
+	 * Find the List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to the given startnode with the given relation type
+	 * @param type The <a href="#{@link}">{@link WarehouseGraphEdgeType}</a>
+	 * @param startNodeEntityUUID The entityUUID of the startNode of the <a href="#{@link}">{@link WarehouseGraphEdge}</a>
+	 * @return List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to startNode by type
+	 */
 	public List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType type, String startNodeEntityUUID) {
 		return this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(type, startNodeEntityUUID);
 	}
@@ -156,7 +173,11 @@ public class WarehouseGraphService {
 	
 /************************************************************* WarehouseInventoryItem ***********************************************/	
 	
-	
+	/**
+	 * Get a <a href="#{@link}">{@link WarehouseInventoryItem}</a> for a <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 * @param warehouseGraphNode The entity to get the <a href="#{@link}">{@link WarehouseInventoryItem}</a> for
+	 * @return The <a href="#{@link}">{@link WarehouseInventoryItem}</a>
+	 */
 	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
 		WarehouseInventoryItem item = new WarehouseInventoryItem();
 		item.setUUID(UUID.fromString(warehouseGraphNode.getEntityUUID()));
