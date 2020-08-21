@@ -148,7 +148,7 @@ public class PathwaysApiController implements PathwaysApi {
 	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(String user, @Valid Boolean hideCollections) {
 	   log.debug("Serving PathwayInventory for user " + user);
 		return new ResponseEntity<List<PathwayInventoryItem>>(
-				this.warehouseGraphService.getListofPathwayInventory(user, hideCollections), HttpStatus.OK);
+				this.pathwayService.getListofPathwayInventory(user, hideCollections), HttpStatus.OK);
 	}
    
    /**
