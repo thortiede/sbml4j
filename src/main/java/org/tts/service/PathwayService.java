@@ -75,6 +75,24 @@ public class PathwayService {
 	}
 	
 	/**
+	 * Find all distinct Species SBO Terms included in a <a href="#{@link}">{@link PathwayNode}</a>
+	 * @param pathwayNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return Iterable of Strings containing the SBO Terms
+	 */
+	public Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID) {
+		return this.pathwayNodeRepository.getAllDistinctSpeciesSboTermsOfPathway(pathwayNodeEntityUUID);
+	}
+
+	/**
+	 * Find all distinct Relation SBO Terms included in a <a href="#{@link}">{@link PathwayNode}</a>
+	 * @param pathwayNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return Iterable of Strings containing the SBO Terms
+	 */
+	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID) {
+		return this.pathwayNodeRepository.getAllDistinctTransitionSboTermsOfPathway(pathwayNodeEntityUUID);
+	}
+	
+	/**
 	 * Get all <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> for reactions in a pathway
 	 * 
 	 * @param pathwayUUID The UUID of the pathway to search for Reactions

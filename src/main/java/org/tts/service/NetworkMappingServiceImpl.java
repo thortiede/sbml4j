@@ -149,7 +149,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		if (type.equals(NetworkMappingType.METABOLIC) || type.equals(NetworkMappingType.PATHWAYMAPPING)) {
 
 			// gather nodeTypes
-			this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
+			this.pathwayService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
 			Iterable<MetabolicPathwayReturnType> metPathwayResult = this.pathwayService
 					.getAllMetabolicPathwayReturnTypes(UUID.fromString(pathway.getEntityUUID()), nodeSBOTerms);
@@ -226,11 +226,11 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		boolean processTransitionsNeeded = false;
 		if (type.equals(NetworkMappingType.PATHWAYMAPPING)) {
 			// gather nodeTypes
-			this.warehouseGraphService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
+			this.pathwayService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
 
 			// gather transitionTypes
-			this.warehouseGraphService.getAllDistinctTransitionSboTermsOfPathway(pathway.getEntityUUID())
+			this.pathwayService.getAllDistinctTransitionSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> transitionSBOTerms.add(sboTerm));
 			processTransitionsNeeded = true;
 			
