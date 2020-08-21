@@ -235,7 +235,7 @@ public class SbmlApiController implements SbmlApi {
 			
 			this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 			
-			fileNameToPathwayInventoryMap.put(file.getOriginalFilename(), this.warehouseGraphService.getPathwayInventoryItem(user, pathwayNode));
+			fileNameToPathwayInventoryMap.put(file.getOriginalFilename(), this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
 			
 
 		}
