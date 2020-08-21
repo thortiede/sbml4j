@@ -32,7 +32,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.tts.api.WarehouseApi;
 import org.tts.model.warehouse.DatabaseNode;
-import org.tts.service.WarehouseGraphService;
+import org.tts.service.warehouse.DatabaseNodeService;
 
 /**
  * Controller class handling requests on warehouse specific items (i.e. DatabaseNode)
@@ -45,7 +45,7 @@ import org.tts.service.WarehouseGraphService;
 public class WarehouseApiController implements WarehouseApi {
 
 	@Autowired
-	WarehouseGraphService warehouseGraphService;
+	DatabaseNodeService databaseNodeService;
 	
 	/**
 	 * Get the UUID of the <a href="#{@link}">{@link DatabaseNode}</a> for the given parameters
@@ -59,7 +59,7 @@ public class WarehouseApiController implements WarehouseApi {
 	public ResponseEntity<UUID> getDatabaseUUID(@NotNull @Valid String organism, @NotNull @Valid String source,
 		@NotNull @Valid String version) {
 
-		DatabaseNode database = this.warehouseGraphService.getDatabaseNode(source, version, organism);
+		DatabaseNode database = this.databaseNodeService.getDatabaseNode(source, version, organism);
 		if (database != null) {
 			return new ResponseEntity<UUID>(UUID.fromString(database.getEntityUUID()), HttpStatus.OK);
 		} else {
