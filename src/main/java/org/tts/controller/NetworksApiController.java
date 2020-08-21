@@ -46,6 +46,7 @@ import org.tts.model.flat.FlatEdge;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ContextService;
+import org.tts.service.MyDrugService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.networks.NetworkResourceService;
@@ -67,6 +68,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Autowired
 	MappingNodeService mappingNodeService;
+
+	@Autowired
+	MyDrugService myDrugService;
 	
 	@Autowired
 	NetworkService networkService;
@@ -109,8 +113,25 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> addMyDrugRelations(String user, UUID UUID,
 			@NotNull @Valid String myDrugURL) {
-		// TODO Auto-generated method stub
-		return NetworksApi.super.addMyDrugRelations(user, UUID, myDrugURL);
+		// 0. Does user exist?
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null) {
+			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+		}
+		// 1. Does the network exist?
+		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+			return ResponseEntity.notFound().build();
+		}
+		// 2. Is the user allowed to work on that network?
+		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
+			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
+		}
+		// 3. Copy the network
+		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user, "MyDrugOn");
+		// 4. Add MyDrug Nodes/Edges
+		networkCopy = this.myDrugService.addMyDrugToNetwork(networkCopy.getEntityUUID(), myDrugURL);
+		// 5. Return the InventoryItem of the new Network
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(networkCopy.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
 	@Override
@@ -129,7 +150,7 @@ public class NetworksApiController implements NetworksApi {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
 		// 3. Copy the network
-		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user);
+		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user, "CopyOf");
 		// 4. Network not created?
 		if (networkCopy == null) {
 			return ResponseEntity.badRequest().header("reason", "There has been an error creating a copy of the network with entityUUID: " + UUID.toString()).build();
