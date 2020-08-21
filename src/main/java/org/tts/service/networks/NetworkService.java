@@ -59,6 +59,7 @@ import org.tts.model.warehouse.MappingNode;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
 import org.tts.service.GraphBaseEntityService;
+import org.tts.service.MyDrugService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.UtilityService;
 import org.tts.service.WarehouseGraphService;
@@ -92,7 +93,7 @@ public class NetworkService {
 	
 	@Autowired
 	MappingNodeService mappingNodeService;
-	
+		
 	@Autowired
 	ProvenanceGraphService provenanceGraphService;
 
@@ -231,11 +232,11 @@ public class NetworkService {
 	 * @param user The user to associate the newly created <a href="#{@link}">{@link MappingNode}</a> with
 	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user) {
+	public MappingNode copyNetwork(String networkEntityUUID, String user, String namePrefix) {
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		String newMappingName = "CopyOf_" + parent.getMappingName();
-		String activityName = "Create_copy_of_" + networkEntityUUID;
+		String newMappingName = namePrefix + "_" + parent.getMappingName();
+		String activityName = "Create_" + namePrefix + "_" + networkEntityUUID;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
