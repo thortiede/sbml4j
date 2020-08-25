@@ -60,7 +60,7 @@ import org.tts.service.SimpleSBML.SBMLSpeciesService;
 import org.tts.service.warehouse.MappingNodeService;
 
 /**
- * Service for creating <a href="#{@link}">{@link MappingNpde}</a>s from <a href="#{@link}">{@link PathwayNodes}</a>
+ * Service for creating <a href="#{@link}">{@link MappingNode}</a>s from <a href="#{@link}">{@link PathwayNodes}</a>
  * 
  * @author Thorsten Tiede
  *
@@ -128,6 +128,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
 		Set<String> nodeSymbols = new HashSet<>();
+		Set<String> relationSymbols = new HashSet<>();
 		List<String> nodeSBOTerms = new ArrayList<>();
 
 		// connect MappingNode to PathwayNode with wasDerivedFrom
@@ -205,8 +206,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				}
 				metabolicFlatEdge = this.flatEdgeService.createFlatEdge(current.getTypeOfRelation());
 				this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
-				metabolicFlatEdge.setSymbol(startFlatSpecies.getSymbol() + "-" + current.getTypeOfRelation() + "->"
-						+ endFlatSpecies.getSymbol());
+				String relationSymbol = startFlatSpecies.getSymbol() + "-" + current.getTypeOfRelation() + "->"
+						+ endFlatSpecies.getSymbol();
+				metabolicFlatEdge.setSymbol(relationSymbol);
 				metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
 				metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
 				// TODO: The relationType needs to be determined in a better way.
@@ -214,6 +216,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						: (current.getTypeOfRelation().equals("IS_REACTANT") ? "REACTANTOF"
 								: (current.getTypeOfRelation().equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
 				allFlatEdges.add(metabolicFlatEdge);
+				relationSymbols.add(relationSymbol);
 			}
 			
 			for (String entry : sbmlSimpleReactionToFlatSpeciesMap.keySet()) {
@@ -346,6 +349,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 											current.getInputSpecies().getEntityUUID());
 									transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
 									sbmlSimpleTransitionToFlatEdgeMap.put(current.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+									relationSymbols.add(symbolAndTransitionIdString);
 								}
 							}
 						}
@@ -411,6 +415,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 											current.getOutputSpecies().getEntityUUID());
 									transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
 									sbmlSimpleTransitionToFlatEdgeMap.put(current.getOutputSpecies().getEntityUUID(), transitionFlatEdge);
+									relationSymbols.add(symbolAndTransitionIdString);
 								}
 							}
 						}
@@ -449,6 +454,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						} else {
 							transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, currentTransition);
 							relationTypes.add(transitionFlatEdge.getTypeString());
+							relationSymbols.add(transitionFlatEdge.getSymbol());
 							sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getEntityUUID(), transitionFlatEdge);
 						}
 					} else {
@@ -461,6 +467,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							} else {
 								transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, currentTransition);
 								relationTypes.add(transitionFlatEdge.getTypeString());
+								relationSymbols.add(transitionFlatEdge.getSymbol());
 								sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
 							}
 						}
@@ -474,6 +481,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						} else {
 							transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, currentTransition);
 							relationTypes.add(transitionFlatEdge.getTypeString());
+							relationSymbols.add(transitionFlatEdge.getSymbol());
 							sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
 						}
 					}
@@ -489,6 +497,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							}else {
 								transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, currentTransition);
 								relationTypes.add(transitionFlatEdge.getTypeString());
+								relationSymbols.add(transitionFlatEdge.getSymbol());
 								sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
 							}
 						}
@@ -517,7 +526,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
 		mappingFromPathway.setMappingNodeSymbols(nodeSymbols);
-
+		mappingFromPathway.setMappingRelationSymbols(relationSymbols);
 		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService
 				.saveWarehouseGraphNodeEntity(mappingFromPathway, QUERY_DEPTH_ZERO);
 		logger.info(Instant.now().toString() + ": Persisted FlatSpecies. Starting to connect");
@@ -648,7 +657,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				sb.append(pathway.getPathwayIdString());
 			}			
 		}
-		this.graphBaseEntityService.addAnnotation(target, AnnotationName.PATHWAYS.getAnnotationName(), "string", sb.toString(), this.sbml4jConfig.getAnnotationConfigProperties().isAppend());
+		this.graphBaseEntityService.addAnnotation(target, AnnotationName.PATHWAYS.getAnnotationName(), "string", sb.toString(), true); // always append pathways, if not use this: this.sbml4jConfig.getAnnotationConfigProperties().isAppend());
 	}
 
 }
