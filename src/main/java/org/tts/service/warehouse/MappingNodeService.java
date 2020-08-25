@@ -68,8 +68,8 @@ public class MappingNodeService {
 		newMappingNode.setOrganism(parent.getOrganism());
 		newMappingNode.setMappingType(type);
 		newMappingNode.setMappingName(mappingName);
-		newMappingNode.addWarehouseAnnotation("creationstarttime", Instant.now());
-		return this.save(newMappingNode, 0);
+		newMappingNode.addWarehouseAnnotation("creationstarttime", Instant.now().toString());
+		return this.save(newMappingNode, 1);
 	}
 	
 	/**

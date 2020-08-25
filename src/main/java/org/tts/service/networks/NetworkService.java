@@ -44,12 +44,12 @@ import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.SBMLSpecies;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
@@ -59,7 +59,6 @@ import org.tts.model.warehouse.MappingNode;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
 import org.tts.service.GraphBaseEntityService;
-import org.tts.service.MyDrugService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.UtilityService;
 import org.tts.service.WarehouseGraphService;
@@ -208,7 +207,7 @@ public class NetworkService {
 		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
 		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
 		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		String newMappingEntityUUID = newMapping.getEntityUUID();
 		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
 		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
@@ -266,7 +265,7 @@ public class NetworkService {
 		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
 		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
 		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		String newMappingEntityUUID = newMapping.getEntityUUID();
 		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
 		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
@@ -301,9 +300,9 @@ public class NetworkService {
 		contextMappingNode.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
 		contextMappingNode.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
 		contextMappingNode.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
-		contextMappingNode.addWarehouseAnnotation("creationendtime", Instant.now());
-		contextMappingNode.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(networkEntityUUID));
-		contextMappingNode.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(networkEntityUUID));
+		contextMappingNode.addWarehouseAnnotation("creationendtime", Instant.now().toString());
+		contextMappingNode.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
+		contextMappingNode.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
 		return this.mappingNodeService.save(contextMappingNode, 0);
 	}
 
@@ -455,10 +454,10 @@ public class NetworkService {
 		
 		
 		// update MappingNode
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now());
+		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
-		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
+		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
 		newMapping.setMappingNodeSymbols(this.getNetworkNodeSymbols(newMappingEntityUUID));
 		newMapping.setMappingNodeTypes(this.getNetworkNodeTypes(newMappingEntityUUID));
 		newMapping.setMappingRelationSymbols(this.getNetworkRelationSymbols(newMappingEntityUUID));
