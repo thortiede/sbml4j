@@ -73,9 +73,6 @@ public class PathwayInventoryItem   {
   @Valid
   private List<String> compartments = null;
 
-  @JsonProperty("networkMappingType")
-  private String networkMappingType = null;
-
   @JsonProperty("links")
   @Valid
   private List<Link> links = null;
@@ -295,25 +292,6 @@ public class PathwayInventoryItem   {
     this.compartments = compartments;
   }
 
-  public PathwayInventoryItem networkMappingType(String networkMappingType) {
-    this.networkMappingType = networkMappingType;
-    return this;
-  }
-
-  /**
-   * One of: REGULATORY, SIGNALLING, PPI, METABOLIC, PATHWAYMAPPING
-   * @return networkMappingType
-  **/
-  @ApiModelProperty(example = "REGULATORY", value = "One of: REGULATORY, SIGNALLING, PPI, METABOLIC, PATHWAYMAPPING")
-  
-    public String getNetworkMappingType() {
-    return networkMappingType;
-  }
-
-  public void setNetworkMappingType(String networkMappingType) {
-    this.networkMappingType = networkMappingType;
-  }
-
   public PathwayInventoryItem links(List<Link> links) {
     this.links = links;
     return this;
@@ -361,13 +339,12 @@ public class PathwayInventoryItem   {
         Objects.equals(this.nodeTypes, pathwayInventoryItem.nodeTypes) &&
         Objects.equals(this.transitionTypes, pathwayInventoryItem.transitionTypes) &&
         Objects.equals(this.compartments, pathwayInventoryItem.compartments) &&
-        Objects.equals(this.networkMappingType, pathwayInventoryItem.networkMappingType) &&
         Objects.equals(this.links, pathwayInventoryItem.links);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(UUID, name, pathwayId, organismCode, numberOfNodes, numberOfTransitions, numberOfReactions, nodeTypes, transitionTypes, compartments, networkMappingType, links);
+    return Objects.hash(UUID, name, pathwayId, organismCode, numberOfNodes, numberOfTransitions, numberOfReactions, nodeTypes, transitionTypes, compartments, links);
   }
 
   @Override
@@ -385,7 +362,6 @@ public class PathwayInventoryItem   {
     sb.append("    nodeTypes: ").append(toIndentedString(nodeTypes)).append("\n");
     sb.append("    transitionTypes: ").append(toIndentedString(transitionTypes)).append("\n");
     sb.append("    compartments: ").append(toIndentedString(compartments)).append("\n");
-    sb.append("    networkMappingType: ").append(toIndentedString(networkMappingType)).append("\n");
     sb.append("    links: ").append(toIndentedString(links)).append("\n");
     sb.append("}");
     return sb.toString();
