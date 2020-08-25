@@ -62,17 +62,6 @@ public class FlatEdgeService {
 	FlatEdgeRepository flatEdgeRepository;
 	
 	/**
-	 * Writes the <a href="#{@link}">{@link FlatEdge}</a> into the database
-	 * 
-	 * @param edges An Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities that are to be persisted
-	 * @param depth The save depth to be used (0 for only persisting the edge, 1 for also persisting start- and end-node)
-	 * @return the persisted <a href="#{@link}">{@link FlatEdge}</a> entities
-	 */
-	public Iterable<FlatEdge> persistAll(Iterable<FlatEdge> edges, int depth) {
-		return this.flatEdgeRepository.save(edges, depth);
-	}
-	
-	/**
 	 * Creates a new <a href="#{@link}">{@link FlatEdge}</a> corresponding to the given sboTerm
 	 * 
 	 * @param sboTermString The sbo-Term string representation of the Edge to be created
