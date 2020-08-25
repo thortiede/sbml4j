@@ -175,6 +175,10 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "(p:PathwayNode)-[w:Warehouse]->(sb:SBase) "
 			+ "WHERE sb.entityUUID = $sBaseEntityUUID "
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "AND NOT EXISTS { "
+				+ "MATCH (p)-[np:PROV]->(pc:PathwayCollectionNode) "
+				+ "WHERE np.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "} "
 			+ "RETURN p")
 	List<PathwayNode> getPathwayNodesOfSBase(String sBaseEntityUUID);
 	
