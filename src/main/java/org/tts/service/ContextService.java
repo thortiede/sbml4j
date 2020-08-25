@@ -474,8 +474,47 @@ public class ContextService {
 					maxSize);
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, geneContextNet);
 		}
-		return allFlatEdges;
-		
+		return allFlatEdges;	
+	}
+
+/** GDS Graph Queries ******************************************************************************************/
+	
+	@SuppressWarnings("unused")
+	private String getGdsNodeQuery(String mappingEntityUUID) {
+		return String.format("MATCH (m:MappingNode)-[w:Warehouse]->(f:FlatSpecies) "
+				+ "  WHERE m.entityUUID = \"%s\" "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as id", mappingEntityUUID);
+	}
+	@SuppressWarnings("unused")
+	private String getGdsRelationshipQuery(String mappingEntityUUID, String relationshipString) {
+		return String.format("MATCH 	(m:MappingNode)-[w:Warehouse]->(f:FlatSpecies)-[r:%s]-"
+				+ "			(f2:FlatSpecies)<-[w2:Warehouse]-(m:MappingNode) "
+				+ "	 WHERE m.entityUUID = \"%s\" "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "    AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as source, id(f2) as target", relationshipString, mappingEntityUUID);
+	}
+	@SuppressWarnings("unused")
+	private String buildCreateGdsGraphQuery(String graphName, String baseMappingUUID, String relationshipString) {
+		String query = String.format("CALL gds.graph.create.cypher"
+				+ "("
+				+ "'%s', "
+				+ "'MATCH (m:MappingNode)-[w:Warehouse]->(f:FlatSpecies) "
+				+ "  WHERE m.entityUUID = %s "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as id', "
+				+ "'MATCH 	(m:MappingNode)-[w:Warehouse]->(f:FlatSpecies)-[r:%s]-"
+				+ "			(f2:FlatSpecies)<-[w2:Warehouse]-(m:MappingNode) "
+				+ "	 WHERE m.entityUUID = %s "
+				+ "    AND w.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "    AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
+				+ "  RETURN id(f) as source), id(f2) as target'"
+				+ ") "
+				+ "YIELD graphName, nodeCount, relationshipCount, createMillis "
+				+ "RETURN nodeCount", graphName, baseMappingUUID, relationshipString, baseMappingUUID);
+		//logger.debug(query);
+		return query;
 	}
 	
 }
