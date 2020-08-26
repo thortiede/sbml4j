@@ -209,8 +209,8 @@ public class NetworkService {
 		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
 		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
-		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
+		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
 		
 		if(addNodeAnnotation) {
 			newMapping.addAnnotationType("node." + nodeAnnotationName,
@@ -267,8 +267,8 @@ public class NetworkService {
 		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
 		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", this.getNumberOfNetworkNodes(newMappingEntityUUID));
-		newMapping.addWarehouseAnnotation("numberofrelations", this.getNumberOfNetworkRelations(newMappingEntityUUID));
+		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
+		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
 		return this.mappingNodeService.save(newMapping, 0);
 	}
 	
