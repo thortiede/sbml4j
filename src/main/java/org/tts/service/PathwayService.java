@@ -250,12 +250,16 @@ public class PathwayService {
 		List<String> compartmentList = new ArrayList<>();
 		for (ProvenanceEntity node : pathwayNodes) {
 			if (node.getClass() == SBMLSpecies.class || node.getClass() == SBMLSpeciesGroup.class) {
-				item.addNodeTypesItem(
-						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				String nodeType = this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm());
+				if (item.getNodeTypes() == null || !item.getNodeTypes().contains(nodeType)) {
+					item.addNodeTypesItem(nodeType);
+				}
 				nodeCounter++;
 			} else if (node.getClass() == SBMLSimpleTransition.class) {
-				item.addTransitionTypesItem(
-						this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm()));
+				String transitionType = this.utilityService.translateSBOString(((SBMLSBaseEntity) node).getsBaseSboTerm());
+				if (item.getTransitionTypes() == null || !item.getTransitionTypes().contains(transitionType)) {
+					item.addTransitionTypesItem(transitionType);
+				}
 				transitionCounter++;
 			} else if (node.getClass() == SBMLReaction.class || node.getClass() == SBMLSimpleReaction.class) {
 				reactionCounter++;
