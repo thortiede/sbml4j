@@ -387,7 +387,7 @@ public class NetworkService {
 			}
 			// get the user connected with wasAttributedTo
 			ProvenanceEntity attributedToAgent = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mappingNodeEntityUUID);
-			if (attributedToAgent != null) {
+			if (attributedToAgent != null && this.mappingNodeService.getNumberOfMappingNodesAttributedProvAgent(((ProvenanceGraphAgentNode) attributedToAgent).getGraphAgentName()) == 1) {
 				this.provenanceGraphService.deleteProvenanceEntity(attributedToAgent);
 			}
 			// then delete the mapping node
