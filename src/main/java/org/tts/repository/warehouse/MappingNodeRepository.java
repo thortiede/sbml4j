@@ -41,6 +41,15 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "RETURN fs")
 	List<FlatSpecies> getMappingFlatSpecies(String mappingNodeEntityUUID);
 	
+	@Query("MATCH "
+			+ "(a:PROV_AGENT)"
+			+ "<-[p:PROV]-"
+			+ "(m:MappingNode) "
+			+ "WHERE a.graphAgentName=$graphAgentName "
+			+ "AND p.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "RETURN count(m)")
+	int getNumberOfMappingNodesAttributedProvAgent(String graphAgentName);
+		
 	// match (m:MappingNode)-[:PROV]-(p:PROV_AGENT) where p.graphAgentName in ["All", 'Irene'] return m, p;
 	@Query(value = "MATCH "
 			+ "(m:MappingNode)"
