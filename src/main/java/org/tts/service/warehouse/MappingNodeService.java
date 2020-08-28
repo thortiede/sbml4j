@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,10 +35,12 @@ import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.provenance.ProvenanceGraphEdge;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.warehouse.MappingNodeRepository;
 import org.tts.service.GraphBaseEntityService;
+import org.tts.service.UtilityService;
 
 /**
  * Service for handling requests to and from the MappingNodeRepository
@@ -54,6 +57,9 @@ public class MappingNodeService {
 	
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
+	UtilityService utilityService;
 	
 	/**
 	 * Creates a new <a href="#{@link}">{@link MappingNode}</a>
@@ -137,10 +143,22 @@ public class MappingNodeService {
 		FilterOptions filterOptions = new FilterOptions();
 		MappingNode mappingNode = this.findByEntityUUID(entityUUID);
 		filterOptions.setNodeSymbols(new ArrayList<>(mappingNode.getMappingNodeSymbols()));
-		filterOptions.setNodeTypes(new ArrayList<>(mappingNode.getMappingNodeTypes()));
+		Set<String> mappingNodeSBOTerms = mappingNode.getMappingNodeTypes();
+		for (String sboTerm : mappingNodeSBOTerms) {
+			filterOptions.addNodeTypesItem(this.utilityService.translateSBOString(sboTerm));
+		}
 		filterOptions.setRelationSymbols(new ArrayList<>(mappingNode.getMappingRelationSymbols()));
 		filterOptions.setRelationTypes(new ArrayList<>(mappingNode.getMappingRelationTypes()));
 		return filterOptions;
+	}
+	
+	/**
+	 * Get all <a href="#{@link}">{@link FlatSpecies}</a> of a Mapping
+	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> which contains the FlatSpecies to get
+	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a> that are in the Mapping
+	 */
+	public List<FlatSpecies> getMappingFlatSpecies(String entityUUID) {
+		return this.mappingNodeRepository.getMappingFlatSpecies(entityUUID);
 	}
 	
 	/**
@@ -156,14 +174,15 @@ public class MappingNodeService {
 		networkOptions.setFilter(filterOptions);
 		return networkOptions;
 	}
-	
+
 	/**
-	 * Get all <a href="#{@link}">{@link FlatSpecies}</a> of a Mapping
-	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> which contains the FlatSpecies to get
-	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a> that are in the Mapping
+	 * Get the Number of <a href="#{@link}">{@link MappingNode}</a> that are connected to the <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>
+	 * with graphAgentName by the <a href="#{@link}">{@link ProvenanceGraphEdge}</a> with provenanceGraphEdgeType wasAttributedTo
+	 * @param graphAgentName The name of the <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>
+	 * @return The number of <a href="#{@link}">{@link MappingNode}</a>
 	 */
-	public List<FlatSpecies> getMappingFlatSpecies(String entityUUID) {
-		return this.mappingNodeRepository.getMappingFlatSpecies(entityUUID);
+	public int getNumberOfMappingNodesAttributedProvAgent(String graphAgentName) {
+		return this.mappingNodeRepository.getNumberOfMappingNodesAttributedProvAgent(graphAgentName);
 	}
 	
 	/**
