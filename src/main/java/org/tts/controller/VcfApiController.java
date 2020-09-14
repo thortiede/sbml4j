@@ -35,9 +35,7 @@ import org.tts.api.VcfApi;
 import org.tts.config.VcfConfig;
 import org.tts.model.api.Drivergenes;
 import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ContextService;
 import org.tts.service.ProvenanceGraphService;
@@ -73,18 +71,7 @@ public class VcfApiController implements VcfApi {
 	 */
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid Drivergenes drivergenes, String user) {
-		// 0. Does user exist?
-		//ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		//if(agent == null) {
-			// return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-			// Here we allow a new user to access the network and create a sub network from it
-			// Create the user instead and use it
-			// Create a ProvenanceGraph.Agent Node with it (using the timestamp to make it unique?) - or find Agent in DB and use it
-			//Map<String, Object> agentNodeProperties = new HashMap<>();
-			//agentNodeProperties.put("graphagentname", user);
-			//agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
-			//agent = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
-		//}
+		
 		// 1. BaseNetworkUUID provided?
 		String networkEntityUUID;
 		if (drivergenes.getBaseNetworkUUID() == null) {
