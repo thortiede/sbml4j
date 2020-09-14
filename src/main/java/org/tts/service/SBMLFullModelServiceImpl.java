@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
@@ -110,21 +109,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		return doc.getModel();
 	}
 	
-	@Override
-	public List<GraphBaseEntity> getAllEntities(){
-		return (List<GraphBaseEntity>) this.graphBaseRepository.findAll();
-	}
-	
-	@Override
-	public boolean clearDatabase() {
-		this.graphBaseRepository.deleteAll();
-		if (((List<GraphBaseEntity>) this.graphBaseRepository.findAll()).isEmpty()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	@Override
 	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
 		
@@ -335,7 +319,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 	
 	@Deprecated
-	@Override
 	public Map<String, Iterable<SBMLSBaseEntity>> extractSBMLEntities(Model model) {
 		
 		/*
@@ -468,7 +451,6 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 
 	@Deprecated
-	@Override
 	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
 			Map<String, Iterable<SBMLSBaseEntity>> entityMap) {
 		List<Object> qualSpeciesWithExternalResources = new ArrayList<>();
