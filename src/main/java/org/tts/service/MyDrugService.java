@@ -22,31 +22,50 @@ import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.warehouse.MappingNode;
-
+import org.tts.service.networks.NetworkService;
+import org.tts.service.warehouse.MappingNodeService;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * Service for querying a MyDrug Neo4j Instance and adding Drugs to a network
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
 @Service
 public class MyDrugService {
-
+	
 	@Autowired
-	WarehouseGraphService warehouseGraphService;
+	FlatEdgeService flatEdgeService;
+	
+	@Autowired
+	FlatSpeciesService flatSpeciesService;
 
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
 	
 	@Autowired
-	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
+	MappingNodeService mappingNodeService;
 	
 	@Autowired
-	FlatEdgeService flatEdgeService;
+	NetworkService networkService;
+	
+	@Autowired
+	WarehouseGraphService warehouseGraphService;
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
+	/**
+	 * Add MyDrug Nodes and targets-edges to the network contained in the <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param myDrugURL The URL of a MyDrug Neo4j REST server
+	 * @return The modified <a href="#{@link}">{@link MappingNode}</a> with Drug nodes and targets-edges
+	 */
 	public MappingNode addMyDrugToNetwork(String networkEntityUUID, String myDrugURL) {
-		MappingNode mappingNode = this.warehouseGraphService.getMappingNode(networkEntityUUID);
+		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		
 		StringBuilder matchStringPre = new StringBuilder();
 		matchStringPre.append("(a)-[t:targets]->(b) where b.symbol in [");
@@ -69,8 +88,8 @@ public class MyDrugService {
 			matchString.append("\\\"");
 			matchString.append(nodeSymbol);
 			matchString.append("\\\"");
-			FlatSpecies flatSpeciesToNodeSymbol = (FlatSpecies) this.graphBaseEntityService.findByEntityUUID(
-					this.warehouseGraphService.getEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol));
+			FlatSpecies flatSpeciesToNodeSymbol = this.flatSpeciesService.findByEntityUUID(
+					this.networkService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol));
 			addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, nodeSymbol, flatSpeciesToNodeSymbol);
 			String secondaryNames = (String) flatSpeciesToNodeSymbol.getAnnotation().get(AnnotationName.SECONDARYNAMES.getAnnotationName());
 			if (secondaryNames != null) {
@@ -82,7 +101,6 @@ public class MyDrugService {
 					addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, secondaryName, flatSpeciesToNodeSymbol);
 				}
 			}
-			
 			// do one query here for this one symbol/FlatSpecies
 			JsonNode drugNodes = this.runHttpRESTQuery(myDrugURL, "/db/data/transaction/", "POST", matchStringPre.toString() + matchString.toString() + matchStringPost.toString(), returnString);
 			if (drugNodes == null) {
@@ -102,15 +120,11 @@ public class MyDrugService {
 					logger.info("dataArrayNode is not an Array for FlatSpecies (" + flatSpeciesToNodeSymbol.getEntityUUID()+ ") of resultsNode: " + resultsNode.toString());
 					continue;
 				}
-
 				for (int i = 0; i!= dataArrayNode.size(); i++) {
 					FlatSpecies myDrugSpecies = null;
 					FlatEdge targetsEdge = null;
-					
-					
 					boolean foundTarget = false;
 					boolean reusingMyDrugSpecies = false;
-				
 					JsonNode rowNode = dataArrayNode.get(i).get("row");
 					for (int j = 0; j!= rowNode.size(); j++) {
 						logger.debug(columnsArrayNode.get(j).asText() + ": " + rowNode.get(j).asText());
@@ -122,7 +136,7 @@ public class MyDrugService {
 							} else {
 								logger.debug("New FlatSpecies for myDrug: " + rowNode.get(j).asText() );
 								myDrugSpecies = new FlatSpecies();
-								this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(myDrugSpecies);
+								this.graphBaseEntityService.setGraphBaseEntityProperties(myDrugSpecies);
 								myDrugSpecies.addLabel("Drug");
 								myDrugSpecies.setSymbol(rowNode.get(j).asText());
 								myDrugSpecies.setSboTerm("Drug");
@@ -142,7 +156,7 @@ public class MyDrugService {
 								if(symbolToFlatSpeciesMap.keySet().contains(rowNode.get(j).asText())) {
 									for(FlatSpecies sp : symbolToFlatSpeciesMap.get(rowNode.get(j).asText())) {
 										targetsEdge = this.flatEdgeService.createFlatEdge("targets");
-										this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(targetsEdge);
+										this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
 										targetsEdge.setInputFlatSpecies(myDrugSpecies);
 										targetsEdge.setOutputFlatSpecies(sp);
 										targetsEdge.setSymbol(myDrugSpecies.getSymbol() + "-TARGETS->"
@@ -159,8 +173,7 @@ public class MyDrugService {
 								logger.error("Trying to use not initialized FlatSpecies " + columnsArrayNode.get(j).asText().substring(2) + " with " + rowNode.get(j).asText());
 								continue;
 							}
-						}
-							
+						}		
 					}
 					if (!foundTarget) {
 						logger.debug("Could not find target for: " + myDrugSpecies.getSymbol());
@@ -174,7 +187,7 @@ public class MyDrugService {
 		for (String newRelationSymbol : newRelationSymbols) {
 			mappingNode.addMappingRelatonSymbol(newRelationSymbol);
 		}
-		this.flatEdgeService.persistAll(myDrugFlatEdgeList, 1);
+		this.flatEdgeService.save(myDrugFlatEdgeList, 1);
 		this.warehouseGraphService.connect((ProvenanceEntity) mappingNode, myDrugFlatSpeciesList, WarehouseGraphEdgeType.CONTAINS);
 		Map<String, Object> mappingWarehouseAnnotation = mappingNode.getWarehouse();
 		if(mappingWarehouseAnnotation.containsKey("numberofnodes")) {
@@ -188,10 +201,15 @@ public class MyDrugService {
 		mappingNode.addMappingNodeType("drug");
 		mappingNode.addMappingRelationType("TARGETS");
 		
-		return (MappingNode) this.graphBaseEntityService.persistEntity(mappingNode, 0);
+		return this.mappingNodeService.save(mappingNode, 0);
 	}
 
-
+	/**
+	 * Adds a Symbol, <a href="#{@link}">{@link FlatSpecies}</a> mapping to the symbolToFlatSpeciesMap Map containing a Set as value
+	 * @param symbolToFlatSpeciesMap The Map to add the mapping to
+	 * @param symbol The symbol to act as key in the map
+	 * @param flatSpecies The <a href="#{@link}">{@link FlatSpecies}</a> to add to the Set
+	 */
 	private void addSymbolToFlatSpeciesMapping(Map<String, Set<FlatSpecies>> symbolToFlatSpeciesMap, String symbol,
 			FlatSpecies flatSpecies) {
 		if(symbolToFlatSpeciesMap.containsKey(symbol)) {
@@ -203,7 +221,15 @@ public class MyDrugService {
 		}
 	}
 	
-	
+	/**
+	 * Run a Query to a REST service
+	 * @param baseUrl The basic URL of the MyDrug Neo4j REST service
+	 * @param endpointUrl The enpoint to call at the url
+	 * @param requestType The Type of Request to run
+	 * @param matchString The MATCH string in the Cypher query
+	 * @param returnString The RETURN string in the Cypher query
+	 * @return The JsonNode that holds the results
+	 */
 	private JsonNode runHttpRESTQuery(String baseUrl, String endpointUrl, String requestType, String matchString, String returnString) {
 		
 		try {
@@ -233,7 +259,6 @@ public class MyDrugService {
 				objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 				return objectMapper.readValue(con.getInputStream(), JsonNode.class);
 			}
-			
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			logger.error(e.getMessage());
@@ -244,5 +269,4 @@ public class MyDrugService {
 			return null;
 		} 
 	}
-	
 }

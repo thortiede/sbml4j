@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.HelperQualSpeciesReturn;
@@ -560,19 +559,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public Map<String, Iterable<SBMLSBaseEntity>> extractSBMLEntities(Model model) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<String, Iterable<Object>> extractAndConnectExternalResources(
-			Map<String, Iterable<SBMLSBaseEntity>> allEntities) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) { 
 		
 		
@@ -625,24 +611,4 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		
 		return returnList; // This is the list<sources> of the Knowledge Graph "WarehouseGraphNode" Node, which then serves as Source for the network mappings, derived from full KEGG
 	}
-
-	
-
-
-
-	@Override
-	public boolean clearDatabase() {
-		this.graphBaseEntityRepository.deleteAll();
-		if (((List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll()).isEmpty()) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	@Override
-	public List<GraphBaseEntity> getAllEntities() {
-		return (List<GraphBaseEntity>) this.graphBaseEntityRepository.findAll();
-	}
-
 }

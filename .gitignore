@@ -33,6 +33,10 @@ jsbml.log
 ### Maven ###
 .mvn
 
+### Swagger codegen
+.swagger-codegen
+.swagger-codegen-ignore
+
 ### other ###
 external_libs_and_tools/
 /logs/

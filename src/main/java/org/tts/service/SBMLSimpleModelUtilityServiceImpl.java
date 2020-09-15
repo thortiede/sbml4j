@@ -95,6 +95,7 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 * This is only the EntityUUID so far and no source entity is needed to copy properties from.
 	 * @param target the GraphBaseEntity for which the basic properties (entityUUID) are to be set.
 	 */
+	@Deprecated
 	void setGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
 		target.setActive(true);
@@ -104,6 +105,7 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 * Reset the id and version of the entity and assign new entityUUID
 	 * @param target the GraphBaseEntity for which the basic properties (entityUUID, id, version) are to be reset.
 	 */
+	@Deprecated
 	void resetGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
 		target.setId(null);

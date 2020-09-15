@@ -1,9 +1,33 @@
+/*
+ * ----------------------------------------------------------------------------
+	Copyright 2020 University of Tuebingen 	
+
+	This file is part of SBML4j.
+
+    SBML4j is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    SBML4j is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with SBML4j.  If not, see <https://www.gnu.org/licenses/>.
+ * ---------------------------------------------------------------------------- 
+ */
+
 package org.tts.service;
 
+
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.flat.FlatEdge;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.flat.relationship.CatalystFlatEdge;
 import org.tts.model.flat.relationship.ControlFlatEdge;
 import org.tts.model.flat.relationship.DephosphorylationFlatEdge;
@@ -25,17 +49,24 @@ import org.tts.model.flat.relationship.UncertainProcessFlatEdge;
 import org.tts.model.flat.relationship.UnknownFromSourceFlatEdge;
 import org.tts.repository.flat.FlatEdgeRepository;
 
+/**
+ * Handles the creation and persistence of FlatEdge entities
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
 @Service
 public class FlatEdgeService {
 
 	@Autowired
 	FlatEdgeRepository flatEdgeRepository;
 	
-	
-	public Iterable<FlatEdge> persistAll(Iterable<FlatEdge> edges, int depth) {
-		return this.flatEdgeRepository.save(edges, depth);
-	}
-	
+	/**
+	 * Creates a new <a href="#{@link}">{@link FlatEdge}</a> corresponding to the given sboTerm
+	 * 
+	 * @param sboTermString The sbo-Term string representation of the Edge to be created
+	 * @return a subclass of FlatEdge corresponding to the given sboTerm.
+	 */
 	public FlatEdge createFlatEdge(String sboTermString) {
 		FlatEdge newEdge;
 		switch (sboTermString) {
@@ -102,4 +133,46 @@ public class FlatEdgeService {
 			}
 		return newEdge;
 	}
+	
+	/**
+	 * Returns the geneSet for nodeUUIDs in network with UUID networkEntityUUID.
+	 * Searches for direct connections between pairs of <a href="#{@link}">{@link FlatSpecies}</a> in the List nodeUUIDs
+	 * 
+	 * @param networkEntityUUID The entityUUID of the network to search in
+	 * @param nodeUUIDs List of entityUUIDs of <a href="#{@link}">{@link FlatSpecies}</a> to include
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> connecting the searched <a href="#{@link}">{@link FlatSpecies}</a>
+	 */
+	public Iterable<FlatEdge> getGeneSet(String networkEntityUUID, List<String> nodeUUIDs) {
+		return this.flatEdgeRepository.getGeneSet(networkEntityUUID.toString(), nodeUUIDs);
+	}
+
+	/**
+	 * Get an Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities in a Iterable of <a href="#{@link}">{@link MappingNode}</a> using Iterable of <a href="#{@link}">{@link SBMLSBaseEntity}</a> entityUUIDs
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param simpleModelUUIDs The entityUUIDs of the <a href="#{@link}">{@link SBMLSBaseEntity}</a> entities to find in the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities found
+	 */
+	public Iterable<FlatEdge> getGeneSetFromSBaseUUIDs(String networkEntityUUID, List<String> simpleModelUUIDs) {
+		return this.flatEdgeRepository.getGeneSetFromSBaseUUIDs(networkEntityUUID, simpleModelUUIDs);
+	}
+	
+	/**
+	 * Get all <a href="#{@link}">{@link FlatEdge}</a> entities of a network with enitityUUID
+ 	 * @param entityUUID The entityUUID of a <a href="#{@link}">{@link MappingNode}</a> that contains the requested <a href="#{@link}">{@link FlatEdge}</a> entities
+	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities
+	 */
+	public Iterable<FlatEdge> getNetworkFlatEdges(String entityUUID) {
+		return this.flatEdgeRepository.getNetworkContentsFromUUID(entityUUID);
+	}
+	
+	/**
+	 * Save a collection of <a href="#{@link}">{@link FlatEdge}</a>
+	 * @param entities Iterable of <a href="#{@link}">{@link FlatEdge}</a> to persist
+	 * @param depth The save depth to use
+	 * @return The persisted entities
+	 */
+	public Iterable<FlatEdge> save(Iterable<FlatEdge> entities, int depth) {
+		return this.flatEdgeRepository.save(entities, depth);
+	}
+	
 }
