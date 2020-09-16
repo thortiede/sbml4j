@@ -1,24 +1,16 @@
-/*
- * ----------------------------------------------------------------------------
-	Copyright 2020 University of Tuebingen 	
-
-	This file is part of SBML4j.
-
-    SBML4j is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    SBML4j is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with SBML4j.  If not, see <https://www.gnu.org/licenses/>.
- * ---------------------------------------------------------------------------- 
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
  */
-
 package org.tts.service;
 
 import java.util.Map;
@@ -80,9 +72,6 @@ public class ProvenanceGraphService {
 				return provenanceGraphAgentNode;
 			}
 			
-			
-		
-			
 		case Organisation:
 			break;
 		case SoftwareAgent:
@@ -92,7 +81,6 @@ public class ProvenanceGraphService {
 		}
 		return null;
 	}
-
 
 	/**
 	 * Creates a ProvenanceGraphActivityNode if not already present for Key: graphactivitytype and 
@@ -118,7 +106,6 @@ public class ProvenanceGraphService {
 		
 		return this.provenanceGraphActivityNodeRepository.save(provenanceGraphActivityNode);
 	}
-
 
 	/**
 	 * connect two provenance entities. The entity is not returned. 
@@ -241,7 +228,6 @@ public class ProvenanceGraphService {
 			String endNodeEntityUUID) {
 		return this.provenanceEntityRepository.findAllByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);
 	}
-
 
 	public void deleteProvenanceEntity(ProvenanceEntity entity) {
 		this.provenanceEntityRepository.delete(entity);	

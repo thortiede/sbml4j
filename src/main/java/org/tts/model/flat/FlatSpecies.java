@@ -1,3 +1,16 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.model.flat;
 
 import org.tts.model.common.ContentGraphNode;
@@ -5,7 +18,7 @@ import org.tts.model.common.ContentGraphNode;
 
 public class FlatSpecies extends ContentGraphNode {
 
-	private String simpleModelEntityUUID; // maybe use ProvenanceEdge wasDerivedFrom to link back to the Entity in the simpleModel?
+	private String simpleModelEntityUUID;
 	
 	private String symbol;
 	

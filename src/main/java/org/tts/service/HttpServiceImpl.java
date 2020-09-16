@@ -1,39 +1,35 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.repository.warehouse.MappingNodeRepository;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class HttpServiceImpl implements HttpService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
-	@Autowired
-	private MappingNodeRepository mappingNodeRepository;
-	@Autowired
-	private SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	
 	@Override
 	public List<String> getGeneNamesFromKeggURL(String resource) {
@@ -129,7 +125,6 @@ public class HttpServiceImpl implements HttpService {
 			while ((inputLine = streamReader.readLine()) != null) {
 				logger.debug(inputLine);
 		
-				
 				if(inputLine.startsWith("NAME")) {
 					lastLine = "NAME";
 					splitted = inputLine.split("\\s+");
@@ -203,8 +198,6 @@ public class HttpServiceImpl implements HttpService {
 				}
 				entity.setSecondaryNames(secNames);
 			}
-			
-			
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -215,8 +208,5 @@ public class HttpServiceImpl implements HttpService {
 			return null;
 		}
 		return entity;
-	}
-
-	
-	
+	}	
 }
