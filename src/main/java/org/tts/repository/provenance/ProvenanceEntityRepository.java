@@ -1,3 +1,16 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.repository.provenance;
 
 import org.springframework.data.neo4j.annotation.Query;
@@ -19,7 +32,6 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 	boolean areProvenanceEntitiesConnectedWithProvenanceEdgeType(String sourceEntityUUID, String targetEntityUUID,
 			ProvenanceGraphEdgeType edgetype);
 
-	
 	public ProvenanceEntity findByEntityUUID(String entityUUID);
 
 	@Query(value = "MATCH "
@@ -42,7 +54,6 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 	ProvenanceEntity findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID);
 	
-	
 	@Query(value = "MATCH "
 			+ "(p:ProvenanceEntity)"
 			+ "<-[pr:PROV]-"
@@ -53,8 +64,6 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID);
 	
-	
-
 	@Query(value = "MATCH "
 			+ "(p:ProvenanceEntity)"
 			+ "<-[pr:PROV]-"
@@ -64,6 +73,4 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 			+ "RETURN c")
 	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID);
-
-
 }

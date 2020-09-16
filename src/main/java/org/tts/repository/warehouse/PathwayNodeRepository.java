@@ -1,3 +1,16 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.repository.warehouse;
 
 import java.util.List;
@@ -11,12 +24,6 @@ import org.tts.model.warehouse.PathwayNode;
 
 public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long> {
 
-	
-	/**
-	 * match (p:PathwayNode)-[:PROV {provenanceGraphEdgeType: "wasAttributedTo"}]-(:PROV_AGENT {graphAgentName: "Thor"}) return p
-	 * @param username
-	 * @return
-	 */
 	@Query(value = "MATCH "
 			+ "(p:PathwayNode)"
 			+ "-[pr:PROV]-"
@@ -39,10 +46,8 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN p")
 	Iterable<PathwayNode> findNonCollectionPathwaysAttributedToUser(String username);
 
-	
 	PathwayNode findByEntityUUID(String entityUUID);
-
-
+	
 	@Query("MATCH "
 			+ "(p:PathwayNode)-[w:Warehouse]->(s:SBMLSpecies) "
 			+ "WHERE p.entityUUID = $pathwayNodeEntityUUID "
@@ -50,14 +55,12 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN DISTINCT s.sBaseSboTerm")
 	Iterable<String> getAllDistinctSpeciesSboTermsOfPathway(String pathwayNodeEntityUUID);
 
-
 	@Query("MATCH "
 			+ "(p:PathwayNode)-[w:Warehouse]->(t:SBMLSimpleTransition) "
 			+ "WHERE p.entityUUID = $pathwayNodeEntityUUID "
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "RETURN DISTINCT t.sBaseSboTerm")
 	Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID);
-
 
 	@Query("MATCH "
 			+ "(g1:GraphBaseEntity)"
@@ -156,7 +159,6 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 	int findNumberOfConnectingGenesForTwoPathwaysOfGeneAndGeneSet(String pathway1UUID, String pathway2UUID,
 			String geneOfPathway1, Set<String> genesOfPathway2);
 	
-	
 	/*
 	 * match (p:PathwayNode) where p.pathwayIdString = "path_hsa05200" 
 	 * with p match (p)-[w:Warehouse]->(sb:SBase) 
@@ -181,7 +183,6 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "} "
 			+ "RETURN p")
 	List<PathwayNode> getPathwayNodesOfSBase(String sBaseEntityUUID);
-	
 	
 	@Query(value="MATCH "
 			+ "(p:PathwayNode)"
@@ -222,6 +223,4 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "r as reaction")
 	Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(String pathwayUUID,
 			List<String> nodeSBOTerms);
-	
-	
 }

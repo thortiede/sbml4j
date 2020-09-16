@@ -1,17 +1,29 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.model.api;
 
-import java.util.Objects;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.tts.model.api.PathwayInfoItem;
-import org.tts.model.api.RelationInfoItem;
-import org.springframework.validation.annotation.Validated;
+import java.util.Objects;
+
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+
+import org.springframework.validation.annotation.Validated;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.swagger.annotations.ApiModelProperty;
 
 /**
  * GeneAnalysisItem
