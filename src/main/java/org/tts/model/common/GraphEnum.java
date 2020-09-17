@@ -245,7 +245,7 @@ public class GraphEnum {
 		OMIM("omim"),
 		ENTREZGENE("entrez_gene"),
 		PATHWAYS("pathways"),
-		SECONDARYNAMES("seconday_names"),
+		SECONDARYNAMES("secondary_names"),
 		UNIPROT("uniprot"),
 		OBOECO("obo_eco");
 		
