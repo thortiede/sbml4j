@@ -590,6 +590,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 */
 	private void getBQAnnotations(String parentEntityUUID, FlatSpecies target) {
 		boolean doAppend = this.sbml4jConfig.getAnnotationConfigProperties().isAppend();
+		boolean annotateWithLinks = this.sbml4jConfig.getAnnotationConfigProperties().isAnnotateWithLinks();
 		List<BiomodelsQualifier> bqList = this.biomodelsQualifierRepository.findAllForSBMLSpecies(parentEntityUUID);
 		for(BiomodelsQualifier bq : bqList) {
 			System.out.println(bq.getEndNode().getUri());
@@ -600,7 +601,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					|| bq.getQualifier().equals(Qualifier.BQB_IS_ENCODED_BY)
 				) {
 				String[] splitted = bq.getEndNode().getUri().split("/");
-				this.graphBaseEntityService.addAnnotation(target, splitted[splitted.length-2].replace('.', '_'), "string", splitted[splitted.length-1], doAppend);
+				this.graphBaseEntityService.addAnnotation(target, splitted[splitted.length-2].replace('.', '_'), "string", (annotateWithLinks ? bq.getEndNode().getUri() : splitted[splitted.length-1]), doAppend);
 				
 				if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGGENES) && bq.getEndNode().getSecondaryNames() != null) {
 					StringBuilder sb = new StringBuilder();
