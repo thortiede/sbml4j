@@ -42,7 +42,7 @@ public class SBMLSpeciesService {
 	}
 	
 	/**
-	 * Find a SBMLSpecies by its sBaseName (which must be unique)
+	 * Find a <a href="#{@link}">{@link SBMLSpecies}</a> by its sBaseName (which must be unique)
 	 * 
 	 * @param sBaseName The sBaseName attribute of the <a href="#{@link}">{@link SBMLSpecies}</a> to find
 	 * @return The SBMLSpecies with sBaseName fetched from the database
