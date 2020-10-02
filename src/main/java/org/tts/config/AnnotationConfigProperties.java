@@ -45,6 +45,8 @@ public class AnnotationConfigProperties {
 	
 	private boolean append;
 	
+	private boolean annotateWithLinks;
+	
 	public boolean isSetSeparator(AnnotationName name) {
 		String compareString = null;
 		if (name == null) {
@@ -220,5 +222,13 @@ public class AnnotationConfigProperties {
 
 	public void setAppend(boolean append) {
 		this.append = append;
+	}
+
+	public boolean isAnnotateWithLinks() {
+		return annotateWithLinks;
+	}
+
+	public void setAnnotateWithLinks(boolean annotateWithLinks) {
+		this.annotateWithLinks = annotateWithLinks;
 	}
 }
