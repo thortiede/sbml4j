@@ -16,14 +16,17 @@ package org.tts.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.CVTerm;
+import org.sbml.jsbml.CVTerm.Qualifier;
+import org.sbml.jsbml.CVTerm.Type;
 import org.sbml.jsbml.Compartment;
 import org.sbml.jsbml.ListOf;
 import org.sbml.jsbml.Model;
@@ -41,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.config.SBML4jConfig;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
@@ -71,6 +75,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 	SBMLSimpleReactionRepository sbmlSimpleReactionRepository;
 	SBMLSBaseEntityRepository sbmlSBaseEntityRepository;
@@ -83,6 +91,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	ProvenanceGraphService provenanceGraphService;
 	UtilityService utilityService;
+	SBML4jConfig sbml4jConfig;
 	
 	int SAVE_DEPTH = 1;
 
@@ -97,7 +106,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			HttpService httpService,
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
 			ProvenanceGraphService provenanceGraphService,
-			UtilityService utilityService) {
+			UtilityService utilityService,
+			SBML4jConfig sbml4jConfig) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
 		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
@@ -111,6 +121,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
 		this.provenanceGraphService = provenanceGraphService;
 		this.utilityService = utilityService;
+		this.sbml4jConfig = sbml4jConfig;
 	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model, ProvenanceGraphActivityNode persistActivity) {
@@ -475,16 +486,23 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	 * @param sBaseEntity
 	 */
 	private SBMLSBaseEntity buildAndPersistExternalResourcesForSBaseEntity(SBMLSBaseEntity sBaseEntity, ProvenanceGraphActivityNode activityNode) {
+		
+		boolean addMdAnderson = sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().isAddMdAndersonAnnotation();
+		boolean foundMdAndersonGene = false;
+		List<String> mdAndersonNamesList = new ArrayList<>();
 		SBMLSBaseEntity updatedSBaseEntity = sBaseEntity;
+		List<String> mdAndersonGeneList = sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getGenelist();
+		if (addMdAnderson && mdAndersonGeneList != null && mdAndersonGeneList.contains(sBaseEntity.getsBaseName())) {
+			System.out.println("Found MdAnderson Gene in sBaseName: " + sBaseEntity.getsBaseName());
+			foundMdAndersonGene = true;
+			mdAndersonNamesList.add(sBaseEntity.getsBaseName());
+		}
 		for (CVTerm cvTerm : sBaseEntity.getCvTermList()) {
 			//createExternalResources(cvTerm, qualSpecies);
 			for (String resource : cvTerm.getResources()) {
 				// build a BiomodelsQualifier RelationshopEntity
-				BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
-				newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
-				newBiomodelsQualifier.setType(cvTerm.getQualifierType());
-				newBiomodelsQualifier.setQualifier(cvTerm.getQualifier());
-				newBiomodelsQualifier.setStartNode(updatedSBaseEntity);
+				BiomodelsQualifier newBiomodelsQualifier = createBiomodelsQualifier(updatedSBaseEntity,
+						cvTerm.getQualifierType(), cvTerm.getQualifier());
 				
 				// build the ExternalResource or link to existing one
 				ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
@@ -493,12 +511,37 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					this.provenanceGraphService.connect(activityNode, existingExternalResourceEntity, ProvenanceGraphEdgeType.used);
 				} else {
 					ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
-					newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+					this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
+					//newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
 					newExternalResourceEntity.setUri(resource);
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
 						setKeggGeneNames(resource, newExternalResourceEntity);
+						// check the name
+						if (addMdAnderson && !foundMdAndersonGene && mdAndersonGeneList.contains(newExternalResourceEntity.getName())) {
+							foundMdAndersonGene = true;
+							mdAndersonNamesList.add(newExternalResourceEntity.getName());
+						} else if (addMdAnderson && !foundMdAndersonGene
+								&& newExternalResourceEntity.getSecondaryNames() != null
+								&& !Collections.disjoint(Arrays.asList(newExternalResourceEntity.getSecondaryNames()), mdAndersonGeneList)) {
+							foundMdAndersonGene = true;
+							List<String> secNamesListCopy = new ArrayList<>(Arrays.asList(newExternalResourceEntity.getSecondaryNames()));
+							if (secNamesListCopy.retainAll(mdAndersonGeneList)) {
+								if (secNamesListCopy.isEmpty()) {
+									// did not actually find an MdAnderson Gene Name in the secondary names. Should not happen
+									System.out.println("Should have found MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
+								} else if (secNamesListCopy.size() < 2){
+									mdAndersonNamesList.add(secNamesListCopy.get(0));
+								} else {
+									// multiple hits..
+									System.out.println("Found more than one MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
+									for (String mdAndersonNameHit : secNamesListCopy) {
+										mdAndersonNamesList.add(mdAndersonNameHit);
+									}
+								}
+							}
+						}
 					} else if(resource.contains("kegg.reaction")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
@@ -522,7 +565,48 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				//updatedSBaseEntity.addBiomodelsQualifier(newBiomodelsQualifier);
 			}
 		}
+		if (addMdAnderson && foundMdAndersonGene) {
+			for (String mdAndersonGeneName : mdAndersonNamesList) {
+				BiomodelsQualifier mdAndersonBiomodelsQualifier = this.createBiomodelsQualifier(updatedSBaseEntity, Type.BIOLOGICAL_QUALIFIER, Qualifier.BQB_IS_DESCRIBED_BY);
+				StringBuilder mdAndersonUriStringBuilder = new StringBuilder();
+				mdAndersonUriStringBuilder.append(sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getBaseurl());
+				mdAndersonUriStringBuilder.append(mdAndersonGeneName);
+				mdAndersonUriStringBuilder.append("?section=");
+				mdAndersonUriStringBuilder.append(sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getSection());
+				
+				ExternalResourceEntity existingMdAndersonResourceEntity = this.externalResourceEntityRepository.findByUri(mdAndersonUriStringBuilder.toString());
+				if (existingMdAndersonResourceEntity != null) {
+					mdAndersonBiomodelsQualifier.setEndNode(existingMdAndersonResourceEntity);
+					this.provenanceGraphService.connect(activityNode, existingMdAndersonResourceEntity, ProvenanceGraphEdgeType.used);
+				} else {
+					ExternalResourceEntity newMdAndersonResourceEntity = new ExternalResourceEntity();
+					this.graphBaseEntityService.setGraphBaseEntityProperties(newMdAndersonResourceEntity);
+					//newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+					newMdAndersonResourceEntity.setUri(mdAndersonUriStringBuilder.toString());
+					newMdAndersonResourceEntity.setType(ExternalResourceType.MDANDERSON);
+					newMdAndersonResourceEntity.setDatabaseFromUri("MDAnderson");
+					ExternalResourceEntity persistedNewMdAndersonResourceEntity = this.externalResourceEntityRepository.save(newMdAndersonResourceEntity, 0);
+					mdAndersonBiomodelsQualifier.setEndNode(persistedNewMdAndersonResourceEntity);
+					this.provenanceGraphService.connect(persistedNewMdAndersonResourceEntity, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				}
+				BiomodelsQualifier persistedMDAndersonBiomodelsQualifier = biomodelsQualifierRepository.save(mdAndersonBiomodelsQualifier, 0);
+				updatedSBaseEntity.addBiomodelsQualifier(persistedMDAndersonBiomodelsQualifier);
+				updatedSBaseEntity = this.sbmlSBaseEntityRepository.save(updatedSBaseEntity, 0);
+			}			
+		}
+		
 		return updatedSBaseEntity;
+	}
+
+	private BiomodelsQualifier createBiomodelsQualifier(SBMLSBaseEntity startNodeSBaseEntity, Type qualifierType,
+			Qualifier qualifier) {
+		BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newBiomodelsQualifier);
+		//newBiomodelsQualifier.setEntityUUID(UUID.randomUUID().toString());
+		newBiomodelsQualifier.setType(qualifierType);
+		newBiomodelsQualifier.setQualifier(qualifier);
+		newBiomodelsQualifier.setStartNode(startNodeSBaseEntity);
+		return newBiomodelsQualifier;
 	}	
 	
 	private void setKeggCompoundNames(String resource, ExternalResourceEntity newExternalResourceEntity) {
