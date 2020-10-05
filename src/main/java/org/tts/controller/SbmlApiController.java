@@ -212,22 +212,30 @@ public class SbmlApiController implements SbmlApi {
 			// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 			PathwayNode pathwayNode = this.pathwayService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
 			
-			List<ProvenanceEntity> resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
-			
-			for (ProvenanceEntity entity : resultSet) {
-				this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
+			List<ProvenanceEntity> resultSet;
+			try {
+				resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
+
+				for (ProvenanceEntity entity : resultSet) {
+					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
+				}
+				
+				logger.info("Persisted " + resultSet.size() + " entities for file " + file.getOriginalFilename());
+							
+				this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+				this.provenanceGraphService.connect(sbmlFileNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+				this.provenanceGraphService.connect(database, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+				
+				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
+				
+				fileNameToPathwayInventoryMap.put(file.getOriginalFilename(), this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
+			} catch (Exception e) {
+				// TODO Roll back transaction..
+				e.printStackTrace();
+				return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
 			}
 			
-			logger.info("Persisted " + resultSet.size() + " entities for file " + file.getOriginalFilename());
-						
-			this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-			this.provenanceGraphService.connect(sbmlFileNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-			this.provenanceGraphService.connect(database, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-			
-			this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
-			
-			fileNameToPathwayInventoryMap.put(file.getOriginalFilename(), this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
 			
 
 		}
