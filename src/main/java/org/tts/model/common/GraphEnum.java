@@ -216,7 +216,8 @@ public class GraphEnum {
 		KEGGGENES("kegg.genes"),
 		KEGGCOMPOUND("kegg.compound"),
 		KEGGDRUG("kegg.drug"),
-		KEGGREACTION("kegg.reaction");
+		KEGGREACTION("kegg.reaction"), 
+		MDANDERSON("MDAnderson");
 		
 		private final String externalResourceType;
 		
