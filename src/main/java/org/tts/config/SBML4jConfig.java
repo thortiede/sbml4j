@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.1
  */
 @Configuration
-@EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class})
+@EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, ExternalResourcesProperties.class, MdAndersonProperties.class})
 public class SBML4jConfig {
 	@Autowired
 	private OutputConfigProperties outputConfigProperties;
@@ -38,6 +38,9 @@ public class SBML4jConfig {
 	
 	@Autowired
 	private AnnotationConfigProperties annotationConfigProperties;
+	
+	@Autowired
+	private ExternalResourcesProperties externalResourcesProperties;
 
 	public OutputConfigProperties getOutputConfigProperties() {
 		return outputConfigProperties;
@@ -61,5 +64,13 @@ public class SBML4jConfig {
 
 	public void setAnnotationConfigProperties(AnnotationConfigProperties annotationConfigProperties) {
 		this.annotationConfigProperties = annotationConfigProperties;
+	}
+
+	public ExternalResourcesProperties getExternalResourcesProperties() {
+		return externalResourcesProperties;
+	}
+
+	public void setExternalResourcesProperties(ExternalResourcesProperties externalResourcesProperties) {
+		this.externalResourcesProperties = externalResourcesProperties;
 	}
 }
