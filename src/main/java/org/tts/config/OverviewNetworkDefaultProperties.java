@@ -15,16 +15,9 @@ package org.tts.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "vcf.default")
-public class VcfDefaultProperties {
-/*
- * vcf.default.baseNetworkUUID=2f5b5686-c877-4043-9164-1047cf839816
-vcf.default.minSize=1
-vcf.default.maxSize=3
-vcf.default.terminateAtDrug=false
-vcf.default.direction=both
+@ConfigurationProperties(prefix = "overviewnetwork.default")
+public class OverviewNetworkDefaultProperties {
 
- */
 	private String baseNetworkUUID;
 	private int minSize;
 	private int maxSize;
@@ -62,8 +55,4 @@ vcf.default.direction=both
 	public void setDirection(String direction) {
 		this.direction = direction;
 	}
-	
-	
-	
-	
 }

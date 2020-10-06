@@ -19,35 +19,35 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration class for handling VCF Files
+ * Configuration class for handling overview networks
  * 
  * @author Thorsten Tiede
  *
  * @since 0.1
  */
 @Configuration
-@EnableConfigurationProperties({VcfDefaultProperties.class, VcfConfigProperties.class})
-public class VcfConfig {
+@EnableConfigurationProperties({OverviewNetworkDefaultProperties.class, OverviewNetworkConfigProperties.class})
+public class OverviewNetworkConfig {
 	@Autowired
-	private VcfDefaultProperties vcfDefaultProperties;
+	private OverviewNetworkDefaultProperties overviewNetworkDefaultProperties;
 
 	@Autowired
-	private VcfConfigProperties vcfConfigProperties;
+	private OverviewNetworkConfigProperties overviewNetworkConfigProperties;
 	
-	public VcfDefaultProperties getVcfDefaultProperties() {
-		return vcfDefaultProperties;
+	public OverviewNetworkDefaultProperties getOverviewNetworkDefaultProperties() {
+		return overviewNetworkDefaultProperties;
 	}
 
-	public void setVcfDefaultProperties(VcfDefaultProperties vcfDefaultProperties) {
-		this.vcfDefaultProperties = vcfDefaultProperties;
+	public void setOverviewNetworkDefaultProperties(OverviewNetworkDefaultProperties overviewNetworkDefaultProperties) {
+		this.overviewNetworkDefaultProperties = overviewNetworkDefaultProperties;
 	}
 
-	public VcfConfigProperties getVcfConfigProperties() {
-		return vcfConfigProperties;
+	public OverviewNetworkConfigProperties getOverviewNetworkConfigProperties() {
+		return overviewNetworkConfigProperties;
 	}
 
-	public void setVcfConfigProperties(VcfConfigProperties vcfConfigProperties) {
-		this.vcfConfigProperties = vcfConfigProperties;
+	public void setOverviewNetworkConfigProperties(OverviewNetworkConfigProperties overviewNetworkConfigProperties) {
+		this.overviewNetworkConfigProperties = overviewNetworkConfigProperties;
 	}
 	
 	
