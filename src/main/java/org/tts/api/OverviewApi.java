@@ -33,8 +33,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.tts.model.api.Drivergenes;
 import org.tts.model.api.NetworkInventoryItem;
+import org.tts.model.api.OverviewNetworkItem;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,11 +43,11 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-31T14:30:58.760Z[GMT]")
-@Api(value = "Vcf", description = "the Vcf API")
-public interface VcfApi {
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-06T11:55:24.162Z[GMT]")
+@Api(value = "overview", description = "the overview API")
+public interface OverviewApi {
 
-    Logger log = LoggerFactory.getLogger(VcfApi.class);
+    Logger log = LoggerFactory.getLogger(OverviewApi.class);
 
     default Optional<ObjectMapper> getObjectMapper(){
         return Optional.empty();
@@ -61,16 +61,18 @@ public interface VcfApi {
         return getRequest().map(r -> r.getHeader("Accept"));
     }
 
-    @ApiOperation(value = "upload a set of driver genes and get a network connecting them", nickname = "createOverviewNetwork", notes = "This endpoint creates an overview network that contains all available genes from the input gene list. The given genes will be annotated with  the boolean drivergene. The overview network will contain all available relationships between genes and metabolites that are part of the network. The endpoint returns a networkInventoryItem of the created network. It can be retrieved using the UUID in the GET /network endpoint. If baseNetworkUUID is omitted, the full model will be used. ", response = NetworkInventoryItem.class, tags={ "vcf", })
+    @ApiOperation(value = "upload a set of genes and get a network connecting them", nickname = "createOverviewNetwork", notes = "This endpoint creates an overview network that contains all available genes from the input gene list. The given genes will be annotated with  the boolean given by the field annotationName. The overview network will contain all available relationships between genes and metabolites that are part of the network. The endpoint returns a networkInventoryItem of the created network.  It can be retrieved using the UUID in the GET /network endpoint. If baseNetworkUUID is omitted, the full model will be used. ", response = NetworkInventoryItem.class, tags={ "convenience", })
     @ApiResponses(value = { 
-        @ApiResponse(code = 201, message = "network copied", response = NetworkInventoryItem.class),
+        @ApiResponse(code = 201, message = "network created", response = NetworkInventoryItem.class),
         @ApiResponse(code = 400, message = "Bad Request"),
         @ApiResponse(code = 403, message = "The current user is forbidden from accessing this data") })
-    @RequestMapping(value = "/drivergenes",
+    @RequestMapping(value = "/overview",
         produces = { "application/json" }, 
         consumes = { "application/json" },
         method = RequestMethod.POST)
-    default ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@ApiParam(value = "The genes of interest, aka. the driver genes, to build a driver gene network with based on the network with uuid 'baseNetworkUUID'. If 'baseNetworkUUID' is omitted, the default network will be used." ,required=true )  @Valid @RequestBody Drivergenes drivergenes
+    default ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@ApiParam(value = "The genes of interest, aka. the driver genes, to build a driver gene network with based on the network with uuid 'baseNetworkUUID'. If 'baseNetworkUUID' is omitted, the default network will be used.The genes of interest for which to build an overview network.\n" + 
+    		"          The network is based on the network with uuid 'baseNetworkUUID'.\n" + 
+    		"          If 'baseNetworkUUID' is omitted, the default network will be used." ,required=true )  @Valid @RequestBody OverviewNetworkItem overviewNetworkItem
 ,@ApiParam(value = "The user which requests the creation" ,required=true) @RequestHeader(value="user", required=true) String user
 ) {
         if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
