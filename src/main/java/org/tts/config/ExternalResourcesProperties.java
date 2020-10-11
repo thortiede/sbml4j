@@ -27,6 +27,12 @@ public class ExternalResourcesProperties {
 
 	@Autowired
 	private MdAndersonProperties mdAndersonProperties;
+	
+	@Autowired
+	private BiologicalQualifierProperties biologicalQualifierProperties;
+	
+	@Autowired
+	private KEGGDatabaseProperties keggDatabaseProperties;
 
 	public MdAndersonProperties getMdAndersonProperties() {
 		return mdAndersonProperties;
@@ -34,6 +40,22 @@ public class ExternalResourcesProperties {
 
 	public void setMdAndersonProperties(MdAndersonProperties mdAndersonProperties) {
 		this.mdAndersonProperties = mdAndersonProperties;
+	}
+
+	public BiologicalQualifierProperties getBiologicalQualifierProperties() {
+		return biologicalQualifierProperties;
+	}
+
+	public void setBiologicalQualifierProperties(BiologicalQualifierProperties biologicalQualifierProperties) {
+		this.biologicalQualifierProperties = biologicalQualifierProperties;
+	}
+
+	public KEGGDatabaseProperties getKeggDatabaseProperties() {
+		return keggDatabaseProperties;
+	}
+
+	public void setKeggDatabaseProperties(KEGGDatabaseProperties keggDatabaseProperties) {
+		this.keggDatabaseProperties = keggDatabaseProperties;
 	}
 	
 }

@@ -15,6 +15,7 @@ package org.tts.model.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -34,7 +35,28 @@ public class GeneAnalysisItem   {
   @JsonProperty("gene")
   private String gene = null;
 
-  @JsonProperty("pathways")
+  @JsonProperty("secondary names")
+  private List<String> secondaryNames = null;
+  
+  public List<String> getSecondaryNames() {
+	return secondaryNames;
+  }
+
+  public void setSecondaryNames(List<String> secondaryNames) {
+	  this.secondaryNames = secondaryNames;
+  }
+  
+  public GeneAnalysisItem addSecondaryName(String secondaryName) {
+	  if (this.secondaryNames == null) {
+		  this.secondaryNames = new ArrayList<>();
+	  }
+	  if(!this.secondaryNames.contains(secondaryName)) {
+		  this.secondaryNames.add(secondaryName);
+	  }
+	  return this;
+  }
+
+@JsonProperty("pathways")
   @Valid
   private List<PathwayInfoItem> pathways = null;
 
@@ -42,6 +64,24 @@ public class GeneAnalysisItem   {
   @Valid
   private List<RelationInfoItem> relations = null;
 
+  @JsonProperty("qualifiers")
+  @Valid
+  private Map<String, Map<String, List<String>>> qualifierMap = null;
+  
+  /**
+   * The Qualifier Map of this gene
+   * @return qualifierMap
+   */
+  @ApiModelProperty(value="A map to hold all qualifiers known to this gene item")
+  
+  public Map<String, Map<String, List<String>>> getQualifierMap() {
+	  return qualifierMap;
+  }
+  
+  public void setQualifierMap(Map<String, Map<String, List<String>>> qualifierMap) {
+	  this.qualifierMap = qualifierMap;
+  }
+  
   public GeneAnalysisItem gene(String gene) {
     this.gene = gene;
     return this;
