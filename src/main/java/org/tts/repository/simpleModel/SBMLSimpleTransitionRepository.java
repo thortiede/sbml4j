@@ -15,6 +15,7 @@ package org.tts.repository.simpleModel;
 
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
 import org.tts.model.simple.SBMLSimpleTransition;
 
 public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimpleTransition, Long> {
@@ -24,5 +25,16 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 	@Query(value = "MATCH (t:SBMLSimpleTransition) RETURN DISTINCT t.sBaseSboTerm;")
 	Iterable<String> getTransitionTypes();
 	
-	
+	@Query(value="MATCH "
+			+ "(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
+			+ "(t)"
+			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies) "
+			+ "WHERE s1.entityUUID = $speciesEntityUUID "
+			+ "OR s2.entityUUID = $speciesEntityUUID "
+			+ "RETURN "
+			+ "s1 as inputSpecies,"
+			+ "t as transition, "
+			+ "s2 as outputSpecies"
+			)
+	Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID);
 }
