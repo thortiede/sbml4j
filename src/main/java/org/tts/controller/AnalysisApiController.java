@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.tts.api.AnalysisApi;
 import org.tts.model.api.GeneAnalysisItem;
+import org.tts.service.AnalysisService;
 import org.tts.service.networks.NetworkResourceService;
 
 /**
@@ -39,6 +40,9 @@ import org.tts.service.networks.NetworkResourceService;
 public class AnalysisApiController implements AnalysisApi {
 	
 	@Autowired
+	AnalysisService analysisService;
+	
+	@Autowired
 	NetworkResourceService networkResourceService;
 	
 	
@@ -48,10 +52,16 @@ public class AnalysisApiController implements AnalysisApi {
 	 * @param geneSymbol The symbol for which to get the item
 	 * @return ResponseEntity holding the generated geneAnalysisItem
 	 */
-	public ResponseEntity<GeneAnalysisItem> getGeneAnalysis(String geneSymbol) {
-		GeneAnalysisItem geneAnalysisItem = new GeneAnalysisItem();
-		geneAnalysisItem.setGene(geneSymbol);
-		return new ResponseEntity<GeneAnalysisItem>(geneAnalysisItem, HttpStatus.NOT_IMPLEMENTED);
+	public ResponseEntity<List<GeneAnalysisItem>> getGeneAnalysis(String geneSymbol) {
+		List<GeneAnalysisItem> geneAnalysisItems;
+		try {
+			geneAnalysisItems = this.analysisService.getGeneAnalysis(geneSymbol);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return ResponseEntity.badRequest().build();
+		}
+		return new ResponseEntity<List<GeneAnalysisItem>>(geneAnalysisItems, HttpStatus.OK);
 	}
 	
 	/**
@@ -63,11 +73,9 @@ public class AnalysisApiController implements AnalysisApi {
 	public ResponseEntity<List<GeneAnalysisItem>> getGeneSetAnalysis(List<String> geneSymbols) {
 		List<GeneAnalysisItem> geneAnalysisItems = new ArrayList<>();
 		for (String geneSymbol : geneSymbols) {
-			GeneAnalysisItem geneAnalysisItem = new GeneAnalysisItem();
-			geneAnalysisItem.setGene(geneSymbol);
-			geneAnalysisItems.add(geneAnalysisItem);
+			geneAnalysisItems.addAll(this.analysisService.getGeneAnalysis(geneSymbol));
 		}
-		return new ResponseEntity<List<GeneAnalysisItem>>(geneAnalysisItems, HttpStatus.NOT_IMPLEMENTED);
+		return new ResponseEntity<List<GeneAnalysisItem>>(geneAnalysisItems, HttpStatus.OK);
 	}
 	
 	/**
@@ -84,7 +92,6 @@ public class AnalysisApiController implements AnalysisApi {
 												, List<String> geneSymbols
 												, UUID UUID
 												, boolean directed) {
-		
 		Resource resource = this.networkResourceService.getNetwork(UUID.toString(), geneSymbols, directed);
 		if(resource == null) {
 			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 
