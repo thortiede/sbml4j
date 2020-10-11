@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
  * @since 0.1
  */
 @Configuration
-@EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, ExternalResourcesProperties.class, MdAndersonProperties.class})
+@EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, 
+	ExternalResourcesProperties.class, MdAndersonProperties.class, BiologicalQualifierProperties.class, KEGGDatabaseProperties.class})
 public class SBML4jConfig {
 	@Autowired
 	private OutputConfigProperties outputConfigProperties;

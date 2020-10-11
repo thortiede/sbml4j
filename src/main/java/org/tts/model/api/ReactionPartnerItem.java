@@ -17,20 +17,18 @@ import java.util.Objects;
 
 import org.springframework.validation.annotation.Validated;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * RelationInfoItem
+ * ReactionPartnerItem
  */
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-10T16:25:40.095Z[GMT]")
 
 
-public class RelationInfoItem   {
+public class ReactionPartnerItem   {
   @JsonProperty("name")
   private String name = null;
 
@@ -40,51 +38,16 @@ public class RelationInfoItem   {
   @JsonProperty("sboTerm")
   private String sboTerm = null;
 
-  /**
-   * The direction of this relation in relation to the parent
-   */
-  public enum DirectionEnum {
-    IN("in"),
-    
-    OUT("out"),
-    
-    INOUT("inout");
-
-    private String value;
-
-    DirectionEnum(String value) {
-      this.value = value;
-    }
-
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static DirectionEnum fromValue(String text) {
-      for (DirectionEnum b : DirectionEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
-  }
-  @JsonProperty("direction")
-  private DirectionEnum direction = null;
-
-  public RelationInfoItem name(String name) {
+  public ReactionPartnerItem name(String name) {
     this.name = name;
     return this;
   }
 
   /**
-   * The name of the related gene
+   * The name of the reaction partner
    * @return name
   **/
-  @ApiModelProperty(example = "MAP2K", value = "The name of the related gene")
+  @ApiModelProperty(example = "C20H22N7O6", value = "The name of the reaction partner")
   
     public String getName() {
     return name;
@@ -94,16 +57,16 @@ public class RelationInfoItem   {
     this.name = name;
   }
 
-  public RelationInfoItem type(String type) {
+  public ReactionPartnerItem type(String type) {
     this.type = type;
     return this;
   }
 
   /**
-   * The type of the relation between the two genes
+   * The type of the reaction partner
    * @return type
   **/
-  @ApiModelProperty(example = "stimulation", value = "The type of the relation between the two genes")
+  @ApiModelProperty(example = "compound", value = "The type of the reaction partner")
   
     public String getType() {
     return type;
@@ -113,16 +76,16 @@ public class RelationInfoItem   {
     this.type = type;
   }
 
-  public RelationInfoItem sboTerm(String sboTerm) {
+  public ReactionPartnerItem sboTerm(String sboTerm) {
     this.sboTerm = sboTerm;
     return this;
   }
 
   /**
-   * The sboTerm of this relation
+   * The sboTerm of the reaction partner
    * @return sboTerm
   **/
-  @ApiModelProperty(example = "SBO:0000170", value = "The sboTerm of this relation")
+  @ApiModelProperty(value = "The sboTerm of the reaction partner")
   
     public String getSboTerm() {
     return sboTerm;
@@ -130,25 +93,6 @@ public class RelationInfoItem   {
 
   public void setSboTerm(String sboTerm) {
     this.sboTerm = sboTerm;
-  }
-
-  public RelationInfoItem direction(DirectionEnum direction) {
-    this.direction = direction;
-    return this;
-  }
-
-  /**
-   * The direction of this relation in relation to the parent
-   * @return direction
-  **/
-  @ApiModelProperty(example = "out", value = "The direction of this relation in relation to the parent")
-  
-    public DirectionEnum getDirection() {
-    return direction;
-  }
-
-  public void setDirection(DirectionEnum direction) {
-    this.direction = direction;
   }
 
 
@@ -160,27 +104,25 @@ public class RelationInfoItem   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    RelationInfoItem relationInfoItem = (RelationInfoItem) o;
-    return Objects.equals(this.name, relationInfoItem.name) &&
-        Objects.equals(this.type, relationInfoItem.type) &&
-        Objects.equals(this.sboTerm, relationInfoItem.sboTerm) &&
-        Objects.equals(this.direction, relationInfoItem.direction);
+    ReactionPartnerItem reactionPartnerItem = (ReactionPartnerItem) o;
+    return Objects.equals(this.name, reactionPartnerItem.name) &&
+        Objects.equals(this.type, reactionPartnerItem.type) &&
+        Objects.equals(this.sboTerm, reactionPartnerItem.sboTerm);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, sboTerm, direction);
+    return Objects.hash(name, type, sboTerm);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class RelationInfoItem {\n");
+    sb.append("class ReactionPartnerItem {\n");
     
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    sboTerm: ").append(toIndentedString(sboTerm)).append("\n");
-    sb.append("    direction: ").append(toIndentedString(direction)).append("\n");
     sb.append("}");
     return sb.toString();
   }

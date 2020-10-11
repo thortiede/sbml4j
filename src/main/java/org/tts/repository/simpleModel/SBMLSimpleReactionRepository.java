@@ -13,7 +13,9 @@
  */
 package org.tts.repository.simpleModel;
 
+import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.simple.SBMLSimpleReaction;
 
 
@@ -21,4 +23,23 @@ public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimple
 
 	SBMLSimpleReaction findBysBaseName(String sBaseName, int depth);
 	
+	@Query("MATCH "
+	+ "(r)"
+	+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
+	+ "(s:SBMLSpecies) "
+	+ "WHERE s.entityUUID = $speciesEntityUUID "
+	+ "RETURN s as species, "
+	+ "type(rel) as typeOfRelation, "
+	+ "r as reaction")
+	Iterable<MetabolicPathwayReturnType> findAllReactionsForSpecies(String speciesEntityUUID);
+	
+	@Query("MATCH "
+			+ "(r:SBMLSimpleReaction)"
+			+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
+			+ "(s:SBMLSpecies) "
+			+ "WHERE r.entityUUID = $reactionEntityUUID "
+			+ "RETURN s as species, "
+			+ "type(rel) as typeOfRelation, "
+			+ "r as reaction")
+	Iterable<MetabolicPathwayReturnType> findAllSpeciesForReaction(String reactionEntityUUID);
 }

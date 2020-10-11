@@ -11,13 +11,27 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.tts.config;
 
-import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.ExternalResourceEntity;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
-public interface ExternalResourceEntityRepository extends Neo4jRepository<ExternalResourceEntity, Long> {
+/**
+ * Description
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
+@ConfigurationProperties(prefix = "sbml4j.externalresources.biologicalqualifer")
+public class BiologicalQualifierProperties {
 
-	public ExternalResourceEntity findByUri(String uri);
+	private String defaultDatabase;
+
+	public String getDefaultDatabase() {
+		return defaultDatabase;
+	}
+
+	public void setDefaultDatabase(String defaultDatabase) {
+		this.defaultDatabase = defaultDatabase;
+	}
 	
 }

@@ -42,6 +42,16 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 	public Iterable<SBMLSpecies> findByBQConnectionTo(String name, String databaseFromUri);
 
 	@Query("MATCH "
+			+ "(s:SBMLSpecies)"
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND $name in e.secondaryNames "
+			+ "RETURN s")
+	public Iterable<SBMLSpecies> findByExternalResourceSecondaryName(String name);
+	
+	@Query("MATCH "
 			+ "(g:SBMLSpeciesGroup)"
 			+ "-[h:HAS_GROUP_MEMBER]->"
 			+ "(s:SBMLSpecies) "
