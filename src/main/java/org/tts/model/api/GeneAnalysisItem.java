@@ -15,7 +15,6 @@ package org.tts.model.api;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -30,33 +29,22 @@ import io.swagger.annotations.ApiModelProperty;
  * GeneAnalysisItem
  */
 @Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-10T16:25:40.095Z[GMT]")
+
+
 public class GeneAnalysisItem   {
   @JsonProperty("gene")
   private String gene = null;
 
   @JsonProperty("secondary names")
+  @Valid
   private List<String> secondaryNames = null;
-  
-  public List<String> getSecondaryNames() {
-	return secondaryNames;
-  }
 
-  public void setSecondaryNames(List<String> secondaryNames) {
-	  this.secondaryNames = secondaryNames;
-  }
-  
-  public GeneAnalysisItem addSecondaryName(String secondaryName) {
-	  if (this.secondaryNames == null) {
-		  this.secondaryNames = new ArrayList<>();
-	  }
-	  if(!this.secondaryNames.contains(secondaryName)) {
-		  this.secondaryNames.add(secondaryName);
-	  }
-	  return this;
-  }
+  @JsonProperty("qualifier")
+  @Valid
+  private List<QualifierItem> qualifier = null;
 
-@JsonProperty("pathways")
+  @JsonProperty("pathways")
   @Valid
   private List<PathwayInfoItem> pathways = null;
 
@@ -64,24 +52,10 @@ public class GeneAnalysisItem   {
   @Valid
   private List<RelationInfoItem> relations = null;
 
-  @JsonProperty("qualifiers")
+  @JsonProperty("reactions")
   @Valid
-  private Map<String, Map<String, List<String>>> qualifierMap = null;
-  
-  /**
-   * The Qualifier Map of this gene
-   * @return qualifierMap
-   */
-  @ApiModelProperty(value="A map to hold all qualifiers known to this gene item")
-  
-  public Map<String, Map<String, List<String>>> getQualifierMap() {
-	  return qualifierMap;
-  }
-  
-  public void setQualifierMap(Map<String, Map<String, List<String>>> qualifierMap) {
-	  this.qualifierMap = qualifierMap;
-  }
-  
+  private List<ReactionInfoItem> reactions = null;
+
   public GeneAnalysisItem gene(String gene) {
     this.gene = gene;
     return this;
@@ -101,6 +75,60 @@ public class GeneAnalysisItem   {
     this.gene = gene;
   }
 
+  public GeneAnalysisItem secondaryNames(List<String> secondaryNames) {
+    this.secondaryNames = secondaryNames;
+    return this;
+  }
+
+  public GeneAnalysisItem addSecondaryNamesItem(String secondaryNamesItem) {
+    if (this.secondaryNames == null) {
+      this.secondaryNames = new ArrayList<String>();
+    }
+    this.secondaryNames.add(secondaryNamesItem);
+    return this;
+  }
+
+  /**
+   * Get secondaryNames
+   * @return secondaryNames
+  **/
+  @ApiModelProperty(value = "")
+  
+    public List<String> getSecondaryNames() {
+    return secondaryNames;
+  }
+
+  public void setSecondaryNames(List<String> secondaryNames) {
+    this.secondaryNames = secondaryNames;
+  }
+
+  public GeneAnalysisItem qualifier(List<QualifierItem> qualifier) {
+    this.qualifier = qualifier;
+    return this;
+  }
+
+  public GeneAnalysisItem addQualifierItem(QualifierItem qualifierItem) {
+    if (this.qualifier == null) {
+      this.qualifier = new ArrayList<QualifierItem>();
+    }
+    this.qualifier.add(qualifierItem);
+    return this;
+  }
+
+  /**
+   * The qualifier of this gene
+   * @return qualifier
+  **/
+  @ApiModelProperty(value = "The qualifier of this gene")
+      @Valid
+    public List<QualifierItem> getQualifier() {
+    return qualifier;
+  }
+
+  public void setQualifier(List<QualifierItem> qualifier) {
+    this.qualifier = qualifier;
+  }
+
   public GeneAnalysisItem pathways(List<PathwayInfoItem> pathways) {
     this.pathways = pathways;
     return this;
@@ -108,7 +136,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addPathwaysItem(PathwayInfoItem pathwaysItem) {
     if (this.pathways == null) {
-      this.pathways = new ArrayList<>();
+      this.pathways = new ArrayList<PathwayInfoItem>();
     }
     this.pathways.add(pathwaysItem);
     return this;
@@ -135,7 +163,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addRelationsItem(RelationInfoItem relationsItem) {
     if (this.relations == null) {
-      this.relations = new ArrayList<>();
+      this.relations = new ArrayList<RelationInfoItem>();
     }
     this.relations.add(relationsItem);
     return this;
@@ -155,6 +183,33 @@ public class GeneAnalysisItem   {
     this.relations = relations;
   }
 
+  public GeneAnalysisItem reactions(List<ReactionInfoItem> reactions) {
+    this.reactions = reactions;
+    return this;
+  }
+
+  public GeneAnalysisItem addReactionsItem(ReactionInfoItem reactionsItem) {
+    if (this.reactions == null) {
+      this.reactions = new ArrayList<ReactionInfoItem>();
+    }
+    this.reactions.add(reactionsItem);
+    return this;
+  }
+
+  /**
+   * The reactions this gene is part of
+   * @return reactions
+  **/
+  @ApiModelProperty(value = "The reactions this gene is part of")
+      @Valid
+    public List<ReactionInfoItem> getReactions() {
+    return reactions;
+  }
+
+  public void setReactions(List<ReactionInfoItem> reactions) {
+    this.reactions = reactions;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -166,13 +221,16 @@ public class GeneAnalysisItem   {
     }
     GeneAnalysisItem geneAnalysisItem = (GeneAnalysisItem) o;
     return Objects.equals(this.gene, geneAnalysisItem.gene) &&
+        Objects.equals(this.secondaryNames, geneAnalysisItem.secondaryNames) &&
+        Objects.equals(this.qualifier, geneAnalysisItem.qualifier) &&
         Objects.equals(this.pathways, geneAnalysisItem.pathways) &&
-        Objects.equals(this.relations, geneAnalysisItem.relations);
+        Objects.equals(this.relations, geneAnalysisItem.relations) &&
+        Objects.equals(this.reactions, geneAnalysisItem.reactions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(gene, pathways, relations);
+    return Objects.hash(gene, secondaryNames, qualifier, pathways, relations, reactions);
   }
 
   @Override
@@ -181,8 +239,11 @@ public class GeneAnalysisItem   {
     sb.append("class GeneAnalysisItem {\n");
     
     sb.append("    gene: ").append(toIndentedString(gene)).append("\n");
+    sb.append("    secondaryNames: ").append(toIndentedString(secondaryNames)).append("\n");
+    sb.append("    qualifier: ").append(toIndentedString(qualifier)).append("\n");
     sb.append("    pathways: ").append(toIndentedString(pathways)).append("\n");
     sb.append("    relations: ").append(toIndentedString(relations)).append("\n");
+    sb.append("    reactions: ").append(toIndentedString(reactions)).append("\n");
     sb.append("}");
     return sb.toString();
   }
