@@ -20,6 +20,4 @@ public interface ExternalResourceEntityRepository extends Neo4jRepository<Extern
 
 	public ExternalResourceEntity findByUri(String uri);
 	
-	public Iterable<ExternalResourceEntity> findByNameAndDatabaseFromUri(String name, String databaseFromUri);
-	
 }
