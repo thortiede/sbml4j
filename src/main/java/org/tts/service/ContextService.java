@@ -79,17 +79,19 @@ public class ContextService {
 		Set<String> seenEdges = new HashSet<>();
 		// get nodeApocString
 		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
-		if (genes == null || genes.size() < 1) {
+		Set<String> geneUUIDSet = new HashSet<>();
+		for (String gene : genes) {
+			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (geneFlatSpeciesEntityUUID != null) {
+				geneUUIDSet.add(geneFlatSpeciesEntityUUID);
+			}
+		}
+		if (genes == null || genes.size() < 1 || geneUUIDSet.size() < 1) {
 			// should be caught by the controller
 			return null;
-		} else if (genes.size() == 1) {
-			String geneSymbol = genes.get(0);
-			String flatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, geneSymbol);
-			if (flatSpeciesEntityUUID == null) {
-				return null;
-			}
+		} else if (geneUUIDSet.size() == 1) {
 			// 3. getContext
-			Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(flatSpeciesEntityUUID, relationShipApocString, nodeApocString, minSize, maxSize);
+			Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(geneUUIDSet.iterator().next(), relationShipApocString, nodeApocString, minSize, maxSize);
 
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
 		} else {
