@@ -536,7 +536,7 @@ public class NetworkService {
 			//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
 			FlatSpecies geneSymbolSpecies = this.flatSpeciesService.findBySimpleModelEntityUUID(networkEntityUUID, simpleModelGeneEntityUUID);
 			if (geneSymbolSpecies == null) {
-				//return "Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID;
+				logger.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
 				return null;
 			}
 			flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
