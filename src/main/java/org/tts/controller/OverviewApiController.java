@@ -64,24 +64,50 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
-		// 1. BaseNetworkUUID provided?
+		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
+		boolean baseNetworkUUIDprovided = false;
 		if (overviewNetworkItem.getBaseNetworkUUID() == null) {
 			networkEntityUUID = this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getBaseNetworkUUID();
 		} else {
 			networkEntityUUID = overviewNetworkItem.getBaseNetworkUUID().toString();
+			baseNetworkUUIDprovided = true;
+		}
+		// 1b. AnnotationName provided?
+		if (overviewNetworkItem.getAnnotationName() == null || overviewNetworkItem.getAnnotationName().equals("")) {
+			return ResponseEntity.badRequest().header("reason", "Annotation name not provided in request body in the annotationName - field.").build();
 		}
 		// 2. Does the network exist?
 		if (this.mappingNodeService.findByEntityUUID(networkEntityUUID) == null) {
-			return ResponseEntity.notFound().build();
+			if (baseNetworkUUIDprovided) {
+				return ResponseEntity.badRequest().header("reason", "Could not find the base network provided via the baseNetworkUUID.").build();
+			} else {
+				return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration.").build();
+			}
 		}
+		
 		// 3. We skip the check whether the user can access the baseNetwork for now. 
 		// For this scenario, the user can take any network and create a driver gene network from it
+		
+		
 		List<String> geneNames = overviewNetworkItem.getGenes();
-		if (geneNames == null) {
+		// 4. Any genes provided?
+		if (geneNames == null || geneNames.isEmpty()) {
 			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
 		}
-		// 4. Get the FlatEdges making up the context
+		// 5. Check whether we know at least one of the genes provided
+		boolean foundGene = false;
+		for (String gene : geneNames) {
+			if (this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene) != null) {
+				foundGene = true;
+				break;
+			}
+		}
+		if (!foundGene) {
+			return ResponseEntity.badRequest().header("reason", "Could not find any of the provided genes. Cannot calculate overview network.").build();
+		}
+		
+		// 6. Get the FlatEdges making up the context
 		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(
 											  networkEntityUUID
 											, geneNames 
@@ -96,9 +122,9 @@ public class OverviewApiController implements OverviewApi {
 		for (String geneName : geneNames) {
 			nodeAnnotation.put(geneName, true);
 		}
-		// 5. Add the annotation inline
+		// 7. Add the annotation inline
 		this.networkService.addInlineNodeAnnotation(contextFlatEdges, overviewNetworkItem.getAnnotationName(), "boolean", nodeAnnotation);
-		// 6. Create a networkName for the new network file
+		// 8. Create a networkName for the new network file
 		String networkName = null;
 		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
 			networkName = overviewNetworkItem.getNetworkName();
@@ -113,9 +139,9 @@ public class OverviewApiController implements OverviewApi {
 			networkNameSB.append(networkEntityUUID);
 			networkName = networkNameSB.toString();
 		}
-			// 7. Create a new mapping with the FlatEdges
+		// 9. Create a new mapping with the FlatEdges
 		MappingNode overviewNetwork = this.networkService.createMappingFromFlatEdges(user, networkEntityUUID, contextFlatEdges, networkName);
-		// 8. Return the InventoryItem of the new Network
+		// 10. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(overviewNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 }
