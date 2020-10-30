@@ -81,7 +81,7 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<NetworkInventoryItem> addAnnotationToNetwork(@Valid AnnotationItem body, String user,
-			UUID UUID) {
+			UUID UUID, boolean derive) {
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -96,7 +96,7 @@ public class NetworksApiController implements NetworksApi {
 			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
 		}
 		// 3. Add annotation to network
-		MappingNode annotatedNetwork = this.networkService.annotateNetwork(user, body, UUID.toString());
+		MappingNode annotatedNetwork = this.networkService.annotateNetwork(user, body, UUID.toString(), derive);
 	
 		// 4. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(annotatedNetwork.getEntityUUID()), HttpStatus.CREATED);
