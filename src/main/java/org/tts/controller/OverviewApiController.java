@@ -123,7 +123,7 @@ public class OverviewApiController implements OverviewApi {
 			nodeAnnotation.put(geneName, true);
 		}
 		// 7. Add the annotation inline
-		this.networkService.addInlineNodeAnnotation(contextFlatEdges, overviewNetworkItem.getAnnotationName(), "boolean", nodeAnnotation);
+		this.networkService.addNodeAnnotation(contextFlatEdges, overviewNetworkItem.getAnnotationName(), "boolean", nodeAnnotation);
 		// 8. Create a networkName for the new network file
 		String networkName = null;
 		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
