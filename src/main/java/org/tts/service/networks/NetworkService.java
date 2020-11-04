@@ -157,26 +157,26 @@ public class NetworkService {
 	 */
 	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID, boolean doCreateCopy) {
 		MappingNode mappingToAnnotate = null;
+		StringBuilder prefixSB = new StringBuilder();
+		prefixSB.append("Annotate_with");
+		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
+			prefixSB.append("_node.");
+			prefixSB.append(annotationItem.getNodeAnnotationName());
+			prefixSB.append(".");
+			prefixSB.append(annotationItem.getNodeAnnotationType());
+		}
+		if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
+			prefixSB.append("_relation.");
+			prefixSB.append(annotationItem.getRelationAnnotationName());
+			prefixSB.append(".");
+			prefixSB.append(annotationItem.getRelationAnnotationType());
+		}
 		if (doCreateCopy) {
-			StringBuilder prefixSB = new StringBuilder();
-			prefixSB.append("Annotate_with");
-			if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
-				prefixSB.append("_node.");
-				prefixSB.append(annotationItem.getNodeAnnotationName());
-				prefixSB.append(".");
-				prefixSB.append(annotationItem.getNodeAnnotationType());
-			}
-			if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
-				prefixSB.append("_relation.");
-				prefixSB.append(annotationItem.getRelationAnnotationName());
-				prefixSB.append(".");
-				prefixSB.append(annotationItem.getRelationAnnotationType());
-			}
-			
 			mappingToAnnotate = this.copyNetwork(networkEntityUUID, user, prefixSB.toString());
 			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
 		} else {
 			mappingToAnnotate = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+			mappingToAnnotate.setMappingName(prefixSB.toString().concat(mappingToAnnotate.getMappingName()));
 		}
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
