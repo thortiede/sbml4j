@@ -105,6 +105,7 @@ public interface NetworksApi {
     		+ "- relationAnnotation is a dictionary of \"relation-symbol\": \"annotation\" - pairs where realation-symbol must match one of the relation symbols in the network (see field relationSymbols in FilterOptions); the annotation is added to the relation under the name defined in relationAnnotationName using the type in relationAnnotationType" ,required=true )  @Valid @RequestBody AnnotationItem body
 ,@ApiParam(value = "The user which requests the creation" ,required=true) @RequestHeader(value="user", required=true) String user
 ,@ApiParam(value = "The UUID of the parent network to derive a new network from",required=true) @PathVariable("UUID") UUID uuid
+,@ApiParam(value = "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)") @RequestParam(value = "derive", required = false, defaultValue="true") boolean derive
 ) {
         if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
             if (getAcceptHeader().get().contains("application/json")) {

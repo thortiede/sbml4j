@@ -107,12 +107,12 @@ public class NetworkService {
 	
 	/**
 	 * Takes the FlatEdges and adds the given annotation to nodes in those edges
-	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdges}</a>  entities to scan for <a href="#{@link}">{@link FlatSpecies}</a>  to annotate
+	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdges}</a> entities to scan for <a href="#{@link}">{@link FlatSpecies}</a>  to annotate
 	 * @param annotationName The name of the annotation
 	 * @param annotationType The type of the annotation as a string
 	 * @param nodeAnnotation Map of node symbols to annotation
 	 */
-	public void addInlineNodeAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
+	public void addNodeAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
 			String annotationType, Map<String, Object> nodeAnnotation) {
 		Iterator<FlatEdge> flatEdgeIterator = flatEdges.iterator();
 		while (flatEdgeIterator.hasNext()) {
@@ -127,7 +127,75 @@ public class NetworkService {
 			}		
 		}
 	}
+	
+	/**
+	 * Takes the FlatEdges and adds the given annotation to them
+	 * @param flatEdges The <a href="#{@link}">{@link FlatEdges}</a> entities to add annotations to
+	 * @param annotationName The name of the annotation
+	 * @param annotationType The type of the annotation as a string
+	 * @param relationAnnotation Map of relation symbols to annotation
+	 */
+	public void addRelationAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
+			String annotationType, Map<String, Object> relationAnnotation) {
+		Iterator<FlatEdge> flatEdgeIterator = flatEdges.iterator();
+		while (flatEdgeIterator.hasNext()) {
+			FlatEdge currentEdge = flatEdgeIterator.next();
+			if (relationAnnotation.containsKey(currentEdge.getSymbol())) {
+				this.graphBaseEntityService.addAnnotation(currentEdge, annotationName, annotationType, relationAnnotation.get(currentEdge.getSymbol()), false);
+				relationAnnotation.remove(currentEdge.getSymbol());
+			}
+		}
+	}
 
+	/**
+	 * Annotate network entities and create a new <a href="#{@link}">{@link MappingNode}</a> if requested
+	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
+	 * @param annotationItem The <a href="#{@link}">{@link AnnotationItem}</a> that holds the annotation to add
+	 * @param networkEntityUUID The base network to derive the annotated <a href="#{@link}">{@link MappingNode}</a> from
+	 * @param doCreateCopy whether to derive a new network and put annotation on it (true), or directly add annotation on given network (false)
+	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
+	 */
+	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID, boolean doCreateCopy) {
+		MappingNode mappingToAnnotate = null;
+		StringBuilder prefixSB = new StringBuilder();
+		prefixSB.append("Annotate_with");
+		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
+			prefixSB.append("_node.");
+			prefixSB.append(annotationItem.getNodeAnnotationName());
+			prefixSB.append(".");
+			prefixSB.append(annotationItem.getNodeAnnotationType());
+		}
+		if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
+			prefixSB.append("_relation.");
+			prefixSB.append(annotationItem.getRelationAnnotationName());
+			prefixSB.append(".");
+			prefixSB.append(annotationItem.getRelationAnnotationType());
+		}
+		if (doCreateCopy) {
+			mappingToAnnotate = this.copyNetwork(networkEntityUUID, user, prefixSB.toString());
+			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
+		} else {
+			mappingToAnnotate = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+			mappingToAnnotate.setMappingName(prefixSB.toString().concat(mappingToAnnotate.getMappingName()));
+		}
+
+		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
+		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
+			addNodeAnnotation(networkRelations, 
+					annotationItem.getNodeAnnotationName(), annotationItem.getNodeAnnotationType(), annotationItem.getNodeAnnotation());
+			mappingToAnnotate.addAnnotationType("node." + annotationItem.getNodeAnnotationName(),
+					annotationItem.getNodeAnnotationType());
+		}
+		if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
+			addRelationAnnotation(networkRelations, 
+					annotationItem.getRelationAnnotationName(), annotationItem.getRelationAnnotationType(), annotationItem.getRelationAnnotation());
+			mappingToAnnotate.addAnnotationType("relation." + annotationItem.getRelationAnnotationName(), 
+					annotationItem.getRelationAnnotationType());
+		}
+		this.flatEdgeService.save(networkRelations, 1);
+		return this.mappingNodeService.save(mappingToAnnotate, 0);
+	}
+	
 	/**
 	 * Create a new <a href="#{@link}">{@link MappingNode}</a> and annotate the created mapping
 	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
@@ -135,6 +203,7 @@ public class NetworkService {
 	 * @param networkEntityUUID The base network to derive the annotated <a href="#{@link}">{@link MappingNode}</a> from
 	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
 	 */
+	@Deprecated
 	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID) {
 		
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
