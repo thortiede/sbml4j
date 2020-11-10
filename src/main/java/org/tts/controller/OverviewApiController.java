@@ -19,6 +19,8 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,8 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class OverviewApiController implements OverviewApi {
 
+	 Logger log = LoggerFactory.getLogger(OverviewApiController.class);
+	
 	@Autowired
 	ContextService contextService;
 	
@@ -64,14 +68,18 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
+		log.info("Serving /overview for user " + user);
+		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
 		boolean baseNetworkUUIDprovided = false;
 		if (overviewNetworkItem.getBaseNetworkUUID() == null) {
 			networkEntityUUID = this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getBaseNetworkUUID();
+			log.debug("Using baseNetwork given by properties: " + networkEntityUUID);
 		} else {
 			networkEntityUUID = overviewNetworkItem.getBaseNetworkUUID().toString();
 			baseNetworkUUIDprovided = true;
+			log.debug("Using baseNetwork given input: " + networkEntityUUID);
 		}
 		// 1b. AnnotationName provided?
 		if (overviewNetworkItem.getAnnotationName() == null || overviewNetworkItem.getAnnotationName().equals("")) {
