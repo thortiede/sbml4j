@@ -345,7 +345,7 @@ public class NetworkService {
 		String activityName = "Create_" + networkName;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
-		MappingNode contextMappingNode = this.createMappingPre(user, parent, networkName, activityName, activityType, parent.getMappingType());
+		MappingNode mappingNodeForFlatEdges = this.createMappingPre(user, parent, networkName, activityName, activityType, parent.getMappingType());
 		Iterable<FlatEdge> resettedEdges = resetFlatEdges(flatEdges);
 		// clear the session to re-fetch all entities on request and not reuse old ids
 		this.session.clear();
@@ -353,18 +353,18 @@ public class NetworkService {
 		// save the new Edges
 		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
 		
-		connectContainsFlatEdgeSpecies(contextMappingNode, newFlatEdges);
+		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
 		
 		// updateMappingNode
-		String networkEntityUUID = contextMappingNode.getEntityUUID();
-		contextMappingNode.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
-		contextMappingNode.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
-		contextMappingNode.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
-		contextMappingNode.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
-		contextMappingNode.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		contextMappingNode.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
-		contextMappingNode.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
-		return this.mappingNodeService.save(contextMappingNode, 0);
+		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
+		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
+		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
 	/**
@@ -836,11 +836,14 @@ public class NetworkService {
 
 		try {
 			Map<String, Object> warehouseMap = mapping.getWarehouse();
-			item.setNumberOfNodes(Integer.valueOf(((String) warehouseMap.get("numberofnodes"))));
+			item.setNumberOfNodes(Integer.valueOf((String) warehouseMap.get("numberofnodes")));
 			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
-		} catch (Exception e) {
+		} catch (NullPointerException e) {
 			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
 					+ ") does not have the warehouse-Properties set");
+		} catch (Exception e) {
+			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
+					+ ") could not deliver number of nodes or relations due to:" + e.toString());
 		}
 		
 		/*
