@@ -519,6 +519,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
 		mappingFromPathway.setMappingNodeSymbols(nodeSymbols);
 		mappingFromPathway.setMappingRelationSymbols(relationSymbols);
+		mappingFromPathway.setActive(true);
 		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService
 				.saveWarehouseGraphNodeEntity(mappingFromPathway, QUERY_DEPTH_ZERO);
 		logger.info(Instant.now().toString() + ": Persisted FlatSpecies. Starting to connect");

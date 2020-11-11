@@ -339,6 +339,7 @@ public class NetworkService {
 		String newMappingEntityUUID = newMapping.getEntityUUID();
 		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
 		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
+		newMapping.setActive(true);
 		return this.mappingNodeService.save(newMapping, 0);
 	}
 	
@@ -374,6 +375,7 @@ public class NetworkService {
 		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
+		mappingNodeForFlatEdges.setActive(true);
 		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
@@ -534,7 +536,7 @@ public class NetworkService {
 		newMapping.setMappingNodeTypes(this.getNetworkNodeTypes(newMappingEntityUUID));
 		newMapping.setMappingRelationSymbols(this.getNetworkRelationSymbols(newMappingEntityUUID));
 		newMapping.setMappingRelationTypes(this.getNetworkRelationTypes(newMappingEntityUUID));
-		
+		newMapping.setActive(true);
 		return this.mappingNodeService.save(newMapping, 0);
 	}
 	
