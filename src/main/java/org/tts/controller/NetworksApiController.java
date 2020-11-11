@@ -21,6 +21,8 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -55,6 +57,8 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class NetworksApiController implements NetworksApi {
 
+	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
+	
 	@Autowired
 	ContextService contextService;
 	
@@ -82,6 +86,9 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> addAnnotationToNetwork(@Valid AnnotationItem body, String user,
 			UUID UUID, boolean derive) {
+		
+		log.info("Serving POST /networks/" + UUID.toString() + "/annotation for user " + user + " with AnnotationItem " + body.toString());
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -105,6 +112,9 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> addMyDrugRelations(String user, UUID UUID,
 			@NotNull @Valid String myDrugURL) {
+		
+		log.info("Serving POST /networks/" + UUID.toString() + "/mydrug for user " + user + " with myDrugURL " + myDrugURL);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -128,6 +138,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<NetworkInventoryItem> copyNetwork(String user, UUID UUID) {
+		
+		log.info("Serving POST /networks/" + UUID.toString() + " for user " + user);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -154,6 +167,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<Void> deleteNetwork(String user, UUID UUID) {
+		
+		log.info("Serving DELETE /networks/" + UUID.toString() + " for user " + user);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -183,6 +199,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<NetworkInventoryItem> filterNetwork(@Valid FilterOptions body, String user, UUID UUID) {
+		
+		log.info("Serving POST /networks/" + UUID.toString() + "/filter for user " + user + " with filterOptions " + body.toString());
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -209,6 +228,9 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<Resource> getContext(String user, UUID UUID, @NotNull @Valid String genes,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction, @Valid boolean directed) {
+		
+		log.info("Serving GET /networks/" + UUID.toString() + "/context for user " + user + " with genes " + genes);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -252,6 +274,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<Resource> getNetwork(String user, UUID UUID, @Valid boolean directed) {
+		
+		log.info("Serving GET /networks/" + UUID.toString() + " for user " + user);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -275,6 +300,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<NetworkOptions> getNetworkOptions(String user, UUID UUID) {
+		
+		log.info("Serving GET /networks/" + UUID.toString() + "/options for user " + user);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -298,6 +326,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(String user) {
+		
+		log.info("Serving GET /networks for user " + user);
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {
@@ -317,6 +348,9 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> postContext(@Valid NodeList body, String user, UUID UUID,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction) {
+		
+		log.info("Serving POST /networks/" + UUID.toString() + "/context for user " + user + " with NodeList " + body.toString());
+		
 		// 0. Does user exist?
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 		if(agent == null) {

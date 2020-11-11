@@ -15,6 +15,8 @@ package org.tts.service;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
@@ -32,6 +34,8 @@ import org.tts.repository.provenance.ProvenanceGraphEdgeRepository;
 @Service
 public class ProvenanceGraphService {
 
+	Logger log = LoggerFactory.getLogger(ProvenanceGraphService.class);
+	
 	@Autowired
 	private ProvenanceEntityRepository provenanceEntityRepository;
 	@Autowired
@@ -53,6 +57,8 @@ public class ProvenanceGraphService {
 	public ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
 			Map<String, Object> agentNodeProperties) {
 		
+		log.info("Creating ProvenanceGraphAgentNode for " + agentNodeProperties.get("graphagentname").toString());
+		
 		switch ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")) {
 		case User:
 			//String graphagenttype = ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")).name();
@@ -63,12 +69,14 @@ public class ProvenanceGraphService {
 					);
 
 			if (provenanceGraphAgentNode == null) {
+				log.info("No GraphAgentNode found for " + agentNodeProperties.get("graphagentname").toString() + " of type " + ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")).toString());
 				provenanceGraphAgentNode = new ProvenanceGraphAgentNode();
 				this.graphBaseEntityService.setGraphBaseEntityProperties(provenanceGraphAgentNode);
 				provenanceGraphAgentNode.setGraphAgentType((ProvenanceGraphAgentType) agentNodeProperties.get("graphagenttype"));
 				provenanceGraphAgentNode.setGraphAgentName((String) agentNodeProperties.get("graphagentname"));
 				return this.provenanceGraphAgentNodeRepository.save(provenanceGraphAgentNode);
 			} else {
+				log.info("Found GraphAgentNode: " + provenanceGraphAgentNode.getGraphAgentName() + " with uuid " + provenanceGraphAgentNode.getEntityUUID());
 				return provenanceGraphAgentNode;
 			}
 			

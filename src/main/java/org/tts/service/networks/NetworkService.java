@@ -103,7 +103,7 @@ public class NetworkService {
 	@Autowired
 	WarehouseGraphService warehouseGraphService;
 	
-	Logger logger = LoggerFactory.getLogger(NetworkService.class);
+	Logger log = LoggerFactory.getLogger(NetworkService.class);
 	
 	/**
 	 * Takes the FlatEdges and adds the given annotation to nodes in those edges
@@ -114,6 +114,7 @@ public class NetworkService {
 	 */
 	public void addNodeAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
 			String annotationType, Map<String, Object> nodeAnnotation) {
+		log.info("Adding node annotation " + annotationName);
 		Iterator<FlatEdge> flatEdgeIterator = flatEdges.iterator();
 		while (flatEdgeIterator.hasNext()) {
 			FlatEdge currentEdge = flatEdgeIterator.next();
@@ -137,6 +138,7 @@ public class NetworkService {
 	 */
 	public void addRelationAnnotation(Iterable<FlatEdge> flatEdges, String annotationName,
 			String annotationType, Map<String, Object> relationAnnotation) {
+		log.info("Adding relation annotation " + annotationName);
 		Iterator<FlatEdge> flatEdgeIterator = flatEdges.iterator();
 		while (flatEdgeIterator.hasNext()) {
 			FlatEdge currentEdge = flatEdgeIterator.next();
@@ -156,6 +158,11 @@ public class NetworkService {
 	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
 	 */
 	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID, boolean doCreateCopy) {
+		if (doCreateCopy) {
+			log.info("Deriving network from " + networkEntityUUID + " and adding annotation.");
+		} else {
+			log.info("Annotating network with uuid " + networkEntityUUID + " directly");
+		}
 		MappingNode mappingToAnnotate = null;
 		StringBuilder prefixSB = new StringBuilder();
 		prefixSB.append("Annotate_with");
@@ -293,6 +300,8 @@ public class NetworkService {
 	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
 	 */
 	public MappingNode copyNetwork(String networkEntityUUID, String user, String namePrefix) {
+		log.info("Copying network with uuid: " + networkEntityUUID);
+		
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		String newMappingName = namePrefix + "_" + parent.getMappingName();
@@ -341,6 +350,7 @@ public class NetworkService {
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> that was created and contains the network
 	 */
 	public MappingNode createMappingFromFlatEdges(String user, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, String networkName) {
+		log.info("Creating mapping from FlatEdges from baseNetwork with uuid: " + baseNetworkEntityUUID);
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(baseNetworkEntityUUID);
 		String activityName = "Create_" + networkName;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
@@ -380,6 +390,7 @@ public class NetworkService {
 	 */
 	public MappingNode createMappingPre(String user, MappingNode parent, String newMappingName,
 			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
+		log.info("Creating preconditions for new mapping with parent: " + parent.getEntityUUID());
 		// AgentNode
 		Map<String, Object> agentNodeProperties = new HashMap<>();
 		agentNodeProperties.put("graphagentname", user);
@@ -454,7 +465,7 @@ public class NetworkService {
 			// then delete the mapping node
 			this.provenanceGraphService.deleteProvenanceEntity(this.mappingNodeService.findByEntityUUID(mappingNodeEntityUUID));
 		} catch (Exception e) {
-			logger.warn("Could not cleanly delete Mapping with uuid: " + mappingNodeEntityUUID);
+			log.warn("Could not cleanly delete Mapping with uuid: " + mappingNodeEntityUUID);
 			return false;
 		}
 		
@@ -584,9 +595,9 @@ public class NetworkService {
 					Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
 					while (bqSpeciesIterator.hasNext()) {
 						SBMLSpecies current = bqSpeciesIterator.next();
-						logger.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
+						log.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
 						if(geneSpecies == null) {
-							logger.debug("Using " + current.getsBaseName());
+							log.debug("Using " + current.getsBaseName());
 							geneSpecies = current;
 							break;
 						}
@@ -605,7 +616,7 @@ public class NetworkService {
 			//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
 			FlatSpecies geneSymbolSpecies = this.flatSpeciesService.findBySimpleModelEntityUUID(networkEntityUUID, simpleModelGeneEntityUUID);
 			if (geneSymbolSpecies == null) {
-				logger.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
+				log.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
 				return null;
 			}
 			flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
@@ -839,10 +850,10 @@ public class NetworkService {
 			item.setNumberOfNodes(Integer.valueOf((String) warehouseMap.get("numberofnodes")));
 			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
 		} catch (NullPointerException e) {
-			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
+			log.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
 					+ ") does not have the warehouse-Properties set");
 		} catch (Exception e) {
-			logger.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
+			log.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
 					+ ") could not deliver number of nodes or relations due to:" + e.toString());
 		}
 		
