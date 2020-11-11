@@ -49,12 +49,12 @@ public class ProvenanceGraphService {
 	
 	/**
 	 * Creates a ProvenanceGraphAgentNode if it not already exists for that type and the given name
-	 * If it exists, it adds missing Properties from agentNodeProperties to the node
+	 * If it exists, it returns the existing node
 	 * 
 	 * @param agentNodeProperties
 	 * @return
 	 */
-	public ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
+	public synchronized ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
 			Map<String, Object> agentNodeProperties) {
 		
 		log.info("Creating ProvenanceGraphAgentNode for " + agentNodeProperties.get("graphagentname").toString());
@@ -96,7 +96,7 @@ public class ProvenanceGraphService {
 	 * @param activityType the type of the activity from GraphEnum.ProvenanceGraphActivityType
 	 * @return the persisted node
 	 */
-	public ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
+	public synchronized ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
 			Map<String, Object> activityNodeProperties) {
 	
 		ProvenanceGraphActivityNode provenanceGraphActivityNode = 
