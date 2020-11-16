@@ -126,7 +126,7 @@ public class OverviewApiController implements OverviewApi {
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
 		}
-		log.info("Created overview network");
+		log.info("Created overview network species and relationships");
 		Map<String, Object> nodeAnnotation = new HashMap<>();
 		for (String geneName : geneNames) {
 			nodeAnnotation.put(geneName, true);

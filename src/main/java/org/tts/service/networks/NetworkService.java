@@ -362,10 +362,11 @@ public class NetworkService {
 		this.session.clear();
 		
 		// save the new Edges
+		log.info("Persisting new mapping contents in database...");
 		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
-		
+		log.info("Writing Provenance Information of new mapping..");
 		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
-		
+		log.info("Writing metadata..");
 		// updateMappingNode
 		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
 		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
@@ -376,6 +377,7 @@ public class NetworkService {
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
 		mappingNodeForFlatEdges.setActive(true);
+		log.info("Activating newly created mapping");
 		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
@@ -412,6 +414,7 @@ public class NetworkService {
 		
 		// create new networkMapping that is the same as the parent one
 		// need mapingNode (name: OldName + step)
+		log.info("Creating MappingNode " + newMappingName);
 		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
 				newMappingName);
 		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
@@ -419,6 +422,7 @@ public class NetworkService {
 		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
 				ProvenanceGraphEdgeType.wasGeneratedBy);
+		log.info("New Mapping has uuid: " + newMapping.getEntityUUID());
 		return newMapping;
 	}
 	
