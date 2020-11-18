@@ -76,8 +76,11 @@ public class ContextService {
 	 */
 	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
 			int maxSize, boolean terminateAtDrug, String direction) {
-		
-		log.info("Gathering context edges for input: " + genes.toString() + " on network with uuid " + networkEntityUUID);
+		if (genes == null) {
+			return null;
+		}
+		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
+		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
 		
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
@@ -86,13 +89,13 @@ public class ContextService {
 		// get nodeApocString
 		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
 		Set<String> geneUUIDSet = new HashSet<>();
-		for (String gene : genes) {
+		for (String gene : uniqueGenes) {
 			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 			if (geneFlatSpeciesEntityUUID != null) {
 				geneUUIDSet.add(geneFlatSpeciesEntityUUID);
 			}
 		}
-		if (genes == null || genes.size() < 1 || geneUUIDSet.size() < 1) {
+		if (uniqueGenes.size() < 1 || geneUUIDSet.size() < 1) {
 			// should be caught by the controller
 			return null;
 		} else if (geneUUIDSet.size() == 1) {
@@ -102,7 +105,7 @@ public class ContextService {
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
 		} else {
 			// multi gene context
-			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction);
+			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, uniqueGenes, minSize, maxSize, terminateAtDrug, direction);
 		}
 		return allEdges;
 	}
