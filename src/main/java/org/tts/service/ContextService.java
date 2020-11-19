@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.config.SBML4jConfig;
@@ -41,7 +43,9 @@ import org.tts.service.warehouse.MappingNodeService;
  */
 @Service
 public class ContextService {
-
+	
+	Logger log = LoggerFactory.getLogger(ContextService.class);
+	
 	@Autowired
 	ApocService apocService;
 	
@@ -72,6 +76,11 @@ public class ContextService {
 	 */
 	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
 			int maxSize, boolean terminateAtDrug, String direction) {
+		if (genes == null) {
+			return null;
+		}
+		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
+		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
 		
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
@@ -80,13 +89,13 @@ public class ContextService {
 		// get nodeApocString
 		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
 		Set<String> geneUUIDSet = new HashSet<>();
-		for (String gene : genes) {
+		for (String gene : uniqueGenes) {
 			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 			if (geneFlatSpeciesEntityUUID != null) {
 				geneUUIDSet.add(geneFlatSpeciesEntityUUID);
 			}
 		}
-		if (genes == null || genes.size() < 1 || geneUUIDSet.size() < 1) {
+		if (uniqueGenes.size() < 1 || geneUUIDSet.size() < 1) {
 			// should be caught by the controller
 			return null;
 		} else if (geneUUIDSet.size() == 1) {
@@ -96,7 +105,7 @@ public class ContextService {
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
 		} else {
 			// multi gene context
-			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, genes, minSize, maxSize, terminateAtDrug, direction);
+			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, uniqueGenes, minSize, maxSize, terminateAtDrug, direction);
 		}
 		return allEdges;
 	}
@@ -115,6 +124,8 @@ public class ContextService {
 	 */
 	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
 			int maxSize, boolean terminateAtDrug, String direction){
+		
+		log.debug("Entering method getNetworkContextUsingSharedPathwaySearch");
 		
  		List<FlatEdge> allFlatEdges = new ArrayList<>();
 		Set<String> seenEdges = new HashSet<>();
@@ -145,7 +156,8 @@ public class ContextService {
 		
 		// now we have a map for all pathways with their respective genes from our geneset
 		if (sbml4jConfig.getNetworkConfigProperties().isUseSharedPathwaySearch()) {
-		// find the pathway that contains most genes / get an ordering of them
+			log.debug("Using shared pathway Search");
+			// find the pathway that contains most genes / get an ordering of them
 			Map<String, Integer> pathwayGeneNumberMap = new HashMap<>();
 			pathwayGeneMap.forEach((key, value)-> {
 				pathwayGeneNumberMap.put(key, value.size());
@@ -231,6 +243,7 @@ public class ContextService {
 			 * for now pick the two that are lexically lowest?
 			 * Then 
 			 */
+			log.debug("Continuing after shared pathway search");
 			Iterator<Map.Entry<String, Set<String>> > pathwayGeneMapIterator = pathwayGeneMap.entrySet().iterator();
 			Map<String, Integer> geneNumberMap = new HashMap<>();
 			while (pathwayGeneMapIterator.hasNext()) {
@@ -255,10 +268,10 @@ public class ContextService {
 			if (sortedByCount.keySet().size() < 2) {
 				// something went wrong, we should have at least two differnt genes in here
 				// TODO do something
-				System.out.println("Could not find two different genes after sorting.. Abort..");
+				log.debug("Could not find two different genes after sorting.. Abort..");
 				return null;
 			} else {
-				System.out.println("Connecting two most common genes...");
+				log.debug("Connecting two most common genes...");
 				// now take the top two genes and get a shortest path between them
 				Iterator<Map.Entry<String, Integer>> sortedByCountIterator = sortedByCount.entrySet().iterator();
 				String gene1UUID = null;
@@ -267,7 +280,7 @@ public class ContextService {
 				while (sortedByCountIterator.hasNext()) {
 					if (isGene1) {
 						String gene1 = sortedByCountIterator.next().getKey();
-						System.out.println("Gene1: " + gene1);
+						log.debug("Gene1: " + gene1);
 						gene1UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID,gene1);
 						if (gene1UUID != null) {
 							usedGenes.add(gene1);
@@ -277,7 +290,7 @@ public class ContextService {
 						isGene1 = false;
 					} else {
 						String gene2 = sortedByCountIterator.next().getKey();
-						System.out.println("Gene2: " + gene2);
+						log.debug("Gene2: " + gene2);
 						gene2UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene2);
 						if (gene2UUID != null) {
 							usedGenes.add(gene2);
@@ -306,7 +319,7 @@ public class ContextService {
 			}
 
 		} else {
-			System.out.println("Connecting genes with pathways: " + usedGenes.toString());
+			log.info("Connecting genes with pathways: " + usedGenes.toString());
 				// add a check here if we didn't find a pathway connecting at least two genes. 
 			// what to do then?
 				
@@ -349,7 +362,7 @@ public class ContextService {
 				}
 			}
 			
-			System.out.println("Pathways: " + usedPathwayEntityUUIDSet.toString());
+			log.debug("Pathways: " + usedPathwayEntityUUIDSet.toString());
 			
 			// for the pathways in usedPathwayEntityUUIDSet gather all nodes and relationships
 			// possibly using:
@@ -373,7 +386,7 @@ public class ContextService {
 				});
 			}
 		}
-		System.out.println("Connecting remaining genes..");
+		log.debug("Connecting remaining genes..");
 		
 		// now we have to connect the remaining genes with shortest paths
 		//List<ApocPathReturnType> allPathReturns = new ArrayList<>();
@@ -398,7 +411,7 @@ public class ContextService {
 			}
 			for (String gene : geneList) {
 				boolean isIdenticalNode = false;
-				System.out.println("Searching connection for gene: " + gene);
+				log.debug("Searching connection for gene: " + gene);
 				String geneEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 				if(geneEntityUUID != null) {
 					//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
@@ -407,7 +420,7 @@ public class ContextService {
 					for (String targetUUID : targetNodeUUIDs) {
 						if (targetUUID.equals(geneEntityUUID)) {
 							// it is the same gene, we don't need to connect it. 
-							System.out.println("Gene " + gene + " is identical to gene with uuid " + targetUUID);
+							log.debug("Gene " + gene + " is identical to gene with uuid " + targetUUID);
 							isIdenticalNode = true;
 							break;
 						}
@@ -434,9 +447,9 @@ public class ContextService {
 						}
 					}
 					if (lowestTargetGeneUUID == null) {
-						System.out.println("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
+						log.debug("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
 					} else {
-						System.out.println("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
+						log.debug("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
 						for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
 							if (!allFlatEdges.contains(edge)) {
 								allFlatEdges.add(edge);
@@ -446,7 +459,7 @@ public class ContextService {
 						targetNodeUUIDs.add(geneEntityUUID);
 					}
 				} else {
-					System.out.println("Could not find gene " + gene);
+					log.debug("Could not find gene " + gene);
 				}
 				
 				//bfsPath.forEach(allPathReturns::add);

@@ -20,7 +20,6 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.springframework.hateoas.RepresentationModel;
 import org.springframework.validation.annotation.Validated;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 
@@ -33,7 +32,7 @@ import io.swagger.annotations.ApiModelProperty;
  */
 @Validated
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
-public class NetworkInventoryItem extends RepresentationModel<NetworkInventoryItem>  {
+public class NetworkInventoryItem {
   @JsonProperty("UUID")
   private UUID UUID = null;
 
@@ -247,13 +246,13 @@ public class NetworkInventoryItem extends RepresentationModel<NetworkInventoryIt
         Objects.equals(this.numberOfRelations, networkInventoryItem.numberOfRelations) &&
         Objects.equals(this.nodeTypes, networkInventoryItem.nodeTypes) &&
         Objects.equals(this.relationTypes, networkInventoryItem.relationTypes) &&
-        Objects.equals(this.networkMappingType, networkInventoryItem.networkMappingType) &&
-        Objects.equals(this.getLinks(), networkInventoryItem.getLinks());
+        Objects.equals(this.networkMappingType, networkInventoryItem.networkMappingType)
+        ;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(UUID, name, organismCode, numberOfNodes, numberOfRelations, nodeTypes, relationTypes, networkMappingType, getLinks());
+    return Objects.hash(UUID, name, organismCode, numberOfNodes, numberOfRelations, nodeTypes, relationTypes, networkMappingType);
   }
 
   @Override
@@ -269,7 +268,6 @@ public class NetworkInventoryItem extends RepresentationModel<NetworkInventoryIt
     sb.append("    nodeTypes: ").append(toIndentedString(nodeTypes)).append("\n");
     sb.append("    relationTypes: ").append(toIndentedString(relationTypes)).append("\n");
     sb.append("    networkMappingType: ").append(toIndentedString(networkMappingType)).append("\n");
-    sb.append("    links: ").append(toIndentedString(getLinks())).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -45,7 +45,7 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class OverviewApiController implements OverviewApi {
 
-	 Logger log = LoggerFactory.getLogger(OverviewApiController.class);
+	Logger log = LoggerFactory.getLogger(OverviewApiController.class);
 	
 	@Autowired
 	ContextService contextService;
@@ -68,7 +68,7 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
-		log.info("Serving /overview for user " + user);
+		log.info("Serving /overview for user " + user + " with overviewNetworkItem: " + overviewNetworkItem.toString());
 		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
@@ -126,12 +126,14 @@ public class OverviewApiController implements OverviewApi {
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
 		}
+		log.info("Created overview network species and relationships");
 		Map<String, Object> nodeAnnotation = new HashMap<>();
 		for (String geneName : geneNames) {
 			nodeAnnotation.put(geneName, true);
 		}
 		// 7. Add the annotation inline
 		this.networkService.addNodeAnnotation(contextFlatEdges, overviewNetworkItem.getAnnotationName(), "boolean", nodeAnnotation);
+		log.info("Added annotation " + overviewNetworkItem.getAnnotationName() + " to network");
 		// 8. Create a networkName for the new network file
 		String networkName = null;
 		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
@@ -149,6 +151,7 @@ public class OverviewApiController implements OverviewApi {
 		}
 		// 9. Create a new mapping with the FlatEdges
 		MappingNode overviewNetwork = this.networkService.createMappingFromFlatEdges(user, networkEntityUUID, contextFlatEdges, networkName);
+		log.info("Created MappingNode for network");
 		// 10. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(overviewNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}

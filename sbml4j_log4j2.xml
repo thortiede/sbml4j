@@ -187,9 +187,11 @@
 	<Loggers>
 		<Logger name="org.tts" level="debug" additivity="false">
 			<AppenderRef ref="applicationDebug" />
+			<AppenderRef ref="console" />
 			<AppenderRef ref="applicationInfo" />
 			<AppenderRef ref="applicationWarnError" />
 		</Logger>
+		
 
 <!-- 		<Logger name="org.neo4j" level="info" additivity="false"> -->
 <!-- 			<AppenderRef ref="databaseDebug" /> -->
@@ -221,7 +223,7 @@
 <!-- 			<AppenderRef ref="jsbmlWarnError" /> -->
 <!-- 		</Logger> -->
 
-		<Root level="INFO">
+		<Root level="INFO" additivity = "true">
 			<AppenderRef ref="rootAll" />
 		</Root>
 	</Loggers>

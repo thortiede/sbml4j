@@ -15,6 +15,8 @@ package org.tts.service;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
@@ -32,6 +34,8 @@ import org.tts.repository.provenance.ProvenanceGraphEdgeRepository;
 @Service
 public class ProvenanceGraphService {
 
+	Logger log = LoggerFactory.getLogger(ProvenanceGraphService.class);
+	
 	@Autowired
 	private ProvenanceEntityRepository provenanceEntityRepository;
 	@Autowired
@@ -45,13 +49,15 @@ public class ProvenanceGraphService {
 	
 	/**
 	 * Creates a ProvenanceGraphAgentNode if it not already exists for that type and the given name
-	 * If it exists, it adds missing Properties from agentNodeProperties to the node
+	 * If it exists, it returns the existing node
 	 * 
 	 * @param agentNodeProperties
 	 * @return
 	 */
-	public ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
+	public synchronized ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
 			Map<String, Object> agentNodeProperties) {
+		
+		log.info("Searching ProvenanceGraphAgentNode for " + agentNodeProperties.get("graphagentname").toString());
 		
 		switch ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")) {
 		case User:
@@ -63,12 +69,14 @@ public class ProvenanceGraphService {
 					);
 
 			if (provenanceGraphAgentNode == null) {
+				log.info("No GraphAgentNode found for user " + agentNodeProperties.get("graphagentname").toString() + ". Creating new..");
 				provenanceGraphAgentNode = new ProvenanceGraphAgentNode();
 				this.graphBaseEntityService.setGraphBaseEntityProperties(provenanceGraphAgentNode);
 				provenanceGraphAgentNode.setGraphAgentType((ProvenanceGraphAgentType) agentNodeProperties.get("graphagenttype"));
 				provenanceGraphAgentNode.setGraphAgentName((String) agentNodeProperties.get("graphagentname"));
 				return this.provenanceGraphAgentNodeRepository.save(provenanceGraphAgentNode);
 			} else {
+				log.info("Using GraphAgentNode: " + provenanceGraphAgentNode.getGraphAgentName() + " with uuid " + provenanceGraphAgentNode.getEntityUUID());
 				return provenanceGraphAgentNode;
 			}
 			
@@ -88,7 +96,7 @@ public class ProvenanceGraphService {
 	 * @param activityType the type of the activity from GraphEnum.ProvenanceGraphActivityType
 	 * @return the persisted node
 	 */
-	public ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
+	public synchronized ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
 			Map<String, Object> activityNodeProperties) {
 	
 		ProvenanceGraphActivityNode provenanceGraphActivityNode = 
