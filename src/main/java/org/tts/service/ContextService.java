@@ -449,7 +449,7 @@ public class ContextService {
 					if (lowestTargetGeneUUID == null) {
 						log.debug("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
 					} else {
-						System.out.println("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
+						log.debug("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
 						for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
 							if (!allFlatEdges.contains(edge)) {
 								allFlatEdges.add(edge);
