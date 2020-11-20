@@ -384,7 +384,7 @@ public class NetworksApiController implements NetworksApi {
 		networkName.append("_IN_");
 		networkName.append(UUID.toString());
 		// 6. Create the mapping holding the context
-		MappingNode contextNetwork = this.networkService.createMappingFromFlatEdges(user, UUID.toString(), contextFlatEdges, networkName.toString());
+		MappingNode contextNetwork = this.networkService.createMappingFromFlatEdges(agent, UUID.toString(), contextFlatEdges, networkName.toString());
 		// 7. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
