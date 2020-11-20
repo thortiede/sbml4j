@@ -22,6 +22,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -29,10 +30,13 @@ import org.tts.api.OverviewApi;
 import org.tts.config.OverviewNetworkConfig;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.OverviewNetworkItem;
+import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ContextService;
 import org.tts.service.ProvenanceGraphService;
+import org.tts.service.networks.NetworkResourceService;
 import org.tts.service.networks.NetworkService;
 import org.tts.service.warehouse.MappingNodeService;
 
@@ -60,6 +64,9 @@ public class OverviewApiController implements OverviewApi {
 	NetworkService networkService;
 	
 	@Autowired
+	NetworkResourceService networkResourceService;
+	
+	@Autowired
 	OverviewNetworkConfig overviewNetworkConfig;
 	
 	/**
@@ -68,7 +75,7 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
-		log.info("Serving /overview for user " + user + " with overviewNetworkItem: " + overviewNetworkItem.toString());
+		log.info("Serving POST /overview for user " + user + " with overviewNetworkItem: " + overviewNetworkItem.toString());
 		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
@@ -94,9 +101,8 @@ public class OverviewApiController implements OverviewApi {
 			}
 		}
 		
-		// 3. We skip the check whether the user can access the baseNetwork for now. 
-		// For this scenario, the user can take any network and create a driver gene network from it
-		
+		// 3. Create the user if not existent
+		ProvenanceGraphAgentNode graphAgent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
 		
 		List<String> geneNames = overviewNetworkItem.getGenes();
 		// 4. Any genes provided?
@@ -150,9 +156,40 @@ public class OverviewApiController implements OverviewApi {
 			networkName = networkNameSB.toString();
 		}
 		// 9. Create a new mapping with the FlatEdges
-		MappingNode overviewNetwork = this.networkService.createMappingFromFlatEdges(user, networkEntityUUID, contextFlatEdges, networkName);
+		MappingNode overviewNetwork = this.networkService.createMappingFromFlatEdges(graphAgent, networkEntityUUID, contextFlatEdges, networkName);
 		log.info("Created MappingNode for network");
 		// 10. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(overviewNetwork.getEntityUUID()), HttpStatus.CREATED);
+	}
+	
+	@Override
+	public ResponseEntity<Resource> getOverviewNetwork(String user, String name) {
+		log.info("Serving GET /overview for user " + user + " with network name: " + name);
+		
+		// 0. Does user exist?
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null) {
+			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+		}
+		// 1. Does the network exist?
+		MappingNode overviewNetwork = this.mappingNodeService.findByNetworkNameAndUser(name, user);
+		if (overviewNetwork == null) {
+			log.info("GET /overview: Network for user " + user + " with network name: " + name + " could not be found") ;
+			// If the network does not exist at all, return 204 still in creation
+			return ResponseEntity.status(HttpStatus.NO_CONTENT)
+					.header("reason", "Network with name " + name + " for user " + user + " could not be created", "reason", "Network with name " + name + " for user " + user + " could not be created")
+					.build();
+		}
+		// 2. Is the network active?
+		if (!overviewNetwork.isActive()) {
+			// 2.a No, return 204
+			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is not ready yet") ;
+			return ResponseEntity.notFound().header("reason", "Network is not ready yet").build();
+		} else {
+			// 2.b Yes, return network
+			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is available, returning GraphML") ;
+			Resource networkResource = this.networkResourceService.getNetwork(overviewNetwork.getEntityUUID(), true);
+			return ResponseEntity.ok(networkResource);
+		}
 	}
 }
