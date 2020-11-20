@@ -350,13 +350,13 @@ public class NetworkService {
 	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities that make up the network
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> that was created and contains the network
 	 */
-	public MappingNode createMappingFromFlatEdges(String user, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, String networkName) {
+	public MappingNode createMappingFromFlatEdges(ProvenanceGraphAgentNode graphAgent, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, String networkName) {
 		log.info("Creating mapping from FlatEdges from baseNetwork with uuid: " + baseNetworkEntityUUID);
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(baseNetworkEntityUUID);
 		String activityName = "Create_" + networkName;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
-		MappingNode mappingNodeForFlatEdges = this.createMappingPre(user, parent, networkName, activityName, activityType, parent.getMappingType());
+		MappingNode mappingNodeForFlatEdges = this.createMappingPre(graphAgent, parent, networkName, activityName, activityType, parent.getMappingType());
 		Iterable<FlatEdge> resettedEdges = resetFlatEdges(flatEdges);
 		// clear the session to re-fetch all entities on request and not reuse old ids
 		this.session.clear();
@@ -382,6 +382,43 @@ public class NetworkService {
 	}
 
 	/**
+	 * Create necessary warehouse items for adding a new MappingNode when aganetNode is already present
+	 * @param graphAgent The ProvenanceGraphAgentNode to be associated with the new Mapping
+	 * @param parent The parent <a href="#{@link}">{@link MappingNode}</a> for this operation
+	 * @param newMappingName The name of the new <a href="#{@link}">{@link MappingNode}</a> to create
+	 * @param activityName The name of the <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> that creates this <a href="#{@link}">{@link MappingNode}</a>
+	 * @param activityType The <a href="#{@link}">{@link ProvenanceGraphActivityType}</a> of the <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> that creates this <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingType The <a href="#{@link}">{@link NetworkMappingType}</a> of the new <a href="#{@link}">{@link MappingNode}</a>
+	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
+	 */
+	public MappingNode createMappingPre(ProvenanceGraphAgentNode graphAgent, MappingNode parent, String newMappingName,
+			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
+		// Need Activity
+		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+		activityNodeProvenanceProperties.put("graphactivitytype", activityType);
+		
+		activityNodeProvenanceProperties.put("graphactivityname", activityName);
+		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
+				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+		this.provenanceGraphService.connect(createMappingActivityNode, graphAgent,
+				ProvenanceGraphEdgeType.wasAssociatedWith);
+		Instant startTime = Instant.now();
+		
+		// create new networkMapping that is the same as the parent one
+		// need mapingNode (name: OldName + step)
+		log.info("Creating MappingNode " + newMappingName);
+		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
+				newMappingName);
+		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
+		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(newMapping, graphAgent, ProvenanceGraphEdgeType.wasAttributedTo);
+		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
+				ProvenanceGraphEdgeType.wasGeneratedBy);
+		log.info("New Mapping has uuid: " + newMapping.getEntityUUID());
+		return newMapping;
+	}
+	
+	/**
 	 * Create necessary warehouse items for adding a new MappingNode
 	 * 
 	 * @param user The user to associate with the network
@@ -396,34 +433,10 @@ public class NetworkService {
 			String activityName, ProvenanceGraphActivityType activityType, NetworkMappingType mappingType) {
 		log.info("Creating preconditions for new mapping with parent: " + parent.getEntityUUID());
 		// AgentNode
-		Map<String, Object> agentNodeProperties = new HashMap<>();
-		agentNodeProperties.put("graphagentname", user);
-		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
 		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
-				.createProvenanceGraphAgentNode(agentNodeProperties);
-		// Need Activity
-		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
-		activityNodeProvenanceProperties.put("graphactivitytype", activityType);
+				.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
+		return this.createMappingPre(userAgentNode, parent, newMappingName, activityName, activityType, mappingType);
 		
-		activityNodeProvenanceProperties.put("graphactivityname", activityName);
-		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
-				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
-		this.provenanceGraphService.connect(createMappingActivityNode, userAgentNode,
-				ProvenanceGraphEdgeType.wasAssociatedWith);
-		Instant startTime = Instant.now();
-		
-		// create new networkMapping that is the same as the parent one
-		// need mapingNode (name: OldName + step)
-		log.info("Creating MappingNode " + newMappingName);
-		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
-				newMappingName);
-		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
-		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
-		this.provenanceGraphService.connect(newMapping, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
-		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
-				ProvenanceGraphEdgeType.wasGeneratedBy);
-		log.info("New Mapping has uuid: " + newMapping.getEntityUUID());
-		return newMapping;
 	}
 	
 	
