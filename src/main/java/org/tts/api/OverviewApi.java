@@ -27,12 +27,14 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.OverviewNetworkItem;
 
@@ -88,6 +90,35 @@ public interface OverviewApi {
             log.warn("ObjectMapper or HttpServletRequest not configured in default VcfApi interface so no example is generated");
         }
         return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    @ApiOperation(value = "retrieve a previously created overview network for a user by its name", notes = "Attempts to retrieve an overview network by the network name that was  given during creation using POST /overview. If the network is available (created and active) it gets returned in  graphml format. If the network is still being created (not active yet) the endpoint returns a 404 error. If the network could not be created, the endpoint returns a 403 error. ",
+    		response = Resource.class, tags={ "convenience" })
+        @ApiResponses(value = { 
+            @ApiResponse(code = 200, message = "successful operation", response = Resource.class),
+            
+            @ApiResponse(code = 204, message = "Network is not ready yet"),
+            
+            @ApiResponse(code = 403, message = "The network with the provided name could not be created and is not available") })
+        @RequestMapping(value = "/overview",
+            produces = { "application/octet-stream" }, 
+            method = RequestMethod.GET)
+        default ResponseEntity<Resource> getOverviewNetwork(@ApiParam(value = "The user which requests the creation" ,required=true) @RequestHeader(value="user", required=true) String user
+        		, @ApiParam(value = "The network name to get",required=true) @RequestParam(value = "name", required = true) String name) {
+    	  if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
+              if (getAcceptHeader().get().contains("application/json")) {
+                  try {
+                      return new ResponseEntity<>(getObjectMapper().get().readValue("\"\"", Resource.class), HttpStatus.NOT_IMPLEMENTED);
+                  } catch (IOException e) {
+                      log.error("Couldn't serialize response for content type application/json", e);
+                      return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                  }
+              }
+          } else {
+              log.warn("ObjectMapper or HttpServletRequest not configured in default NetworksApi interface so no example is generated");
+          }
+          return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    	
     }
 
 }
