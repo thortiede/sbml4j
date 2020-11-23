@@ -344,10 +344,47 @@ public class NetworkService {
 	}
 	
 	/**
+	 * Fill the <a href="#{@link}">{@link MappingNode}</a> with copies of the given <a href="#{@link}">{@link FlatEdge}</a> entities as content
+	 * @param graphAgent The <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> to associate with the network
+	 * @param baseNetworkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> this mapping is derived from
+	 * @param flatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities that make up the network
+	 * @param mappingNodeForFlatEdges The <a href="#{@link}">{@link MappingNode}</a>  to use for the new Mapping
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> that was created and contains the network
+	 */
+	public MappingNode createMappingFromFlatEdges(ProvenanceGraphAgentNode graphAgent, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, MappingNode mappingNodeForFlatEdges) {
+		log.info("Creating mapping from FlatEdges from baseNetwork with uuid: " + baseNetworkEntityUUID + " using mappingNode " + mappingNodeForFlatEdges.getMappingName() + "(" + mappingNodeForFlatEdges.getEntityUUID() + ")");
+		
+		Iterable<FlatEdge> resettedEdges = resetFlatEdges(flatEdges);
+		// clear the session to re-fetch all entities on request and not reuse old ids
+		this.session.clear();
+		
+		// save the new Edges
+		log.info("Persisting new mapping contents in database...");
+		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
+		log.info("Writing Provenance Information of new mapping..");
+		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
+		log.info("Writing metadata..");
+		// updateMappingNode
+		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
+		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
+		mappingNodeForFlatEdges.setActive(true);
+		log.info("Activating newly created mapping");
+		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
+	}
+	
+	
+	/**
 	 * Create a new <a href="#{@link}">{@link MappingNode}</a> that contains the given <a href="#{@link}">{@link FlatEdge}</a> entities as content
 	 * @param user The user to associate with the network
 	 * @param baseNetworkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> this mapping is derived from
-	 * @param contextFlatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities that make up the network
+	 * @param flatEdges The <a href="#{@link}">{@link FlatEdge}</a> entities that make up the network
+	 * @param networkName The name of the newly created <a href="#{@link}">{@link MappingNode}</a>
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> that was created and contains the network
 	 */
 	public MappingNode createMappingFromFlatEdges(ProvenanceGraphAgentNode graphAgent, String baseNetworkEntityUUID, List<FlatEdge> flatEdges, String networkName) {
