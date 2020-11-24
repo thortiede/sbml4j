@@ -439,14 +439,12 @@ public class NetworkService {
 				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
 		this.provenanceGraphService.connect(createMappingActivityNode, graphAgent,
 				ProvenanceGraphEdgeType.wasAssociatedWith);
-		Instant startTime = Instant.now();
-		
+				
 		// create new networkMapping that is the same as the parent one
 		// need mapingNode (name: OldName + step)
 		log.info("Creating MappingNode " + newMappingName);
 		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
 				newMappingName);
-		newMapping.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
 		this.provenanceGraphService.connect(newMapping, graphAgent, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
@@ -869,8 +867,8 @@ public class NetworkService {
 		Iterator<FlatEdge> newFlatEdgeIterator = flatEdges.iterator();
 		while (newFlatEdgeIterator.hasNext()) {
 			FlatEdge currentEdge = newFlatEdgeIterator.next();
-			this.warehouseGraphService.connect(mappingNode, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
-			this.warehouseGraphService.connect(mappingNode, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(mappingNode, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
+			this.warehouseGraphService.connect(mappingNode, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
 		}
 	}
 	
