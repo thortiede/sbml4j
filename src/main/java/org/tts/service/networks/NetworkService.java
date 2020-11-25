@@ -865,10 +865,17 @@ public class NetworkService {
 	 */
 	private void connectContainsFlatEdgeSpecies(MappingNode mappingNode, Iterable<FlatEdge> flatEdges) {
 		Iterator<FlatEdge> newFlatEdgeIterator = flatEdges.iterator();
+		Set<String> seenSpecies = new HashSet<>();
 		while (newFlatEdgeIterator.hasNext()) {
 			FlatEdge currentEdge = newFlatEdgeIterator.next();
-			this.warehouseGraphService.connect(mappingNode, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
-			this.warehouseGraphService.connect(mappingNode, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
+			if (!seenSpecies.contains(currentEdge.getInputFlatSpecies().getEntityUUID())) {
+				this.warehouseGraphService.connect(mappingNode, currentEdge.getInputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
+				seenSpecies.add(currentEdge.getInputFlatSpecies().getEntityUUID());
+			}
+			if (!seenSpecies.contains(currentEdge.getOutputFlatSpecies().getEntityUUID())) {
+				this.warehouseGraphService.connect(mappingNode, currentEdge.getOutputFlatSpecies(), WarehouseGraphEdgeType.CONTAINS, false);
+				seenSpecies.add(currentEdge.getOutputFlatSpecies().getEntityUUID());
+			}
 		}
 	}
 	
