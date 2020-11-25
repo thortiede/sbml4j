@@ -13,6 +13,7 @@
  */
 package org.tts;
 
+import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,7 +31,15 @@ public class Sbml4jApplication {
 	DataSourceConfig dataSourceConfig;
 
 	public static void main(String[] args) {
-		SpringApplication.run(Sbml4jApplication.class, args);
+		try {
+			SpringApplication.run(Sbml4jApplication.class, args);
+		} catch (UnsatisfiedDependencyException e) {
+			System.err.println("Failed to start SBML4j, retry...");
+			System.exit(1);
+		} catch (Exception e) {
+			System.err.print("Encountered exception " + e.getMessage() + ". Trying to restart..");
+			System.exit(2);
+		}
 	}
 	
 }
