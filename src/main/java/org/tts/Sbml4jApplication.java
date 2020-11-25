@@ -34,7 +34,7 @@ public class Sbml4jApplication {
 		try {
 			SpringApplication.run(Sbml4jApplication.class, args);
 		} catch (UnsatisfiedDependencyException e) {
-			System.err.println("Failed to start SBML4j, retry...");
+			System.err.println("Failed to start SBML4j, probably because database not ready yet. Restarting...");
 			System.exit(1);
 		} catch (Exception e) {
 			System.err.print("Encountered exception " + e.getMessage() + ". Trying to restart..");
