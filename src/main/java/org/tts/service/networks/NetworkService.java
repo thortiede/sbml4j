@@ -183,7 +183,8 @@ public class NetworkService {
 			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
 		} else {
 			mappingToAnnotate = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-			mappingToAnnotate.setMappingName(prefixSB.toString().concat(mappingToAnnotate.getMappingName()));
+			// do not change the network name if we add the annotation without deriving from it.
+			mappingToAnnotate.setMappingName(mappingToAnnotate.getMappingName());
 		}
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
