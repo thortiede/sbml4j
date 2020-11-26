@@ -1,4 +1,20 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.model.common;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class GraphEnum {
 	
@@ -7,7 +23,8 @@ public class GraphEnum {
 	 * ANNOTATE,<br>
 	 * FILTER,<br>
 	 * CONTEXT,<br>
-	 * MULTIGENESUBNET,
+	 * MULTIGENESUBNET,<br>
+	 * PATHWAYINFO
 	 */
 	public enum MappingStep {
 		COPY,
@@ -15,6 +32,7 @@ public class GraphEnum {
 		FILTER,
 		CONTEXT,
 		MULTIGENESUBNET,
+		PATHWAYINFO
 	}
 	
 	public enum NetworkMappingType {
@@ -79,9 +97,9 @@ public class GraphEnum {
 	}
 	
 	/**
-	 * Entity<br>
-	 * Activity<br>
-	 * Agent<br>
+	 * PROV_ENTITY<br>
+	 * PROV_ACTIVITY<br>
+	 * PROV_AGENT<br>
 	 */
 	public enum ProvenanceGraphNodeType {
 		PROV_ENTITY, PROV_ACTIVITY, PROV_AGENT
@@ -91,7 +109,10 @@ public class GraphEnum {
 	 * 	persistFile,<br>
 		createMapping,<br>
 		mapAnnotations,<br>
-		runAlgorithm<br>
+		runAlgorithm,<br>
+		createKnowledgeGraph,<br>
+		addMyDrugNodes,<br>
+		createContext
 	 */
 	public enum ProvenanceGraphActivityType {
 		persistFile,
@@ -99,7 +120,8 @@ public class GraphEnum {
 		mapAnnotations,
 		runAlgorithm,
 		createKnowledgeGraph,
-		addMyDrugNodes
+		addMyDrugNodes,
+		createContext
 	}
 	
 	/**
@@ -134,7 +156,11 @@ public class GraphEnum {
 		METHYLATION("SBO:0000214"),<br>
 		MOLECULARINTERACTION("SBO:0000344"),<br>
 		CONTROL("SBO:0000168");<br>
-		UNKNOWNINSOURCE("unknown");
+		UNKNOWNINSOURCE("unknown"),<br>
+		TARGETS("targets"),<br>
+		PRODUCT("product"),<br>
+		REACTANT("reactant"),<br>
+		CATALYST("catalyst");
 	 */
 	
 	public enum RelationTypes {
@@ -151,7 +177,11 @@ public class GraphEnum {
 		MOLECULARINTERACTION("SBO:0000344"),
 		CONTROL("SBO:0000168"),
 		UNKNOWNFROMSOURCE("unknownFromSource"),
-		TARGETS("targets");
+		TARGETS("targets"),
+		PRODUCT("product"),
+		REACTANT("reactant"),
+		CATALYST("catalyst");
+		
 		
 		private final String relType;
 		
@@ -166,11 +196,13 @@ public class GraphEnum {
 	}
 	/**
 	 * CONTAINS<br>
-	 * FOR
+	 * FOR<br>
+	 * DERIVEDFROM
 	 */
 	public enum WarehouseGraphEdgeType {
 		CONTAINS,
-		FOR
+		FOR,
+		DERIVEDFROM
 	}
 	
 	/**
@@ -184,7 +216,8 @@ public class GraphEnum {
 		KEGGGENES("kegg.genes"),
 		KEGGCOMPOUND("kegg.compound"),
 		KEGGDRUG("kegg.drug"),
-		KEGGREACTION("kegg.reaction");
+		KEGGREACTION("kegg.reaction"), 
+		MDANDERSON("MDAnderson");
 		
 		private final String externalResourceType;
 		
@@ -203,4 +236,51 @@ public class GraphEnum {
 		OTHER
 	}
 	
+	
+	public enum AnnotationName {
+		KEGGGENES("kegg_genes"),
+		NAME("name"),
+		ECCODE("ec-code"),
+		ENSEMBL("ensembl"),
+		HGNC("hgnc"),
+		OMIM("omim"),
+		ENTREZGENE("entrez_gene"),
+		PATHWAYS("pathways"),
+		SECONDARYNAMES("secondary_names"),
+		UNIPROT("uniprot"),
+		OBOECO("obo_eco");
+		
+		private final String annotationName;
+		
+		AnnotationName(String name) {
+			this.annotationName = name;
+		}
+		
+		public String getAnnotationName() {
+			return this.annotationName;
+		}
+		
+		
+		 //****** Reverse Lookup Implementation************//
+		 
+	    //Lookup table
+	    private static final Map<String, AnnotationName> lookup = new HashMap<>();
+	  
+	    //Populate the lookup table on loading time
+	    static
+	    {
+	        for(AnnotationName name : AnnotationName.values())
+	        {
+	            lookup.put(name.getAnnotationName(), name);
+	        }
+	    }
+	  
+	    //This method can be used for reverse lookup purpose
+	    public static AnnotationName get(String name) 
+	    {
+	        return lookup.get(name);
+	    }
+		
+		
+	}
 }

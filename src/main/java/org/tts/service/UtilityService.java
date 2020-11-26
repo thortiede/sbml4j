@@ -1,3 +1,16 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.service;
 
 import java.util.HashSet;
@@ -6,26 +19,57 @@ import java.util.Set;
 import org.sbml.jsbml.ontology.Triple;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service for utility functions regarding SBO Terms
+ * 
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
 @Service
 public class UtilityService {
 
-	
+	/**
+	 * Translate an SBO string (i.e. SBO:000170) to a name representation of that term
+	 * Uses the method org.sbml.jsbml.SBO.getTerm to translate but has some exceptions for personalised Terms
+	 * 
+	 * @param sboString The Term String to translate
+	 * @return The translated name
+	 */
 	public String translateSBOString(String sboString) {
 		return (	sboString.equals("") 
 				|| 	sboString.equals("unknown") 
 				|| 	sboString.equals("undefined in source") 
 				|| 	sboString.equals("unknownFromSource")
 				) 	? "unknownFromSource" 
-					: (sboString.equals("targets") 
+					: (sboString.toLowerCase().equals("targets") 
 							? "targets" 
-							: (sboString.equals("Drug") 
-									? 	"Drug"
-									:	org.sbml.jsbml.SBO.getTerm(sboString).getName()
-							)
-					)
+							: (sboString.toLowerCase().equals("drug") 
+									? 	"drug"
+									:	(sboString.equals("PRODUCTOF")
+											? "PRODUCTOF"
+											: (sboString.equals("REACTANTOF")
+													? "REACTANTOF"
+													: (sboString.equals("CATALYSES")
+															? "CATALYSES"
+															: org.sbml.jsbml.SBO.getTerm(sboString).getName()
+															)
+												)
+										)
+								)
+							
+						)
 				;
 	}
 	
+	/**
+	 * Translate a name (or alias) to the corresponding SBO Term (i.e. SBO:000170)
+	 * Uses the methods org.sbml.jsbml.SBO.convertAlias2SBO and org.sbml.jsbml.SBO.intToString to translate
+	 * Has exception for the alias "targets"
+	 * 
+	 * @param alias The name (or alias) to translate
+	 * @return The translated SBO Term
+	 */
 	public String translateToSBOString(String alias) {
 		if(alias.equals("targets")) return "targets";
 		else {
@@ -35,6 +79,13 @@ public class UtilityService {
 		}
 	}
 	
+	/**
+	 * Get all child SBO terms of a root sbo term element
+	 * Uses the methods org.sbml.jsbml.SBO.getTerm and org.sbml.jsbml.SBO.getTriples to find the child terms
+	 *  
+	 * @param sboRootTerm The SBO term (i.e. SBO:000170) to find the child terms for
+	 * @return A <a href="#{@link}">{@link Set}</a> with all SBO Terms of found children
+	 */
 	public Set<String> getSBOChildren(String sboRootTerm) {
 		
 		Set<String> childrenSet = new HashSet<>();
@@ -45,6 +96,13 @@ public class UtilityService {
 		return childrenSet;
 	}
 	
+	/**
+	 * Get all child SBO terms and their child elements of a root sbo term element
+	 * Uses the methods org.sbml.jsbml.SBO.getTerm and org.sbml.jsbml.SBO.getTriples to find the child terms
+	 *  
+	 * @param sboRootTerm The SBO term (i.e. SBO:000170) to find the child terms for
+	 * @return A <a href="#{@link}">{@link Set}</a> with all SBO Terms of found children
+	 */
 	public Set<String> getAllSBOChildren(String sboRootTerm) {
 		Set<String> directChildren = getSBOChildren(sboRootTerm);
 		Set<String> allChildren = new HashSet<>();

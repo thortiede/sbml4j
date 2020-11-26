@@ -1,50 +1,45 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts;
 
-import java.util.Arrays;
-
+import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.tts.config.DataSourceConfig;
-import org.tts.property.FileStorageProperties;
+
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
-@EnableConfigurationProperties({
-			FileStorageProperties.class
-})
+@EnableSwagger2
+@ComponentScan(basePackages = { "org.tts", "org.tts.api",
+		 "io.swagger.configuration"})
 public class Sbml4jApplication {
-
-	DataSourceConfig dataSourceConfig;
-	
-	
 	@Autowired
-	public Sbml4jApplication(DataSourceConfig dataSourceConfig) {
-		super();
-		this.dataSourceConfig = dataSourceConfig;
-	}
+	DataSourceConfig dataSourceConfig;
 
 	public static void main(String[] args) {
-		SpringApplication.run(Sbml4jApplication.class, args);
+		try {
+			SpringApplication.run(Sbml4jApplication.class, args);
+		} catch (UnsatisfiedDependencyException e) {
+			System.err.println("Failed to start SBML4j, probably because database not ready yet. Restarting...");
+			System.exit(1);
+		} catch (Exception e) {
+			System.err.print("Encountered exception " + e.getMessage() + ". Trying to restart..");
+			System.exit(2);
+		}
 	}
 	
-	@Bean
-    public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
-        return args -> {
-
-            System.out.println("Let's inspect the beans provided by Spring Boot:");
-
-            String[] beanNames = ctx.getBeanDefinitionNames();
-            Arrays.sort(beanNames);
-            for (String beanName : beanNames) {
-                System.out.println(beanName);
-            }
-            dataSourceConfig.setup();
-            
-
-        };
-	}
 }

@@ -1,13 +1,24 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.model.common;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
-import org.neo4j.ogm.annotation.Labels;
+import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Version;
 
@@ -26,6 +37,7 @@ public class GraphBaseEntity {
 	 * The unique identifier of every entity in this application
 	 * Entities shall reference other entities only by this UUID
 	 */
+	@Index(unique=true)
 	private String entityUUID;
 	
 	/**
@@ -38,8 +50,6 @@ public class GraphBaseEntity {
 	/*@Relationship(type="IN", direction=Relationship.OUTGOING)
 	private List<Organism> organisms;
 	*/
-	@Labels
-	private List<String> labels = new ArrayList<>();
 	
 	@Properties
 	private Map<String, Object> annotation = new HashMap<>();
@@ -71,34 +81,6 @@ public class GraphBaseEntity {
 
 	public void setEntityUUID(String entityUUID) {
 		this.entityUUID = entityUUID;
-	}
-	
-	public List<String> getLabels() {
-		return labels;
-	}
-
-	public void setLabels(List<String> labels) {
-		this.labels = labels;
-	}
-	
-	public boolean addLabel(String newLabel) {
-		try {
-			if(!labels.contains(newLabel))
-				this.labels.add(newLabel);
-		} catch (Exception e) {
-			// element could not be added
-			return false;
-		}
-		return true;
-	}
-	
-	public boolean removeLabel(String name) {
-		try {
-			this.labels.remove(name);
-		} catch (Exception e) {
-			return false;
-		}
-		return true;
 	}
 	
 	//@JsonIgnore

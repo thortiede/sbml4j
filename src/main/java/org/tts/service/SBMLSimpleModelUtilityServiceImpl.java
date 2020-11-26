@@ -1,6 +1,18 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.service;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -96,60 +108,31 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 * This is only the EntityUUID so far and no source entity is needed to copy properties from.
 	 * @param target the GraphBaseEntity for which the basic properties (entityUUID) are to be set.
 	 */
+	@Deprecated
 	void setGraphBaseEntityProperties(GraphBaseEntity target) {
-		setGraphBaseEntityProperties(target, null, null);
-	}
-	
-	void setGraphBaseEntityProperties(GraphBaseEntity target, List<String> labels) {
-		setGraphBaseEntityProperties(target, labels, null);
-	}
-	
-	void setGraphBaseEntityProperties(GraphBaseEntity target,  Map<String, Object> annotations) {
-		setGraphBaseEntityProperties(target, null, annotations);
+		target.setEntityUUID(UUID.randomUUID().toString());
+		target.setActive(true);
 	}
 	
 	/**
-	 * Set Properties of GraphBaseEntity.
+	 * Reset the id and version of the entity and assign new entityUUID
+	 * @param target the GraphBaseEntity for which the basic properties (entityUUID, id, version) are to be reset.
 	 */
-	void setGraphBaseEntityProperties(GraphBaseEntity target, List<String> labels, Map<String, Object> annotations) {
+	@Deprecated
+	void resetGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(UUID.randomUUID().toString());
-		target.setActive(true);
-		// labels
-		if (labels != null) {
-			List<String> targetLabels = target.getLabels();
-			if (targetLabels.size() == 0) {
-				for (String label : labels) {
-					targetLabels.add(label);
-				}
-			} else {
-				// we need to check if label already exists
-				for (String label : labels) {
-					if (!targetLabels.contains(label)) {
-						targetLabels.add(label);
-					}
-				}
-			}
-			// we have added the new labels, write them back
-			target.setLabels(targetLabels);
-		}
-		// properties
-		if (annotations != null) {
-			Map<String, Object> targetAnnotation = target.getAnnotation();
-			if (targetAnnotation.size() == 0) {
-				for (String annotationKey : annotations.keySet()) {
-					targetAnnotation.put(annotationKey, annotations.get(annotationKey));
-				}
-			} else {
-				for (String annotationKey : annotations.keySet()) {
-					if (!targetAnnotation.containsKey(annotationKey)) {
-						targetAnnotation.put(annotationKey, annotations.get(annotationKey));
-					}
-				}
-			}
-			// we have added the new properties, write them back
-			target.setAnnotation(targetAnnotation);
-		}
-		
+		target.setId(null);
+		target.setVersion(null);
+	}
+	/**
+	 * Reset the id and version of the entity and assign an entityUUID
+	 * @param uuid The uuid to be assigned to target
+	 * @param target the GraphBaseEntity for which the basic properties (entityUUID, id, version) are to be reset.
+	 */
+	void resetGraphBaseEntityProperties(String uuid, GraphBaseEntity target) {
+		target.setEntityUUID(uuid);
+		target.setId(null);
+		target.setVersion(null);
 	}
 	
 	/**

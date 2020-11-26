@@ -1,3 +1,16 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.model.warehouse;
 
 import java.util.HashSet;
@@ -17,10 +30,13 @@ public class MappingNode extends WarehouseGraphNode {
 	
 	private Set<String> mappingNodeSymbols;
 	
+	private Set<String> mappingRelationSymbols;
+	
 	private String baseNetworkEntityUUID;
 	
 	private String geneSymbol;
 	
+	@Deprecated
 	private Set<String> subnetGeneSymbolSet;
 	
 	private int minSize;
@@ -105,18 +121,40 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingNodeSymbols = mappingNodeSymbols;
 	}
 	
+	public void addMappingNodeSymbol(String nodeSymbol) {
+		this.mappingNodeSymbols.add(nodeSymbol);
+	}
+	
+	public Set<String> getMappingRelationSymbols() {
+		return mappingRelationSymbols;
+	}
+
+	public void setMappingRelationSymbols(Set<String> mappingRelationSymbols) {
+		this.mappingRelationSymbols = mappingRelationSymbols;
+	}
+
+	public void addMappingRelatonSymbol(String relationSymbol) {
+		if (this.mappingRelationSymbols == null) {
+			this.mappingRelationSymbols = new HashSet<>();
+		}
+		this.mappingRelationSymbols.add(relationSymbol);
+	}
+	
 	public Set<String> getMappingNodeSymbols() {
 		return this.mappingNodeSymbols;
 	}
-
+	
+	@Deprecated
 	public Set<String> getSubnetGeneSymbolSet() {
 		return subnetGeneSymbolSet;
 	}
-
+	
+	@Deprecated
 	public void setSubnetGeneSymbolSet(Set<String> subnetGeneSymbolSet) {
 		this.subnetGeneSymbolSet = subnetGeneSymbolSet;
 	}
 	
+	@Deprecated
 	public boolean addSubnetGeneSymbol(String subnetGeneSymbol) {
 		if (this.subnetGeneSymbolSet == null) {
 			this.subnetGeneSymbolSet = new HashSet<>();

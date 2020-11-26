@@ -1,113 +1,207 @@
+/**
+ * --------------------------------------------------------------------------
+ *                                 SBML4j
+ * --------------------------------------------------------------------------
+ * University of Tuebingen, 2020.
+ * 
+ * This code is part of the SBML4j software package and subject to the terms
+ * and conditions defined by its license (MIT License). For license details
+ * please refer to the LICENSE file included as part of this source code
+ * package.
+ * 
+ * For a full list of authors, please refer to the file AUTHORS.
+ */
 package org.tts.service;
 
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
-import org.tts.model.api.Input.FilterOptions;
-import org.tts.model.api.Input.PathwayCollectionCreationItem;
-import org.tts.model.api.Output.NetworkInventoryItem;
-import org.tts.model.api.Output.NodeEdgeList;
-import org.tts.model.api.Output.PathwayInventoryItem;
-import org.tts.model.api.Output.WarehouseInventoryItem;
-import org.tts.model.common.GraphEnum.FileNodeType;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.tts.model.api.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphNodeType;
-import org.tts.model.common.Organism;
-import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.PathwayCollectionNode;
-import org.tts.model.warehouse.PathwayNode;
+import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
+import org.tts.repository.warehouse.WarehouseGraphEdgeRepository;
+import org.tts.repository.warehouse.WarehouseGraphNodeRepository;
+import org.tts.service.warehouse.OrganismService;
 
+/**
+ * Service for handling Warehouse specific tasks
+ * @author Thorsten Tiede
+ *
+ * @since 0.1
+ */
+@Service
+public class WarehouseGraphService {
 
-public interface WarehouseGraphService {
-	/*public WarehouseGraphNode getWarehouseGraphNode(WarehouseGraphNodeType warehouseGraphNodeType, String source, String sourceVersion, Organism org, Map<String, String> entityKeyMap);
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
 	
-	public WarehouseGraphNode createWarehouseGraphNode(WarehouseGraphNodeType warehouseGraphNodeType, String source, String sourceVersion, Organism org, Map<String, String> entityKeyMap);
-
-	public boolean warehouseGraphNodeExists(WarehouseGraphNodeType warehouseGraphNodeType, String source, String sourceVersion, Organism org, Map<String, String> entityKeyMap);
-*/
-	public DatabaseNode getDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes);
-
-	public DatabaseNode createDatabaseNode(String source, String sourceVersion, Organism org,
-			Map<String, String> matchingAttributes);
-
-	public boolean fileNodeExists(FileNodeType fileNodeType, Organism org, String filename);
-
-	public FileNode createFileNode(FileNodeType fileNodeType, Organism org, String filename, byte[] filecontent);
-
-	public FileNode getFileNode(FileNodeType fileNodeType, Organism org, String filename);
-
-	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype);
-
-	public PathwayNode createPathwayNode(String idString, String nameString, Organism org);
-
-	public MappingNode createMappingNode(WarehouseGraphNode pathway, NetworkMappingType type, String mappingName);
-
-	public List<PathwayInventoryItem> getListofPathwayInventory(String username);
-
-	public List<ProvenanceEntity> getPathwayContents(String username, String entityUUID);
-
-	public PathwayNode getPathwayNode(String username, String entityUUID);
-
-	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode);
-
-	public DatabaseNode getDatabaseNode(String databaseEntityUUID);
-
-	public PathwayCollectionNode createPathwayCollection(PathwayCollectionCreationItem pathwayCollectionCreationItem, DatabaseNode databaseNode,
-			ProvenanceGraphActivityNode createPathwayCollectionGraphActivityNode, ProvenanceGraphAgentNode agentNode);
-
-	public PathwayCollectionNode createPathwayCollectionNode(String pathwayCollectionName, String pathwayCollectionDescription,
-			Organism organism);
-
-	public Map<String, Integer> buildPathwayFromCollection(PathwayNode pathwayNode, PathwayCollectionNode pathwayCollectionNode,
-			ProvenanceGraphActivityNode buildPathwayFromCollectionActivityNode, ProvenanceGraphAgentNode agentNode);
-
-	public List<String> getListofPathwayUUIDs();
-
-	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth);
-
-	public List<NetworkInventoryItem> getListOfNetworkInventoryItems(String username, boolean isActiveOnly);
-
-	public NodeEdgeList getNetwork(String mappingNodeEntityUUID, String method);
-
-	public NetworkInventoryItem getNetworkInventoryItem(String entityUUID);
-
-	public List<FlatSpecies> getNetworkNodes(String entityUUID);
-
-	public List<String> getNetworkNodeSymbols(List<FlatSpecies> networkNodes);
-
-	public List<String> getNetworkNodeSymbols(String entityUUID);
-
-	public MappingNode getMappingNode(String entityUUID);
-
-	public List<FlatSpecies> copyFlatSpeciesList(List<FlatSpecies> original);
-
-	public FilterOptions getFilterOptions(WarehouseGraphNodeType nodeType, String entityUUID);
-
-	public List<FlatSpecies> copyAndFilterFlatSpeciesList(List<FlatSpecies> originalFlatSpeciesList, FilterOptions options);
-
-	public List<FlatSpecies> createNetworkContext(List<FlatSpecies> oldSpeciesList, String parentUUID, FilterOptions options);
+	@Autowired
+	OrganismService organismService;
 	
-	public MappingNode saveMappingNode(MappingNode node, int depth);
+	@Autowired
+	ProvenanceGraphService provenanceGraphService;
 
-	public String getMappingEntityUUID(String baseNetworkEntityUUID, String geneSymbol, int minSize, int maxSize);
-
-	public boolean mappingForPathwayExists(String entityUUID);
-
-	public String findStartNode(String baseNetworkUUID, String geneSymbol);
-
-	List<FlatSpecies> findNetworkContext(String startNodeEntityUUID, FilterOptions options);
-
-	NodeEdgeList flatSpeciesListToNEL(List<FlatSpecies> flatSpeciesList, String networkEntityUUID);
-
-	public NetworkInventoryItem deactivateNetwork(String mappingNodeEntityUUID);
+	@Autowired
+	WarehouseGraphEdgeRepository warehouseGraphEdgeRepository;
 	
+	@Autowired
+	WarehouseGraphNodeRepository warehouseGraphNodeRepository;
+	
+	
+/************************************************************* Repository Methods *************************************************/		
+	
+	/**
+	 * Save a <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 * @param node The <a href="#{@link}">{@link WarehouseGraphNode}</a> to save
+	 * @param depth The depth to use
+	 * @return The persisted <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 */
+	public WarehouseGraphNode saveWarehouseGraphNodeEntity(WarehouseGraphNode node, int depth) {
+		return this.warehouseGraphNodeRepository.save(node, depth);
+	}
+	
+	/**
+	 * Find the List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to the given startnode with the given relation type
+	 * @param type The <a href="#{@link}">{@link WarehouseGraphEdgeType}</a>
+	 * @param startNodeEntityUUID The entityUUID of the startNode of the <a href="#{@link}">{@link WarehouseGraphEdge}</a>
+	 * @return List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to startNode by type
+	 */
+	public List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType type, String startNodeEntityUUID) {
+		return this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(type, startNodeEntityUUID);
+	}
+	
+	
+/************************************************************* Connect Warehouse Entities ************************************************/	
+
+	/**
+	 * connect two warehouse entities. Always leaves the two entities connected with
+	 * that edgetype, whether they already have been connected or not
+	 * 
+	 * @param source   the startNode of the edge
+	 * @param targetUUID   the UUID of the endNode of the edge
+	 * @param edgetype the WarehouseGraphEdgeType
+	 * @return true if a new connection is made, false if the entities were already
+	 *         connected with that edgetype
+	 */
+	
+	public boolean connect(ProvenanceEntity source, String targetUUID, WarehouseGraphEdgeType edgetype) {
+		return this.connect(source, this.provenanceGraphService.getByEntityUUID(targetUUID), edgetype);
+	}
+
+	/**
+	 * connect two warehouse entities. Always leaves the two entities connected with
+	 * that edgetype, whether they already have been connected or not
+	 * 
+	 * @param sourceUUID  the UUID of the startNode of the edge
+	 * @param target   the endNode of the edge
+	 * @param edgetype the WarehouseGraphEdgeType
+	 * @return true if a new connection is made, false if the entities were already
+	 *         connected with that edgetype
+	 */
+	
+	public boolean connect(String sourceUUID, ProvenanceEntity target, WarehouseGraphEdgeType edgetype) {
+		return this.connect(this.provenanceGraphService.getByEntityUUID(sourceUUID), target, edgetype);
+	}
+	
+	
+	/**
+	 * connect two warehouse entities. Always leaves the two entities connected with
+	 * that edgetype, whether they already have been connected or not
+	 * 
+	 * @param source   the startNode of the edge
+	 * @param target   the endNode of the edge
+	 * @param edgetype the WarehouseGraphEdgeType
+	 * @return true if a new connection is made, false if the entities were already
+	 *         connected with that edgetype
+	 */
+	
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype) {
+		return this.connect(source, target, edgetype, true);
+	}
+	
+	/**
+	 * connect two warehouse entities. Always leaves the two entities connected with
+	 * that edgetype, whether they already have been connected or not
+	 * 
+	 * @param source   the startNode of the edge
+	 * @param target   the endNode of the edge
+	 * @param edgetype the WarehouseGraphEdgeType
+	 * @param doCheck  check if the two entities are already connected (yes), or skip the check (false)
+	 * @return true if a new connection is made, false if the entities were already
+	 *         connected with that edgetype
+	 */
+	
+	public boolean connect(ProvenanceEntity source, ProvenanceEntity target, WarehouseGraphEdgeType edgetype, boolean doCheck) {
+		if (doCheck && this.warehouseGraphNodeRepository.areWarehouseEntitiesConnectedWithWarehouseGraphEdgeType(
+				source.getEntityUUID(), target.getEntityUUID(), edgetype)) {
+			return false;
+		}
+
+		WarehouseGraphEdge newEdge = new WarehouseGraphEdge();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newEdge);
+		newEdge.setWarehouseGraphEdgeType(edgetype);
+		newEdge.setStartNode(source);
+		newEdge.setEndNode(target);
+
+		this.warehouseGraphEdgeRepository.save(newEdge, 0);
+		return true;
+
+	}
+	
+	/**
+	 * connect a set of source provenance entities with one target entity. The entities are not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntities the startNodes of the edges
+	 * @param target the endNode of the edge
+	 * @param edgetype the warehouseGraphEdgeType
+	 */
+	
+	public void connect (Iterable<ProvenanceEntity> sourceEntities, ProvenanceEntity target, WarehouseGraphEdgeType edgetype) {
+		for (ProvenanceEntity source : sourceEntities) {
+			this.connect(source, target, edgetype);
+		}
+	}
+	
+	/**
+	 * connect a source entity with a set of target provenance entities. The entities are not returned. 
+	 * Should that be required in the future, it needs to be changed here
+	 * @param sourceEntities the startNodes of the edges
+	 * @param target the endNode of the edge
+	 * @param edgetype the warehouseGraphEdgeType
+	 */
+	
+	public void connect (ProvenanceEntity source, Iterable<ProvenanceEntity> targetEntities, WarehouseGraphEdgeType edgetype) {
+		for (ProvenanceEntity target : targetEntities) {
+			this.connect(source, target, edgetype);
+		}
+	}
+
+
+
+	
+/************************************************************* WarehouseInventoryItem ***********************************************/	
+	
+	/**
+	 * Get a <a href="#{@link}">{@link WarehouseInventoryItem}</a> for a <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 * @param warehouseGraphNode The entity to get the <a href="#{@link}">{@link WarehouseInventoryItem}</a> for
+	 * @return The <a href="#{@link}">{@link WarehouseInventoryItem}</a>
+	 */
+	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
+		WarehouseInventoryItem item = new WarehouseInventoryItem();
+		item.setUUID(UUID.fromString(warehouseGraphNode.getEntityUUID()));
+		// item.setSource(findSource(warehouseGraphNode).getSource());
+		// item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
+		item.setOrganismCode((this.organismService
+				.findOrganismForWarehouseGraphNode(warehouseGraphNode.getEntityUUID())).getOrgCode());
+		if (warehouseGraphNode.getClass() == MappingNode.class) {
+			item.setName(((MappingNode) warehouseGraphNode).getMappingName());
+		}
+		return item;
+	}
+
 }
