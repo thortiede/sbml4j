@@ -4,7 +4,7 @@ A Service oriented approach to persisting SBML formatted files in a Neo4j databa
 
 ## Docker
 This software is available as docker image:  
-https://hub.docker.com/repository/docker/thortiede/sbml4j/general  
+https://hub.docker.com/repository/docker/thortiede/sbml4j  
 `docker pull thortiede/sbml4j:latest`
 
 ## Prerequisites:
@@ -31,12 +31,14 @@ In order to isolate the communication between the sbml4j application docker and 
 
 ## API documentation
 You can find the documentation for the REST API at swaggerhub:
-`https://app.swaggerhub.com/apis-docs/tiede/sbml4j/1.1.4`
+
+https://app.swaggerhub.com/apis-docs/tiede/sbml4j/1.1.4
 
 ## Docker compose
 
 You can find a docker-compose project over at
-`https://github.com/thortiede/sbml4j-compose`
+
+https://github.com/thortiede/sbml4j-compose
 
 It will start both the neo4j an the sbml4j containers.
 It includes a  preloaded database comprised of 40 cancer-related publilcy available KEGG pathways.
@@ -47,5 +49,7 @@ You can find the network mappings via the GET /networks endpoint using the user 
 
 
 [1]: Clemens Wrzodek, Andreas Dräger, and Andreas Zell. KEGGtranslator: visualizing and converting the KEGG PATHWAY database to various formats. Bioinformatics, 27(16):2314--2315, June 2011
+
 [2]: https://go.drugbank.com/
+
 [3]: Developed at the University of Tübingen, to be published
