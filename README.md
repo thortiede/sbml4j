@@ -42,14 +42,14 @@ https://github.com/thortiede/sbml4j-compose
 
 It will start both the neo4j an the sbml4j containers.
 It includes a  preloaded database comprised of 40 cancer-related publilcy available KEGG pathways.
-The kgml-files obtained from KEGG were translated using [KEGGtranslator][1].
+The kgml-files obtained from KEGG were translated using KEGGtranslator[1].
 After loading all pathway maps we created a CollectionPathway from which four network mappings were derived.
-The mappings are enriched with drug-nodes from [Drugbank][2] and drug-target relationships which were fetched from a [MyDrug][3] instance using the /POST /networks/{UUID}/myDrug endpoint.
+The mappings are enriched with drug-nodes from [Drugbank][3] and drug-target relationships which were fetched from a MyDrug[2] instance using the /POST /networks/{UUID}/myDrug endpoint.
 You can find the network mappings via the GET /networks endpoint using the user `pecax`.
 
 
 [1]: Clemens Wrzodek, Andreas Dräger, and Andreas Zell. KEGGtranslator: visualizing and converting the KEGG PATHWAY database to various formats. Bioinformatics, 27(16):2314--2315, June 2011
 
-[2]: https://go.drugbank.com/
+[2]: Developed at the University of Tübingen, to be published
 
-[3]: Developed at the University of Tübingen, to be published
+[3]: https://go.drugbank.com/
