@@ -84,9 +84,9 @@ public class ApocService {
 	public String getNodeOrString(Iterable<String> nodeTypes, boolean terminateAtDrug) {
 		StringBuilder sb = new StringBuilder();
 		for (String nodeType : nodeTypes) {
-			if (nodeType.equals("Drug") && terminateAtDrug) {
+			if (nodeType.equals("drug") && terminateAtDrug) {
 				sb.append("/");
-				sb.append(nodeType);
+				sb.append("Drug");
 				sb.append("|");
 			}	
 		}

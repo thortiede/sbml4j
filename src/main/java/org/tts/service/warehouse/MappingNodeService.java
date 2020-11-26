@@ -108,6 +108,16 @@ public class MappingNodeService {
 	}
 
 	/**
+	 * Find a mappingNode by its mappingName and the associated user
+	 * @param name The mappingName attribute of the MappingNode to find 
+	 * @param user The name of the ProvenanceGraphAgentNode associated with the mapping
+	 * @return
+	 */
+	public MappingNode findByNetworkNameAndUser(String name, String user) {
+		return this.mappingNodeRepository.findByMappingNameAndUser(name, user);
+	}
+	
+	/**
 	 * Get the <a href="#{@link}">{@link AnnotationItem}</a> for the <a href="#{@link}">{@link MappingNode}</a> with entityUUID entityUUID
 	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
 	 * @return The <a href="#{@link}">{@link AnnotationItem}</a> for the <a href="#{@link}">{@link MappingNode}</a>
@@ -198,4 +208,6 @@ public class MappingNodeService {
 	public MappingNode save(MappingNode node, int depth) {
 		return this.mappingNodeRepository.save(node, depth);
 	}
+
+	
 }

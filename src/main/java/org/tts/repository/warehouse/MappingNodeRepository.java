@@ -71,5 +71,15 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "AND a.graphAgentName = $user "
 			+ "RETURN count(m) > 0")
 	boolean isMappingNodeAttributedToUser(String entityUUID, String user);
+
+	@Query(value = "MATCH "
+			+ "(m:MappingNode)"
+			+ "-[p:PROV]->"
+			+ "(a:PROV_AGENT) "
+			+ "WHERE m.mappingName = $name "
+			+ "AND p.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "AND a.graphAgentName = $user "
+			+ "RETURN m")
+	MappingNode findByMappingNameAndUser(String name, String user);
 	
 }

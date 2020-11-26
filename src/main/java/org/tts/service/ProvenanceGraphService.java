@@ -54,26 +54,31 @@ public class ProvenanceGraphService {
 	 * @param agentNodeProperties
 	 * @return
 	 */
-	public synchronized ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
+	public ProvenanceGraphAgentNode createProvenanceGraphAgentNode(
 			Map<String, Object> agentNodeProperties) {
+		return this.createProvenanceGraphAgentNode(agentNodeProperties.get("graphagentname").toString(), (ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype"));
+	}
+	
+	/**
+	 * Creates a ProvenanceGraphAgentNode if it not already exists for that type and the given name
+	 * If it exists, it returns the existing node
+	 * @param name The name of the agent
+	 * @param graphAgentType The ProvenanceGraphAgentType for the node to create
+	 */
+	public synchronized ProvenanceGraphAgentNode createProvenanceGraphAgentNode(String name, ProvenanceGraphAgentType graphAgentType) {
+					
+		log.info("Searching ProvenanceGraphAgentNode for " + name);
 		
-		log.info("Searching ProvenanceGraphAgentNode for " + agentNodeProperties.get("graphagentname").toString());
-		
-		switch ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")) {
+		switch (graphAgentType) {
 		case User:
-			//String graphagenttype = ((ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype")).name();
 			ProvenanceGraphAgentNode provenanceGraphAgentNode = 
-			this.provenanceGraphAgentNodeRepository.findByGraphAgentTypeAndGraphAgentName(
-					(ProvenanceGraphAgentType)agentNodeProperties.get("graphagenttype"), 
-					agentNodeProperties.get("graphagentname").toString()
-					);
-
+			this.provenanceGraphAgentNodeRepository.findByGraphAgentTypeAndGraphAgentName(graphAgentType, name);
 			if (provenanceGraphAgentNode == null) {
-				log.info("No GraphAgentNode found for user " + agentNodeProperties.get("graphagentname").toString() + ". Creating new..");
+				log.info("No GraphAgentNode found for user " + name + ". Creating new..");
 				provenanceGraphAgentNode = new ProvenanceGraphAgentNode();
 				this.graphBaseEntityService.setGraphBaseEntityProperties(provenanceGraphAgentNode);
-				provenanceGraphAgentNode.setGraphAgentType((ProvenanceGraphAgentType) agentNodeProperties.get("graphagenttype"));
-				provenanceGraphAgentNode.setGraphAgentName((String) agentNodeProperties.get("graphagentname"));
+				provenanceGraphAgentNode.setGraphAgentType(graphAgentType);
+				provenanceGraphAgentNode.setGraphAgentName(name);
 				return this.provenanceGraphAgentNodeRepository.save(provenanceGraphAgentNode);
 			} else {
 				log.info("Using GraphAgentNode: " + provenanceGraphAgentNode.getGraphAgentName() + " with uuid " + provenanceGraphAgentNode.getEntityUUID());
@@ -240,6 +245,8 @@ public class ProvenanceGraphService {
 	public void deleteProvenanceEntity(ProvenanceEntity entity) {
 		this.provenanceEntityRepository.delete(entity);	
 	}
+
+	
 	
 	
 }

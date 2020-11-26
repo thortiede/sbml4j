@@ -81,13 +81,14 @@ public class ContextService {
 		}
 		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
 		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
-		
+		log.info("Terminate at Drug is " + terminateAtDrug + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
 		List<FlatEdge> allEdges = new ArrayList<>();
 		Set<String> seenEdges = new HashSet<>();
 		// get nodeApocString
 		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
+		log.info("Node string for path.expand: " + nodeApocString);
 		Set<String> geneUUIDSet = new HashSet<>();
 		for (String gene : uniqueGenes) {
 			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
@@ -121,11 +122,11 @@ public class ContextService {
 	 * @param terminateAtDrug Whether the context should always terminate in a Drug node (yes), or in any node (false). Attn: Requires MyDrug Nodes in the Network
 	 * @param direction The direction to expand the context to (one of upstream, downstream, both)
 	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
-	 */
+	 */ 	
 	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
 			int maxSize, boolean terminateAtDrug, String direction){
 		
-		log.debug("Entering method getNetworkContextUsingSharedPathwaySearch");
+		log.debug("Entering method getNetworkContextUsingSharedPathwaySearch with usingSharedPathwaySearch being " + this.sbml4jConfig.getNetworkConfigProperties().isUseSharedPathwaySearch());
 		
  		List<FlatEdge> allFlatEdges = new ArrayList<>();
 		Set<String> seenEdges = new HashSet<>();
