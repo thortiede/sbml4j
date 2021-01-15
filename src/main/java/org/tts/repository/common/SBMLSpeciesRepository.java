@@ -13,6 +13,8 @@
  */
 package org.tts.repository.common;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
@@ -41,6 +43,29 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> findByBQConnectionTo(String name, String databaseFromUri);
 
+	@Query("MATCH "
+			+ "(s:SBMLSpecies)"
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND e.uri = $uri "
+			+ "RETURN s")
+	public Iterable<SBMLSpecies> findByBQConnectionWithUri(String uri);
+
+	@Query("MATCH "
+			+ "(c:SBMLCompartment)"
+			+ "<-[:CONTAINED_IN]-"
+			+ "(s:SBMLSpecies)"
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND e.uri in $uriList "
+			+ "RETURN c, s")
+	public Iterable<SBMLSpecies> findByBQConnectionWithUriList(List<String> uriList);
+
+	
 	@Query("MATCH "
 			+ "(s:SBMLSpecies)"
 			+ "-[b:BQ]->"
