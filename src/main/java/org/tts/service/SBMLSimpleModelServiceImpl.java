@@ -189,27 +189,19 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found group");
 				groupSpeciesList.add(species);
 			} else {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesService.findExistingSpeciesToModelSpecies(species);
-						//this.sbmlSpeciesRepository.findBysBaseName(species.getName());
-				if(existingSpecies != null) {
-					speciesList.add(existingSpecies);
-					this.provenanceGraphService.connect(activityNode, existingSpecies, ProvenanceGraphEdgeType.used);
-					logger.info("Reusing species with uuid: " + existingSpecies.getEntityUUID() + " for new species with sbaseId: " + species.getId());
-				} else {
-					SBMLSpecies newSpecies = new SBMLSpecies();
-					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
-					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(species, newSpecies);
-					// uncomment to connect entities to compartments
-					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
-					this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSpecies);
-					
-					SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-					persistedNewSpecies.setCvTermList(species.getCVTerms());
-					newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies, activityNode);
-					SBMLSpecies persistedSpeciesWithExternalResources = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-					speciesList.add(persistedSpeciesWithExternalResources);
-					this.provenanceGraphService.connect(persistedSpeciesWithExternalResources, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-				}
+				SBMLSpecies newSpecies = new SBMLSpecies();
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
+				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(species, newSpecies);
+				// uncomment to connect entities to compartments
+				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
+				this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSpecies);
+				
+				SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				persistedNewSpecies.setCvTermList(species.getCVTerms());
+				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies, activityNode);
+				SBMLSpecies persistedSpeciesWithExternalResources = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				speciesList.add(persistedSpeciesWithExternalResources);
+				this.provenanceGraphService.connect(persistedSpeciesWithExternalResources, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the groups nodes
