@@ -69,6 +69,7 @@ import org.tts.repository.common.SBMLSBaseEntityRepository;
 import org.tts.repository.common.SBMLSpeciesRepository;
 import org.tts.repository.simpleModel.SBMLSimpleReactionRepository;
 import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
+import org.tts.service.SimpleSBML.SBMLSpeciesService;
 
 @Service
 public class SBMLSimpleModelServiceImpl implements SBMLService {
@@ -77,6 +78,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
+	SBMLSpeciesService sbmlSpeciesService;
 	
 	
 	SBMLSpeciesRepository sbmlSpeciesRepository;
@@ -185,10 +189,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found group");
 				groupSpeciesList.add(species);
 			} else {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(species.getName());
+				SBMLSpecies existingSpecies = this.sbmlSpeciesService.findExistingSpeciesToModelSpecies(species);
+						//this.sbmlSpeciesRepository.findBysBaseName(species.getName());
 				if(existingSpecies != null) {
 					speciesList.add(existingSpecies);
 					this.provenanceGraphService.connect(activityNode, existingSpecies, ProvenanceGraphEdgeType.used);
+					logger.info("Reusing species with uuid: " + existingSpecies.getEntityUUID() + " for new species with sbaseId: " + species.getId());
 				} else {
 					SBMLSpecies newSpecies = new SBMLSpecies();
 					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSpecies);
@@ -227,7 +233,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(symbol);
+				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(symbol); // This is why the sBaseName is so important. it is the only way to match the group members to database entities
 				newSBMLSpeciesGroup.addSpeciesToGroup(existingSpecies);
 				speciesSbaseName += "_";
 				speciesSbaseName += symbol;
@@ -260,7 +266,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
 		for (Reaction reaction : listOfReactions) {
 			
-			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBysBaseName(reaction.getName(), 0);
+			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBysBaseName(reaction.getName(), 0); // TODO: Do we need to change this too?
 			if(existingSimpleReaction != null) {
 				// found existing Reaction
 				// TODO: Check if it is the same reaction with reactants and products
@@ -326,7 +332,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
-				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName());
+				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName()); // TODO: Do not use sBaseName here either, or?
 				if (existingSpecies != null) {
 					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
 						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
