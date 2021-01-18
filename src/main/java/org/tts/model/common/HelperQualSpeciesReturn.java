@@ -19,7 +19,7 @@ import java.util.Map;
 public class HelperQualSpeciesReturn {
 	Map<String, SBMLQualSpecies> speciesMap;
 	
-	Map<String, String> sBaseIdMap;
+	Map<String, SBMLQualSpecies> sBaseIdMap;
 
 	public Map<String, SBMLQualSpecies> getSpeciesMap() {
 		return speciesMap;
@@ -39,20 +39,20 @@ public class HelperQualSpeciesReturn {
 	}
 	
 
-	public Map<String, String> getsBaseIdMap() {
+	public Map<String, SBMLQualSpecies> getsBaseIdMap() {
 		return sBaseIdMap;
 	}
 
-	public void setsBaseIdMap(Map<String, String> sBaseIdMap) {
+	public void setsBaseIdMap(Map<String, SBMLQualSpecies> sBaseIdMap) {
 		this.sBaseIdMap = sBaseIdMap;
 	}
 	
-	public void addsBasePair(String originalSBaseId, String newSBaseId) {
+	public void addsBasePair(String originalSBaseId, SBMLQualSpecies qualSpecies) {
 		if (this.sBaseIdMap == null) {
 			this.sBaseIdMap = new HashMap<>();
 		}
 		if (!this.sBaseIdMap.containsKey(originalSBaseId)) {
-			this.sBaseIdMap.put(originalSBaseId, newSBaseId);
+			this.sBaseIdMap.put(originalSBaseId, qualSpecies);
 		}
 	}
 }

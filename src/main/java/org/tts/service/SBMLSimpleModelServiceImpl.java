@@ -354,27 +354,29 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
-			helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+			
 			newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 			newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
+			
 			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
 			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
 			qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+			helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), persistedNewQualSpecies);
 			this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
 		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
 		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
-			Map<String, String> emptySBaseIdMap = new HashMap<>();
+			Map<String, SBMLQualSpecies> emptySBaseIdMap = new HashMap<>();
 			helperQualSpeciesReturn.setsBaseIdMap(emptySBaseIdMap);
 		}
 		return helperQualSpeciesReturn;
 	}
 	
 	private List<SBMLSimpleTransition> buildAndPersistTransitions(
-			Map<String, String> qualSBaseLookupMap,
+			Map<String, SBMLQualSpecies> qualSBaseLookupMap,
 			ListOf<Transition> transitionListOf,
 			ProvenanceGraphActivityNode activityNode) {
 		List<SBMLSimpleTransition> transitionList = new ArrayList<>();
@@ -382,32 +384,37 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			SBMLQualSpecies tmp = null;
 			String newTransitionId = "";
 			if(transition.getListOfInputs().size() > 1) {
-				logger.info("More than one Input in transition: " + transition.getName());
+				logger.warn("More than one Input in transition: " + transition.getName());
 			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies()));
+				tmp = qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies());
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
+				logger.warn("Could not find QualSpecies in this model for : " + transition.getListOfInputs().get(0).getQualitativeSpecies());
+				//tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfInputs().get(0).getQualitativeSpecies());
+				tmp = null;
 			}
 			if(tmp == null) {
 				logger.debug("Tmp is null!!");
+			} else {
+				newTransitionId += tmp.getsBaseName();
+				newTransitionId += "-";
 			}
-			newTransitionId += tmp.getsBaseName();
-			newTransitionId += "-";
 			newTransitionId += this.utilityService.translateSBOString(transition.getSBOTermID());
 			newTransitionId += "->"; // TODO: Should this be directional?
 			if(transition.getListOfOutputs().size() > 1) {
-				logger.info("More than one Output in transition: " + transition.getName());
+				logger.warn("More than one Output in transition: " + transition.getName());
 			}
 			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
-				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies()));
+				tmp = qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies());
 			} else {
-				tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+				logger.warn("Could not find QualSpecies in this model for : " + transition.getListOfOutputs().get(0).getQualitativeSpecies());
+				//tmp = this.sbmlQualSpeciesRepository.findBysBaseId(transition.getListOfOutputs().get(0).getQualitativeSpecies());
+				tmp = null;
 			}
 			if (tmp != null) {
 				newTransitionId += (tmp).getsBaseName();
 			} else {
-				logger.debug("Species is null");
+				logger.warn("Species is null");
 			}
 			
 			SBMLSimpleTransition existingSimpleTransition = this.sbmlSimpleTransitionRepository.getByTransitionId(newTransitionId, 2);
@@ -660,7 +667,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				persistedQualSpeciesList.forEach((k, qualSpecies)-> {
 					returnList.add(qualSpecies);
 				});
-				Map<String, String> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
+				Map<String, SBMLQualSpecies> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
 				
 				// transitions (qual model plugin)
 				if(qualModelPlugin.getListOfTransitions() != null && qualModelPlugin.getListOfTransitions().size() > 0) {
