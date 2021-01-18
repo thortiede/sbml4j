@@ -417,39 +417,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.warn("Species is null");
 			}
 			
-			SBMLSimpleTransition existingSimpleTransition = this.sbmlSimpleTransitionRepository.getByTransitionId(newTransitionId, 2);
-			String inputName = null;
-			String outputName = null;
-			if(qualSBaseLookupMap.containsKey(transition.getListOfInputs().get(0).getQualitativeSpecies())) {
-				inputName = qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies());
-			} else {
-				inputName = transition.getListOfInputs().get(0).getQualitativeSpecies();
-			}
-			if(qualSBaseLookupMap.containsKey(transition.getListOfOutputs().get(0).getQualitativeSpecies())) {
-				outputName = qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies());
-			} else {
-				outputName = transition.getListOfOutputs().get(0).getQualitativeSpecies();
-			}
-			if(existingSimpleTransition != null ) {
-				if(existingSimpleTransition.getInputSpecies() == null || existingSimpleTransition.getOutputSpecies() == null) {
-					logger.debug("How?");
-				}
-				if(existingSimpleTransition.getInputSpecies().getsBaseName().equals(inputName) &&
-						existingSimpleTransition.getOutputSpecies().getsBaseName().equals(outputName)) {
-					transitionList.add(existingSimpleTransition);
-					this.provenanceGraphService.connect(activityNode, existingSimpleTransition, ProvenanceGraphEdgeType.used);
-				}
-			} else {
-				SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
-				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSimpleTransition);
-				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(transition, newSimpleTransition);
-				newSimpleTransition.setTransitionId(newTransitionId);
-				newSimpleTransition.setInputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(inputName));
-				newSimpleTransition.setOutputSpecies(this.sbmlQualSpeciesRepository.findBysBaseId(outputName));
-				SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition, SAVE_DEPTH);
-				transitionList.add(persistedNewSimpleTransition);
-				this.provenanceGraphService.connect(persistedNewSimpleTransition, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			}
+			SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newSimpleTransition);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(transition, newSimpleTransition);
+			newSimpleTransition.setTransitionId(newTransitionId);
+			newSimpleTransition.setInputSpecies(qualSBaseLookupMap.get(transition.getListOfInputs().get(0).getQualitativeSpecies())); // not sure if this works
+			newSimpleTransition.setOutputSpecies(qualSBaseLookupMap.get(transition.getListOfOutputs().get(0).getQualitativeSpecies())); // not sure if this works
+			SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition, SAVE_DEPTH);
+			transitionList.add(persistedNewSimpleTransition);
+			this.provenanceGraphService.connect(persistedNewSimpleTransition, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			
 		}
 		return transitionList;
 	}
