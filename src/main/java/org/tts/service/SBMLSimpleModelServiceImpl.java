@@ -184,6 +184,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			ProvenanceGraphActivityNode activityNode) {
 		List<SBMLSpecies> speciesList = new ArrayList<>();
 		List<Species> groupSpeciesList = new ArrayList<>();
+		Map<String, SBMLSpecies> sBaseNameToSBMLSpeciesMap = new HashMap<>();
 		for (Species species : speciesListOf) {
 			if(species.getName().equals("Group")) {
 				logger.debug("found group");
@@ -201,6 +202,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies, activityNode);
 				SBMLSpecies persistedSpeciesWithExternalResources = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
 				speciesList.add(persistedSpeciesWithExternalResources);
+				sBaseNameToSBMLSpeciesMap.put(newSpecies.getsBaseName(), newSpecies);
 				this.provenanceGraphService.connect(persistedSpeciesWithExternalResources, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
@@ -225,8 +227,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSBMLSpeciesGroup);
 			String speciesSbaseName = newSBMLSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(symbol); // This is why the sBaseName is so important. it is the only way to match the group members to database entities
-				newSBMLSpeciesGroup.addSpeciesToGroup(existingSpecies);
+				// SBMLSpecies existingSpecies = this.sbmlSpeciesRepository.findBysBaseName(symbol); // This is why the sBaseName is so important. it is the only way to match the group members to database entities
+				newSBMLSpeciesGroup.addSpeciesToGroup(sBaseNameToSBMLSpeciesMap.get(symbol));
 				speciesSbaseName += "_";
 				speciesSbaseName += symbol;
 			}
