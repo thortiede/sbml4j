@@ -348,29 +348,20 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				SBMLQualSpecies existingQualSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(symbol);
-				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(existingQualSpecies);
+				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(qualSpeciesMap.get(symbol));
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
-			SBMLQualSpeciesGroup existingSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) sbmlQualSpeciesRepository.findBysBaseName(qualSpeciesSbaseName);
-			if (existingSBMLQualSpeciesGroup != null) {
-				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
-					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);
-					this.provenanceGraphService.connect(activityNode, existingSBMLQualSpeciesGroup, ProvenanceGraphEdgeType.used);
-				}
-				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
-			} else {
-				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
-				
-				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
-				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
-				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			}
+			helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+			newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
+			newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
+			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
+			newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
+			
+			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+			this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			
 		}
 		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
 		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
