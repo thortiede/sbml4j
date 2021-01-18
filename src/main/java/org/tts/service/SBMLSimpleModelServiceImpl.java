@@ -232,21 +232,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				speciesSbaseName += "_";
 				speciesSbaseName += symbol;
 			}
-			SBMLSpeciesGroup existingSBMLSpeciesGroup = (SBMLSpeciesGroup) sbmlSpeciesRepository.findBysBaseName(speciesSbaseName);
-			if (existingSBMLSpeciesGroup != null) {
-				speciesList.add(existingSBMLSpeciesGroup);
-				this.provenanceGraphService.connect(activityNode, existingSBMLSpeciesGroup, ProvenanceGraphEdgeType.used);
-			} else {
-				newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
-				newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
-				newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
-				SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-				persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
-				newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
-				persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-				speciesList.add(persistedNewSpeciesGroup);
-				this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			}
+			newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
+			newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
+			newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
+			SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
+			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
+			persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			speciesList.add(persistedNewSpeciesGroup);
+			this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			
 		}
 		return speciesList;
 	}
