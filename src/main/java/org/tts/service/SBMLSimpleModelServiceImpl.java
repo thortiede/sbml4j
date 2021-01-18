@@ -255,56 +255,50 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
 		for (Reaction reaction : listOfReactions) {
 			
-			SBMLSimpleReaction existingSimpleReaction = this.sbmlSimpleReactionRepository.findBysBaseName(reaction.getName(), 0); // TODO: Do we need to change this too?
-			if(existingSimpleReaction != null) {
-				// found existing Reaction
-				// TODO: Check if it is the same reaction with reactants and products
-				sbmlSimpleReactionList.add(existingSimpleReaction);
-			} else {
-				// reaction not yet in db, build and persist it
-				SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
-				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newReaction);
-				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(reaction, newReaction);
-				// uncomment to connect entities to compartments
-				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
-				this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
-				// reactants
-				for (int i=0; i != reaction.getReactantCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getReactant(i).getSpecies());
-					if(referencedSpecies == null) {
-						logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
-					} else {
-						newReaction.addReactant(referencedSpecies);
-					}
+			// reaction not yet in db, build and persist it
+			SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
+			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newReaction);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(reaction, newReaction);
+			// uncomment to connect entities to compartments
+			this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
+			this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
+			// reactants
+			for (int i=0; i != reaction.getReactantCount(); i++) {
+				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getReactant(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else {
+					newReaction.addReactant(referencedSpecies);
 				}
-				// products
-				for (int i=0; i != reaction.getProductCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getProduct(i).getSpecies());
-					if(referencedSpecies == null) {
-						logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
-					} else {
-						newReaction.addProduct(referencedSpecies);
-					}
-				}
-				// catalysts
-				for (int i=0; i != reaction.getModifierCount(); i++) {
-					SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getModifier(i).getSpecies());
-					if(referencedSpecies == null) {
-						logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
-					} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
-						newReaction.addCatalysts(referencedSpecies);
-					} else {
-						logger.warn("Skipping modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " with sboTerm " + reaction.getModifier(i).getSBOTermID());
-					}
-				}
-				
-				// annotations
-				SBMLSimpleReaction persistedSimpleReaction = this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH);
-				persistedSimpleReaction.setCvTermList(reaction.getCVTerms());
-				newReaction = (SBMLSimpleReaction) buildAndPersistExternalResourcesForSBaseEntity(persistedSimpleReaction, activityNode);
-				sbmlSimpleReactionList.add(this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH));
 			}
+			// products
+			for (int i=0; i != reaction.getProductCount(); i++) {
+				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getProduct(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else {
+					newReaction.addProduct(referencedSpecies);
+				}
+			}
+			// catalysts
+			for (int i=0; i != reaction.getModifierCount(); i++) {
+				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getModifier(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
+					newReaction.addCatalysts(referencedSpecies);
+				} else {
+					logger.warn("Skipping modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " with sboTerm " + reaction.getModifier(i).getSBOTermID());
+				}
+			}
+			
+			// annotations
+			SBMLSimpleReaction persistedSimpleReaction = this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH);
+			persistedSimpleReaction.setCvTermList(reaction.getCVTerms());
+			newReaction = (SBMLSimpleReaction) buildAndPersistExternalResourcesForSBaseEntity(persistedSimpleReaction, activityNode);
+			sbmlSimpleReactionList.add(this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH));
 		}
+		
 		
 		return sbmlSimpleReactionList;
 	}
