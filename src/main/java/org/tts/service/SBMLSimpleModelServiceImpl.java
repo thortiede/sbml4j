@@ -315,30 +315,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
-				SBMLQualSpecies existingSpecies = this.sbmlQualSpeciesRepository.findBysBaseName(qualSpecies.getName()); // TODO: Do not use sBaseName here either, or?
-				if (existingSpecies != null) {
-					if(!qualSpeciesMap.containsKey(existingSpecies.getsBaseId())) {
-						qualSpeciesMap.put(existingSpecies.getsBaseId(), existingSpecies);
-						this.provenanceGraphService.connect(activityNode, existingSpecies, ProvenanceGraphEdgeType.used);
-					}	
-					if(!qualSpecies.getId().substring(5).equals(qualSpecies.getName())) {
-						// possibly this is the case when we have an entity duplicated in sbml, but deduplicate it here
-						// transitions might reference this duplicate entity and need to be pointed to the original one
-						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies.getsBaseId());
-					}
-					
-				} else {
-					SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
-					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newQualSpecies);
-					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(qualSpecies, newQualSpecies);
-					// uncomment to connect entities to compartments
-					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
-					this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
-					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
-					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
-					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
-					this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-				}
+				SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
+				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newQualSpecies);
+				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(qualSpecies, newQualSpecies);
+				// uncomment to connect entities to compartments
+				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
+				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
+				newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
+				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
+				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the group nodes
