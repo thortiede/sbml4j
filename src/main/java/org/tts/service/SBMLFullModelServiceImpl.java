@@ -749,7 +749,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 					if(!qualSpecies.getId().substring(5).equals(qualSpecies.getName())) {
 						// possibly this is the case when we have an entity duplicated in sbml, but deduplicate it here
 						// transitions might reference this duplicate entity and need to be pointed to the original one
-						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies.getsBaseId());
+						helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), existingSpecies);
 					}
 					
 				} else {
@@ -795,9 +795,9 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 				if (!qualSpeciesMap.containsKey(existingSBMLQualSpeciesGroup.getsBaseId())) {
 					qualSpeciesMap.put(existingSBMLQualSpeciesGroup.getsBaseId(), existingSBMLQualSpeciesGroup);
 				}
-				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), newSBMLQualSpeciesGroup);
 			} else {
-				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), qualSpeciesSbaseName);
+				helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), newSBMLQualSpeciesGroup);
 				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
@@ -808,7 +808,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		}
 		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
 		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
-			Map<String, String> emptySBaseIdMap = new HashMap<>();
+			Map<String, SBMLQualSpecies> emptySBaseIdMap = new HashMap<>();
 			helperQualSpeciesReturn.setsBaseIdMap(emptySBaseIdMap);
 		}
 		return helperQualSpeciesReturn;
