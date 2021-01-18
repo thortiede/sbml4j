@@ -178,7 +178,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return sbmlCompartmentList;
 	}
 
-	private List<SBMLSpecies> buildAndPersistSBMLSpecies(
+	private Map<String, SBMLSpecies> buildAndPersistSBMLSpecies(
 			ListOf<Species> speciesListOf,
 			Map<String, SBMLCompartment> compartmentLookupMap, 
 			ProvenanceGraphActivityNode activityNode) {
@@ -240,10 +240,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
 			persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
 			speciesList.add(persistedNewSpeciesGroup);
+			sBaseNameToSBMLSpeciesMap.put(speciesSbaseName, persistedNewSpeciesGroup);
 			this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
-		return speciesList;
+		return sBaseNameToSBMLSpeciesMap;
 	}
 
 	
@@ -305,6 +306,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	
 	private HelperQualSpeciesReturn buildAndPersistSBMLQualSpecies(
 			ListOf<QualitativeSpecies> qualSpeciesListOf, 
+			Map<String, SBMLSpecies> persistedSBMLSpeciesMap, 
 			Map<String, SBMLCompartment> compartmentLookupMap,
 			ProvenanceGraphActivityNode activityNode) {
 		HelperQualSpeciesReturn helperQualSpeciesReturn = new HelperQualSpeciesReturn();
@@ -321,7 +323,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				// uncomment to connect entities to compartments
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
-				newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
+				newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -356,7 +358,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 			newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
-			newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
+			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
 			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
 			qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
@@ -622,7 +624,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	@Override
 	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) { 
 		
-		
+		Map<String, SBMLSpecies> persistedSBMLSpeciesMap = null;
 		// compartment
 		List<ProvenanceEntity> returnList= new ArrayList<>();
 		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model, activityNode);
@@ -634,8 +636,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		
 		// species
 		if (model.getListOfSpecies() != null && model.getListOfSpecies().size() > 0) {
-			List<SBMLSpecies> persistedSBMLSpecies = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap, activityNode);
-			persistedSBMLSpecies.forEach(species->{
+			persistedSBMLSpeciesMap = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap, activityNode);
+			persistedSBMLSpeciesMap.forEach((name, species)->{
 				returnList.add(species);
 			});
 		}
@@ -652,7 +654,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 			// qualitative Species
 			if(qualModelPlugin.getListOfQualitativeSpecies() != null && qualModelPlugin.getListOfQualitativeSpecies().size() > 0) {
-				HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap, activityNode);
+				HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), persistedSBMLSpeciesMap, compartmentLookupMap, activityNode);
 				
 				Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
 				persistedQualSpeciesList.forEach((k, qualSpecies)-> {
