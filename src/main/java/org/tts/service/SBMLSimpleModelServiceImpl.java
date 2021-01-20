@@ -233,7 +233,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				speciesSbaseName += symbol;
 			}
 			newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
-			newSBMLSpeciesGroup.setsBaseId(speciesSbaseName);
+			newSBMLSpeciesGroup.setsBaseId(species.getId());
 			newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
 			SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
 			persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
@@ -310,7 +310,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			Map<String, SBMLCompartment> compartmentLookupMap,
 			ProvenanceGraphActivityNode activityNode) {
 		HelperQualSpeciesReturn helperQualSpeciesReturn = new HelperQualSpeciesReturn();
-		Map<String, SBMLQualSpecies> qualSpeciesMap = new HashMap<>();
+		//Map<String, SBMLQualSpecies> sBaseIdToQualSpeciesMap = new HashMap<>();
+		//Map<String, SBMLQualSpecies> sBaseNameToQualSpeciesMap = new HashMap<>();
 		List<QualitativeSpecies> groupQualSpeciesList = new ArrayList<>();
 		for (QualitativeSpecies qualSpecies : qualSpeciesListOf) {
 			if(qualSpecies.getName().equals("Group")) {
@@ -325,7 +326,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
 				newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
-				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+				
+				helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+				//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+				//sBaseNameToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseName(), persistedNewQualSpecies);
+				
 				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
@@ -350,28 +355,33 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newSBMLQualSpeciesGroup);
 			String qualSpeciesSbaseName = newSBMLQualSpeciesGroup.getsBaseName();
 			for (String symbol : groupMemberSymbols) {
-				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(qualSpeciesMap.get(symbol));
+				// here I need a symbol/sbaseName to QualSpecies map, but qualSpeciesMap maps the sbaseId of the qualSpecies to the QualSpecies.
+				newSBMLQualSpeciesGroup.addQualSpeciesToGroup(helperQualSpeciesReturn.getSBaseNameToQualSpeciesMap().get(symbol)); // TODO: THIS LEADS TO 
+				//org.springframework.dao.InvalidDataAccessApiUsageException: The relationship 'HAS_GROUP_MEMBER' from 'org.tts.model.common.SBMLQualSpeciesGroup' to 'org.tts.model.common.SBMLQualSpecies' stored on '#qualSpeciesInGroup' contains 'null', which is an invalid target for this relationship.'; nested exception is org.neo4j.ogm.exception.core.InvalidRelationshipTargetException: The relationship 'HAS_GROUP_MEMBER' from 'org.tts.model.common.SBMLQualSpeciesGroup' to 'org.tts.model.common.SBMLQualSpecies' stored on '#qualSpeciesInGroup' contains 'null', which is an invalid target for this relationship.'
+
 				qualSpeciesSbaseName += "_";
 				qualSpeciesSbaseName += symbol;
 			}
 			
 			newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
-			newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
+			newSBMLQualSpeciesGroup.setsBaseId(qualSpecies.getId());
 			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
 			
 			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
 			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
-			qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
-			helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), persistedNewQualSpecies);
+			helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+			
+			//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
+			//helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), persistedNewQualSpecies);
 			this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
-		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
-		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
-			Map<String, SBMLQualSpecies> emptySBaseIdMap = new HashMap<>();
-			helperQualSpeciesReturn.setsBaseIdMap(emptySBaseIdMap);
-		}
+		//helperQualSpeciesReturn.setSBaseNameToQualSpeciesMap(sBaseIdToQualSpeciesMap);
+		//if(helperQualSpeciesReturn.getSBaseIdToQualSpeciesMap() == null) {
+		//	Map<String, SBMLQualSpecies> emptySBaseIdMap = new HashMap<>();
+		//	helperQualSpeciesReturn.setSBaseIdToQualSpeciesMap(emptySBaseIdMap);
+		//}
 		return helperQualSpeciesReturn;
 	}
 	
@@ -640,11 +650,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			if(qualModelPlugin.getListOfQualitativeSpecies() != null && qualModelPlugin.getListOfQualitativeSpecies().size() > 0) {
 				HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), persistedSBMLSpeciesMap, compartmentLookupMap, activityNode);
 				
-				Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSpeciesMap();
+				Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSBaseNameToQualSpeciesMap();
 				persistedQualSpeciesList.forEach((k, qualSpecies)-> {
 					returnList.add(qualSpecies);
 				});
-				Map<String, SBMLQualSpecies> qualSBaseLookupMap = qualSpeciesHelper.getsBaseIdMap();
+				Map<String, SBMLQualSpecies> qualSBaseLookupMap = qualSpeciesHelper.getSBaseIdToQualSpeciesMap();
 				
 				// transitions (qual model plugin)
 				if(qualModelPlugin.getListOfTransitions() != null && qualModelPlugin.getListOfTransitions().size() > 0) {

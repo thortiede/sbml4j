@@ -17,42 +17,53 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HelperQualSpeciesReturn {
-	Map<String, SBMLQualSpecies> speciesMap;
+	// sBaseName To QualSpecies Map
+	Map<String, SBMLQualSpecies> sBaseNameToQualSpeciesMap;
 	
-	Map<String, SBMLQualSpecies> sBaseIdMap;
+	// sBaseId To QualSpecies Map
+	Map<String, SBMLQualSpecies> sBaseIdToQualSpeciesMap;
 
-	public Map<String, SBMLQualSpecies> getSpeciesMap() {
-		return speciesMap;
+	public Map<String, SBMLQualSpecies> getSBaseNameToQualSpeciesMap() {
+		return this.sBaseNameToQualSpeciesMap;
 	}
 
-	public void setSpeciesMap(Map<String, SBMLQualSpecies> speciesMap) {
-		this.speciesMap = speciesMap;
-	}
-	
-	public void addQualSpecies(SBMLQualSpecies qualSpecies) {
-		if (this.speciesMap == null) {
-			this.speciesMap = new HashMap<>();
-		}
-		if(!this.speciesMap.containsKey(qualSpecies.getsBaseId())) {
-			this.speciesMap.put(qualSpecies.getsBaseId(), qualSpecies);
-		}
+	public void setSBaseNameToQualSpeciesMap(Map<String, SBMLQualSpecies> sBaseNameToQualSpeciesMap) {
+		this.sBaseNameToQualSpeciesMap = sBaseNameToQualSpeciesMap;
 	}
 	
+	
 
-	public Map<String, SBMLQualSpecies> getsBaseIdMap() {
-		return sBaseIdMap;
+	public Map<String, SBMLQualSpecies> getSBaseIdToQualSpeciesMap() {
+		return sBaseIdToQualSpeciesMap;
 	}
 
-	public void setsBaseIdMap(Map<String, SBMLQualSpecies> sBaseIdMap) {
-		this.sBaseIdMap = sBaseIdMap;
+	public void setSBaseIdToQualSpeciesMap(Map<String, SBMLQualSpecies> sBaseIdToQualSpeciesMap) {
+		this.sBaseIdToQualSpeciesMap = sBaseIdToQualSpeciesMap;
 	}
 	
 	public void addsBasePair(String originalSBaseId, SBMLQualSpecies qualSpecies) {
-		if (this.sBaseIdMap == null) {
-			this.sBaseIdMap = new HashMap<>();
+		if (this.sBaseIdToQualSpeciesMap == null) {
+			this.sBaseIdToQualSpeciesMap = new HashMap<>();
 		}
-		if (!this.sBaseIdMap.containsKey(originalSBaseId)) {
-			this.sBaseIdMap.put(originalSBaseId, qualSpecies);
+		if (!this.sBaseIdToQualSpeciesMap.containsKey(originalSBaseId)) {
+			this.sBaseIdToQualSpeciesMap.put(originalSBaseId, qualSpecies);
 		}
 	}
+	
+	
+	public void addQualSpecies(SBMLQualSpecies qualSpecies) {
+		if (this.sBaseNameToQualSpeciesMap == null) {
+			this.sBaseNameToQualSpeciesMap = new HashMap<>();
+		}
+		if(!this.sBaseNameToQualSpeciesMap.containsKey(qualSpecies.getsBaseName())) {
+			this.sBaseNameToQualSpeciesMap.put(qualSpecies.getsBaseName(), qualSpecies);
+		}
+		if (this.sBaseIdToQualSpeciesMap == null) {
+			this.sBaseIdToQualSpeciesMap = new HashMap<>();
+		}
+		if (!this.sBaseIdToQualSpeciesMap.containsKey(qualSpecies.getsBaseId())) {
+			this.sBaseIdToQualSpeciesMap.put(qualSpecies.getsBaseId(), qualSpecies);
+		}
+	}
+	
 }

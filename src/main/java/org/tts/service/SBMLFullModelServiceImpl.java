@@ -806,10 +806,10 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			}
 		}
-		helperQualSpeciesReturn.setSpeciesMap(qualSpeciesMap);
-		if(helperQualSpeciesReturn.getsBaseIdMap() == null) {
+		helperQualSpeciesReturn.setSBaseNameToQualSpeciesMap(qualSpeciesMap);
+		if(helperQualSpeciesReturn.getSBaseIdToQualSpeciesMap() == null) {
 			Map<String, SBMLQualSpecies> emptySBaseIdMap = new HashMap<>();
-			helperQualSpeciesReturn.setsBaseIdMap(emptySBaseIdMap);
+			helperQualSpeciesReturn.setSBaseIdToQualSpeciesMap(emptySBaseIdMap);
 		}
 		return helperQualSpeciesReturn;
 	}
