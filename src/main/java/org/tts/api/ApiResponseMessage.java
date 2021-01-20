@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.api;
+/*package org.tts.api;
 
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -79,4 +79,4 @@ public class ApiResponseMessage {
     public void setMessage(String message) {
         this.message = message;
     }
-}
+}*/
