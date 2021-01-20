@@ -101,11 +101,11 @@ public class SbmlApiController implements SbmlApi {
 	@Override
 	public ResponseEntity<Map<String, PathwayInventoryItem>> uploadSBML(@Valid MultipartFile[] files, String user,
 			@NotNull @Valid String organism, @NotNull @Valid String source, @NotNull @Valid String version) {
-		
+		logger.debug("Serving POST /sbml..");
 		Map<String, PathwayInventoryItem> fileNameToPathwayInventoryMap = new HashMap<>();
 		
 		for (MultipartFile file : files) {
-			log.info("Processing file " + file.getOriginalFilename());
+			logger.debug("Processing file " + file.getOriginalFilename());
 	
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
