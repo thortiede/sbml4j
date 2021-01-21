@@ -23,7 +23,7 @@ import org.tts.model.common.SBMLSpecies;
 @Repository
 public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long> {
 	
-	public SBMLSpecies findBysBaseName(String sBaseName);
+	public List<SBMLSpecies> findBysBaseName(String sBaseName);
 
 	public SBMLSpecies findBysBaseId(String sBaseId);
 	
