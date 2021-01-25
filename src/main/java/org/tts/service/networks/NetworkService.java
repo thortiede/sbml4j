@@ -637,44 +637,45 @@ public class NetworkService {
 		// 0. Check whether we have that geneSymbol directly in the network
 		if (flatSpeciesEntityUUID == null) {
 			// 1. Find SBMLSpecies with geneSymbol (or SBMLSpecies connected to externalResource with geneSymbol)
-			SBMLSpecies geneSpecies = this.sbmlSpeciesService.findBysBaseName(nodeSymbol);
-			String simpleModelGeneEntityUUID = null;
-			if(geneSpecies != null) {
-				simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
-			} else {
-				Iterable<SBMLSpecies> bqSpecies = this.sbmlSpeciesService.findByBQConnectionTo(nodeSymbol, "KEGG");
-				if (bqSpecies == null) {
-					// we could not find that gene
-					return null;
+			for (SBMLSpecies geneSpecies : this.sbmlSpeciesService.findBysBaseName(nodeSymbol)) {
+				String simpleModelGeneEntityUUID = null;
+				if(geneSpecies != null) {
+					simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
 				} else {
-					Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
-					while (bqSpeciesIterator.hasNext()) {
-						SBMLSpecies current = bqSpeciesIterator.next();
-						log.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
-						if(geneSpecies == null) {
-							log.debug("Using " + current.getsBaseName());
-							geneSpecies = current;
-							break;
+					Iterable<SBMLSpecies> bqSpecies = this.sbmlSpeciesService.findByBQConnectionTo(nodeSymbol, "KEGG");
+					if (bqSpecies == null) {
+						// we could not find that gene
+						return null;
+					} else {
+						Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
+						while (bqSpeciesIterator.hasNext()) {
+							SBMLSpecies current = bqSpeciesIterator.next();
+							log.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
+							if(geneSpecies == null) {
+								log.debug("Using " + current.getsBaseName());
+								geneSpecies = current;
+								break;
+							}
+						}
+						if(geneSpecies != null) {
+							simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
+						} else {
+							return null;
 						}
 					}
-					if(geneSpecies != null) {
-						simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
-					} else {
-						return null;
-					}
 				}
+				if (simpleModelGeneEntityUUID == null) {
+					return null;
+				}
+				// 2. Find FlatSpecies in network with networkEntityUUID to use as startPoint for context search
+				//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
+				FlatSpecies geneSymbolSpecies = this.flatSpeciesService.findBySimpleModelEntityUUID(networkEntityUUID, simpleModelGeneEntityUUID);
+				if (geneSymbolSpecies == null) {
+					log.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
+					return null;
+				}
+				flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
 			}
-			if (simpleModelGeneEntityUUID == null) {
-				return null;
-			}
-			// 2. Find FlatSpecies in network with networkEntityUUID to use as startPoint for context search
-			//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
-			FlatSpecies geneSymbolSpecies = this.flatSpeciesService.findBySimpleModelEntityUUID(networkEntityUUID, simpleModelGeneEntityUUID);
-			if (geneSymbolSpecies == null) {
-				log.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
-				return null;
-			}
-			flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
 		}
 		return flatSpeciesEntityUUID;
 	}
