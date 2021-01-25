@@ -448,6 +448,15 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							relationTypes.add(transitionFlatEdge.getTypeString());
 							relationSymbols.add(transitionFlatEdge.getSymbol());
 							sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getEntityUUID(), transitionFlatEdge);
+							if (inputFlatSpecies.getLabels().contains("Drug")) {
+								FlatEdge targetsEdge = this.flatEdgeService.createFlatEdge("targets");
+								this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
+								targetsEdge.setInputFlatSpecies(inputFlatSpecies);
+								targetsEdge.setOutputFlatSpecies(outputFlatSpecies);
+								targetsEdge.setSymbol(inputFlatSpecies.getSymbol() + "-TARGETS->"
+										+ outputFlatSpecies.getSymbol());
+								allFlatEdges.add(targetsEdge);
+							}
 						}
 					} else {
 						// input single, output group
@@ -627,6 +636,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							secondaryNames += bq.getEndNode().getName();
 							annotatedEntity.getAnnotation().put(AnnotationName.SECONDARYNAMES.getAnnotationName(), secondaryNames);
 						}
+					} else if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGDRUG)) {
+						target.addLabel("Drug");
 					}
 				} else if (bq.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) { // uri.contains("mdanderson")) {
 					this.graphBaseEntityService.addAnnotation(target, "mdanderson", "string", uri, doAppend);
