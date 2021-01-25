@@ -65,7 +65,7 @@ public class SBMLSpeciesService {
 	 * @param sBaseName The sBaseName attribute of the <a href="#{@link}">{@link SBMLSpecies}</a> to find
 	 * @return The SBMLSpecies with sBaseName fetched from the database
 	 */
-	public SBMLSpecies findBysBaseName(String sBaseName) {
+	public List<SBMLSpecies> findBysBaseName(String sBaseName) {
 		return this.sbmlSpeciesRepository.findBysBaseName(sBaseName);
 		
 	}
@@ -105,16 +105,17 @@ public class SBMLSpeciesService {
 	 */
 	public Map<String, SBMLSpecies> findAllBySymbol(String symbol, boolean searchBQConnections) {
 		Map<String, SBMLSpecies> allSpecies = new HashMap<>();
-		SBMLSpecies geneSpecies = this.findBysBaseName(symbol);
-		if (geneSpecies != null) {
-			allSpecies.put(geneSpecies.getEntityUUID(), geneSpecies);
-		}
-		if(searchBQConnections) {
-			Iterable<SBMLSpecies> bqSpecies = this.findByBQConnectionTo(symbol, sbml4jConfig.getExternalResourcesProperties().getBiologicalQualifierProperties().getDefaultDatabase());
-			Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
-			while(bqSpeciesIterator.hasNext()) {
-				SBMLSpecies current = bqSpeciesIterator.next();
-				allSpecies.putIfAbsent(current.getEntityUUID(), current);
+		for (SBMLSpecies geneSpecies : this.findBysBaseName(symbol)) {
+			if (geneSpecies != null) {
+				allSpecies.put(geneSpecies.getEntityUUID(), geneSpecies);
+			}
+			if(searchBQConnections) {
+				Iterable<SBMLSpecies> bqSpecies = this.findByBQConnectionTo(symbol, sbml4jConfig.getExternalResourcesProperties().getBiologicalQualifierProperties().getDefaultDatabase());
+				Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
+				while(bqSpeciesIterator.hasNext()) {
+					SBMLSpecies current = bqSpeciesIterator.next();
+					allSpecies.putIfAbsent(current.getEntityUUID(), current);
+				}
 			}
 		}
 		return allSpecies;
