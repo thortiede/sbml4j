@@ -757,7 +757,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 					setSbaseProperties(qualSpecies, newQualSpecies);
 					//setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 					setQualSpeciesProperties(qualSpecies, newQualSpecies);
-					newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
+					//newQualSpecies.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpecies.getName()));
 					SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies);
 					qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				}
@@ -801,7 +801,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 				newSBMLQualSpeciesGroup.setsBaseName(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseId(qualSpeciesSbaseName);
 				newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
-				newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
+				//newSBMLQualSpeciesGroup.setCorrespondingSpecies(this.sbmlSpeciesRepository.findBysBaseName(qualSpeciesSbaseName));
 				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup);
 				qualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			}
