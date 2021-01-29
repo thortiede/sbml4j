@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
@@ -122,6 +123,22 @@ public interface NetworksApi {
         return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
     }
 
+    @ApiOperation(value = "Provide a csv-file with Drivergene information", tags={ "networks" })
+    @ApiResponses(value = { 
+        @ApiResponse(code = 201, message = "Created network with Drivergene information added.", response = NetworkInventoryItem.class),
+        
+        @ApiResponse(code = 400, message = "Bad Request") })
+    @RequestMapping(value = "/networks/{UUID}/csv",
+        produces = { "application/json" }, 
+        consumes = { "multipart/form-data" }, 
+        method = RequestMethod.POST)
+    ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@ApiParam(value = "The csv-file containing the Drivergene information" ,required=true )  @Valid @RequestBody MultipartFile[] drivergenes,
+    															 @RequestHeader(value="user", required=true) String user,
+    															 @PathVariable("UUID") UUID UUID,
+    															 @RequestParam(value = "type", required = true) String type,
+    															 @Valid @RequestParam(value = "networkname", required = false) String networkname
+    															 );
+    
 
     @ApiOperation(value = "Provide a URL to a MyDrug Neo4j Database and add Drug nodes and Drug-targets->Gene Relationships to a network", nickname = "addMyDrugRelations", notes = "", response = NetworkInventoryItem.class, tags={ "networks","mydrug", })
     @ApiResponses(value = { 
@@ -257,7 +274,7 @@ public interface NetworksApi {
 ,@NotNull @ApiParam(value = "", required = true) @Valid @RequestParam(value = "genes", required = true) String genes
 ,@ApiParam(value = "The minimum depth of the context search", defaultValue = "1") @Valid @RequestParam(value = "minSize", required = false, defaultValue="1") Integer minSize
 ,@ApiParam(value = "The maximum depth of the context search", defaultValue = "3") @Valid @RequestParam(value = "maxSize", required = false, defaultValue="3") Integer maxSize
-,@ApiParam(value = "allows to restrict the context search to only show paths that end in a drug node (MyDrug annotations are required for this)", defaultValue = "false") @Valid @RequestParam(value = "terminateAtDrug", required = false, defaultValue="false") Boolean terminateAtDrug
+,@ApiParam(value = "find nodes of this type and stop the expansion there", defaultValue = "false") @Valid @RequestParam(value = "terminateAt", required = false, defaultValue="false") String terminateAt
 ,@ApiParam(value = "The direction of the context expansion (upstream, downstream, both)", allowableValues = "upstream, downstream, both", defaultValue = "both") @Valid @RequestParam(value = "direction", required = false, defaultValue="both") String direction
 ,@ApiParam(value = "Denotes whether the return network graph is directed", defaultValue = "false") @Valid @RequestParam(value = "directed", required = false, defaultValue="false") boolean directed
 ) {
@@ -383,7 +400,7 @@ public interface NetworksApi {
 ,@ApiParam(value = "The UUID of the network that serves as a basis for this context",required=true) @PathVariable("UUID") UUID UUID
 ,@ApiParam(value = "The minimum depth of the context search", defaultValue = "1") @Valid @RequestParam(value = "minSize", required = false, defaultValue="1") Integer minSize
 ,@ApiParam(value = "The maximum depth of the context search", defaultValue = "3") @Valid @RequestParam(value = "maxSize", required = false, defaultValue="3") Integer maxSize
-,@ApiParam(value = "allows to restrict the context search to only show paths that end in a drug node (MyDrug annotations are required for this)", defaultValue = "false") @Valid @RequestParam(value = "terminateAtDrug", required = false, defaultValue="false") Boolean terminateAtDrug
+,@ApiParam(value = "find nodes of this type and stop the expansion there", defaultValue = "false") @Valid @RequestParam(value = "terminateAt", required = false, defaultValue="false") String terminateAt
 ,@ApiParam(value = "The direction of the context expansion (upstream, downstream, both)", allowableValues = "upstream, downstream, both", defaultValue = "both") @Valid @RequestParam(value = "direction", required = false, defaultValue="both") String direction
 ) {
         if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
