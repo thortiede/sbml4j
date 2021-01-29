@@ -184,7 +184,7 @@ public class NetworkService {
 		} else {
 			mappingToAnnotate = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 			// do not change the network name if we add the annotation without deriving from it.
-			mappingToAnnotate.setMappingName(mappingToAnnotate.getMappingName());
+			// mappingToAnnotate.setMappingName(mappingToAnnotate.getMappingName());
 		}
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
@@ -365,16 +365,7 @@ public class NetworkService {
 		log.info("Writing Provenance Information of new mapping..");
 		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
 		log.info("Writing metadata..");
-		// updateMappingNode
-		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
-		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
-		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
-		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
-		mappingNodeForFlatEdges.setActive(true);
+		updateMappingNodeMetadata(mappingNodeForFlatEdges);
 		log.info("Activating newly created mapping");
 		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
@@ -405,20 +396,12 @@ public class NetworkService {
 		log.info("Writing Provenance Information of new mapping..");
 		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
 		log.info("Writing metadata..");
-		// updateMappingNode
-		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
-		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
-		mappingNodeForFlatEdges.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
-		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
-		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
-		mappingNodeForFlatEdges.setActive(true);
+		updateMappingNodeMetadata(mappingNodeForFlatEdges);
 		log.info("Activating newly created mapping");
 		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
+	
 	/**
 	 * Create necessary warehouse items for adding a new MappingNode when aganetNode is already present
 	 * @param graphAgent The ProvenanceGraphAgentNode to be associated with the new Mapping
@@ -757,6 +740,28 @@ public class NetworkService {
 	}
 	
 	/**
+	 * Get the node labels of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return Set of Strings with node labels
+	 */
+	public Set<String> getNetworkNodeLabels(String networkEntityUUID) {
+		return this.getNetworkNodeLabels(this.getNetworkNodes(networkEntityUUID));
+	}
+
+	/**
+	 * Get the node labels of a collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @param networkNodes The collection of <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * @return Set of Strings with node labels
+	 */
+	public Set<String> getNetworkNodeLabels(Iterable<FlatSpecies> networkNodes) {
+		Set<String> nodeLabels = new HashSet<>();
+		for (FlatSpecies node : networkNodes) {
+			nodeLabels.addAll(node.getLabels());
+		}
+		return nodeLabels;
+	}
+	
+	/**
 	 * Retrieve <a href="#{@link}">{@link FlatEdge}</a> entities of a <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID 
 	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
 	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> entities
@@ -843,6 +848,20 @@ public class NetworkService {
 		return getNetworkIventoryItem(mapping);
 	}
 
+	public void updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
+		// updateMappingNode
+		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
+		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationSymbols(this.getNetworkRelationSymbols(networkEntityUUID));
+		mappingNodeForFlatEdges.setMappingRelationTypes(this.getNetworkRelationTypes(networkEntityUUID));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
+		mappingNodeForFlatEdges.setActive(true);
+	}
+
+	
 	/**
 	 * Connect a set of <a href="#{@link}">{@link FlatEdge}</a> entities (or rather the <a href="#{@link}">{@link FlatSpecies}</a> within) to a <a href="#{@link}">{@link MappingNode}</a>
 	 * @param mappingNode The <a href="#{@link}">{@link MappingNode}</a> to connect to
