@@ -13,9 +13,12 @@
  */
 package org.tts.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -28,6 +31,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.multipart.MultipartFile;
 import org.tts.api.NetworksApi;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.AnnotationItem;
@@ -37,15 +41,20 @@ import org.tts.model.api.NetworkOptions;
 import org.tts.model.api.NodeList;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ContextService;
+import org.tts.service.CsvService;
+import org.tts.service.FlatSpeciesService;
+import org.tts.service.GraphBaseEntityService;
 import org.tts.service.MyDrugService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.networks.NetworkResourceService;
 import org.tts.service.networks.NetworkService;
 import org.tts.service.warehouse.MappingNodeService;
+
 @javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
 /**
  * Controller class for all things networks related
@@ -61,6 +70,15 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Autowired
 	ContextService contextService;
+	
+	@Autowired
+	CsvService csvService;
+	
+	@Autowired
+	FlatSpeciesService flatSpeciesService;
+	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
 	
 	@Autowired
 	MappingNodeService mappingNodeService;
@@ -227,7 +245,7 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<Resource> getContext(String user, UUID UUID, @NotNull @Valid String genes,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction, @Valid boolean directed) {
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction, @Valid boolean directed) {
 		
 		log.info("Serving GET /networks/" + UUID.toString() + "/context for user " + user + " with genes " + genes);
 		
@@ -250,7 +268,12 @@ public class NetworksApiController implements NetworksApi {
 			return ResponseEntity.badRequest().header("reason", "Must give at least on gene").build();
 		}
 		// 4. Get the FlatEdges making up the context
-		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAtDrug, direction);
+		if (terminateAt == null) { // eventually check this against known types, which must include any previously added types
+			terminateAt = "";
+		} 
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAt, direction);
+		
+		
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
 		}
@@ -347,7 +370,7 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<NetworkInventoryItem> postContext(@Valid NodeList body, String user, UUID UUID,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid Boolean terminateAtDrug, @Valid String direction) {
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction) {
 		
 		log.info("Serving POST /networks/" + UUID.toString() + "/context for user " + user + " with NodeList " + body.toString());
 		
@@ -370,7 +393,10 @@ public class NetworksApiController implements NetworksApi {
 			return ResponseEntity.badRequest().header("reason", "Must give at least on gene").build();
 		}
 		// 4. Get the FlatEdges making up the context
-		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAtDrug, direction);
+		if (terminateAt == null) {
+			terminateAt = "";
+		}
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAt, direction);
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
 		}
@@ -388,6 +414,55 @@ public class NetworksApiController implements NetworksApi {
 		// 7. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
-	
+
+	@Override
+	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@Valid MultipartFile[] drivergenes, String user,
+			UUID UUID, String type, @Valid String networkname) {
+		
+		Map<String, List<Map<String, String>>> annotationMap;
+		MappingNode oldNetwork = this.mappingNodeService.findByEntityUUID(UUID.toString());
+		MappingNode newNetwork = this.networkService.copyNetwork(oldNetwork.getEntityUUID(), user, networkname);
+		Iterable<FlatSpecies> networkSpecies = this.networkService.getNetworkNodes(newNetwork.getEntityUUID());
+		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
+		for (MultipartFile file : drivergenes) {
+			log.debug("Processing file " + file.getOriginalFilename());
+			try {
+				annotationMap = csvService.parseCsv(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return ResponseEntity.badRequest().header("reason", "IOException while reading file " + file.getOriginalFilename() + ": " + e.getMessage()).build();
+			}
+			
+			
+			while (networkSpeciesIterator.hasNext()) {
+				FlatSpecies current = networkSpeciesIterator.next();
+				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
+					// we have a match and want this species to be annotated with the data and have the label added
+					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
+					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
+					if (currentAnnotation == null) {
+						// just a safe guard
+						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
+						continue;
+					}
+					int annotationNum = 1;
+					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
+						
+						for (String key : indiviualAnnotationMap.keySet()) {
+							String value = indiviualAnnotationMap.get(key);
+							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
+						}
+						annotationNum++;
+					}
+					current.addLabel(type);
+				}
+			}
+			this.flatSpeciesService.save(networkSpecies, 0);
+		}
+		this.networkService.updateMappingNodeMetadata(newNetwork);
+		
+		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
+		
+	}
 	
 }
