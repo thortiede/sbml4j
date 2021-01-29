@@ -185,10 +185,8 @@
 	</Appenders>
 	
 	<Loggers>
-		<Logger name="org.tts" level="info" additivity="false">
-<!-- 			<AppenderRef ref="applicationDebug" /> -->
-			<AppenderRef ref="applicationInfo" />
-			<AppenderRef ref="applicationWarnError" />
+		<Logger name="org.tts" level="debug" additivity="true">
+			<AppenderRef ref="console" />
 		</Logger>
 
 <!-- 		<Logger name="org.neo4j" level="debug" additivity="false"> -->
