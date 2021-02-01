@@ -155,6 +155,55 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
+	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@Valid MultipartFile[] drivergenes, String user,
+			UUID UUID, String type, @Valid String networkname) {
+		
+		Map<String, List<Map<String, String>>> annotationMap;
+		MappingNode oldNetwork = this.mappingNodeService.findByEntityUUID(UUID.toString());
+		MappingNode newNetwork = this.networkService.copyNetwork(oldNetwork.getEntityUUID(), user, networkname);
+		Iterable<FlatSpecies> networkSpecies = this.networkService.getNetworkNodes(newNetwork.getEntityUUID());
+		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
+		for (MultipartFile file : drivergenes) {
+			log.debug("Processing file " + file.getOriginalFilename());
+			try {
+				annotationMap = csvService.parseCsv(file);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return ResponseEntity.badRequest().header("reason", "IOException while reading file " + file.getOriginalFilename() + ": " + e.getMessage()).build();
+			}
+			
+			
+			while (networkSpeciesIterator.hasNext()) {
+				FlatSpecies current = networkSpeciesIterator.next();
+				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
+					// we have a match and want this species to be annotated with the data and have the label added
+					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
+					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
+					if (currentAnnotation == null) {
+						// just a safe guard
+						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
+						continue;
+					}
+					int annotationNum = 1;
+					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
+						
+						for (String key : indiviualAnnotationMap.keySet()) {
+							String value = indiviualAnnotationMap.get(key);
+							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
+						}
+						annotationNum++;
+					}
+					current.addLabel(type);
+				}
+			}
+			this.flatSpeciesService.save(networkSpecies, 0);
+		}
+		this.networkService.updateMappingNodeMetadata(newNetwork);
+		
+		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
+	}
+	
+	@Override
 	public ResponseEntity<NetworkInventoryItem> copyNetwork(String user, UUID UUID) {
 		
 		log.info("Serving POST /networks/" + UUID.toString() + " for user " + user);
@@ -415,54 +464,6 @@ public class NetworksApiController implements NetworksApi {
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 
-	@Override
-	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@Valid MultipartFile[] drivergenes, String user,
-			UUID UUID, String type, @Valid String networkname) {
-		
-		Map<String, List<Map<String, String>>> annotationMap;
-		MappingNode oldNetwork = this.mappingNodeService.findByEntityUUID(UUID.toString());
-		MappingNode newNetwork = this.networkService.copyNetwork(oldNetwork.getEntityUUID(), user, networkname);
-		Iterable<FlatSpecies> networkSpecies = this.networkService.getNetworkNodes(newNetwork.getEntityUUID());
-		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
-		for (MultipartFile file : drivergenes) {
-			log.debug("Processing file " + file.getOriginalFilename());
-			try {
-				annotationMap = csvService.parseCsv(file);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return ResponseEntity.badRequest().header("reason", "IOException while reading file " + file.getOriginalFilename() + ": " + e.getMessage()).build();
-			}
-			
-			
-			while (networkSpeciesIterator.hasNext()) {
-				FlatSpecies current = networkSpeciesIterator.next();
-				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
-					// we have a match and want this species to be annotated with the data and have the label added
-					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
-					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
-					if (currentAnnotation == null) {
-						// just a safe guard
-						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
-						continue;
-					}
-					int annotationNum = 1;
-					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
-						
-						for (String key : indiviualAnnotationMap.keySet()) {
-							String value = indiviualAnnotationMap.get(key);
-							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
-						}
-						annotationNum++;
-					}
-					current.addLabel(type);
-				}
-			}
-			this.flatSpeciesService.save(networkSpecies, 0);
-		}
-		this.networkService.updateMappingNodeMetadata(newNetwork);
-		
-		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
-		
-	}
+	
 	
 }
