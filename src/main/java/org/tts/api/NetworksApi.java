@@ -132,7 +132,7 @@ public interface NetworksApi {
         produces = { "application/json" }, 
         consumes = { "multipart/form-data" }, 
         method = RequestMethod.POST)
-    ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@ApiParam(value = "The csv-file containing the Drivergene information" ,required=true )  @Valid @RequestBody MultipartFile[] drivergenes,
+    ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@ApiParam(value = "The csv-file containing the Drivergene information" ,required=true )  @Valid @RequestBody MultipartFile[] data,
     															 @RequestHeader(value="user", required=true) String user,
     															 @PathVariable("UUID") UUID UUID,
     															 @RequestParam(value = "type", required = true) String type,
