@@ -108,6 +108,10 @@ public class OverviewApiController implements OverviewApi {
 		}
 		// 3a. Get the network name
 		List<String> geneNames = overviewNetworkItem.getGenes();
+		// 4b. Any genes provided?
+		if (geneNames == null || geneNames.isEmpty()) {
+			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
+		}
 		String networkName = null;
 		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
 			networkName = overviewNetworkItem.getNetworkName();
@@ -123,7 +127,7 @@ public class OverviewApiController implements OverviewApi {
 			networkName = networkNameSB.toString();
 		}
 		
-		// 3b. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
+		// 3c. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
 		MappingNode existingNetwork = this.mappingNodeService.findByNetworkNameAndUser(networkName, user);
 		if (existingNetwork != null) {
 			log.info("Found existing network with name " + networkName + " for user " + user + ". Deleting existing network.");
@@ -139,14 +143,9 @@ public class OverviewApiController implements OverviewApi {
 			}
 		}
 		
-		// 3. Create the user if not existent
+		// 4. Create the user if not existent
 		ProvenanceGraphAgentNode graphAgent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
 		
-		
-		// 4. Any genes provided?
-		if (geneNames == null || geneNames.isEmpty()) {
-			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
-		}
 		// 5. Check whether we know at least one of the genes provided
 		boolean foundGene = false;
 		for (String gene : geneNames) {
