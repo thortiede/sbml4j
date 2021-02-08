@@ -24,6 +24,8 @@ public class NetworkConfigProperties {
 	
 	private boolean useSharedPathwaySearch;
 	
+	private String publicUser;
+	
 	public boolean isHardDelete() {
 		return hardDelete;
 	}
@@ -46,5 +48,13 @@ public class NetworkConfigProperties {
 
 	public void setUseSharedPathwaySearch(boolean useSharedPathwaySearch) {
 		this.useSharedPathwaySearch = useSharedPathwaySearch;
+	}
+
+	public String getPublicUser() {
+		return publicUser;
+	}
+
+	public void setPublicUser(String publicUser) {
+		this.publicUser = publicUser;
 	}
 }
