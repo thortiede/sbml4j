@@ -397,7 +397,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(String user) {
-		
+		// Get the default user from the config and add it to the a user list, then use the method taking the user list, making the default user networks accessible for everyone
+		// Do the same for every endoint requiring a user
+				
 		log.info("Serving GET /networks for user " + user);
 		
 		// 0. Does user exist?
