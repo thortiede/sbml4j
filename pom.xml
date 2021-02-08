@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.1.14</version>
+	<version>0.1.17</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -123,6 +123,19 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+		<!--OpenCSV dependencies -->        
+<!--         <dependency> -->
+<!--     		<groupId>com.opencsv</groupId> -->
+<!--     		<artifactId>opencsv</artifactId> -->
+<!--     		<version>4.1</version> -->
+<!-- 		</dependency> -->
+		<!-- https://mvnrepository.com/artifact/com.univocity/univocity-parsers -->
+		<dependency>
+		    <groupId>com.univocity</groupId>
+		    <artifactId>univocity-parsers</artifactId>
+		    <version>2.1.1</version>
+		</dependency>
+		
 	</dependencies>
 
 	<build>
@@ -137,7 +150,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.1.14</tag>
+	                <tag>0.1.17</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->

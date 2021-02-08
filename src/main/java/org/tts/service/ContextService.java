@@ -75,19 +75,19 @@ public class ContextService {
 	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
 	 */
 	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
-			int maxSize, boolean terminateAtDrug, String direction) {
+			int maxSize, String terminateAt, String direction) {
 		if (genes == null) {
 			return null;
 		}
 		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
 		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
-		log.info("Terminate at Drug is " + terminateAtDrug + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
+		log.info("TerminateAt is " + terminateAt + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
 		List<FlatEdge> allEdges = new ArrayList<>();
 		Set<String> seenEdges = new HashSet<>();
 		// get nodeApocString
-		String nodeApocString = this.apocService.getNodeOrString(filterOptions.getNodeTypes(), terminateAtDrug);
+		String nodeApocString = this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt);
 		log.info("Node string for path.expand: " + nodeApocString);
 		Set<String> geneUUIDSet = new HashSet<>();
 		for (String gene : uniqueGenes) {
@@ -106,7 +106,7 @@ public class ContextService {
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
 		} else {
 			// multi gene context
-			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, uniqueGenes, minSize, maxSize, terminateAtDrug, direction);
+			allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, uniqueGenes, minSize, maxSize, terminateAt, direction);
 		}
 		return allEdges;
 	}
@@ -124,7 +124,7 @@ public class ContextService {
 	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
 	 */ 	
 	private List<FlatEdge> getNetworkContextUsingSharedPathwaySearch(String networkEntityUUID, List<String> genes, int minSize,
-			int maxSize, boolean terminateAtDrug, String direction){
+			int maxSize, String terminateAt, String direction){
 		
 		log.debug("Entering method getNetworkContextUsingSharedPathwaySearch with usingSharedPathwaySearch being " + this.sbml4jConfig.getNetworkConfigProperties().isUseSharedPathwaySearch());
 		
@@ -472,7 +472,7 @@ public class ContextService {
 			Iterable<ApocPathReturnType> geneContextNet = this.apocService.pathExpand(
 					geneFlatSpeciesEntityUUID, 
 					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-					this.apocService.getNodeOrString(networkNodeTypes, terminateAtDrug),
+					this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt),
 					minSize, 
 					maxSize);
 			this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, geneContextNet);

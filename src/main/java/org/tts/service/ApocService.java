@@ -79,14 +79,13 @@ public class ApocService {
 			}
 		}
 	}
-	
-	
-	public String getNodeOrString(Iterable<String> nodeTypes, boolean terminateAtDrug) {
+		
+	public String getNodeOrString(Iterable<String> nodeTypes, String terminateAt) {
 		StringBuilder sb = new StringBuilder();
 		for (String nodeType : nodeTypes) {
-			if (nodeType.equals("drug") && terminateAtDrug) {
+			if (nodeType.equals(terminateAt)) {
 				sb.append("/");
-				sb.append("Drug");
+				sb.append(nodeType);
 				sb.append("|");
 			}	
 		}

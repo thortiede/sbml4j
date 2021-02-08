@@ -535,7 +535,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		int fsConnectCounter = 1;
 
 		for (FlatSpecies fs : persistedFlatSpecies) {
-			logger.info(Instant.now().toString() + ": Building ConnectionSet #" + fsConnectCounter++);
+			logger.debug(Instant.now().toString() + ": Building ConnectionSet #" + fsConnectCounter++);
 			this.provenanceGraphService.connect(fs,	fs.getSimpleModelEntityUUID(), ProvenanceGraphEdgeType.wasDerivedFrom);
 			this.warehouseGraphService.connect(fs, fs.getSimpleModelEntityUUID(), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);

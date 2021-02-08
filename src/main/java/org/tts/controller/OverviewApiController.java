@@ -168,7 +168,7 @@ public class OverviewApiController implements OverviewApi {
 											, geneNames 
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMinSize()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMaxSize()
-											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug()
+											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug() == true ? "Drug" : ""
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection());
 		if(contextFlatEdges == null) {
 			this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
