@@ -107,6 +107,9 @@ public interface NetworksApi {
 ,@ApiParam(value = "The user which requests the creation" ,required=true) @RequestHeader(value="user", required=true) String user
 ,@ApiParam(value = "The UUID of the parent network to derive a new network from",required=true) @PathVariable("UUID") UUID uuid
 ,@ApiParam(value = "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)") @RequestParam(value = "derive", required = false, defaultValue="true") boolean derive
+,@ApiParam(value = "A network name or name prefix for the annotated network") @RequestParam(value = "networkname", required = false) String networkname
+,@ApiParam(value = "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (if network is derived) ") @RequestParam(value = "prefixName", required = false, defaultValue="false") boolean prefixName
+,@ApiParam(value = "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (if network is not derived) ") @RequestParam(value = "prefixName", required = false, defaultValue="false") boolean prefixName
 ) {
         if(getObjectMapper().isPresent() && getAcceptHeader().isPresent()) {
             if (getAcceptHeader().get().contains("application/json")) {
@@ -136,7 +139,8 @@ public interface NetworksApi {
     															 @RequestHeader(value="user", required=true) String user,
     															 @PathVariable("UUID") UUID UUID,
     															 @RequestParam(value = "type", required = true) String type,
-    															 @Valid @RequestParam(value = "networkname", required = false) String networkname
+    															 @Valid @RequestParam(value = "networkname", required = false) String networkname,
+    															 @Valid @RequestParam(value = "prefixName", required = false) boolean prefixName
     															 );
     
 
