@@ -14,6 +14,8 @@
 package org.tts.repository.warehouse;
 
 import java.util.List;
+
+import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.warehouse.DatabaseNode;
 
@@ -23,4 +25,28 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 
 	DatabaseNode findByEntityUUID(String entityUUID);
 
+	@Query("MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[provpw:PROV]->"
+			+ "(f:FileNode)"
+			+ "-[provfn:PROV]->"
+			+ "(d:DatabaseNode)"
+			+ "where p.entityUUID = $pathwayEntityUUID "
+			+ "and provpw.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "and provfn.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "return d")
+	DatabaseNode findByPathway(String pathwayEntityUUID);
+	
+	@Query("MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[provpw:PROV]->"
+			+ "(f:FileNode)"
+			+ "-[provfn:PROV]->"
+			+ "(d:DatabaseNode)"
+			+ "where p.entityUUID in pathwayEntityUUIDList "
+			+ "and provpw.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "and provfn.provenanceGraphEdgeType = \"wasDerivedFrom\" "
+			+ "return d")
+	List<DatabaseNode> findByPathwayList(List<String> pathwayEntityUUIDList);
+	
 }
