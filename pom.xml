@@ -123,6 +123,14 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable -->
+		<dependency>
+		    <groupId>org.openapitools</groupId>
+		    <artifactId>jackson-databind-nullable</artifactId>
+		    <version>0.2.1</version>
+		</dependency>
+
+        
 		<!--OpenCSV dependencies -->        
 <!--         <dependency> -->
 <!--     		<groupId>com.opencsv</groupId> -->
