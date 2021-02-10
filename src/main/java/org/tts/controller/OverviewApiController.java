@@ -26,6 +26,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.OverviewApi;
 import org.tts.config.OverviewNetworkConfig;
 import org.tts.config.SBML4jConfig;
@@ -36,6 +37,7 @@ import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ConfigService;
 import org.tts.service.ContextService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.networks.NetworkResourceService;
@@ -52,6 +54,9 @@ import org.tts.service.warehouse.MappingNodeService;
 public class OverviewApiController implements OverviewApi {
 
 	Logger log = LoggerFactory.getLogger(OverviewApiController.class);
+	
+	@Autowired
+	ConfigService configService;
 	
 	@Autowired
 	ContextService contextService;
@@ -192,27 +197,32 @@ public class OverviewApiController implements OverviewApi {
 	
 	@Override
 	public ResponseEntity<Resource> getOverviewNetwork(String user, String name) {
-		log.info("Serving GET /overview for user " + user + " with network name: " + name);
+		log.info("Serving GET /overview" + (user != null ? " for user " + user : "") + " with network name: " + name);
 		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
 		MappingNode overviewNetwork = this.mappingNodeService.findByNetworkNameAndUser(name, user);
 		if (overviewNetwork == null) {
 			log.info("GET /overview: Network for user " + user + " with network name: " + name + " could not be found") ;
 			// If the network does not exist at all, return 204 still in creation
 			return ResponseEntity.status(HttpStatus.NO_CONTENT)
-					.header("reason", "Network with name " + name + " for user " + user + " could not be created")
+					.header("reason", "Network with name " + name + " for user " + user + " could not be found")
+					.build();
+		}
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(overviewNetwork.getEntityUUID(), user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
 					.build();
 		}
 		// 2. Is the network active?
 		if (!overviewNetwork.isActive()) {
 			// 2.a No, return 204
-			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is not ready yet") ;
-			return ResponseEntity.notFound().header("reason", "Network is not ready yet").build();
+			log.info("GET /overview: Network for user " + networkUser + " with network name: " + name + " is not ready yet. Try again later.") ;
+			return ResponseEntity.notFound().header("reason", "Network is not ready yet. Try again later.").build();
 		} else {
 			// 2.b Yes, return network
 			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is available, returning GraphML") ;
