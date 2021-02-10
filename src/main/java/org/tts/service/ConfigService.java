@@ -36,7 +36,7 @@ public class ConfigService {
 		if (publicUser != null && !publicUser.equals("")) {
 			userList.add(publicUser);
 		}
-		if (!user.equals(publicUser) && !user.strip().equals("")) {
+		if (user != null && !user.equals(publicUser) && !user.strip().equals("")) {
 			userList.add(user);
 		}
 		return userList;
@@ -54,8 +54,8 @@ public class ConfigService {
 		}
 		Iterable<ProvenanceEntity> userEntities = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, uuid);
 		Iterator<ProvenanceEntity> peIter = userEntities.iterator();
-		ProvenanceEntity pe = peIter.next();
 		while (peIter.hasNext()) {
+			ProvenanceEntity pe = peIter.next();
 			try {
 				ProvenanceGraphAgentNode peAgent = (ProvenanceGraphAgentNode) pe;
 				if (user != null && peAgent.getGraphAgentName().equals(user)) {
@@ -68,7 +68,7 @@ public class ConfigService {
 			}		
 		}
 		// if we reached here, the network was not attributed to the given user, or the configured public user
-		throw new UserUnauthorizedException(user != null ? "User " +user +" is not authorized to access network with uuid" +uuid : "Network with uuid " +uuid + " not accesible for public user");
+		throw new UserUnauthorizedException(user != null ? "User " +user +" is not authorized to access network with uuid " +uuid : "Network with uuid " +uuid + " not accesible for public user");
 	}
 	
 	public boolean isPublicUser(String user) {
