@@ -1,16 +1,3 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.ArrayList;
@@ -20,8 +7,6 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -29,41 +14,31 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * PathwayInventoryItem
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-31T10:46:08.514Z[GMT]")
-public class PathwayInventoryItem   {
-  @JsonProperty("UUID")
-  private UUID UUID = null;
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+public class PathwayInventoryItem {
+  @JsonProperty("UUID") private UUID UUID;
 
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("name") private String name;
 
-  @JsonProperty("pathwayId")
-  private String pathwayId = null;
+  @JsonProperty("pathwayId") private String pathwayId;
 
-  @JsonProperty("organismCode")
-  private String organismCode = null;
+  @JsonProperty("organismCode") private String organismCode;
 
-  @JsonProperty("numberOfNodes")
-  private Integer numberOfNodes = null;
+  @JsonProperty("numberOfNodes") private Integer numberOfNodes;
 
-  @JsonProperty("numberOfTransitions")
-  private Integer numberOfTransitions = null;
+  @JsonProperty("numberOfTransitions") private Integer numberOfTransitions;
 
-  @JsonProperty("numberOfReactions")
-  private Integer numberOfReactions = null;
+  @JsonProperty("numberOfReactions") private Integer numberOfReactions;
 
-  @JsonProperty("nodeTypes")
-  @Valid
-  private List<String> nodeTypes = null;
+  @JsonProperty("nodeTypes") @Valid private List<String> nodeTypes = null;
 
   @JsonProperty("transitionTypes")
   @Valid
   private List<String> transitionTypes = null;
 
-  @JsonProperty("compartments")
-  @Valid
-  private List<String> compartments = null;
+  @JsonProperty("compartments") @Valid private List<String> compartments = null;
 
   public PathwayInventoryItem UUID(UUID UUID) {
     this.UUID = UUID;
@@ -73,17 +48,16 @@ public class PathwayInventoryItem   {
   /**
    * Get UUID
    * @return UUID
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    @Valid
-    public UUID getUUID() {
+
+  @Valid
+
+  public UUID getUUID() {
     return UUID;
   }
 
-  public void setUUID(UUID UUID) {
-    this.UUID = UUID;
-  }
+  public void setUUID(UUID UUID) { this.UUID = UUID; }
 
   public PathwayInventoryItem name(String name) {
     this.name = name;
@@ -93,16 +67,14 @@ public class PathwayInventoryItem   {
   /**
    * Get name
    * @return name
-  **/
+   */
   @ApiModelProperty(example = "Example Pathway", value = "")
-  
-    public String getName() {
+
+  public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  public void setName(String name) { this.name = name; }
 
   public PathwayInventoryItem pathwayId(String pathwayId) {
     this.pathwayId = pathwayId;
@@ -112,16 +84,14 @@ public class PathwayInventoryItem   {
   /**
    * Get pathwayId
    * @return pathwayId
-  **/
+   */
   @ApiModelProperty(example = "path_hsa05225", value = "")
-  
-    public String getPathwayId() {
+
+  public String getPathwayId() {
     return pathwayId;
   }
 
-  public void setPathwayId(String pathwayId) {
-    this.pathwayId = pathwayId;
-  }
+  public void setPathwayId(String pathwayId) { this.pathwayId = pathwayId; }
 
   public PathwayInventoryItem organismCode(String organismCode) {
     this.organismCode = organismCode;
@@ -131,10 +101,13 @@ public class PathwayInventoryItem   {
   /**
    * Three letter organism code this network belongs to
    * @return organismCode
-  **/
-  @ApiModelProperty(example = "hsa", value = "Three letter organism code this network belongs to")
-  
-    public String getOrganismCode() {
+   */
+  @ApiModelProperty(
+      example = "hsa",
+      value = "Three letter organism code this network belongs to")
+
+  public String
+  getOrganismCode() {
     return organismCode;
   }
 
@@ -150,10 +123,10 @@ public class PathwayInventoryItem   {
   /**
    * Get numberOfNodes
    * @return numberOfNodes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public Integer getNumberOfNodes() {
+
+  public Integer getNumberOfNodes() {
     return numberOfNodes;
   }
 
@@ -169,10 +142,10 @@ public class PathwayInventoryItem   {
   /**
    * Get numberOfTransitions
    * @return numberOfTransitions
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public Integer getNumberOfTransitions() {
+
+  public Integer getNumberOfTransitions() {
     return numberOfTransitions;
   }
 
@@ -188,10 +161,10 @@ public class PathwayInventoryItem   {
   /**
    * Get numberOfReactions
    * @return numberOfReactions
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public Integer getNumberOfReactions() {
+
+  public Integer getNumberOfReactions() {
     return numberOfReactions;
   }
 
@@ -215,10 +188,10 @@ public class PathwayInventoryItem   {
   /**
    * Get nodeTypes
    * @return nodeTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getNodeTypes() {
+
+  public List<String> getNodeTypes() {
     return nodeTypes;
   }
 
@@ -231,7 +204,8 @@ public class PathwayInventoryItem   {
     return this;
   }
 
-  public PathwayInventoryItem addTransitionTypesItem(String transitionTypesItem) {
+  public PathwayInventoryItem
+  addTransitionTypesItem(String transitionTypesItem) {
     if (this.transitionTypes == null) {
       this.transitionTypes = new ArrayList<>();
     }
@@ -242,10 +216,10 @@ public class PathwayInventoryItem   {
   /**
    * Get transitionTypes
    * @return transitionTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getTransitionTypes() {
+
+  public List<String> getTransitionTypes() {
     return transitionTypes;
   }
 
@@ -269,10 +243,10 @@ public class PathwayInventoryItem   {
   /**
    * Get compartments
    * @return compartments
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getCompartments() {
+
+  public List<String> getCompartments() {
     return compartments;
   }
 
@@ -281,46 +255,68 @@ public class PathwayInventoryItem   {
   }
 
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PathwayInventoryItem pathwayInventoryItem = (PathwayInventoryItem) o;
+    PathwayInventoryItem pathwayInventoryItem = (PathwayInventoryItem)o;
     return Objects.equals(this.UUID, pathwayInventoryItem.UUID) &&
         Objects.equals(this.name, pathwayInventoryItem.name) &&
         Objects.equals(this.pathwayId, pathwayInventoryItem.pathwayId) &&
         Objects.equals(this.organismCode, pathwayInventoryItem.organismCode) &&
-        Objects.equals(this.numberOfNodes, pathwayInventoryItem.numberOfNodes) &&
-        Objects.equals(this.numberOfTransitions, pathwayInventoryItem.numberOfTransitions) &&
-        Objects.equals(this.numberOfReactions, pathwayInventoryItem.numberOfReactions) &&
+        Objects.equals(this.numberOfNodes,
+                       pathwayInventoryItem.numberOfNodes) &&
+        Objects.equals(this.numberOfTransitions,
+                       pathwayInventoryItem.numberOfTransitions) &&
+        Objects.equals(this.numberOfReactions,
+                       pathwayInventoryItem.numberOfReactions) &&
         Objects.equals(this.nodeTypes, pathwayInventoryItem.nodeTypes) &&
-        Objects.equals(this.transitionTypes, pathwayInventoryItem.transitionTypes) &&
+        Objects.equals(this.transitionTypes,
+                       pathwayInventoryItem.transitionTypes) &&
         Objects.equals(this.compartments, pathwayInventoryItem.compartments);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(UUID, name, pathwayId, organismCode, numberOfNodes, numberOfTransitions, numberOfReactions, nodeTypes, transitionTypes, compartments);
+    return Objects.hash(UUID, name, pathwayId, organismCode, numberOfNodes,
+                        numberOfTransitions, numberOfReactions, nodeTypes,
+                        transitionTypes, compartments);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class PathwayInventoryItem {\n");
-    
+
     sb.append("    UUID: ").append(toIndentedString(UUID)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    pathwayId: ").append(toIndentedString(pathwayId)).append("\n");
-    sb.append("    organismCode: ").append(toIndentedString(organismCode)).append("\n");
-    sb.append("    numberOfNodes: ").append(toIndentedString(numberOfNodes)).append("\n");
-    sb.append("    numberOfTransitions: ").append(toIndentedString(numberOfTransitions)).append("\n");
-    sb.append("    numberOfReactions: ").append(toIndentedString(numberOfReactions)).append("\n");
-    sb.append("    nodeTypes: ").append(toIndentedString(nodeTypes)).append("\n");
-    sb.append("    transitionTypes: ").append(toIndentedString(transitionTypes)).append("\n");
-    sb.append("    compartments: ").append(toIndentedString(compartments)).append("\n");
+    sb.append("    pathwayId: ")
+        .append(toIndentedString(pathwayId))
+        .append("\n");
+    sb.append("    organismCode: ")
+        .append(toIndentedString(organismCode))
+        .append("\n");
+    sb.append("    numberOfNodes: ")
+        .append(toIndentedString(numberOfNodes))
+        .append("\n");
+    sb.append("    numberOfTransitions: ")
+        .append(toIndentedString(numberOfTransitions))
+        .append("\n");
+    sb.append("    numberOfReactions: ")
+        .append(toIndentedString(numberOfReactions))
+        .append("\n");
+    sb.append("    nodeTypes: ")
+        .append(toIndentedString(nodeTypes))
+        .append("\n");
+    sb.append("    transitionTypes: ")
+        .append(toIndentedString(transitionTypes))
+        .append("\n");
+    sb.append("    compartments: ")
+        .append(toIndentedString(compartments))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -329,7 +325,7 @@ public class PathwayInventoryItem   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }

@@ -1,16 +1,3 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.ArrayList;
@@ -19,8 +6,6 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -28,13 +13,11 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * GeneAnalysisItem
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-10T16:25:40.095Z[GMT]")
-
-
-public class GeneAnalysisItem   {
-  @JsonProperty("gene")
-  private String gene = null;
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+public class GeneAnalysisItem {
+  @JsonProperty("gene") private String gene;
 
   @JsonProperty("secondary names")
   @Valid
@@ -64,16 +47,14 @@ public class GeneAnalysisItem   {
   /**
    * The gene name this item is for
    * @return gene
-  **/
+   */
   @ApiModelProperty(example = "BRAF", value = "The gene name this item is for")
-  
-    public String getGene() {
+
+  public String getGene() {
     return gene;
   }
 
-  public void setGene(String gene) {
-    this.gene = gene;
-  }
+  public void setGene(String gene) { this.gene = gene; }
 
   public GeneAnalysisItem secondaryNames(List<String> secondaryNames) {
     this.secondaryNames = secondaryNames;
@@ -82,7 +63,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addSecondaryNamesItem(String secondaryNamesItem) {
     if (this.secondaryNames == null) {
-      this.secondaryNames = new ArrayList<String>();
+      this.secondaryNames = new ArrayList<>();
     }
     this.secondaryNames.add(secondaryNamesItem);
     return this;
@@ -91,10 +72,10 @@ public class GeneAnalysisItem   {
   /**
    * Get secondaryNames
    * @return secondaryNames
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getSecondaryNames() {
+
+  public List<String> getSecondaryNames() {
     return secondaryNames;
   }
 
@@ -109,7 +90,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addQualifierItem(QualifierItem qualifierItem) {
     if (this.qualifier == null) {
-      this.qualifier = new ArrayList<QualifierItem>();
+      this.qualifier = new ArrayList<>();
     }
     this.qualifier.add(qualifierItem);
     return this;
@@ -118,10 +99,12 @@ public class GeneAnalysisItem   {
   /**
    * The qualifier of this gene
    * @return qualifier
-  **/
+   */
   @ApiModelProperty(value = "The qualifier of this gene")
-      @Valid
-    public List<QualifierItem> getQualifier() {
+
+  @Valid
+
+  public List<QualifierItem> getQualifier() {
     return qualifier;
   }
 
@@ -136,7 +119,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addPathwaysItem(PathwayInfoItem pathwaysItem) {
     if (this.pathways == null) {
-      this.pathways = new ArrayList<PathwayInfoItem>();
+      this.pathways = new ArrayList<>();
     }
     this.pathways.add(pathwaysItem);
     return this;
@@ -145,10 +128,12 @@ public class GeneAnalysisItem   {
   /**
    * The pathways this gene is found in
    * @return pathways
-  **/
+   */
   @ApiModelProperty(value = "The pathways this gene is found in")
-      @Valid
-    public List<PathwayInfoItem> getPathways() {
+
+  @Valid
+
+  public List<PathwayInfoItem> getPathways() {
     return pathways;
   }
 
@@ -163,7 +148,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addRelationsItem(RelationInfoItem relationsItem) {
     if (this.relations == null) {
-      this.relations = new ArrayList<RelationInfoItem>();
+      this.relations = new ArrayList<>();
     }
     this.relations.add(relationsItem);
     return this;
@@ -172,10 +157,12 @@ public class GeneAnalysisItem   {
   /**
    * The relations this gene is part of
    * @return relations
-  **/
+   */
   @ApiModelProperty(value = "The relations this gene is part of")
-      @Valid
-    public List<RelationInfoItem> getRelations() {
+
+  @Valid
+
+  public List<RelationInfoItem> getRelations() {
     return relations;
   }
 
@@ -190,7 +177,7 @@ public class GeneAnalysisItem   {
 
   public GeneAnalysisItem addReactionsItem(ReactionInfoItem reactionsItem) {
     if (this.reactions == null) {
-      this.reactions = new ArrayList<ReactionInfoItem>();
+      this.reactions = new ArrayList<>();
     }
     this.reactions.add(reactionsItem);
     return this;
@@ -199,10 +186,12 @@ public class GeneAnalysisItem   {
   /**
    * The reactions this gene is part of
    * @return reactions
-  **/
+   */
   @ApiModelProperty(value = "The reactions this gene is part of")
-      @Valid
-    public List<ReactionInfoItem> getReactions() {
+
+  @Valid
+
+  public List<ReactionInfoItem> getReactions() {
     return reactions;
   }
 
@@ -210,16 +199,15 @@ public class GeneAnalysisItem   {
     this.reactions = reactions;
   }
 
-
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GeneAnalysisItem geneAnalysisItem = (GeneAnalysisItem) o;
+    GeneAnalysisItem geneAnalysisItem = (GeneAnalysisItem)o;
     return Objects.equals(this.gene, geneAnalysisItem.gene) &&
         Objects.equals(this.secondaryNames, geneAnalysisItem.secondaryNames) &&
         Objects.equals(this.qualifier, geneAnalysisItem.qualifier) &&
@@ -230,20 +218,29 @@ public class GeneAnalysisItem   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(gene, secondaryNames, qualifier, pathways, relations, reactions);
+    return Objects.hash(gene, secondaryNames, qualifier, pathways, relations,
+                        reactions);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class GeneAnalysisItem {\n");
-    
+
     sb.append("    gene: ").append(toIndentedString(gene)).append("\n");
-    sb.append("    secondaryNames: ").append(toIndentedString(secondaryNames)).append("\n");
-    sb.append("    qualifier: ").append(toIndentedString(qualifier)).append("\n");
+    sb.append("    secondaryNames: ")
+        .append(toIndentedString(secondaryNames))
+        .append("\n");
+    sb.append("    qualifier: ")
+        .append(toIndentedString(qualifier))
+        .append("\n");
     sb.append("    pathways: ").append(toIndentedString(pathways)).append("\n");
-    sb.append("    relations: ").append(toIndentedString(relations)).append("\n");
-    sb.append("    reactions: ").append(toIndentedString(reactions)).append("\n");
+    sb.append("    relations: ")
+        .append(toIndentedString(relations))
+        .append("\n");
+    sb.append("    reactions: ")
+        .append(toIndentedString(reactions))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -252,7 +249,7 @@ public class GeneAnalysisItem   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }

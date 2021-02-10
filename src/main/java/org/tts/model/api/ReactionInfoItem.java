@@ -1,16 +1,3 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.ArrayList;
@@ -19,8 +6,6 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -28,22 +13,17 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * ReactionInfoItem
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-10T16:25:40.095Z[GMT]")
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+public class ReactionInfoItem {
+  @JsonProperty("name") private String name;
 
+  @JsonProperty("type") private String type;
 
-public class ReactionInfoItem   {
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("sboTerm") private String sboTerm;
 
-  @JsonProperty("type")
-  private String type = null;
-
-  @JsonProperty("sboTerm")
-  private String sboTerm = null;
-
-  @JsonProperty("reversible")
-  private Boolean reversible = null;
+  @JsonProperty("reversible") private Boolean reversible;
 
   @JsonProperty("reactants")
   @Valid
@@ -65,16 +45,14 @@ public class ReactionInfoItem   {
   /**
    * The name of the reaction
    * @return name
-  **/
+   */
   @ApiModelProperty(example = "rn:R04125", value = "The name of the reaction")
-  
-    public String getName() {
+
+  public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  public void setName(String name) { this.name = name; }
 
   public ReactionInfoItem type(String type) {
     this.type = type;
@@ -84,16 +62,16 @@ public class ReactionInfoItem   {
   /**
    * The type of the reaction
    * @return type
-  **/
-  @ApiModelProperty(example = "biochemical reaction", value = "The type of the reaction")
-  
-    public String getType() {
+   */
+  @ApiModelProperty(example = "biochemical reaction",
+                    value = "The type of the reaction")
+
+  public String
+  getType() {
     return type;
   }
 
-  public void setType(String type) {
-    this.type = type;
-  }
+  public void setType(String type) { this.type = type; }
 
   public ReactionInfoItem sboTerm(String sboTerm) {
     this.sboTerm = sboTerm;
@@ -103,16 +81,14 @@ public class ReactionInfoItem   {
   /**
    * The SBO Term of the reaction
    * @return sboTerm
-  **/
+   */
   @ApiModelProperty(value = "The SBO Term of the reaction")
-  
-    public String getSboTerm() {
+
+  public String getSboTerm() {
     return sboTerm;
   }
 
-  public void setSboTerm(String sboTerm) {
-    this.sboTerm = sboTerm;
-  }
+  public void setSboTerm(String sboTerm) { this.sboTerm = sboTerm; }
 
   public ReactionInfoItem reversible(Boolean reversible) {
     this.reversible = reversible;
@@ -122,10 +98,12 @@ public class ReactionInfoItem   {
   /**
    * Whether the reaction is reversible
    * @return reversible
-  **/
-  @ApiModelProperty(example = "false", value = "Whether the reaction is reversible")
-  
-    public Boolean isReversible() {
+   */
+  @ApiModelProperty(example = "false",
+                    value = "Whether the reaction is reversible")
+
+  public Boolean
+  getReversible() {
     return reversible;
   }
 
@@ -140,7 +118,7 @@ public class ReactionInfoItem   {
 
   public ReactionInfoItem addReactantsItem(ReactionPartnerItem reactantsItem) {
     if (this.reactants == null) {
-      this.reactants = new ArrayList<ReactionPartnerItem>();
+      this.reactants = new ArrayList<>();
     }
     this.reactants.add(reactantsItem);
     return this;
@@ -149,10 +127,12 @@ public class ReactionInfoItem   {
   /**
    * Get reactants
    * @return reactants
-  **/
+   */
   @ApiModelProperty(value = "")
-      @Valid
-    public List<ReactionPartnerItem> getReactants() {
+
+  @Valid
+
+  public List<ReactionPartnerItem> getReactants() {
     return reactants;
   }
 
@@ -167,7 +147,7 @@ public class ReactionInfoItem   {
 
   public ReactionInfoItem addProductsItem(ReactionPartnerItem productsItem) {
     if (this.products == null) {
-      this.products = new ArrayList<ReactionPartnerItem>();
+      this.products = new ArrayList<>();
     }
     this.products.add(productsItem);
     return this;
@@ -176,10 +156,12 @@ public class ReactionInfoItem   {
   /**
    * Get products
    * @return products
-  **/
+   */
   @ApiModelProperty(value = "")
-      @Valid
-    public List<ReactionPartnerItem> getProducts() {
+
+  @Valid
+
+  public List<ReactionPartnerItem> getProducts() {
     return products;
   }
 
@@ -194,7 +176,7 @@ public class ReactionInfoItem   {
 
   public ReactionInfoItem addCatalystsItem(ReactionPartnerItem catalystsItem) {
     if (this.catalysts == null) {
-      this.catalysts = new ArrayList<ReactionPartnerItem>();
+      this.catalysts = new ArrayList<>();
     }
     this.catalysts.add(catalystsItem);
     return this;
@@ -203,10 +185,12 @@ public class ReactionInfoItem   {
   /**
    * Get catalysts
    * @return catalysts
-  **/
+   */
   @ApiModelProperty(value = "")
-      @Valid
-    public List<ReactionPartnerItem> getCatalysts() {
+
+  @Valid
+
+  public List<ReactionPartnerItem> getCatalysts() {
     return catalysts;
   }
 
@@ -214,16 +198,15 @@ public class ReactionInfoItem   {
     this.catalysts = catalysts;
   }
 
-
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ReactionInfoItem reactionInfoItem = (ReactionInfoItem) o;
+    ReactionInfoItem reactionInfoItem = (ReactionInfoItem)o;
     return Objects.equals(this.name, reactionInfoItem.name) &&
         Objects.equals(this.type, reactionInfoItem.type) &&
         Objects.equals(this.sboTerm, reactionInfoItem.sboTerm) &&
@@ -235,21 +218,28 @@ public class ReactionInfoItem   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, sboTerm, reversible, reactants, products, catalysts);
+    return Objects.hash(name, type, sboTerm, reversible, reactants, products,
+                        catalysts);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ReactionInfoItem {\n");
-    
+
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    sboTerm: ").append(toIndentedString(sboTerm)).append("\n");
-    sb.append("    reversible: ").append(toIndentedString(reversible)).append("\n");
-    sb.append("    reactants: ").append(toIndentedString(reactants)).append("\n");
+    sb.append("    reversible: ")
+        .append(toIndentedString(reversible))
+        .append("\n");
+    sb.append("    reactants: ")
+        .append(toIndentedString(reactants))
+        .append("\n");
     sb.append("    products: ").append(toIndentedString(products)).append("\n");
-    sb.append("    catalysts: ").append(toIndentedString(catalysts)).append("\n");
+    sb.append("    catalysts: ")
+        .append(toIndentedString(catalysts))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -258,7 +248,7 @@ public class ReactionInfoItem   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }
