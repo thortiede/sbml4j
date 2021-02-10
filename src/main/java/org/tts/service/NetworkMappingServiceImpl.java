@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
@@ -104,18 +105,18 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 * @param type The <a href="#{@link}">{@link NetworkMappingType}</a> that should be applied in the mappingProcess
 	 * @param activityNode The <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> this mapping is generated from
 	 * @param agentNode The The <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> that this mapping was attributed to
+	 * @param newMappingName A string representing the name of the Mapping to be created (Needs to be checked for uniqueness before passing it in this method)
 	 * @return The created <a href="#{@link}">{@link MappingNpde}</a> that contains the new Mapping
 	 */
 	@Override
 	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type,
-			ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) throws Exception {
+			ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode, String newMappingName) throws NetworkAlreadyExistsException, Exception {
 
 		Instant startTime = Instant.now();
 		logger.info("Started Creating Mapping from Pathway at " + startTime.toString());
 		// need a Warehouse Node of Type Mapping, set NetworkMappingTypes
-		String mappingName = "Map_" + type.name() + "_" + pathway.getPathwayIdString();
-
-		MappingNode mappingFromPathway = this.mappingNodeService.createMappingNode(pathway, type, mappingName);
+		
+		MappingNode mappingFromPathway = this.mappingNodeService.createMappingNode(pathway, type, newMappingName);
 		logger.info("Created MappingNode with uuid:" + mappingFromPathway.getEntityUUID());
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
