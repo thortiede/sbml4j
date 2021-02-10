@@ -26,6 +26,8 @@ public class NetworkConfigProperties {
 	
 	private String publicUser;
 	
+	private boolean forceDeleteOfPublicNetwork;
+	
 	public boolean isHardDelete() {
 		return hardDelete;
 	}
@@ -56,5 +58,13 @@ public class NetworkConfigProperties {
 
 	public void setPublicUser(String publicUser) {
 		this.publicUser = publicUser;
+	}
+
+	public boolean isForceDeleteOfPublicNetwork() {
+		return forceDeleteOfPublicNetwork;
+	}
+
+	public void setForceDeleteOfPublicNetwork(boolean forceDeleteOfPublicNetwork) {
+		this.forceDeleteOfPublicNetwork = forceDeleteOfPublicNetwork;
 	}
 }

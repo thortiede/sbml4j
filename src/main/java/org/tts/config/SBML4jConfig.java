@@ -29,7 +29,8 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, 
-	ExternalResourcesProperties.class, MdAndersonProperties.class, BiologicalQualifierProperties.class, KEGGDatabaseProperties.class})
+	ExternalResourcesProperties.class, MdAndersonProperties.class, BiologicalQualifierProperties.class, KEGGDatabaseProperties.class,
+	ContextConfigProperties.class})
 public class SBML4jConfig {
 	@Autowired
 	private OutputConfigProperties outputConfigProperties;
@@ -42,6 +43,9 @@ public class SBML4jConfig {
 	
 	@Autowired
 	private ExternalResourcesProperties externalResourcesProperties;
+	
+	@Autowired
+	private ContextConfigProperties contextConfigProperties;
 
 	public OutputConfigProperties getOutputConfigProperties() {
 		return outputConfigProperties;
@@ -73,5 +77,13 @@ public class SBML4jConfig {
 
 	public void setExternalResourcesProperties(ExternalResourcesProperties externalResourcesProperties) {
 		this.externalResourcesProperties = externalResourcesProperties;
+	}
+
+	public ContextConfigProperties getContextConfigProperties() {
+		return contextConfigProperties;
+	}
+
+	public void setContextConfigProperties(ContextConfigProperties contextConfigProperties) {
+		this.contextConfigProperties = contextConfigProperties;
 	}
 }
