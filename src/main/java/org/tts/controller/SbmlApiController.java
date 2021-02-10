@@ -99,10 +99,11 @@ public class SbmlApiController implements SbmlApi {
 	 * @return all Entities as they were persisted (or connected if already present) as a result of persisting the model
 	 */
 	@Override
-	public ResponseEntity<Map<String, PathwayInventoryItem>> uploadSBML(@Valid MultipartFile[] files, String user,
-			@NotNull @Valid String organism, @NotNull @Valid String source, @NotNull @Valid String version) {
+	public ResponseEntity<List<PathwayInventoryItem>> uploadSBML(@NotNull @Valid String organism,
+			@NotNull @Valid String source, @NotNull @Valid String version, String user,
+			@Valid List<MultipartFile> files) {
 		logger.debug("Serving POST /sbml..");
-		Map<String, PathwayInventoryItem> fileNameToPathwayInventoryMap = new HashMap<>();
+		List<PathwayInventoryItem> fileNameToPathwayInventoryList = new ArrayList<>();
 		
 		for (MultipartFile file : files) {
 			logger.debug("Processing file " + file.getOriginalFilename());
@@ -220,8 +221,7 @@ public class SbmlApiController implements SbmlApi {
 					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
 				}
 				
-				logger.info("Persisted " + resultSet.size() + " entities for file " + file.getOriginalFilename());
-							
+				logger.info("Persisted " + resultSet.size() + " entities for file " + file.getOriginalFilename());			
 				this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 				this.provenanceGraphService.connect(sbmlFileNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
@@ -229,16 +229,13 @@ public class SbmlApiController implements SbmlApi {
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 				
-				fileNameToPathwayInventoryMap.put(file.getOriginalFilename(), this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
+				fileNameToPathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
 			} catch (Exception e) {
 				// TODO Roll back transaction..
 				e.printStackTrace();
 				return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
 			}
-			
-			
-
 		}
-		return new ResponseEntity<>(fileNameToPathwayInventoryMap, HttpStatus.CREATED);
+		return new ResponseEntity<>(fileNameToPathwayInventoryList, HttpStatus.CREATED);
 	}
 }
