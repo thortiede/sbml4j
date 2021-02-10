@@ -152,16 +152,18 @@ public class PathwayService {
 	 * @param hideCollections Do not include <a href="#{@link}">{@link PathwayCollectionNode}</a> entities (true), or include them (false)
 	 * @return List of UUIDs of Pathways associated with the user
 	 */
-	public List<UUID> getListofPathwayUUIDs(String user, boolean hideCollections) {
+	public List<UUID> getListofPathwayUUIDs(List<String> users, boolean hideCollections) {
 		List<UUID> uuids = new ArrayList<>();
 		Iterable<PathwayNode> pathways;
-		if(hideCollections) {
-			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
-		} else {
-			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
-		}
-		for (PathwayNode pathwayNode : pathways) {
-			uuids.add(UUID.fromString(pathwayNode.getEntityUUID()));
+		for (String user : users) {
+			if(hideCollections) {
+				pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
+			} else {
+				pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
+			}
+			for (PathwayNode pathwayNode : pathways) {
+				uuids.add(UUID.fromString(pathwayNode.getEntityUUID()));
+			}
 		}
 		return uuids;
 	}
@@ -205,17 +207,19 @@ public class PathwayService {
 	 * @param hideCollections Hide Collection pathways (true) or show them (false)
 	 * @return List of <a href="#{@link}">{@link PathwayInventoryItem}</a> for user
 	 */
-	public List<PathwayInventoryItem> getListofPathwayInventory(String user, boolean hideCollections) {
+	public List<PathwayInventoryItem> getListofPathwayInventory(List<String> users, boolean hideCollections) {
 		List<PathwayInventoryItem> pathwayInventoryItemList = new ArrayList<>();
 		Iterable<PathwayNode> pathways;
-		if(hideCollections) {
-			pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
-		} else {
-			pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
-		}
-		for (PathwayNode pathwayNode : pathways) {
-			PathwayInventoryItem item = getPathwayInventoryItem(user, pathwayNode);
-			pathwayInventoryItemList.add(item);
+		for (String user : users) {
+			if(hideCollections) {
+				pathways = this.pathwayNodeRepository.findNonCollectionPathwaysAttributedToUser(user);
+			} else {
+				pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
+			}
+			for (PathwayNode pathwayNode : pathways) {
+				PathwayInventoryItem item = getPathwayInventoryItem(user, pathwayNode);
+				pathwayInventoryItemList.add(item);
+			}
 		}
 
 		return pathwayInventoryItemList;
