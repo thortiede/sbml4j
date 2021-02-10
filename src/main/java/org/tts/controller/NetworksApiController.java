@@ -16,9 +16,7 @@ package org.tts.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -32,6 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.NetworkAlreadyExistsException;
+import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.NetworksApi;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.AnnotationItem;
@@ -39,13 +39,9 @@ import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
 import org.tts.model.api.NetworkOptions;
 import org.tts.model.api.NodeList;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
-import org.tts.service.ContextService;
-import org.tts.service.CsvService;
+import org.tts.service.ConfigService;
 import org.tts.service.FlatSpeciesService;
 import org.tts.service.GraphBaseEntityService;
 import org.tts.service.MyDrugService;
@@ -55,7 +51,6 @@ import org.tts.service.networks.NetworkResourceService;
 import org.tts.service.networks.NetworkService;
 import org.tts.service.warehouse.MappingNodeService;
 
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
 /**
  * Controller class for all things networks related
  * 
@@ -66,13 +61,10 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class NetworksApiController implements NetworksApi {
 
-	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
+		Logger log = LoggerFactory.getLogger(NetworksApiController.class);
 	
 	@Autowired
-	ContextService contextService;
-	
-	@Autowired
-	CsvService csvService;
+	ConfigService configService;
 	
 	@Autowired
 	FlatSpeciesService flatSpeciesService;
@@ -102,154 +94,213 @@ public class NetworksApiController implements NetworksApi {
 	SBML4jConfig sbml4jConfig;
 	
 	@Override
-	public ResponseEntity<NetworkInventoryItem> addAnnotationToNetwork(@Valid AnnotationItem body, String user,
-			UUID UUID, boolean derive) {
+	public ResponseEntity<NetworkInventoryItem> addAnnotationToNetwork(UUID UUID, @Valid AnnotationItem annotationItem,
+			String user, @Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive) {
+		String uuid = UUID.toString();
+		log.info("Serving POST /networks/" + uuid + "/annotation" + (user != null ? " for user " + user : "") + " with AnnotationItem " + annotationItem.toString());
 		
-		log.info("Serving POST /networks/" + UUID.toString() + "/annotation for user " + user + " with AnnotationItem " + body.toString());
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+		if (this.mappingNodeService.findByEntityUUID(uuid) == null) {
 			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 3. Add annotation to network
-		MappingNode annotatedNetwork = this.networkService.annotateNetwork(user, body, UUID.toString(), derive);
+		
+		// 3. Force copy if network is from public user!
+		if (this.configService.isPublicUser(networkUser) && !derive) {
+			derive = true;
+			log.warn("Overriding derive parameter because given user is the public user and network has to be derived");
+		}
+				
+		// 4. Add annotation to network
+		MappingNode annotatedNetwork;
+		try {
+			annotatedNetwork = this.networkService.annotateNetwork(user != null ? user.strip() : networkUser,
+												annotationItem, uuid, networkname, prefixName, derive);
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
 	
 		// 4. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(annotatedNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 
 	@Override
-	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(@Valid MultipartFile[] data, String user,
-			UUID UUID, String type, @Valid String networkname) {
+	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(UUID UUID, @NotNull @Valid String type, String user,
+			@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive,
+			@Valid List<MultipartFile> data) {
 		
-		Map<String, List<Map<String, String>>> annotationMap;
-		MappingNode oldNetwork = this.mappingNodeService.findByEntityUUID(UUID.toString());
-		MappingNode newNetwork = this.networkService.copyNetwork(oldNetwork.getEntityUUID(), user, networkname);
-		Iterable<FlatSpecies> networkSpecies = this.networkService.getNetworkNodes(newNetwork.getEntityUUID());
-		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
-		for (MultipartFile file : data) {
-			log.debug("Processing file " + file.getOriginalFilename());
-			try {
-				annotationMap = csvService.parseCsv(file);
-			} catch (IOException e) {
-				e.printStackTrace();
-				return ResponseEntity.badRequest().header("reason", "IOException while reading file " + file.getOriginalFilename() + ": " + e.getMessage()).build();
-			}
-			
-			while (networkSpeciesIterator.hasNext()) {
-				FlatSpecies current = networkSpeciesIterator.next();
-				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
-					// we have a match and want this species to be annotated with the data and have the label added
-					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
-					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
-					if (currentAnnotation == null) {
-						// just a safe guard
-						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
-						continue;
-					}
-					int annotationNum = 1;
-					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
-						
-						for (String key : indiviualAnnotationMap.keySet()) {
-							String value = indiviualAnnotationMap.get(key);
-							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
-						}
-						annotationNum++;
-					}
-					current.addLabel(type);
-				}
-			}
-			this.flatSpeciesService.save(networkSpecies, 0);
+		String uuid = UUID.toString();
+		log.info("Serving POST /networks/" + uuid + "/csv " + (user != null ? " for user " + user : ""));
+		
+		// 1. Does the network exist?
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
+			return ResponseEntity.notFound().build();
 		}
-		this.networkService.updateMappingNodeMetadata(newNetwork);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+		
+		// 3. Force copy if network is from public user!
+		if (this.configService.isPublicUser(networkUser) && !derive) {
+			derive = true;
+			log.warn("Overriding derive parameter because given user is the public user and network has to be derived");
+		}
+		// 4. add the data to the network
+		MappingNode newNetwork;
+		try {
+			newNetwork = this.networkService.addCsvDataToNetwork(networkUser, data, type, uuid, networkname, prefixName, derive);
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (IOException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", "Could not read input file: " + e.getMessage())
+					.build();
+		}
 		
 		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
 	}
 	
 	@Override
-	public ResponseEntity<NetworkInventoryItem> addMyDrugRelations(String user, UUID UUID,
-			@NotNull @Valid String myDrugURL) {
+	public ResponseEntity<NetworkInventoryItem> addMyDrugRelations(UUID UUID, @NotNull @Valid String myDrugURL,
+			String user, @Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive) {
 		
-		log.info("Serving POST /networks/" + UUID.toString() + "/mydrug for user " + user + " with myDrugURL " + myDrugURL);
+		String uuid = UUID.toString();
+		log.info("Serving POST /networks/" + uuid + "/mydrug " + (user != null ? " for user " + user : "")+ " with myDrugURL " + myDrugURL);
 		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 3. Copy the network
-		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user, "MyDrugOn");
+		
+		// 3. Force copy if network is from public user!
+		if (this.configService.isPublicUser(networkUser) && !derive) {
+			derive = true;
+			log.warn("Overriding derive parameter because given user is the public user and network has to be derived");
+		}
+		// 4. add the data to the network
+		MappingNode newNetwork;
 		// 4. Add MyDrug Nodes/Edges
-		networkCopy = this.myDrugService.addMyDrugToNetwork(networkCopy.getEntityUUID(), myDrugURL);
+		try {
+			newNetwork = this.myDrugService.addMyDrugToNetwork(networkUser, uuid, myDrugURL, networkname, prefixName, derive);
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
 		// 5. Return the InventoryItem of the new Network
-		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(networkCopy.getEntityUUID()), HttpStatus.CREATED);
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
 	@Override
-	public ResponseEntity<NetworkInventoryItem> copyNetwork(String user, UUID UUID) {
+	public ResponseEntity<NetworkInventoryItem> copyNetwork(@NotNull @Valid UUID parentUUID, String user,
+			@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean suffixName) {
+		String uuid = parentUUID.toString();
+		log.info("Serving POST /networks?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
 		
-		log.info("Serving POST /networks/" + UUID.toString() + " for user " + user);
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 3. Copy the network
-		MappingNode networkCopy = this.networkService.copyNetwork(UUID.toString(), user, "CopyOf");
-		// 4. Network not created?
-		if (networkCopy == null) {
-			return ResponseEntity.badRequest().header("reason", "There has been an error creating a copy of the network with entityUUID: " + UUID.toString()).build();
+		
+		// 3. Determine the name of the network
+		String copiedNetworkName;
+		if (prefixName && networkname != null) {
+			copiedNetworkName = (networkname.endsWith("_") ? networkname : networkname + "_") + mappingForUUID.getMappingName();
+		} else if (suffixName && networkname != null) { 
+			copiedNetworkName = mappingForUUID.getMappingName() + (networkname.startsWith("_") ? networkname : "_" + networkname);
+		} else if (networkname == null && (prefixName || suffixName)) {
+			copiedNetworkName = (prefixName ? "CopyOf_" : "") + mappingForUUID.getMappingName() +(suffixName ? "_copy" : "");
+		} else {
+			copiedNetworkName = networkname;
+		}
+		MappingNode newNetwork;
+		// 4. copy the network
+		try {
+			newNetwork = this.networkService.getCopiedOrNamedMappingNode(networkUser, uuid, copiedNetworkName, false, true, "CopyOf_");
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 		// 5. Return the InventoryItem of the new Network
-		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(networkCopy.getEntityUUID()), HttpStatus.CREATED);
+		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()), HttpStatus.CREATED);
 		
 	}
 	
 	@Override
 	public ResponseEntity<Void> deleteNetwork(String user, UUID UUID) {
 		
-		log.info("Serving DELETE /networks/" + UUID.toString() + " for user " + user);
+		String uuid = UUID.toString();
+		log.info("Serving DELETE /networks/" + (user != null ? " for user " + user : ""));
 		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<Void>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 3. Delete network / Deactivate network
+		// 3. Is this a public user network?
+		if (this.configService.isPublicUser(networkUser) ) {
+			// 3. Is user allowed to delete a public network, i.e. was the public user given in request and is config set to true?
+			if (!this.configService.isAllowedToDeletePublicNetwork(user)) {
+				return ResponseEntity.badRequest()
+						.header("reason", "Tried to delete public network, but did not pass public user and set correct config. Denying deletion.")
+						.build();
+			}
+		}
+		// 4. Delete network / Deactivate network
 		boolean isDeleted = false;
 		if (sbml4jConfig.getNetworkConfigProperties().isHardDelete()) {
 			isDeleted = this.networkService.deleteNetwork(UUID.toString());
@@ -259,73 +310,121 @@ public class NetworksApiController implements NetworksApi {
 		if(isDeleted) {
 			return ResponseEntity.noContent().build();
 		} else {
-			return ResponseEntity.badRequest().header("reason", "Found network associated to user, but failed to delete it").build();
+			return ResponseEntity.badRequest().header("reason", "User was authorized to delete existing network, but attempt failed due to unknown error.").build();
 		}
 	}
 	
 	@Override
-	public ResponseEntity<NetworkInventoryItem> filterNetwork(@Valid FilterOptions body, String user, UUID UUID) {
+	public ResponseEntity<NetworkInventoryItem> filterNetwork(UUID UUID, @Valid FilterOptions filterOptions,
+			String user, @Valid String networkname, @Valid Boolean prefixName) {
 		
-		log.info("Serving POST /networks/" + UUID.toString() + "/filter for user " + user + " with filterOptions " + body.toString());
+		String uuid = UUID.toString();
+		log.info("Serving POST /networks/" + uuid + "/filter" + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
 		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
-			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		if (this.mappingNodeService.findByEntityUUID(uuid) == null) {
+			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<NetworkInventoryItem>(HttpStatus.FORBIDDEN);
-		}
-		MappingNode filteredNetwork = this.networkService.filterNetwork(UUID.toString(), body, user);
 		
-		// 3. Network not created?
-		if (filteredNetwork == null) {
-			return ResponseEntity.badRequest().header("reason", "There has been an error filtering the network with entityUUID: " + UUID.toString()).build();
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 4. Return the InventoryItem of the new Network
+				
+		// 3. Filter the network
+		MappingNode filteredNetwork;
+		try {
+			filteredNetwork = this.networkService.filterNetwork(user != null ? user.strip() : networkUser,
+												filterOptions, uuid, networkname, prefixName);
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+	
+		// 4. Network not created?
+		if (filteredNetwork == null) {
+			return ResponseEntity.badRequest().header("reason", "There has been an error filtering the network with entityUUID: " + uuid).build();
+		}
+		// 5. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(filteredNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
 	@Override
-	public ResponseEntity<Resource> getContext(String user, UUID UUID, @NotNull @Valid String genes,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction, @Valid boolean directed) {
+	public ResponseEntity<Resource> getContext(UUID UUID, @NotNull @Valid String genes, String user,
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
+			@Valid Boolean directed) {
 		
-		log.info("Serving GET /networks/" + UUID.toString() + "/context for user " + user + " with genes " + genes);
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
+		String uuid = UUID.toString();
+		log.info("Serving GET /networks/" + uuid + "/context " + (user != null ? " for user " + user : "") + " with genes " + genes);
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
-			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		MappingNode mappingForContext = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForContext == null) {
+			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<Resource>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		try {
+			this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 		// 3. Extract the genes
 		List<String> geneNames = Arrays.asList(genes.split(", "));
 		if(geneNames.size() < 1) {
 			return ResponseEntity.badRequest().header("reason", "Must give at least on gene").build();
 		}
-		// 4. Get the FlatEdges making up the context
-		if (terminateAt == null) { // eventually check this against known types, which must include any previously added types
-			terminateAt = "";
-		} 
-		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAt, direction);
 		
-		
-		if(contextFlatEdges == null) {
-			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
+		// 4. Check the input parameters
+		int minDepth; 
+		if (minSize != null) {
+			minDepth = minSize.intValue();
+		} else if (this.configService.getContextMinSize() != null) {
+			minDepth = this.configService.getContextMinSize().intValue();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No minSize-parameter given and no parameter value set in config. Please provide either one")
+					.build();
 		}
-		// 5. Create a filename for the output file
+		int maxDepth; 
+		if (minSize != null) {
+			maxDepth = maxSize.intValue();
+		} else if (this.configService.getContextMinSize() != null) {
+			maxDepth = this.configService.getContextMaxSize().intValue();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No maxSize-parameter given and no parameter value set in config. Please provide either one")
+					.build();
+		}
+		String terminateAtString;
+		if (terminateAt == null && this.configService.getContextTerminateAt() != null) {
+			terminateAtString = this.configService.getContextTerminateAt();
+		} else {
+			terminateAtString = null;
+		}
+		String directionString;
+		if (direction != null) {
+			directionString = direction;
+		} else if (this.configService.getContextDirection() != null) {
+			directionString = this.configService.getContextDirection();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No direction-parameter given and no parameter value set in config. Please provide either one")
+					.build();
+		}
+		// 5. Get the context
+		List<FlatEdge> contextFlatEdges = this.networkService.getNetworkContextFlatEdges(uuid, geneNames, minDepth, maxDepth, terminateAtString, directionString);
+		if(contextFlatEdges == null) {
+			return ResponseEntity.badRequest().header("reason", "Failed to gather context from parent network").build();
+		}
+		// 6. Create a filename for the output file
 		StringBuilder filename = new StringBuilder();
 		filename.append("context");
 		for (String gene : geneNames) {
@@ -333,7 +432,7 @@ public class NetworksApiController implements NetworksApi {
 			filename.append(gene);
 		}
 		filename.append("_IN_");
-		filename.append(UUID.toString());
+		filename.append(mappingForContext.getMappingName());
 		filename.append(".graphml");
 		// 6. Get the Resource containing the GraphML of the context
 		Resource contextResource = this.networkResourceService.getNetworkForFlatEdges(contextFlatEdges, directed, filename.toString());
@@ -344,25 +443,25 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
-	public ResponseEntity<Resource> getNetwork(String user, UUID UUID, @Valid boolean directed) {
+	public ResponseEntity<Resource> getNetwork(UUID UUID, String user, @Valid Boolean directed) {
+		String uuid = UUID.toString();	
+		log.info("Serving GET /networks/" + uuid + (user != null ? " for user " + user : ""));
 		
-		log.info("Serving GET /networks/" + UUID.toString() + " for user " + user);
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
-			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		if (this.mappingNodeService.findByEntityUUID(uuid) == null) {
+			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<Resource>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		try {
+			this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 		// 3. Get the network as a GraphML Resource
-		Resource networkResource = this.networkResourceService.getNetwork(UUID.toString(), directed);
+		Resource networkResource = this.networkResourceService.getNetwork(uuid, directed);
 		if (networkResource == null) {
 			return ResponseEntity.noContent().build();
 		}
@@ -370,25 +469,26 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
-	public ResponseEntity<NetworkOptions> getNetworkOptions(String user, UUID UUID) {
+	public ResponseEntity<NetworkOptions> getNetworkOptions(UUID UUID, String user) {
 		
-		log.info("Serving GET /networks/" + UUID.toString() + "/options for user " + user);
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
+		String uuid = UUID.toString();
+		log.info("Serving GET /networks/" + uuid + "/options" + (user != null ? " for user " + user : ""));
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
-			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
+			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		
+		// 2. Is the given user or the public user authorized for this network?
+		try {
+			this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 		// 3. Get the network options
-		NetworkOptions networkOptions = this.networkService.getNetworkOptions(UUID.toString(), user);
+		NetworkOptions networkOptions = this.mappingNodeService.getNetworkOptions(uuid);
 		if (networkOptions.getAnnotation() == null || networkOptions.getFilter() == null) {
 			return ResponseEntity.badRequest().build();
 		}
@@ -397,19 +497,15 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(String user) {
-		// Get the default user from the config and add it to the a user list, then use the method taking the user list, making the default user networks accessible for everyone
-		// Do the same for every endoint requiring a user
-				
-		log.info("Serving GET /networks for user " + user);
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+		log.info("Serving GET /networks" + (user != null ? " for user " + user : ""));
+		// 0. Get list of users including the public user
+		List<String> userList = this.configService.getUserList(user);
+		if(userList.size() < 1) {
+			return ResponseEntity.badRequest().header("reason", "Bad username given: " + user + " and no public user configured. Set config parameter sbml4j.networks.public-user and/or give proper username to prevent this.").build();
 		}
 		// 1. Find all networks for that user
 		List<NetworkInventoryItem> userNetworkInventoryItems = new ArrayList<>();
-		List<MappingNode> userNetworks = this.mappingNodeService.findAllFromUser(user, !this.sbml4jConfig.getNetworkConfigProperties().isShowInactiveNetworks());
+		List<MappingNode> userNetworks = this.mappingNodeService.findAllFromUsers(userList, !this.sbml4jConfig.getNetworkConfigProperties().isShowInactiveNetworks());
 		// 2. Get NetworkInventoryItem for each of them
 		for (MappingNode userMap : userNetworks) {
 			NetworkInventoryItem item = this.networkService.getNetworkInventoryItem(userMap.getEntityUUID());
@@ -419,52 +515,83 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
-	public ResponseEntity<NetworkInventoryItem> postContext(@Valid NodeList body, String user, UUID UUID,
-			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction) {
-		
-		log.info("Serving POST /networks/" + UUID.toString() + "/context for user " + user + " with NodeList " + body.toString());
-		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
+	public ResponseEntity<NetworkInventoryItem> postContext(UUID UUID, @Valid NodeList nodeList, String user,
+			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
+			@Valid String networkname, @Valid Boolean prefixName) {
+		String uuid = UUID.toString();
+		log.info("Serving POST /networks/" + uuid + "/context" + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
+		// 0. Extract the genes
+		List<String> geneNames = nodeList.getGenes();
+		if(geneNames.size() < 1) {
+			return ResponseEntity.badRequest().header("reason", "Must give at least one gene in body.").build();
 		}
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(UUID.toString()) == null) {
-			return ResponseEntity.badRequest().header("reason", "Network with entityUUID " + UUID.toString() + " does not exist.").build();
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
+			return ResponseEntity.notFound().build();
 		}
-		// 2. Is the user allowed to work on that network?
-		if (!this.mappingNodeService.isMappingNodeAttributedToUser(UUID.toString(), user)) {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
-		// 3. Extract the genes
-		List<String> geneNames = body.getGenes();
-		if(geneNames.size() < 1) {
-			return ResponseEntity.badRequest().header("reason", "Must give at least on gene").build();
+		// 4. Check the input parameters
+		int minDepth; 
+		if (minSize != null) {
+			minDepth = minSize.intValue();
+		} else if (this.configService.getContextMinSize() != null) {
+			minDepth = this.configService.getContextMinSize().intValue();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No minSize-parameter given and no parameter value set in config. Please provide either one")
+					.build();
 		}
-		// 4. Get the FlatEdges making up the context
-		if (terminateAt == null) {
-			terminateAt = "";
+		int maxDepth; 
+		if (minSize != null) {
+			maxDepth = maxSize.intValue();
+		} else if (this.configService.getContextMinSize() != null) {
+			maxDepth = this.configService.getContextMaxSize().intValue();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No maxSize-parameter given and no parameter value set in config. Please provide either one")
+					.build();
 		}
-		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(UUID.toString(), geneNames, minSize, maxSize, terminateAt, direction);
-		if(contextFlatEdges == null) {
-			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
+		String terminateAtString;
+		if (terminateAt == null && this.configService.getContextTerminateAt() != null) {
+			terminateAtString = this.configService.getContextTerminateAt();
+		} else {
+			terminateAtString = null;
 		}
-		// 5. Create a networkName for the new network file
-		StringBuilder networkName = new StringBuilder();
-		networkName.append("context");
-		for (String gene : geneNames) {
-			networkName.append("_");
-			networkName.append(gene);
+		String directionString;
+		if (direction != null) {
+			directionString = direction;
+		} else if (this.configService.getContextDirection() != null) {
+			directionString = this.configService.getContextDirection();
+		} else {
+			return ResponseEntity.badRequest()
+					.header("reason", "No direction-parameter given and no parameter value set in config. Please provide either one")
+					.build();
 		}
-		networkName.append("_IN_");
-		networkName.append(UUID.toString());
-		// 6. Create the mapping holding the context
-		MappingNode contextNetwork = this.networkService.createMappingFromFlatEdges(agent, UUID.toString(), contextFlatEdges, networkName.toString());
+
+		// 3. Create the context network
+		MappingNode contextNetwork;
+		try {
+			contextNetwork = this.networkService.createContextNetwork(networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
+					directionString, networkname, prefixName);
+		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (Exception e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
 		// 7. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
-
-	
-	
 }
