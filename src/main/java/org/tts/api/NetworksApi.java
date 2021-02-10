@@ -546,14 +546,10 @@ public interface NetworksApi {
           value =
               "The user which requests the creation, the configured public user will be used if omitted")
       @RequestHeader(value = "user", required = false) String user,
-      @ApiParam(value = "The minimum depth of the context search",
-                defaultValue = "1") @Valid
-      @RequestParam(value = "minSize", required = false,
-                    defaultValue = "1") Integer minSize,
-      @ApiParam(value = "The maximum depth of the context search",
-                defaultValue = "3") @Valid
-      @RequestParam(value = "maxSize", required = false,
-                    defaultValue = "3") Integer maxSize,
+      @ApiParam(value = "The minimum depth of the context search") @Valid
+      @RequestParam(value = "minSize", required = false) Integer minSize,
+      @ApiParam(value = "The maximum depth of the context search") @Valid
+      @RequestParam(value = "maxSize", required = false) Integer maxSize,
       @ApiParam(
           value =
               "find nodes of this type and stop the expansion there (upload a csv with that type first to be able to use this)")
@@ -786,14 +782,10 @@ public interface NetworksApi {
           value =
               "The user which requests the creation, the configured public user will be used if omitted")
       @RequestHeader(value = "user", required = false) String user,
-      @ApiParam(value = "The minimum depth of the context search",
-                defaultValue = "1") @Valid
-      @RequestParam(value = "minSize", required = false,
-                    defaultValue = "1") Integer minSize,
-      @ApiParam(value = "The maximum depth of the context search",
-                defaultValue = "3") @Valid
-      @RequestParam(value = "maxSize", required = false,
-                    defaultValue = "3") Integer maxSize,
+      @ApiParam(value = "The minimum depth of the context search") @Valid
+      @RequestParam(value = "minSize", required = false) Integer minSize,
+      @ApiParam(value = "The maximum depth of the context search") @Valid
+      @RequestParam(value = "maxSize", required = false) Integer maxSize,
       @ApiParam(
           value =
               "find nodes of this type and stop the expansion there (upload a csv with that type first to be able to use this)")
