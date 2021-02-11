@@ -46,6 +46,7 @@ import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.PathwayNode;
+import org.tts.service.ConfigService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.SBMLService;
@@ -64,6 +65,9 @@ import org.tts.service.warehouse.OrganismService;
 @Controller
 public class SbmlApiController implements SbmlApi {
 
+	@Autowired
+	ConfigService configService;
+	
 	@Autowired
 	DatabaseNodeService databaseNodeService;
 	
@@ -127,6 +131,13 @@ public class SbmlApiController implements SbmlApi {
 				return ResponseEntity.badRequest().header("reason", "File ContentType is not application/xml").build();
 			}
 
+			if (user == null || user.isBlank() ||user.isEmpty()) {
+				user = configService.getPublicUser();
+			}
+			if (user == null) {
+				return ResponseEntity.badRequest().header("reason", "No user provided and no public user configured. This is fatal. Aborting. Please provide user in header or configure public user.").build();
+			}
+			
 			/*
 			 * Create Provenance Nodes
 			 */
