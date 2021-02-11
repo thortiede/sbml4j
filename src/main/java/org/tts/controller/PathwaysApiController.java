@@ -99,6 +99,7 @@ public class PathwaysApiController implements PathwaysApi {
 	@Override
 	public ResponseEntity<UUID> createPathwayCollection(
 			@Valid PathwayCollectionCreationItem pathwayCollectionCreationItem, String user) {
+		log.info("Serving POST /pathwayCollection" + (user != null ? " for user " + user : ""));
 		Map<String, Object> agentNodeProperties = new HashMap<>();
 		agentNodeProperties.put("graphagentname", user);
 		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
