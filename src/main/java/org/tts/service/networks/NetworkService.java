@@ -398,7 +398,7 @@ public class NetworkService {
 			throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user);
 		}
 		
-		String activityName = "Create_" + name;
+		String activityName = "Create_" + newMappingName;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
