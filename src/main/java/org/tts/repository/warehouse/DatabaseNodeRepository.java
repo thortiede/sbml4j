@@ -43,7 +43,7 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 			+ "(f:FileNode)"
 			+ "-[provfn:PROV]->"
 			+ "(d:DatabaseNode)"
-			+ "where p.entityUUID in pathwayEntityUUIDList "
+			+ "where p.entityUUID in $pathwayEntityUUIDList "
 			+ "and provpw.provenanceGraphEdgeType = \"wasDerivedFrom\" "
 			+ "and provfn.provenanceGraphEdgeType = \"wasDerivedFrom\" "
 			+ "return d")
