@@ -99,4 +99,12 @@ public class ConfigService {
 		return this.sbml4jConfig.getContextConfigProperties().getTerminateAt();
 	}
 	
+	public String getPublicUser() {
+		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
+		if (publicUser == null) {
+			log.warn("No public user defined in configuration; Public network access not available. Please consider configuring a public user to get rid of this message.");
+		}
+		return publicUser;
+	}
+	
 }
