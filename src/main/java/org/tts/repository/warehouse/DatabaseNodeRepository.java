@@ -21,6 +21,15 @@ import org.tts.model.warehouse.DatabaseNode;
 
 public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Long> {
 
+	
+	
+	@Query("MATCH "
+			+ "(d:DatabaseNode)"
+			+ "-[fo:FOR]->"
+			+ "(o:Organism) "
+			+ "where d.source = $source "
+			+ "and d.sourceVersion = $sourceVersion "
+			+ "RETURN d, fo, o")
 	List<DatabaseNode> findBySourceAndSourceVersion(String source, String sourceVersion);
 
 	DatabaseNode findByEntityUUID(String entityUUID);
@@ -43,10 +52,12 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 			+ "(f:FileNode)"
 			+ "-[provfn:PROV]->"
 			+ "(d:DatabaseNode)"
+			+ "-[fo:FOR]->"
+			+ "(o:Organism) "
 			+ "where p.entityUUID in $pathwayEntityUUIDList "
 			+ "and provpw.provenanceGraphEdgeType = \"wasDerivedFrom\" "
 			+ "and provfn.provenanceGraphEdgeType = \"wasDerivedFrom\" "
-			+ "return d")
+			+ "return d, fo, o")
 	List<DatabaseNode> findByPathwayList(List<String> pathwayEntityUUIDList);
 	
 }
