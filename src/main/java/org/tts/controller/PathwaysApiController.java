@@ -213,11 +213,17 @@ public class PathwaysApiController implements PathwaysApi {
 		String uuid = UUID.toString();
 		log.info("Serving POST /mapping/" + uuid + (user != null ? " for user " + user : ""));
 		// 2. Is the given user or the public user authorized for this pathway?
+		String pathwayUser;
 		try {
-			this.configService.getUserNameAttributedToNetwork(uuid, user);
+			pathwayUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
 		} catch (UserUnauthorizedException e) {
 			return ResponseEntity.badRequest()
-					.header("reason", e.getMessage().replace("network", "pathway"))
+					.header("reason", e.getMessage().replace("network", "pathway").replace("Network", "Pathway"))
+					.build();
+		}
+		if (pathwayUser == null) {
+			return ResponseEntity.badRequest()
+					.header("reason", "Unable to get user attributed to the pathway.")
 					.build();
 		}
 		// 3. Determine the name of the network
@@ -240,16 +246,16 @@ public class PathwaysApiController implements PathwaysApi {
 		// The name should be unique per user
 		// if user already exists AND a mapping with that name already exists, then error
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
-		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
-				&& this.mappingNodeService.findByNetworkNameAndUser(mappingName, user) != null) {
+		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, pathwayUser) != null
+				&& this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser) != null) {
 			return ResponseEntity.badRequest()
-					.header("reason", "Network with name " + mappingName + " already exists for user " + user)
+					.header("reason", "Network with name " + mappingName + " already exists for user " + pathwayUser)
 					.build();
 		}
 		
 		// Need Agent
 		Map<String, Object> agentNodeProperties = new HashMap<>();
-		agentNodeProperties.put("graphagentname", user);
+		agentNodeProperties.put("graphagentname", pathwayUser);
 		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
 		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
 				.createProvenanceGraphAgentNode(agentNodeProperties);
