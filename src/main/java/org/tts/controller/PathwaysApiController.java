@@ -101,6 +101,13 @@ public class PathwaysApiController implements PathwaysApi {
 			@Valid PathwayCollectionCreationItem pathwayCollectionCreationItem, String user) {
 		log.info("Serving POST /pathwayCollection" + (user != null ? " for user " + user : ""));
 		Map<String, Object> agentNodeProperties = new HashMap<>();
+		
+		if (user == null) {
+			user = this.configService.getPublicUser();
+		}
+		if (user == null) {
+			return ResponseEntity.badRequest().header("reason", "Unable to create PathwayCollection without a user. Either provide one in the header, or configure one in the properties.").build();
+		}
 		agentNodeProperties.put("graphagentname", user);
 		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
 		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService
