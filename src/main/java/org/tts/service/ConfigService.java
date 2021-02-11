@@ -32,7 +32,7 @@ public class ConfigService {
 	public List<String> getUserList(String user) {
 		List<String> userList = new ArrayList<>();
 		// get public user
-		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
+		String publicUser = this.getPublicUser();
 		if (publicUser != null && !publicUser.equals("")) {
 			userList.add(publicUser);
 		}
@@ -45,7 +45,7 @@ public class ConfigService {
 	
 	public String getUserNameAttributedToNetwork(String uuid, String user) throws UserUnauthorizedException {
 		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
-		if (publicUser == null || publicUser.strip().equals("")) {
+		if (publicUser == null || publicUser.isEmpty() || publicUser.isBlank()) {
 			log.warn("No public user defined in configuration; Public network access not available. Please consider configuring a public user to get rid of this message.");
 		}
 		publicUser = publicUser.strip();
