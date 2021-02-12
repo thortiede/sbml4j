@@ -264,7 +264,7 @@ public class MyDrugService {
 			jsonInputString += " return ";
 			jsonInputString += returnString;
 			jsonInputString += ";\" } ]}";
-			System.out.println(jsonInputString);
+			logger.debug(jsonInputString);
 			OutputStream os = con.getOutputStream();
 			byte[] input = jsonInputString.getBytes("utf-8");
 			os.write(input, 0, input.length);

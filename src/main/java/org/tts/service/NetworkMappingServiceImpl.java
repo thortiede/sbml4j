@@ -604,7 +604,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		boolean annotateWithLinks = this.sbml4jConfig.getAnnotationConfigProperties().isAnnotateWithLinks();
 		List<BiomodelsQualifier> bqList = this.biomodelsQualifierRepository.findAllForSBMLSpecies(parentEntityUUID);
 		for(BiomodelsQualifier bq : bqList) {
-			//System.out.println(bq.getEndNode().getUri());
+			//logger.debug(bq.getEndNode().getUri());
 			
 			if (bq.getQualifier().equals(Qualifier.BQB_HAS_VERSION) 
 					|| bq.getQualifier().equals(Qualifier.BQB_IS)

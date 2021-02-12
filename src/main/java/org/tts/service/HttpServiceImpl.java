@@ -55,7 +55,7 @@ public class HttpServiceImpl implements HttpService {
 			String[] splitted;
 			String lastLine = "";
 			while ((inputLine = streamReader.readLine()) != null) {
-				logger.debug(inputLine);
+				//logger.debug(inputLine);
 				if(inputLine.startsWith("NAME")) {
 					lastLine = "NAME";
 					splitted = inputLine.split("\\s+");
@@ -123,7 +123,7 @@ public class HttpServiceImpl implements HttpService {
 			String exactMass;
 			String molWeight;
 			while ((inputLine = streamReader.readLine()) != null) {
-				logger.debug(inputLine);
+				//logger.debug(inputLine);
 		
 				if(inputLine.startsWith("NAME")) {
 					lastLine = "NAME";
