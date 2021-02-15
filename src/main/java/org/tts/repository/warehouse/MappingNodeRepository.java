@@ -61,7 +61,7 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "return m")
 	List<MappingNode> findAllActiveFromUsers(List<String> users);
 	
-	@Query(value = "MATCH "
+	/*@Query(value = "MATCH "
 			+ "(m:MappingNode)"
 			+ "-[p:PROV]->"
 			+ "(a:PROV_AGENT) "
@@ -71,7 +71,19 @@ public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long
 			+ "AND a.graphAgentName = $user "
 			+ "RETURN count(m) > 0")
 	boolean isMappingNodeAttributedToUser(String entityUUID, String user);
+	 */
+	@Query(value = "MATCH "
+			+ "(m:MappingNode)"
+			+ "-[p:PROV]->"
+			+ "(a:PROV_AGENT) "
+			+ "WHERE "
+			+ "m.entityUUID = $entityUUID "
+			+ "AND p.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "AND a.graphAgentName in $users "
+			+ "RETURN count(m) > 0")
+	boolean isMappingNodeAccesibleForUsers(String entityUUID, List<String> users);
 
+	
 	@Query(value = "MATCH "
 			+ "(m:MappingNode)"
 			+ "-[p:PROV]->"

@@ -81,7 +81,7 @@ public class ContextService {
 		}
 		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
 		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
-		log.info("TerminateAt is " + terminateAt + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
+		log.info("TerminateAt is " + (terminateAt != null ? terminateAt : "not given") + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
 		List<FlatEdge> allEdges = new ArrayList<>();
@@ -137,7 +137,6 @@ public class ContextService {
 		Map<String, Set<String>> pathwayGeneMap = new HashMap<>();
 		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		Set<String> networkRelationTypes = mappingNode.getMappingRelationTypes();
-		Set<String> networkNodeTypes = mappingNode.getMappingNodeTypes();
 		for (String gene : geneList) {
 			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 			if (geneFlatSpeciesEntityUUID != null) {

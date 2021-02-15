@@ -26,6 +26,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.OverviewApi;
 import org.tts.config.OverviewNetworkConfig;
 import org.tts.config.SBML4jConfig;
@@ -36,6 +37,7 @@ import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ConfigService;
 import org.tts.service.ContextService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.networks.NetworkResourceService;
@@ -52,6 +54,9 @@ import org.tts.service.warehouse.MappingNodeService;
 public class OverviewApiController implements OverviewApi {
 
 	Logger log = LoggerFactory.getLogger(OverviewApiController.class);
+	
+	@Autowired
+	ConfigService configService;
 	
 	@Autowired
 	ContextService contextService;
@@ -108,6 +113,10 @@ public class OverviewApiController implements OverviewApi {
 		}
 		// 3a. Get the network name
 		List<String> geneNames = overviewNetworkItem.getGenes();
+		// 4b. Any genes provided?
+		if (geneNames == null || geneNames.isEmpty()) {
+			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
+		}
 		String networkName = null;
 		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
 			networkName = overviewNetworkItem.getNetworkName();
@@ -123,7 +132,7 @@ public class OverviewApiController implements OverviewApi {
 			networkName = networkNameSB.toString();
 		}
 		
-		// 3b. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
+		// 3c. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
 		MappingNode existingNetwork = this.mappingNodeService.findByNetworkNameAndUser(networkName, user);
 		if (existingNetwork != null) {
 			log.info("Found existing network with name " + networkName + " for user " + user + ". Deleting existing network.");
@@ -139,14 +148,9 @@ public class OverviewApiController implements OverviewApi {
 			}
 		}
 		
-		// 3. Create the user if not existent
+		// 4. Create the user if not existent
 		ProvenanceGraphAgentNode graphAgent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
 		
-		
-		// 4. Any genes provided?
-		if (geneNames == null || geneNames.isEmpty()) {
-			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
-		}
 		// 5. Check whether we know at least one of the genes provided
 		boolean foundGene = false;
 		for (String gene : geneNames) {
@@ -193,27 +197,32 @@ public class OverviewApiController implements OverviewApi {
 	
 	@Override
 	public ResponseEntity<Resource> getOverviewNetwork(String user, String name) {
-		log.info("Serving GET /overview for user " + user + " with network name: " + name);
+		log.info("Serving GET /overview" + (user != null ? " for user " + user : "") + " with network name: " + name);
 		
-		// 0. Does user exist?
-		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null) {
-			return ResponseEntity.badRequest().header("reason", "User " + user + " does not exist").build();
-		}
 		// 1. Does the network exist?
 		MappingNode overviewNetwork = this.mappingNodeService.findByNetworkNameAndUser(name, user);
 		if (overviewNetwork == null) {
 			log.info("GET /overview: Network for user " + user + " with network name: " + name + " could not be found") ;
 			// If the network does not exist at all, return 204 still in creation
 			return ResponseEntity.status(HttpStatus.NO_CONTENT)
-					.header("reason", "Network with name " + name + " for user " + user + " could not be created")
+					.header("reason", "Network with name " + name + " for user " + user + " could not be found")
+					.build();
+		}
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(overviewNetwork.getEntityUUID(), user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
 					.build();
 		}
 		// 2. Is the network active?
 		if (!overviewNetwork.isActive()) {
 			// 2.a No, return 204
-			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is not ready yet") ;
-			return ResponseEntity.notFound().header("reason", "Network is not ready yet").build();
+			log.info("GET /overview: Network for user " + networkUser + " with network name: " + name + " is not ready yet. Try again later.") ;
+			return ResponseEntity.notFound().header("reason", "Network is not ready yet. Try again later.").build();
 		} else {
 			// 2.b Yes, return network
 			log.info("GET /overview: Network for user " + user + " with network name: " + name + " is available, returning GraphML") ;

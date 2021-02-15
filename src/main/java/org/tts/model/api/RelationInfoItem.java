@@ -1,21 +1,6 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.Objects;
-
-import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,54 +11,52 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * RelationInfoItem
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-10-10T16:25:40.095Z[GMT]")
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+public class RelationInfoItem {
+  @JsonProperty("name") private String name;
 
+  @JsonProperty("type") private String type;
 
-public class RelationInfoItem   {
-  @JsonProperty("name")
-  private String name = null;
-
-  @JsonProperty("type")
-  private String type = null;
-
-  @JsonProperty("sboTerm")
-  private String sboTerm = null;
+  @JsonProperty("sboTerm") private String sboTerm;
 
   /**
    * The direction of this relation in relation to the parent
    */
   public enum DirectionEnum {
     IN("in"),
-    
+
     OUT("out"),
-    
+
     INOUT("inout");
 
     private String value;
 
-    DirectionEnum(String value) {
-      this.value = value;
+    DirectionEnum(String value) { this.value = value; }
+
+    @JsonValue
+    public String getValue() {
+      return value;
     }
 
     @Override
-    @JsonValue
     public String toString() {
       return String.valueOf(value);
     }
 
     @JsonCreator
-    public static DirectionEnum fromValue(String text) {
+    public static DirectionEnum fromValue(String value) {
       for (DirectionEnum b : DirectionEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
+        if (b.value.equals(value)) {
           return b;
         }
       }
-      return null;
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
     }
   }
-  @JsonProperty("direction")
-  private DirectionEnum direction = null;
+
+  @JsonProperty("direction") private DirectionEnum direction;
 
   public RelationInfoItem name(String name) {
     this.name = name;
@@ -83,16 +66,14 @@ public class RelationInfoItem   {
   /**
    * The name of the related gene
    * @return name
-  **/
+   */
   @ApiModelProperty(example = "MAP2K", value = "The name of the related gene")
-  
-    public String getName() {
+
+  public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  public void setName(String name) { this.name = name; }
 
   public RelationInfoItem type(String type) {
     this.type = type;
@@ -102,16 +83,16 @@ public class RelationInfoItem   {
   /**
    * The type of the relation between the two genes
    * @return type
-  **/
-  @ApiModelProperty(example = "stimulation", value = "The type of the relation between the two genes")
-  
-    public String getType() {
+   */
+  @ApiModelProperty(example = "stimulation",
+                    value = "The type of the relation between the two genes")
+
+  public String
+  getType() {
     return type;
   }
 
-  public void setType(String type) {
-    this.type = type;
-  }
+  public void setType(String type) { this.type = type; }
 
   public RelationInfoItem sboTerm(String sboTerm) {
     this.sboTerm = sboTerm;
@@ -121,16 +102,16 @@ public class RelationInfoItem   {
   /**
    * The sboTerm of this relation
    * @return sboTerm
-  **/
-  @ApiModelProperty(example = "SBO:0000170", value = "The sboTerm of this relation")
-  
-    public String getSboTerm() {
+   */
+  @ApiModelProperty(example = "SBO:0000170",
+                    value = "The sboTerm of this relation")
+
+  public String
+  getSboTerm() {
     return sboTerm;
   }
 
-  public void setSboTerm(String sboTerm) {
-    this.sboTerm = sboTerm;
-  }
+  public void setSboTerm(String sboTerm) { this.sboTerm = sboTerm; }
 
   public RelationInfoItem direction(DirectionEnum direction) {
     this.direction = direction;
@@ -140,10 +121,13 @@ public class RelationInfoItem   {
   /**
    * The direction of this relation in relation to the parent
    * @return direction
-  **/
-  @ApiModelProperty(example = "out", value = "The direction of this relation in relation to the parent")
-  
-    public DirectionEnum getDirection() {
+   */
+  @ApiModelProperty(
+      example = "out",
+      value = "The direction of this relation in relation to the parent")
+
+  public DirectionEnum
+  getDirection() {
     return direction;
   }
 
@@ -151,16 +135,15 @@ public class RelationInfoItem   {
     this.direction = direction;
   }
 
-
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    RelationInfoItem relationInfoItem = (RelationInfoItem) o;
+    RelationInfoItem relationInfoItem = (RelationInfoItem)o;
     return Objects.equals(this.name, relationInfoItem.name) &&
         Objects.equals(this.type, relationInfoItem.type) &&
         Objects.equals(this.sboTerm, relationInfoItem.sboTerm) &&
@@ -176,11 +159,13 @@ public class RelationInfoItem   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class RelationInfoItem {\n");
-    
+
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    sboTerm: ").append(toIndentedString(sboTerm)).append("\n");
-    sb.append("    direction: ").append(toIndentedString(direction)).append("\n");
+    sb.append("    direction: ")
+        .append(toIndentedString(direction))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -189,7 +174,7 @@ public class RelationInfoItem   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }

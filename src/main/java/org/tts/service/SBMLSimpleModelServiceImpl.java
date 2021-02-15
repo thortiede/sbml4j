@@ -455,7 +455,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		SBMLSBaseEntity updatedSBaseEntity = sBaseEntity;
 		List<String> mdAndersonGeneList = sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getGenelist();
 		if (addMdAnderson && mdAndersonGeneList != null && mdAndersonGeneList.contains(sBaseEntity.getsBaseName())) {
-			System.out.println("Found MdAnderson Gene in sBaseName: " + sBaseEntity.getsBaseName());
+			logger.debug("Found MdAnderson Gene in sBaseName: " + sBaseEntity.getsBaseName());
 			foundMdAndersonGene = true;
 			mdAndersonNamesList.add(sBaseEntity.getsBaseName());
 		}
@@ -492,12 +492,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 							if (secNamesListCopy.retainAll(mdAndersonGeneList)) {
 								if (secNamesListCopy.isEmpty()) {
 									// did not actually find an MdAnderson Gene Name in the secondary names. Should not happen
-									System.out.println("Should have found MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
+									logger.debug("Should have found MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
 								} else if (secNamesListCopy.size() < 2){
 									mdAndersonNamesList.add(secNamesListCopy.get(0));
 								} else {
 									// multiple hits..
-									System.out.println("Found more than one MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
+									logger.debug("Found more than one MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
 									for (String mdAndersonNameHit : secNamesListCopy) {
 										mdAndersonNamesList.add(mdAndersonNameHit);
 									}

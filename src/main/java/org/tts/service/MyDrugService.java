@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.model.common.GraphEnum.AnnotationName;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.flat.FlatEdge;
@@ -73,12 +74,18 @@ public class MyDrugService {
 	
 	/**
 	 * Add MyDrug Nodes and targets-edges to the network contained in the <a href="#{@link}">{@link MappingNode}</a> with entityUUID networkEntityUUID
-	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param user The user associated with the new <a href="#{@link}">{@link MappingNode}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to be copied or altered
 	 * @param myDrugURL The URL of a MyDrug Neo4j REST server
-	 * @return The modified <a href="#{@link}">{@link MappingNode}</a> with Drug nodes and targets-edges
+	 * @param networkname An optional name for the resulting network, or prefix to the name (if prefixName is true)
+	 * @param prefixName Whether to prefix the existing network name (true) with the given prefixString or replace it with networkname (false)
+	 * @param derive Whether to create a copy of the existing network (true), or add data to the network without copying it (false).
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> which has the Drug-Node-<a href="#{@link}">{@link FlatSpecies}</a> added.
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 */
-	public MappingNode addMyDrugToNetwork(String networkEntityUUID, String myDrugURL) {
-		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+	public MappingNode addMyDrugToNetwork(String user, String networkEntityUUID, String myDrugURL, String networkname, boolean prefixName, boolean derive) throws NetworkAlreadyExistsException {
+		
+		MappingNode mappingNode = this.networkService.getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName, derive, "MyDrugNodesOn_");
 		
 		StringBuilder matchStringPre = new StringBuilder();
 		matchStringPre.append("(a)-[t:targets]->(b) where b.symbol in [");
@@ -257,7 +264,7 @@ public class MyDrugService {
 			jsonInputString += " return ";
 			jsonInputString += returnString;
 			jsonInputString += ";\" } ]}";
-			System.out.println(jsonInputString);
+			logger.debug(jsonInputString);
 			OutputStream os = con.getOutputStream();
 			byte[] input = jsonInputString.getBytes("utf-8");
 			os.write(input, 0, input.length);

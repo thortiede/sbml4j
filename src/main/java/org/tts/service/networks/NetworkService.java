@@ -13,6 +13,7 @@
  */
 package org.tts.service.networks;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,10 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.api.NetworkOptions;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
@@ -48,6 +50,9 @@ import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
+import org.tts.service.ConfigService;
+import org.tts.service.ContextService;
+import org.tts.service.CsvService;
 import org.tts.service.FlatEdgeService;
 import org.tts.service.FlatSpeciesService;
 import org.tts.service.GraphBaseEntityService;
@@ -72,7 +77,16 @@ import org.tts.service.warehouse.OrganismService;
  */
 @Service
 public class NetworkService {
-
+	
+	@Autowired
+	ConfigService configService;
+	
+	@Autowired
+	ContextService contextService;
+	
+	@Autowired
+	CsvService csvService;
+	
 	@Autowired
 	FlatSpeciesService flatSpeciesService;
 	
@@ -104,6 +118,70 @@ public class NetworkService {
 	WarehouseGraphService warehouseGraphService;
 	
 	Logger log = LoggerFactory.getLogger(NetworkService.class);
+	
+	/**
+	 * Adds data contained in the provided Multipart files to the network as annotations on nodes
+	 * Currently only node-annotations are possible
+	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
+	 * @param data The Multipart files containing the data
+	 * @param type String representing the type of data being added. Will become a node label on affected nodes.
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to add the data to
+	 * @param networkname An optional name for the resulting network, or prefix to the name (if prefixName is true)
+	 * @param prefixName Whether to prefix the existing network name (true) with the given networkname or replace it with networkname (false)
+	 * @param derive Whether to create a copy of the existing network (true), or add data to the network without copying it (false).
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> which holds the <a href="#{@link}">{@link FlatSpecies}</a> having the data added to them.
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws IOException If an input file cannot be read
+	 */
+	public MappingNode addCsvDataToNetwork(	String user,
+											List<MultipartFile> data,
+											String type,
+											String networkEntityUUID,
+											String networkname,
+											boolean prefixName,
+											boolean derive) throws NetworkAlreadyExistsException, IOException{
+		
+
+		Map<String, List<Map<String, String>>> annotationMap;
+		MappingNode newNetwork = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
+				derive, type + "_on_");
+
+		
+		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(newNetwork.getEntityUUID());
+		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
+		for (MultipartFile file : data) {
+			log.debug("Processing file " + file.getOriginalFilename());
+			annotationMap = this.csvService.parseCsv(file); // can throw IOException
+			while (networkSpeciesIterator.hasNext()) {
+				FlatSpecies current = networkSpeciesIterator.next();
+				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
+					// we have a match and want this species to be annotated with the data and have the label added
+					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
+					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
+					if (currentAnnotation == null) {
+						// just a safe guard
+						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
+						continue;
+					}
+					int annotationNum = 1;
+					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
+						
+						for (String key : indiviualAnnotationMap.keySet()) {
+							String value = indiviualAnnotationMap.get(key);
+							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
+						}
+						annotationNum++;
+					}
+					current.addLabel(type);
+				}
+			}
+			this.flatSpeciesService.save(networkSpecies, 0);
+		}
+		this.updateMappingNodeMetadata(newNetwork);
+		return newNetwork;
+	}
+	
+	
 	
 	/**
 	 * Takes the FlatEdges and adds the given annotation to nodes in those edges
@@ -154,16 +232,22 @@ public class NetworkService {
 	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
 	 * @param annotationItem The <a href="#{@link}">{@link AnnotationItem}</a> that holds the annotation to add
 	 * @param networkEntityUUID The base network to derive the annotated <a href="#{@link}">{@link MappingNode}</a> from
-	 * @param doCreateCopy whether to derive a new network and put annotation on it (true), or directly add annotation on given network (false)
+	 * @param derive whether to derive a new network and put annotation on it (true), or directly add annotation on given network (false)
 	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 */
-	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID, boolean doCreateCopy) {
-		if (doCreateCopy) {
+	public MappingNode annotateNetwork(	String user, 
+										@Valid AnnotationItem annotationItem,
+										String networkEntityUUID,
+										String networkname,
+										boolean prefixName,
+										boolean derive) throws NetworkAlreadyExistsException {
+		if (derive) {
 			log.info("Deriving network from " + networkEntityUUID + " and adding annotation.");
 		} else {
 			log.info("Annotating network with uuid " + networkEntityUUID + " directly");
 		}
-		MappingNode mappingToAnnotate = null;
+		
 		StringBuilder prefixSB = new StringBuilder();
 		prefixSB.append("Annotate_with");
 		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
@@ -178,14 +262,9 @@ public class NetworkService {
 			prefixSB.append(".");
 			prefixSB.append(annotationItem.getRelationAnnotationType());
 		}
-		if (doCreateCopy) {
-			mappingToAnnotate = this.copyNetwork(networkEntityUUID, user, prefixSB.toString());
-			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
-		} else {
-			mappingToAnnotate = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-			// do not change the network name if we add the annotation without deriving from it.
-			// mappingToAnnotate.setMappingName(mappingToAnnotate.getMappingName());
-		}
+		String prefixString = prefixSB.toString();
+		MappingNode mappingToAnnotate = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
+				derive, prefixString);
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
 		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
@@ -203,7 +282,7 @@ public class NetworkService {
 		this.flatEdgeService.save(networkRelations, 1);
 		return this.mappingNodeService.save(mappingToAnnotate, 0);
 	}
-	
+
 	/**
 	 * Create a new <a href="#{@link}">{@link MappingNode}</a> and annotate the created mapping
 	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
@@ -298,15 +377,28 @@ public class NetworkService {
 	 * Adds the copied entities to the List of CONTAINED entities in the newly created <a href="#{@link}">{@link MappingNode}</a>
 	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to copy
 	 * @param user The user to associate the newly created <a href="#{@link}">{@link MappingNode}</a> with
+	 * @param name The name for the new network
+	 * @param prefixName Whether to use the given name as prefix to the old name (true) or replace the old name with the given name (false)
 	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
+	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user, String namePrefix) {
+	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName) throws NetworkAlreadyExistsException {
 		log.info("Copying network with uuid: " + networkEntityUUID);
 		
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		String newMappingName = namePrefix + "_" + parent.getMappingName();
-		String activityName = "Create_" + namePrefix + "_" + networkEntityUUID;
+		String newMappingName = buildMappingName(name, prefixName, parent.getMappingName());
+		
+		// Check the MappingName against existing names for that user
+		// The name should be unique per user
+		// if user already exists AND a mapping with that name already exists, then error
+		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
+				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
+			throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user);
+		}
+		
+		String activityName = "Create_" + newMappingName;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
@@ -460,6 +552,69 @@ public class NetworkService {
 	
 	
 	/**
+	 * Wrapper for creating a new network consisting of the calculated context for the given geneNames on the parentMapping
+	 * @param user The user for which the context is calculated
+	 * @param geneNames The List of Strings representing the geneSymols to calculate the context for
+	 * @param parentMapping The <a href="#{@link}">{@link MappingNode}</a> the context should be calculated in
+	 * @param minSize The minimal size of the neighborhood around each given gene
+	 * @param maxSize The maximal size of the neighborhood around each given gene
+	 * @param terminateAt The node label that should terminate the neighborhood search
+	 * @param direction The direction in which to search (along directed edges (downstream), against directed edges (upstream)or both (both)
+	 * @param networkname The name to give the newly created <a href="#{@link}">{@link MappingNode}</a>
+	 * @param prefixName Whether to prefix the given networkname to the parentMapping name
+	 * @return The created <a href="#{@link}">{@link MappingNode}</a> holding the context network
+	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws Exception if something else fails during context creation (message gives reason)
+	 */
+	public MappingNode createContextNetwork(String user, List<String> geneNames, MappingNode parentMapping, Integer minSize,
+			Integer maxSize, String terminateAt, String direction, String networkname, Boolean prefixName)
+			throws NetworkAlreadyExistsException,Exception {
+		// 1. Determine the name of the network
+		String contextNetworkName;
+		if (networkname != null) {
+			contextNetworkName = this.buildMappingName(networkname, prefixName, parentMapping.getMappingName());
+		} else {
+			// Create a default networkname to prefix or use as name for the new network
+			StringBuilder defaultName = new StringBuilder();
+			defaultName.append("Context");
+			for (String gene : geneNames) {
+				defaultName.append("_");
+				defaultName.append(gene);
+			}
+			if (prefixName) {
+				defaultName.append("_in_");
+				defaultName.append(parentMapping.getMappingName());
+			}
+			contextNetworkName = defaultName.toString();
+		}
+		// 2. Check if that name already exists
+		// if user already exists AND a mapping with that name already exists, then error
+		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
+				&& this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user) != null) {
+			throw new NetworkAlreadyExistsException(1, "Network with name " + contextNetworkName + " already exists for user " + user);
+		}
+		
+		// 3. We need a graphAgent for creating the new network
+		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
+		if(agent == null && !this.configService.isPublicUser(user)) {
+			// create a new agent for this operation
+			agent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
+		} else {
+			throw new Exception("Failed to assign user to context mapping.");
+		}
+		// 4. get the context
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(parentMapping.getEntityUUID(), geneNames, minSize, maxSize, terminateAt, direction);
+		if(contextFlatEdges == null) {
+			throw new Exception("Failed to gather context from parent network");
+		}
+		// 5. Create the mapping holding the context
+		MappingNode contextNetwork = this.createMappingFromFlatEdges(agent, parentMapping.getEntityUUID(), contextFlatEdges, contextNetworkName);
+		
+		return contextNetwork;
+	}
+
+	/**
 	 * Deactivate a <a href="#{@link}">{@link MappingNode}</a>
 	 * @param mappingNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
 	 * @return true if the <a href="#{@link}">{@link MappingNode}</a> was inactivated, false if it didn't exist
@@ -516,11 +671,23 @@ public class NetworkService {
 	 * @param filterOptions The <a href="#{@link}">{@link FilterOptions}</a> to apply
 	 * @param user The user to associate the filtered network to
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> of the filtered network
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 */
-	public MappingNode filterNetwork(String networkEntityUUID, FilterOptions filterOptions, String user) {
+	public MappingNode filterNetwork(	String user,
+										FilterOptions filterOptions,
+										String networkEntityUUID,
+										String networkname, 
+										boolean prefixName) throws NetworkAlreadyExistsException {
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		String newMappingName = "Filter_network_" + parent.getMappingName();
+		String newMappingName = buildMappingName(networkname, prefixName, parent.getMappingName());
+		// check if name already exists for user
+		// if user already exists AND a mapping with that name already exists, then error
+		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
+				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
+			throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user); 
+		}
 		String activityName = "Filter_network_" + networkEntityUUID;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
 		NetworkMappingType mappingType = parent.getMappingType();
@@ -589,6 +756,52 @@ public class NetworkService {
 		return this.flatSpeciesService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
 	}
 
+	/**
+	 * Copy the <a href="#{@link}">{@link MappingNode}</a> with UUID networkEntityUUID or set name of <a href="#{@link}">{@link MappingNode}</a>
+	 * according to input parameters
+	 * @param user The user associated with the new <a href="#{@link}">{@link MappingNode}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to be copied or altered
+	 * @param networkname An optional name for the resulting network, or prefix to the name (if prefixName is true)
+	 * @param prefixName Whether to prefix the existing network name (true) with the given prefixString or replace it with networkname (false)
+	 * @param derive Whether to create a copy of the existing network (true), or add data to the network without copying it (false).
+	 * @param prefixString The String to prefix the existing name with, if applicable
+	 * @return The copied or named <a href="#{@link}">{@link MappingNode}</a> 
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 */
+	public MappingNode getCopiedOrNamedMappingNode(String user, String networkEntityUUID, String networkname,
+			boolean prefixName, boolean derive, String prefixString) throws NetworkAlreadyExistsException {
+		MappingNode copiedOrNamedMappingNode = null;
+		if (derive) {
+			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname != null ? networkname : prefixString, prefixName);
+			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
+		} else {
+			copiedOrNamedMappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+			String newMappingName;
+			if (networkname == null && prefixName) {
+				newMappingName = prefixString + "_" + copiedOrNamedMappingNode.getMappingName();
+			} else if (networkname != null && !prefixName) {
+				newMappingName = networkname;
+			} else if (networkname != null && prefixName) {
+				newMappingName = networkname.endsWith("_") 
+						? networkname + copiedOrNamedMappingNode.getMappingName() 
+						: networkname + "_" + copiedOrNamedMappingNode.getMappingName();
+			} else {
+				newMappingName = copiedOrNamedMappingNode.getMappingName();
+			}
+			// Check the MappingName against existing names for that user
+			// The name should be unique per user
+			// if user already exists AND a mapping with that name already exists, then error
+			// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+			if (!newMappingName.equals(copiedOrNamedMappingNode.getMappingName()) 
+					&& (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
+							&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null)) {
+				throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user);
+			}
+			copiedOrNamedMappingNode.setMappingName(newMappingName);
+		}
+		return copiedOrNamedMappingNode;
+	}
+	
 	/**
 	 * Returns the geneSet for nodeUUIDs in network with UUID networkEntityUUID.
 	 * Searches for direct connections between pairs of <a href="#{@link}">{@link FlatSpecies}</a> in the List nodeUUIDs
@@ -663,6 +876,20 @@ public class NetworkService {
 		return flatSpeciesEntityUUID;
 	}
 	
+	/**
+	 * Get List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the gene context in a network around a set of input genes
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
+	 * @param genes A List of gene names to find the context for
+	 * @param minSize The minimal step size to take for a context path
+	 * @param maxSize The maximal step size to take for a context path
+	 * @param terminateAtDrug Whether the context should always terminate in a Drug node (yes), or in any node (false). Attn: Requires MyDrug Nodes in the Network
+	 * @param direction The direction to expand the context to (one of upstream, downstream, both)
+	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
+	 */
+	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
+			int maxSize, String terminateAt, String direction) {
+		return this.contextService.getNetworkContextFlatEdges(networkEntityUUID, genes, minSize, maxSize, terminateAt, direction);
+	}
 	/**
 	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a list of entityUUIDs
 	 * 
@@ -823,19 +1050,6 @@ public class NetworkService {
 		return (int) StreamSupport.stream(this.getNetworkRelations(networkEntityUUID).spliterator(), false).count(); 
 	}
 		
-	/**
-	 * Get the <a href="#{@link}">{@link NetworkOptions}</a> for the <a href="#{@link}">{@link MappingNode}</a> with entityUUId networkEntityUuid
-	 * @param networkEntityUuid The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
-	 * @param user The user that is attributed to the <a href="#{@link}">{@link MappingNode}</a>
-	 * @return The <a href="#{@link}">{@link NetworkOptions}</a> with default values for this network, if the user is attributed to the <a href="#{@link}">{@link MappingNode}</a>, an empty <a href="#{@link}">{@link NetworkOptions}</a> otherwise
-	 */
-	public NetworkOptions getNetworkOptions(String networkEntityUuid, String user) {
-		if (this.mappingNodeService.isMappingNodeAttributedToUser(networkEntityUuid, user)) {
-			return this.mappingNodeService.getNetworkOptions(networkEntityUuid);
-		} else {
-			return new NetworkOptions();
-		}
-	}
 	
 	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> with entityUUID
@@ -861,6 +1075,22 @@ public class NetworkService {
 		mappingNodeForFlatEdges.setActive(true);
 	}
 
+	/**
+	 * Build a mapping name according to given options
+	 * @param nameOrPrefix The name or prefix to set as name
+	 * @param isPrefixName Whether the given name is prefix or full name
+	 * @param currentName The name the prefix should be prefixed to, if applicable
+	 * @return The resulting name 
+	 */
+	private String buildMappingName(String nameOrPrefix, boolean isPrefixName, String currentName) {
+		String newMappingName;
+		if (isPrefixName) {
+			newMappingName = (nameOrPrefix.endsWith("_") ? nameOrPrefix : nameOrPrefix + "_") + currentName;
+		} else {
+			newMappingName = nameOrPrefix;
+		}
+		return newMappingName;
+	}
 	
 	/**
 	 * Connect a set of <a href="#{@link}">{@link FlatEdge}</a> entities (or rather the <a href="#{@link}">{@link FlatSpecies}</a> within) to a <a href="#{@link}">{@link MappingNode}</a>
@@ -900,6 +1130,7 @@ public class NetworkService {
 		}
 	}
 	
+	
 	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> mapping
 	 * 
@@ -915,7 +1146,7 @@ public class NetworkService {
 		// item.setSourceVersion(findSource(mapping).getSourceVersion());
 		item.setName(mapping.getMappingName());
 		item.setOrganismCode((this.organismService.findOrganismForWarehouseGraphNode(mapping.getEntityUUID())).getOrgCode());
-		item.setNetworkMappingType(mapping.getMappingType());
+		item.setNetworkMappingType(mapping.getMappingType().toString());
 		if (mapping.getMappingNodeTypes() != null) {
 			for (String sboTerm : mapping.getMappingNodeTypes()) {
 				item.addNodeTypesItem(this.utilityService.translateSBOString(sboTerm));

@@ -1,16 +1,3 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.ArrayList;
@@ -19,29 +6,34 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * FilterOptions
+ * The filterOptions to be used in the step upon creation.  - NodeSymbols: Only
+ * nodes listed here can be part of the network (and if they match given
+ * nodeTypes)   - NodeTypes: Only nodes having one of the listed nodesTypes here
+ * can be part of the network (and if they are contained in NodeSymbols)   -
+ * RelationSymbols: Only relations listed here can be part of the network (and
+ * if they match given relationTypes)   - RelationTypes: Only edges having one
+ * of the listed relationTypes here can be part of the network
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
-public class FilterOptions   {
-  @JsonProperty("nodeTypes")
-  @Valid
-  private List<String> nodeTypes = null;
+@ApiModel(
+    description =
+        "The filterOptions to be used in the step upon creation.  - NodeSymbols: Only nodes listed here can be part of the network (and if they match given nodeTypes)   - NodeTypes: Only nodes having one of the listed nodesTypes here can be part of the network (and if they are contained in NodeSymbols)   - RelationSymbols: Only relations listed here can be part of the network (and if they match given relationTypes)   - RelationTypes: Only edges having one of the listed relationTypes here can be part of the network ")
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+public class FilterOptions {
+  @JsonProperty("nodeTypes") @Valid private List<String> nodeTypes = null;
 
   @JsonProperty("relationTypes")
   @Valid
   private List<String> relationTypes = null;
 
-  @JsonProperty("nodeSymbols")
-  @Valid
-  private List<String> nodeSymbols = null;
+  @JsonProperty("nodeSymbols") @Valid private List<String> nodeSymbols = null;
 
   @JsonProperty("relationSymbols")
   @Valid
@@ -63,10 +55,10 @@ public class FilterOptions   {
   /**
    * Get nodeTypes
    * @return nodeTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getNodeTypes() {
+
+  public List<String> getNodeTypes() {
     return nodeTypes;
   }
 
@@ -90,10 +82,10 @@ public class FilterOptions   {
   /**
    * Get relationTypes
    * @return relationTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getRelationTypes() {
+
+  public List<String> getRelationTypes() {
     return relationTypes;
   }
 
@@ -117,10 +109,10 @@ public class FilterOptions   {
   /**
    * Get nodeSymbols
    * @return nodeSymbols
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getNodeSymbols() {
+
+  public List<String> getNodeSymbols() {
     return nodeSymbols;
   }
 
@@ -144,10 +136,10 @@ public class FilterOptions   {
   /**
    * Get relationSymbols
    * @return relationSymbols
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getRelationSymbols() {
+
+  public List<String> getRelationSymbols() {
     return relationSymbols;
   }
 
@@ -155,16 +147,15 @@ public class FilterOptions   {
     this.relationSymbols = relationSymbols;
   }
 
-
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    FilterOptions filterOptions = (FilterOptions) o;
+    FilterOptions filterOptions = (FilterOptions)o;
     return Objects.equals(this.nodeTypes, filterOptions.nodeTypes) &&
         Objects.equals(this.relationTypes, filterOptions.relationTypes) &&
         Objects.equals(this.nodeSymbols, filterOptions.nodeSymbols) &&
@@ -180,11 +171,19 @@ public class FilterOptions   {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class FilterOptions {\n");
-    
-    sb.append("    nodeTypes: ").append(toIndentedString(nodeTypes)).append("\n");
-    sb.append("    relationTypes: ").append(toIndentedString(relationTypes)).append("\n");
-    sb.append("    nodeSymbols: ").append(toIndentedString(nodeSymbols)).append("\n");
-    sb.append("    relationSymbols: ").append(toIndentedString(relationSymbols)).append("\n");
+
+    sb.append("    nodeTypes: ")
+        .append(toIndentedString(nodeTypes))
+        .append("\n");
+    sb.append("    relationTypes: ")
+        .append(toIndentedString(relationTypes))
+        .append("\n");
+    sb.append("    nodeSymbols: ")
+        .append(toIndentedString(nodeSymbols))
+        .append("\n");
+    sb.append("    relationSymbols: ")
+        .append(toIndentedString(relationSymbols))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -193,7 +192,7 @@ public class FilterOptions   {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }

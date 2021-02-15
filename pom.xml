@@ -6,7 +6,7 @@
 
 	<groupId>org.tts</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.1.17</version>
+	<version>0.1.18</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -123,6 +123,14 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable -->
+		<dependency>
+		    <groupId>org.openapitools</groupId>
+		    <artifactId>jackson-databind-nullable</artifactId>
+		    <version>0.2.1</version>
+		</dependency>
+
+        
 		<!--OpenCSV dependencies -->        
 <!--         <dependency> -->
 <!--     		<groupId>com.opencsv</groupId> -->
@@ -150,7 +158,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.1.17</tag>
+	                <tag>0.1.18</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->

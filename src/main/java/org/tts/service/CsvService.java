@@ -61,14 +61,13 @@ public class CsvService implements RowProcessor {
 
 	@Override
 	public void processStarted(ParsingContext context) {
-		System.out.println("Reached processStarted");
+		logger.debug("Reached processStarted");
 		geneToAnnotationMap = new HashMap<>();
 		
 	}
 
 	@Override
 	public void rowProcessed(String[] row, ParsingContext context) {
-		System.out.println("Reached rowProcess");
 		if (!this.geneToAnnotationMap.containsKey(row[0])) {
 			this.geneToAnnotationMap.put(row[0], new ArrayList<>());
 		}
@@ -84,7 +83,7 @@ public class CsvService implements RowProcessor {
 
 	@Override
 	public void processEnded(ParsingContext context) {
-		System.out.println("Reached processEnded");
+		logger.debug("Reached processEnded");
 				
 	}
 }

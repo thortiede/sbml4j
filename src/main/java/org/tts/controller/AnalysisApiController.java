@@ -24,9 +24,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.AnalysisApi;
 import org.tts.model.api.GeneAnalysisItem;
 import org.tts.service.AnalysisService;
+import org.tts.service.ConfigService;
 import org.tts.service.networks.NetworkResourceService;
 
 /**
@@ -38,6 +40,9 @@ import org.tts.service.networks.NetworkResourceService;
 
 @Controller
 public class AnalysisApiController implements AnalysisApi {
+	
+	@Autowired
+	ConfigService configService;
 	
 	@Autowired
 	AnalysisService analysisService;
@@ -92,6 +97,11 @@ public class AnalysisApiController implements AnalysisApi {
 												, List<String> geneSymbols
 												, UUID UUID
 												, boolean directed) {
+		try {
+			this.configService.getUserNameAttributedToNetwork(UUID.toString(), user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest().header("reason", e.getMessage() != null ? e.getMessage() : "User " +user + " not authorized").build();
+		}
 		Resource resource = this.networkResourceService.getNetwork(UUID.toString(), geneSymbols, directed);
 		if(resource == null) {
 			return new ResponseEntity<Resource>(HttpStatus.NO_CONTENT); 

@@ -32,6 +32,7 @@ import org.tts.model.provenance.ProvenanceGraphEdge;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.WarehouseGraphNode;
 import org.tts.repository.warehouse.MappingNodeRepository;
+import org.tts.service.ConfigService;
 import org.tts.service.GraphBaseEntityService;
 import org.tts.service.UtilityService;
 
@@ -45,6 +46,9 @@ import org.tts.service.UtilityService;
 @Service
 public class MappingNodeService {
 
+	@Autowired
+	ConfigService configService;
+	
 	@Autowired
 	MappingNodeRepository mappingNodeRepository;
 	
@@ -78,6 +82,7 @@ public class MappingNodeService {
 	 * @param activeOnly Only retrieve active <a href="#{@link}">{@link MappingNode}</a> (true), or inactive also (false)
 	 * @return List of <a href="#{@link}">{@link MappingNode}</a> that are associated with users
 	 */
+	@Deprecated
 	public List<MappingNode> findAllFromUser(String user, boolean activeOnly) {
 		List<String> users = new ArrayList<>();
 		users.add(user);
@@ -108,10 +113,10 @@ public class MappingNodeService {
 	}
 
 	/**
-	 * Find a mappingNode by its mappingName and the associated user
-	 * @param name The mappingName attribute of the MappingNode to find 
-	 * @param user The name of the ProvenanceGraphAgentNode associated with the mapping
-	 * @return
+	 * Find a  <a href="#{@link}">{@link MappingNode}</a>  by its mappingName and the associated user
+	 * @param name The mappingName attribute of the  <a href="#{@link}">{@link MappingNode}</a>  to find 
+	 * @param user The name of the  <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> associated with the mapping
+	 * @return The <a href="#{@link}">{@link MappingNode}</a> found, if it exists, null otherwise. 
 	 */
 	public MappingNode findByNetworkNameAndUser(String name, String user) {
 		return this.mappingNodeRepository.findByMappingNameAndUser(name, user);
@@ -195,8 +200,19 @@ public class MappingNodeService {
 	 * @param user The user to which <a href="#{@link}">{@link MappingNode}</a> should be attributed to
 	 * @return true if the <a href="#{@link}">{@link MappingNode}</a> is attributed to user, false otherwise
 	 */
-	public boolean isMappingNodeAttributedToUser(String entityUUID, String user) {
+	/*public boolean isMappingNodeAttributedToUser(String entityUUID, String user) {
 		return this.mappingNodeRepository.isMappingNodeAttributedToUser(entityUUID, user);
+	}
+	*/
+	/**
+	 * Check whether a <a href="#{@link}">{@link MappingNode}</a> can be accessed by a <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>,
+	 * including the configured public user
+	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to check
+	 * @param user The user who <a href="#{@link}">{@link MappingNode}</a> should have access to the <a href="#{@link}">{@link MappingNode}</a>
+	 * @return true if the <a href="#{@link}">{@link MappingNode}</a> is accessible for the user (or the public user), false otherwise
+	 */
+	public boolean isMappingNodeAccesibleForUsers(String entityUUID, String user) {
+	return this.mappingNodeRepository.isMappingNodeAccesibleForUsers(entityUUID, this.configService.getUserList(user));
 	}
 	
 	/**

@@ -91,4 +91,13 @@ public class DatabaseNodeService {
 			return null;
 		}
 	}
+	
+	/**
+	 * Find all <a href="#{@link}">{@link DatabaseNode}</a> from which the Pathways with given entityUUIDs are derived from
+	 * @param pathwayUUIDList The list of Strings representing the entityUUIDs of the <a href="#{@link}">{@link PathwayNode}</a>s
+	 * @return List of <a href="#{@link}">{@link DatabaseNode}</a>s from which the pathways are derived
+	 */
+	public List<DatabaseNode> findByPathwayList(List<String> pathwayUUIDList) {
+		return this.databaseNodeRepository.findByPathwayList(pathwayUUIDList);
+	}
 }

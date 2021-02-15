@@ -13,6 +13,7 @@
  */
 package org.tts.service;
 
+import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
@@ -21,6 +22,10 @@ import org.tts.model.warehouse.PathwayNode;
 
 public interface NetworkMappingService {
 	
-	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type, ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode) throws Exception;
+	public MappingNode createMappingFromPathway(PathwayNode pathway, 
+												NetworkMappingType type,
+												ProvenanceGraphActivityNode activityNode,
+												ProvenanceGraphAgentNode agentNode,
+												String newMappingName) throws NetworkAlreadyExistsException, Exception;
 	
 }

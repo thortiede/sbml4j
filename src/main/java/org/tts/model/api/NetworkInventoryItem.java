@@ -1,16 +1,3 @@
-/**
- * --------------------------------------------------------------------------
- *                                 SBML4j
- * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
- * 
- * This code is part of the SBML4j software package and subject to the terms
- * and conditions defined by its license (MIT License). For license details
- * please refer to the LICENSE file included as part of this source code
- * package.
- * 
- * For a full list of authors, please refer to the file AUTHORS.
- */
 package org.tts.model.api;
 
 import java.util.ArrayList;
@@ -20,9 +7,6 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
-import org.springframework.validation.annotation.Validated;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -30,36 +14,28 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * NetworkInventoryItem
  */
-@Validated
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.SpringCodegen", date = "2020-07-28T10:58:57.976Z[GMT]")
+@javax.annotation.
+Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
+          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
 public class NetworkInventoryItem {
-  @JsonProperty("UUID")
-  private UUID UUID = null;
+  @JsonProperty("UUID") private UUID UUID;
 
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("name") private String name;
 
-  @JsonProperty("organismCode")
-  private String organismCode = null;
+  @JsonProperty("organismCode") private String organismCode;
 
-  @JsonProperty("numberOfNodes")
-  private Integer numberOfNodes = null;
+  @JsonProperty("numberOfNodes") private Integer numberOfNodes;
 
-  @JsonProperty("numberOfRelations")
-  private Integer numberOfRelations = null;
+  @JsonProperty("numberOfRelations") private Integer numberOfRelations;
 
-  @JsonProperty("nodeTypes")
-  @Valid
-  private List<String> nodeTypes = null;
+  @JsonProperty("nodeTypes") @Valid private List<String> nodeTypes = null;
 
   @JsonProperty("relationTypes")
   @Valid
   private List<String> relationTypes = null;
 
-  @JsonProperty("networkMappingType")
-  private NetworkMappingType networkMappingType = null;
+  @JsonProperty("networkMappingType") private String networkMappingType;
 
-  
   public NetworkInventoryItem UUID(UUID UUID) {
     this.UUID = UUID;
     return this;
@@ -68,17 +44,16 @@ public class NetworkInventoryItem {
   /**
    * Get UUID
    * @return UUID
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    @Valid
-    public UUID getUUID() {
+
+  @Valid
+
+  public UUID getUUID() {
     return UUID;
   }
 
-  public void setUUID(UUID UUID) {
-    this.UUID = UUID;
-  }
+  public void setUUID(UUID UUID) { this.UUID = UUID; }
 
   public NetworkInventoryItem name(String name) {
     this.name = name;
@@ -88,16 +63,14 @@ public class NetworkInventoryItem {
   /**
    * Get name
    * @return name
-  **/
+   */
   @ApiModelProperty(example = "Example Network", value = "")
-  
-    public String getName() {
+
+  public String getName() {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+  public void setName(String name) { this.name = name; }
 
   public NetworkInventoryItem organismCode(String organismCode) {
     this.organismCode = organismCode;
@@ -107,10 +80,13 @@ public class NetworkInventoryItem {
   /**
    * Three letter organism code this network belongs to
    * @return organismCode
-  **/
-  @ApiModelProperty(example = "hsa", value = "Three letter organism code this network belongs to")
-  
-    public String getOrganismCode() {
+   */
+  @ApiModelProperty(
+      example = "hsa",
+      value = "Three letter organism code this network belongs to")
+
+  public String
+  getOrganismCode() {
     return organismCode;
   }
 
@@ -126,10 +102,10 @@ public class NetworkInventoryItem {
   /**
    * Get numberOfNodes
    * @return numberOfNodes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public Integer getNumberOfNodes() {
+
+  public Integer getNumberOfNodes() {
     return numberOfNodes;
   }
 
@@ -145,10 +121,10 @@ public class NetworkInventoryItem {
   /**
    * Get numberOfRelations
    * @return numberOfRelations
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public Integer getNumberOfRelations() {
+
+  public Integer getNumberOfRelations() {
     return numberOfRelations;
   }
 
@@ -172,10 +148,10 @@ public class NetworkInventoryItem {
   /**
    * Get nodeTypes
    * @return nodeTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getNodeTypes() {
+
+  public List<String> getNodeTypes() {
     return nodeTypes;
   }
 
@@ -199,10 +175,10 @@ public class NetworkInventoryItem {
   /**
    * Get relationTypes
    * @return relationTypes
-  **/
+   */
   @ApiModelProperty(value = "")
-  
-    public List<String> getRelationTypes() {
+
+  public List<String> getRelationTypes() {
     return relationTypes;
   }
 
@@ -210,7 +186,7 @@ public class NetworkInventoryItem {
     this.relationTypes = relationTypes;
   }
 
-  public NetworkInventoryItem networkMappingType(NetworkMappingType networkMappingType) {
+  public NetworkInventoryItem networkMappingType(String networkMappingType) {
     this.networkMappingType = networkMappingType;
     return this;
   }
@@ -218,56 +194,75 @@ public class NetworkInventoryItem {
   /**
    * One of: REGULATORY, SIGNALLING, PPI, METABOLIC, PATHWAYMAPPING
    * @return networkMappingType
-  **/
-  @ApiModelProperty(example = "REGULATORY", value = "One of: REGULATORY, SIGNALLING, PPI, METABOLIC, PATHWAYMAPPING")
-  
-    public NetworkMappingType getNetworkMappingType() {
+   */
+  @ApiModelProperty(
+      example = "REGULATORY",
+      value = "One of: REGULATORY, SIGNALLING, PPI, METABOLIC, PATHWAYMAPPING")
+
+  public String
+  getNetworkMappingType() {
     return networkMappingType;
   }
 
-  public void setNetworkMappingType(NetworkMappingType networkMappingType) {
+  public void setNetworkMappingType(String networkMappingType) {
     this.networkMappingType = networkMappingType;
   }
 
-
   @Override
-  public boolean equals(java.lang.Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NetworkInventoryItem networkInventoryItem = (NetworkInventoryItem) o;
+    NetworkInventoryItem networkInventoryItem = (NetworkInventoryItem)o;
     return Objects.equals(this.UUID, networkInventoryItem.UUID) &&
         Objects.equals(this.name, networkInventoryItem.name) &&
         Objects.equals(this.organismCode, networkInventoryItem.organismCode) &&
-        Objects.equals(this.numberOfNodes, networkInventoryItem.numberOfNodes) &&
-        Objects.equals(this.numberOfRelations, networkInventoryItem.numberOfRelations) &&
+        Objects.equals(this.numberOfNodes,
+                       networkInventoryItem.numberOfNodes) &&
+        Objects.equals(this.numberOfRelations,
+                       networkInventoryItem.numberOfRelations) &&
         Objects.equals(this.nodeTypes, networkInventoryItem.nodeTypes) &&
-        Objects.equals(this.relationTypes, networkInventoryItem.relationTypes) &&
-        Objects.equals(this.networkMappingType, networkInventoryItem.networkMappingType)
-        ;
+        Objects.equals(this.relationTypes,
+                       networkInventoryItem.relationTypes) &&
+        Objects.equals(this.networkMappingType,
+                       networkInventoryItem.networkMappingType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(UUID, name, organismCode, numberOfNodes, numberOfRelations, nodeTypes, relationTypes, networkMappingType);
+    return Objects.hash(UUID, name, organismCode, numberOfNodes,
+                        numberOfRelations, nodeTypes, relationTypes,
+                        networkMappingType);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class NetworkInventoryItem {\n");
-    
+
     sb.append("    UUID: ").append(toIndentedString(UUID)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    organismCode: ").append(toIndentedString(organismCode)).append("\n");
-    sb.append("    numberOfNodes: ").append(toIndentedString(numberOfNodes)).append("\n");
-    sb.append("    numberOfRelations: ").append(toIndentedString(numberOfRelations)).append("\n");
-    sb.append("    nodeTypes: ").append(toIndentedString(nodeTypes)).append("\n");
-    sb.append("    relationTypes: ").append(toIndentedString(relationTypes)).append("\n");
-    sb.append("    networkMappingType: ").append(toIndentedString(networkMappingType)).append("\n");
+    sb.append("    organismCode: ")
+        .append(toIndentedString(organismCode))
+        .append("\n");
+    sb.append("    numberOfNodes: ")
+        .append(toIndentedString(numberOfNodes))
+        .append("\n");
+    sb.append("    numberOfRelations: ")
+        .append(toIndentedString(numberOfRelations))
+        .append("\n");
+    sb.append("    nodeTypes: ")
+        .append(toIndentedString(nodeTypes))
+        .append("\n");
+    sb.append("    relationTypes: ")
+        .append(toIndentedString(relationTypes))
+        .append("\n");
+    sb.append("    networkMappingType: ")
+        .append(toIndentedString(networkMappingType))
+        .append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -276,7 +271,7 @@ public class NetworkInventoryItem {
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).
    */
-  private String toIndentedString(java.lang.Object o) {
+  private String toIndentedString(Object o) {
     if (o == null) {
       return "null";
     }
