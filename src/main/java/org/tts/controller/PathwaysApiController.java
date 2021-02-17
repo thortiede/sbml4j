@@ -174,7 +174,7 @@ public class PathwaysApiController implements PathwaysApi {
 	 */
 	@Override
 	public ResponseEntity<List<PathwayInventoryItem>> listAllPathways(String user, @Valid Boolean hideCollections) {
-	   log.info("Serving POST /pathways" + (user != null ? " for user " + user : ""));
+	   log.info("Serving GET /pathways" + (user != null ? " for user " + user : ""));
 	   
 	   // 0. Get list of users including the public user
 	   List<String> userList = this.configService.getUserList(user);
