@@ -251,6 +251,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	private List<SBMLSimpleReaction> buildAndPersistSBMLSimpleReactions(ListOf<Reaction> listOfReactions,
 			Map<String, SBMLCompartment> compartmentLookupMap,
+			Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap,
 			ProvenanceGraphActivityNode activityNode) {
 		
 		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
@@ -265,7 +266,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
 			// reactants
 			for (int i=0; i != reaction.getReactantCount(); i++) {
-				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getReactant(i).getSpecies());
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getReactant(i).getSpecies());
 				if(referencedSpecies == null) {
 					logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 				} else {
@@ -274,7 +275,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 			// products
 			for (int i=0; i != reaction.getProductCount(); i++) {
-				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getProduct(i).getSpecies());
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getProduct(i).getSpecies());
 				if(referencedSpecies == null) {
 					logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 				} else {
@@ -283,7 +284,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 			// catalysts
 			for (int i=0; i != reaction.getModifierCount(); i++) {
-				SBMLSpecies referencedSpecies = this.sbmlSpeciesRepository.findBysBaseId(reaction.getModifier(i).getSpecies());
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getModifier(i).getSpecies());
 				if(referencedSpecies == null) {
 					logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
 				} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
@@ -629,15 +630,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 		
 		// species
+		Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap = new HashMap<>();
 		if (model.getListOfSpecies() != null && model.getListOfSpecies().size() > 0) {
 			persistedSBMLSpeciesMap = buildAndPersistSBMLSpecies(model.getListOfSpecies(), compartmentLookupMap, activityNode);
 			persistedSBMLSpeciesMap.forEach((name, species)->{
 				returnList.add(species);
+				sBaseIdToSBMLSpeciesMap.put(species.getsBaseId(), species);
 			});
 		}
 		// reactions
 		if(model.getListOfReactions() != null && model.getListOfReactions().size() > 0) {
-			List<SBMLSimpleReaction> persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap, activityNode);
+			List<SBMLSimpleReaction> persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap, sBaseIdToSBMLSpeciesMap, activityNode);
 			persistedSBMLSimpleReactions.forEach(reaction->{
 				returnList.add(reaction);
 			});
