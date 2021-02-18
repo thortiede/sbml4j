@@ -142,6 +142,7 @@ public class PathwayCollectionNodeService {
 					.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.hadMember,
 							pathwayCollectionNode.getEntityUUID())) {
 				// get all element in the pathway (Connected with CONTAINS)
+				logger.info("Connecting pathway " + pathwayEntity.getId());
 				for (ProvenanceEntity entity : this.warehouseGraphService
 						.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
 								pathwayEntity.getEntityUUID())) {
