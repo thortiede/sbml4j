@@ -192,7 +192,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				if (startFlatSpeciesExists && endFlatSpeciesExists) {
 					// since both species already exist, they now get an additional relationship
 					// within the metabolic network
-					logger.info("SBMLSpecies with entityUUID: " + current.getSpecies().getEntityUUID()
+					logger.debug("SBMLSpecies with entityUUID: " + current.getSpecies().getEntityUUID()
 							+ " and SBMLSimpleReaction with entityUUID: " + current.getReaction().getEntityUUID()
 							+ " have more than one relationship in pathway with entityUUID: "
 							+ pathway.getEntityUUID());
