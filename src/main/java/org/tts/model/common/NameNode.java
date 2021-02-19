@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @NodeEntity
 public class NameNode extends ProvenanceGraphEntityNode {
 
+	@Index(unique=true)
 	private String name;
 	
 	@Relationship(type = "KNOWNAS", direction = Relationship.INCOMING)
@@ -52,7 +54,7 @@ public class NameNode extends ProvenanceGraphEntityNode {
 	public void setResources(List<ExternalResourceEntity> resources) {
 		this.resources = resources;
 		this.resourceUUIDs = new HashSet<>();
-		for (ExternalResourceEntity e :this.resources) {
+		for (ExternalResourceEntity e : this.resources) {
 			resourceUUIDs.add(e.getEntityUUID());
 		}
 	}
@@ -60,7 +62,12 @@ public class NameNode extends ProvenanceGraphEntityNode {
 	public void addResource(ExternalResourceEntity resource) {
 		if (this.resources == null) {
 			this.resources = new ArrayList<>();
+		}
+		if (this.resourceUUIDs == null) {
 			this.resourceUUIDs = new HashSet<>();
+			for (ExternalResourceEntity e : this.resources) {
+				resourceUUIDs.add(e.getEntityUUID());
+			}
 		}
 		if (this.resourceUUIDs.add(resource.getEntityUUID())) {
 			this.resources.add(resource);
