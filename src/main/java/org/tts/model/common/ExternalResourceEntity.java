@@ -14,10 +14,13 @@
 package org.tts.model.common;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+import org.neo4j.ogm.annotation.Transient;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.provenance.ProvenanceEntity;
 
@@ -34,8 +37,10 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	
 	private String shortIdentifierFromUri;
 	
+	@Deprecated
 	private String name;
 	
+	@Deprecated
 	private String[] secondaryNames;
 	
 	private ExternalResourceType type;
@@ -43,6 +48,12 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	@Relationship(type = "BQ", direction = Relationship.INCOMING)
 	private List<BiomodelsQualifier> relatedSBMLSBaseEntities;
 
+	@Relationship(type = "KNOWNAS", direction = Relationship.OUTGOING)
+	private List<NameNode> names;
+	
+	@Transient
+	private Set<String> nameNodeUUIDs;
+	
 	public String getUri() {
 		return uri;
 	}
@@ -74,19 +85,19 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	public void setShortIdentifierFromUri(String shortIdentifierFromUri) {
 		this.shortIdentifierFromUri = shortIdentifierFromUri;
 	}
-
+	@Deprecated
 	public String getName() {
 		return name;
 	}
-
+	@Deprecated
 	public void setName(String name) {
 		this.name = name;
 	}
-
+	@Deprecated
 	public String[] getSecondaryNames() {
 		return secondaryNames;
 	}
-
+	@Deprecated
 	public void setSecondaryNames(String[] secondaryNames) {
 		this.secondaryNames = secondaryNames;
 	}
@@ -122,6 +133,28 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 			this.relatedSBMLSBaseEntities.add(relatedSBMLSBaseEntity);
 		}
 		
+	}
+
+	public List<NameNode> getNames() {
+		return names;
+	}
+
+	public void setNames(List<NameNode> names) {
+		this.names = names;
+		this.nameNodeUUIDs = new HashSet<>();
+		for (NameNode name : names) {
+			this.nameNodeUUIDs.add(name.getEntityUUID());
+		}
+	}
+	
+	public void addName(NameNode nameNode) {
+		if (this.names == null) {
+			this.names = new ArrayList<>();
+			this.nameNodeUUIDs = new HashSet<>();
+		}
+		if (this.nameNodeUUIDs.add(nameNode.getEntityUUID())) {
+			this.names.add(nameNode);
+		}
 	}
 	
 }
