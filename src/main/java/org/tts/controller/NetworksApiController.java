@@ -406,6 +406,8 @@ public class NetworksApiController implements NetworksApi {
 		String terminateAtString;
 		if (terminateAt == null && this.configService.getContextTerminateAt() != null) {
 			terminateAtString = this.configService.getContextTerminateAt();
+		} else if (terminateAt != null) {
+			terminateAtString = terminateAt;
 		} else {
 			terminateAtString = null;
 		}
