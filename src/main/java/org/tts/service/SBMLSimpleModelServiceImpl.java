@@ -199,13 +199,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSpecies);
 				
-				SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-				persistedNewSpecies.setCvTermList(species.getCVTerms());
-				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies, activityNode);
-				SBMLSpecies persistedSpeciesWithExternalResources = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-				speciesList.add(persistedSpeciesWithExternalResources);
+				newSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				newSpecies.setCvTermList(species.getCVTerms());
+				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(newSpecies, activityNode);
+				newSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				speciesList.add(newSpecies);
 				sBaseNameToSBMLSpeciesMap.put(newSpecies.getsBaseName(), newSpecies);
-				this.provenanceGraphService.connect(persistedSpeciesWithExternalResources, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.provenanceGraphService.connect(newSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the groups nodes
@@ -237,13 +237,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
 			newSBMLSpeciesGroup.setsBaseId(species.getId());
 			newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
-			SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-			persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
-			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
-			persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-			speciesList.add(persistedNewSpeciesGroup);
-			sBaseNameToSBMLSpeciesMap.put(speciesSbaseName, persistedNewSpeciesGroup);
-			this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			newSBMLSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			newSBMLSpeciesGroup.setCvTermList(species.getCVTerms());
+			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(newSBMLSpeciesGroup, activityNode);
+			newSBMLSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			speciesList.add(newSBMLSpeciesGroup);
+			sBaseNameToSBMLSpeciesMap.put(speciesSbaseName, newSBMLSpeciesGroup);
+			this.provenanceGraphService.connect(newSBMLSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
 		return sBaseNameToSBMLSpeciesMap;
@@ -328,13 +328,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
 				newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
-				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
+				newQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 				
-				helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+				newQualSpecies.setCvTermList(qualSpecies.getCVTerms());
+				newQualSpecies = (SBMLQualSpecies) buildAndPersistExternalResourcesForSBaseEntity(newQualSpecies, activityNode);
+				newQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
+				
+				helperQualSpeciesReturn.addQualSpecies(newQualSpecies);
 				//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				//sBaseNameToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseName(), persistedNewQualSpecies);
 				
-				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.provenanceGraphService.connect(newQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the group nodes
@@ -372,12 +376,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			
 			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
-			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
-			helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			newSBMLQualSpeciesGroup.setCvTermList(qualSpecies.getCVTerms());
+			newSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(newSBMLQualSpeciesGroup, activityNode);
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			
+			helperQualSpeciesReturn.addQualSpecies(newSBMLQualSpeciesGroup);
 			
 			//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			//helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), persistedNewQualSpecies);
-			this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			this.provenanceGraphService.connect(newSBMLQualSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
 		//helperQualSpeciesReturn.setSBaseNameToQualSpeciesMap(sBaseIdToQualSpeciesMap);
