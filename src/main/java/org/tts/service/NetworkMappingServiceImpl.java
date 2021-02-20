@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.GraphBaseEntity;
 import org.tts.model.common.GraphEnum.AnnotationName;
@@ -40,6 +39,8 @@ import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.common.SBMLQualSpecies;
+import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpecies;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
@@ -49,6 +50,8 @@ import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
+import org.tts.service.SimpleSBML.SBMLQualSpeciesService;
+import org.tts.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
 import org.tts.service.warehouse.MappingNodeService;
 
@@ -81,7 +84,13 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	ProvenanceGraphService provenanceGraphService;
 
 	@Autowired
-	SBMLSpeciesService sbmlSpeciesSevice;
+	SBMLSpeciesService sbmlSpeciesService;
+	
+	@Autowired
+	SBMLQualSpeciesService sbmlQualSpeciesService;
+	
+	@Autowired
+	SBMLSimpleTransitionService sbmlSimpleTransitionService;
 
 	@Autowired
 	UtilityService utilityService;
@@ -120,9 +129,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		logger.info("Created MappingNode with uuid:" + mappingFromPathway.getEntityUUID());
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
-		Set<String> nodeSymbols = new HashSet<>();
+		Set<String> flatSpeciesSymbols = new HashSet<>();
 		Set<String> relationSymbols = new HashSet<>();
 		List<String> nodeSBOTerms = new ArrayList<>();
+		int numberOfReactions = 0;
 
 		// connect MappingNode to PathwayNode with wasDerivedFrom
 		this.provenanceGraphService.connect(mappingFromPathway, pathway, ProvenanceGraphEdgeType.wasDerivedFrom);
@@ -131,14 +141,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// attribute the new Mapping to the agent
 		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 
-		Map<String, FlatSpecies> sbmlSpeciesEntityUUIDToFlatSpeciesMap = new HashMap<>();
+		Map<String, FlatSpecies> sbmlSBaseEntityUUIDToFlatSpeciesMap = new HashMap<>();
 		Map<String, FlatSpecies> sbmlSimpleReactionToFlatSpeciesMap = new HashMap<>();
 
 		List<FlatSpecies> allFlatSpecies = new ArrayList<>();
 		List<FlatEdge> allFlatEdges = new ArrayList<>();
-
+		
 		Iterable<FlatSpecies> persistedFlatSpecies;
-
+		
 		// divert here for different mapping types
 		if (type.equals(NetworkMappingType.METABOLIC) || type.equals(NetworkMappingType.PATHWAYMAPPING)) {
 
@@ -162,18 +172,20 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				startFlatSpeciesExists = false;
 				endFlatSpeciesExists = false;
 				current = metIt.next();
-				if (sbmlSpeciesEntityUUIDToFlatSpeciesMap.containsKey(current.getSpecies().getEntityUUID())) {
-					startFlatSpecies = sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(current.getSpecies().getEntityUUID());
+				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(current.getSpecies().getEntityUUID())) {
+					startFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap.get(current.getSpecies().getEntityUUID());
 					startFlatSpeciesExists = true;
 				} else {
 					startFlatSpecies = new FlatSpecies();
 					this.graphBaseEntityService.setGraphBaseEntityProperties(startFlatSpecies);
 					startFlatSpecies.setSymbol(current.getSpecies().getsBaseName());
-					nodeSymbols.add(current.getSpecies().getsBaseName());
 					startFlatSpecies.setSboTerm(current.getSpecies().getsBaseSboTerm());
 					nodeTypes.add(current.getSpecies().getsBaseSboTerm());
 					startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
-					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getSpecies().getEntityUUID(), startFlatSpecies);
+					sbmlSBaseEntityUUIDToFlatSpeciesMap.put(current.getSpecies().getEntityUUID(), startFlatSpecies);
+					if (!flatSpeciesSymbols.add(startFlatSpecies.getSymbol())) {
+						logger.warn("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + startFlatSpecies.getEntityUUID());
+					}
 				}
 				if (sbmlSimpleReactionToFlatSpeciesMap.containsKey(current.getReaction().getEntityUUID())) {
 					endFlatSpecies = sbmlSimpleReactionToFlatSpeciesMap.get(current.getReaction().getEntityUUID());
@@ -183,11 +195,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					this.graphBaseEntityService.setGraphBaseEntityProperties(endFlatSpecies);
 					endFlatSpecies.addLabel(flatReactionLabel);
 					endFlatSpecies.setSymbol(current.getReaction().getsBaseName());
-					nodeSymbols.add(current.getReaction().getsBaseName());
 					endFlatSpecies.setSboTerm(current.getReaction().getsBaseSboTerm());
 					nodeTypes.add(current.getReaction().getsBaseSboTerm());
 					endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
 					sbmlSimpleReactionToFlatSpeciesMap.put(current.getReaction().getEntityUUID(), endFlatSpecies);
+					numberOfReactions++;
+					if (!flatSpeciesSymbols.add(endFlatSpecies.getSymbol())) {
+						logger.warn("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + endFlatSpecies.getEntityUUID());
+					}
 				}
 				if (startFlatSpeciesExists && endFlatSpeciesExists) {
 					// since both species already exist, they now get an additional relationship
@@ -217,7 +232,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			}
 		}
 		
-		Map<String, FlatEdge> sbmlSimpleTransitionToFlatEdgeMap = new HashMap<>();
+		
 		List<String> transitionSBOTerms = new ArrayList<>();
 		boolean processTransitionsNeeded = false;
 		if (type.equals(NetworkMappingType.PATHWAYMAPPING)) {
@@ -272,47 +287,52 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			processTransitionsNeeded = true;
 			
 		}
-		// do we have non metabolic elements we need to process?
+	
 		if (processTransitionsNeeded) {
-			Iterable<NonMetabolicPathwayReturnType> nonMetPathwayResult = this.pathwayService
-					.getAllNonMetabolicPathwayReturnTypes(UUID.fromString(pathway.getEntityUUID()), transitionSBOTerms,
-							nodeSBOTerms);
+			Iterable<SBMLSimpleTransition> pathwayTransitions = 
+					this.sbmlSimpleTransitionService.findMatchingTransitionsInPathway(
+															pathway.getEntityUUID(),
+															transitionSBOTerms, 
+															nodeSBOTerms);
+			
+			Iterator<SBMLSimpleTransition> it = pathwayTransitions.iterator();
+			SBMLSimpleTransition currentTransition;
 
-			Iterator<NonMetabolicPathwayReturnType> it = nonMetPathwayResult.iterator();
-			NonMetabolicPathwayReturnType current;
-			FlatSpecies inputFlatSpecies = null;
-			FlatSpecies outputFlatSpecies = null;
-			FlatEdge transitionFlatEdge;
 			while (it.hasNext()) {
+				FlatSpecies inputFlatSpecies = null;
+				FlatSpecies outputFlatSpecies = null;
+				
 				List<FlatSpecies> inputGroupFlatSpecies = null;
 				List<FlatSpecies> outputGroupFlatSpecies = null;
-				current = it.next();
+				currentTransition = it.next();
 				
 				// input species
-				if (sbmlSpeciesEntityUUIDToFlatSpeciesMap.containsKey(current.getInputSpecies().getEntityUUID())) {
-					inputFlatSpecies = sbmlSpeciesEntityUUIDToFlatSpeciesMap
-							.get(current.getInputSpecies().getEntityUUID());
+				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(currentTransition.getInputSpecies().getEntityUUID())) {
+					inputFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap
+							.get(currentTransition.getInputSpecies().getEntityUUID());
 				} else {
-					if(current.getInputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
+					if(currentTransition.getInputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
 						// the member species should have transitions together with the sbo 
 						inputGroupFlatSpecies = new ArrayList<>();
 						boolean areAllProteins = true;
-						for(SBMLSpecies groupSpecies : this.sbmlSpeciesSevice.getSBMLSpeciesOfGroup(current.getInputSpecies().getEntityUUID())) {
+						for(SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(currentTransition.getInputSpecies().getEntityUUID())) {
 							if(areAllProteins) {
 								// if up to this point all have been proteins (so sbo term has always been 252, then check this one
 								// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
 								areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
 							}
-							if(sbmlSpeciesEntityUUIDToFlatSpeciesMap.containsKey(groupSpecies.getEntityUUID())) {
-								inputGroupFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
+							if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(currentTransition.getInputSpecies().getEntityUUID())) {
+								inputGroupFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
 							} else {
 								// haven't seen this Species before
-								FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSpecies(groupSpecies);
-								sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
+								FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
+								if (!flatSpeciesSymbols.add(newGroupFlatSpecies.getSymbol())) {
+									logger.warn("Duplicate Symbol " + newGroupFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + newGroupFlatSpecies.getEntityUUID());
+								}
+								sbmlSBaseEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
 										newGroupFlatSpecies);
 								nodeTypes.add(groupSpecies.getsBaseSboTerm());
-								nodeSymbols.add(groupSpecies.getsBaseName());
 								// finally add this new species to the group specific list for connection
 								inputGroupFlatSpecies.add(newGroupFlatSpecies);
 							}
@@ -325,7 +345,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
 								if (i != j) {
 									// add two flat edges (i -> j and j -> i)
-									transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+									FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
 									this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
 									transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
 									transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
@@ -338,47 +358,52 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 									transitionFlatEdge.addAnnotationType("TransitionId", "String");
 									transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
 									relationTypes.add(transitionFlatEdge.getTypeString());
-									transitionFlatEdge.addAnnotation("sbmlSimpleTransitionEntityUUID",
-											current.getInputSpecies().getEntityUUID());
-									transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
-									sbmlSimpleTransitionToFlatEdgeMap.put(current.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+									transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+											currentTransition.getInputSpecies().getEntityUUID());
+									transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+									//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+									allFlatEdges.add(transitionFlatEdge);
 									relationSymbols.add(symbolAndTransitionIdString);
 								}
 							}
 						}
 					} else {
-					inputFlatSpecies = this.createFlatSpeciesFromSBMLSpecies(current.getInputSpecies());
-					nodeSymbols.add(current.getInputSpecies().getsBaseName());
-					nodeTypes.add(current.getInputSpecies().getsBaseSboTerm());
-					sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getInputSpecies().getEntityUUID(),
-							inputFlatSpecies);
+						inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(currentTransition.getInputSpecies());
+						if (!flatSpeciesSymbols.add(inputFlatSpecies.getSymbol())) {
+							logger.warn("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + inputFlatSpecies.getEntityUUID());
+						}
+						nodeTypes.add(currentTransition.getInputSpecies().getsBaseSboTerm());
+						sbmlSBaseEntityUUIDToFlatSpeciesMap.put(currentTransition.getInputSpecies().getEntityUUID(),
+								inputFlatSpecies);
 					}
 				}
 				// output species
-				if (sbmlSpeciesEntityUUIDToFlatSpeciesMap.containsKey(current.getOutputSpecies().getEntityUUID())) {
-					outputFlatSpecies = sbmlSpeciesEntityUUIDToFlatSpeciesMap
-							.get(current.getOutputSpecies().getEntityUUID());
+				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(currentTransition.getOutputSpecies().getEntityUUID())) {
+					outputFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap
+							.get(currentTransition.getOutputSpecies().getEntityUUID());
 				} else {
-					if(current.getOutputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
+					if (currentTransition.getOutputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
 						// the member species should have transitions together with the sbo 
 						outputGroupFlatSpecies = new ArrayList<>();
 						boolean areAllProteins = true;
-						for(SBMLSpecies groupSpecies : this.sbmlSpeciesSevice.getSBMLSpeciesOfGroup(current.getOutputSpecies().getEntityUUID())) {
+						for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(currentTransition.getOutputSpecies().getEntityUUID())) {
 							if(areAllProteins) {
 								// if up to this point all have been proteins (so sbo term has always been 252, then check this one
 								// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
 								areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
 							}
-							if(sbmlSpeciesEntityUUIDToFlatSpeciesMap.containsKey(groupSpecies.getEntityUUID())) {
-								outputGroupFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
+							if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(groupSpecies.getEntityUUID())) {
+								outputGroupFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
 							} else {
 								// haven't seen this Species before
-								FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSpecies(groupSpecies);
-								sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
+								FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
+								if (!flatSpeciesSymbols.add(newGroupFlatSpecies.getSymbol())) {
+									logger.warn("Duplicate Symbol " + newGroupFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + newGroupFlatSpecies.getEntityUUID());
+								}
+								sbmlSBaseEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
 										newGroupFlatSpecies);
 								nodeTypes.add(groupSpecies.getsBaseSboTerm());
-								nodeSymbols.add(groupSpecies.getsBaseName());
 								// finally add this new species to the group specific list for connection
 								outputGroupFlatSpecies.add(newGroupFlatSpecies);
 							}
@@ -391,7 +416,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							for (int j = 0; j != outputGroupFlatSpecies.size(); j++) {
 								if (i != j) {
 									// add two flat edges (i -> j and j -> i)
-									transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+									FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
 									this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
 									transitionFlatEdge.setInputFlatSpecies(outputGroupFlatSpecies.get(i));
 									transitionFlatEdge.setOutputFlatSpecies(outputGroupFlatSpecies.get(j));
@@ -404,130 +429,103 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 									transitionFlatEdge.addAnnotationType("TransitionId", "String");
 									transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
 									relationTypes.add(transitionFlatEdge.getTypeString());
-									transitionFlatEdge.addAnnotation("sbmlSimpleTransitionEntityUUID",
-											current.getOutputSpecies().getEntityUUID());
-									transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
-									sbmlSimpleTransitionToFlatEdgeMap.put(current.getOutputSpecies().getEntityUUID(), transitionFlatEdge);
+									transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+											currentTransition.getOutputSpecies().getEntityUUID());
+									transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+									//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getOutputSpecies().getEntityUUID(), transitionFlatEdge);
+									allFlatEdges.add(transitionFlatEdge);
 									relationSymbols.add(symbolAndTransitionIdString);
 								}
 							}
 						}
 					} else {
-						outputFlatSpecies = this.createFlatSpeciesFromSBMLSpecies(current.getOutputSpecies());
-						nodeSymbols.add(current.getOutputSpecies().getsBaseName());
-						nodeTypes.add(current.getOutputSpecies().getsBaseSboTerm());
-						sbmlSpeciesEntityUUIDToFlatSpeciesMap.put(current.getOutputSpecies().getEntityUUID(),
+						outputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(currentTransition.getOutputSpecies());
+						if (!flatSpeciesSymbols.add(outputFlatSpecies.getSymbol())) {
+							logger.warn("Duplicate Symbol " + outputFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + outputFlatSpecies.getEntityUUID());
+						}
+						nodeTypes.add(currentTransition.getOutputSpecies().getsBaseSboTerm());
+						sbmlSBaseEntityUUIDToFlatSpeciesMap.put(currentTransition.getOutputSpecies().getEntityUUID(),
 								outputFlatSpecies);
 					}
 				}
 				
-				// transition
-				
-				// now we need to look at whether we had one or two groups
-				SBMLSimpleTransition currentTransition = current.getTransition();
+				// now build the transition or transitions, if we had one or two groups
 				
 				if (inputFlatSpecies != null) {
 					
 					if (outputFlatSpecies != null) {
 						// no groups, so two normal species, this should be the standard case
-						if (sbmlSimpleTransitionToFlatEdgeMap.containsKey(currentTransition.getEntityUUID())) {
-							transitionFlatEdge = sbmlSimpleTransitionToFlatEdgeMap.get(currentTransition.getEntityUUID());
-							logger.info("Reusing Transition " + currentTransition.getEntityUUID());
-							
-							if (!(transitionFlatEdge.getInputFlatSpecies().equals(inputFlatSpecies)
-									&& transitionFlatEdge.getOutputFlatSpecies().equals(outputFlatSpecies))) {
-								// this should be identical, if the transition really is the same
-								logger.info("Transition does not have the same input and output.. Aborting");
-								throw new Exception("Reusing Transition " + currentTransition.getEntityUUID()
-										+ ", but input and output are not the same");
-							} else {
-								// already have this transition, continue
-								continue;
-							}
-						} else {
-							transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, currentTransition);
-							relationTypes.add(transitionFlatEdge.getTypeString());
-							relationSymbols.add(transitionFlatEdge.getSymbol());
-							sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getEntityUUID(), transitionFlatEdge);
-							if (inputFlatSpecies.getLabels().contains("Drug")) {
-								FlatEdge targetsEdge = this.flatEdgeService.createFlatEdge("targets");
-								this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
-								targetsEdge.setInputFlatSpecies(inputFlatSpecies);
-								targetsEdge.setOutputFlatSpecies(outputFlatSpecies);
-								targetsEdge.setSymbol(inputFlatSpecies.getSymbol() + "-TARGETS->"
-										+ outputFlatSpecies.getSymbol());
-								allFlatEdges.add(targetsEdge);
-							}
+						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, currentTransition);
+						relationTypes.add(transitionFlatEdge.getTypeString());
+						relationSymbols.add(transitionFlatEdge.getSymbol());
+						allFlatEdges.add(transitionFlatEdge);
+						if (inputFlatSpecies.getLabels().contains("Drug")) {
+							FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
+							allFlatEdges.add(targetsEdge);
 						}
 					} else {
-						// input single, output group
+						// input is single, output is group
 						for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
-							String transitionUUID = currentTransition.getEntityUUID() + "]->(" + outputFlatSpeciesOfGroup.getEntityUUID();
-							if (sbmlSimpleTransitionToFlatEdgeMap.containsKey(transitionUUID)) {
-								transitionFlatEdge = sbmlSimpleTransitionToFlatEdgeMap.get(transitionUUID);
-								logger.info("Reusing Transition To Group " + transitionUUID);
-							} else {
-								transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, currentTransition);
-								relationTypes.add(transitionFlatEdge.getTypeString());
-								relationSymbols.add(transitionFlatEdge.getSymbol());
-								sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, currentTransition);
+							relationTypes.add(transitionFlatEdge.getTypeString());
+							relationSymbols.add(transitionFlatEdge.getSymbol());
+							allFlatEdges.add(transitionFlatEdge);
+							if (inputFlatSpecies.getLabels().contains("Drug")) {
+								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
+								allFlatEdges.add(targetsEdge);
 							}
 						}
 					}
 				} else if (outputFlatSpecies != null) {
+					// input is group, output is single
 					for (FlatSpecies inputFlatSpeciesOfGroup : inputGroupFlatSpecies) {
-						String transitionUUID = inputFlatSpeciesOfGroup.getEntityUUID() + ")->[" + currentTransition.getEntityUUID();
-						if(sbmlSimpleTransitionToFlatEdgeMap.containsKey(transitionUUID)) {
-							transitionFlatEdge = sbmlSimpleTransitionToFlatEdgeMap.get(transitionUUID);
-							logger.info("Reusing Transition from Group " + transitionUUID);
-						} else {
-							transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, currentTransition);
-							relationTypes.add(transitionFlatEdge.getTypeString());
-							relationSymbols.add(transitionFlatEdge.getSymbol());
-							sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
+						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, currentTransition);
+						relationTypes.add(transitionFlatEdge.getTypeString());
+						relationSymbols.add(transitionFlatEdge.getSymbol());
+						allFlatEdges.add(transitionFlatEdge);
+						if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
+							FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
+							allFlatEdges.add(targetsEdge);
 						}
 					}
 				} else {
+					// input is group, output is group
 					for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
 						FlatSpecies inputFlatSpeciesOfGroup = inputGroupFlatSpecies.get(i);
 						for (int j = 0; j != outputGroupFlatSpecies.size(); j ++) {
 							FlatSpecies outputFlatSpeciesOfGroup = outputGroupFlatSpecies.get(j);
-							String transitionUUID = inputFlatSpeciesOfGroup.getEntityUUID() + ")->[" + currentTransition.getEntityUUID() + "]->(" + outputFlatSpeciesOfGroup.getEntityUUID();
-							if(sbmlSimpleTransitionToFlatEdgeMap.containsKey(transitionUUID)) {
-								transitionFlatEdge = sbmlSimpleTransitionToFlatEdgeMap.get(transitionUUID);
-								logger.info("Reusing Transition to and from Group " + transitionUUID);
-							}else {
-								transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, currentTransition);
-								relationTypes.add(transitionFlatEdge.getTypeString());
-								relationSymbols.add(transitionFlatEdge.getSymbol());
-								sbmlSimpleTransitionToFlatEdgeMap.put(transitionUUID, transitionFlatEdge);
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, currentTransition);
+							relationTypes.add(transitionFlatEdge.getTypeString());
+							relationSymbols.add(transitionFlatEdge.getSymbol());
+							allFlatEdges.add(transitionFlatEdge);
+							if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
+								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
+								allFlatEdges.add(targetsEdge);
 							}
 						}
 					}
 				} 
 			}
 		}
-		for (String entry : sbmlSpeciesEntityUUIDToFlatSpeciesMap.keySet()) {
-			allFlatSpecies.add(sbmlSpeciesEntityUUIDToFlatSpeciesMap.get(entry));
+		for (String entry : sbmlSBaseEntityUUIDToFlatSpeciesMap.keySet()) {
+			allFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(entry));
 		}
 		
 		// TODO: Create and Add FlatSpecies for those SBMLSpecies that do not have any connection (aka unconnected nodes)
 		
 		persistedFlatSpecies = this.flatSpeciesService.save(allFlatSpecies, QUERY_DEPTH_ZERO);
 
-		for (String entry : sbmlSimpleTransitionToFlatEdgeMap.keySet()) {
-			allFlatEdges.add(sbmlSimpleTransitionToFlatEdgeMap.get(entry));
-		}
 		this.flatEdgeService.save(allFlatEdges, QUERY_DEPTH_ZERO);
 
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		mappingFromPathway.addWarehouseAnnotation("creationendtime", endTime.toString());
-		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(allFlatSpecies.size()));
+		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(allFlatSpecies.size())); // this includes reactions
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(allFlatEdges.size()));
+		mappingFromPathway.addWarehouseAnnotation("numberofreactions", String.valueOf(numberOfReactions));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
-		mappingFromPathway.setMappingNodeSymbols(nodeSymbols);
+		mappingFromPathway.setMappingNodeSymbols(flatSpeciesSymbols);
 		mappingFromPathway.setMappingRelationSymbols(relationSymbols);
 		mappingFromPathway.setActive(true);
 		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService
@@ -536,13 +534,24 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		int fsConnectCounter = 1;
 
 		for (FlatSpecies fs : persistedFlatSpecies) {
-			logger.debug(Instant.now().toString() + ": Building ConnectionSet #" + fsConnectCounter++);
-			this.provenanceGraphService.connect(fs,	fs.getSimpleModelEntityUUID(), ProvenanceGraphEdgeType.wasDerivedFrom);
-			this.warehouseGraphService.connect(fs, fs.getSimpleModelEntityUUID(), WarehouseGraphEdgeType.DERIVEDFROM);
+			logger.debug("Building ConnectionSet #" + fsConnectCounter++ + ": FlatSpecies: " + fs.getEntityUUID());
+			// do not build the wasDerivedFrom and DERIVEDFROM connections. They take very long and are never traversed/used later on
+			//this.provenanceGraphService.connect(fs,	fs.getSimpleModelEntityUUID(), ProvenanceGraphEdgeType.wasDerivedFrom);
+			//this.warehouseGraphService.connect(fs, fs.getSimpleModelEntityUUID(), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	private FlatEdge createTargetsEdge(FlatSpecies inputFlatSpecies, FlatSpecies outputFlatSpecies) {
+		FlatEdge targetsEdge = this.flatEdgeService.createFlatEdge("targets");
+		this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
+		targetsEdge.setInputFlatSpecies(inputFlatSpecies);
+		targetsEdge.setOutputFlatSpecies(outputFlatSpecies);
+		targetsEdge.setSymbol(inputFlatSpecies.getSymbol() + "-TARGETS->"
+				+ outputFlatSpecies.getSymbol());
+		return targetsEdge;
 	}
 
 	/**
@@ -568,28 +577,28 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		transitionFlatEdge.setSymbol(inputFlatSpecies.getSymbol() + "-" + transitionFlatEdge.getTypeString()
 				+ "->" + outputFlatSpecies.getSymbol());
 		
-		transitionFlatEdge.addAnnotation("sbmlSimpleTransitionEntityUUID",
+		transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
 				simpleTransition.getEntityUUID());
-		transitionFlatEdge.addAnnotationType("sbmlSimpleTransitionEntityUUID", "String");
+		transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
 		return transitionFlatEdge;
 	}
 
 	/**
 	 * Create a <a href="#{@link}">{@link FlatSpecies}</a> from a <a href="#{@link}">{@link SBMLSpecies}</a>
 	 * 
-	 * @param sbmlSpecies The <a href="#{@link}">{@link SBMLSpecies}</a> to be used as source for the new <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param sbmlSBaseEntity The <a href="#{@link}">{@link SBMLSBaseEntity}</a> to be used as source for the new <a href="#{@link}">{@link FlatSpecies}</a>
 	 * @return The created <a href="#{@link}">{@link FlatSpecies}</a>
 	 */
-	private FlatSpecies createFlatSpeciesFromSBMLSpecies(SBMLSpecies sbmlSpecies) {
+	private FlatSpecies createFlatSpeciesFromSBMLSBaseEntity(SBMLSBaseEntity sbmlSBaseEntity) {
 		FlatSpecies newFlatSpecies = new FlatSpecies();
 		this.graphBaseEntityService.setGraphBaseEntityProperties(newFlatSpecies);
-		newFlatSpecies.setSymbol(sbmlSpecies.getsBaseName());
+		newFlatSpecies.setSymbol(sbmlSBaseEntity.getsBaseName());
 		
-		newFlatSpecies.setSboTerm(sbmlSpecies.getsBaseSboTerm());
+		newFlatSpecies.setSboTerm(sbmlSBaseEntity.getsBaseSboTerm());
 		
-		newFlatSpecies.setSimpleModelEntityUUID(sbmlSpecies.getEntityUUID());
-		getBQAnnotations(sbmlSpecies.getEntityUUID(), newFlatSpecies);
-		getPathwayAnnotations(UUID.fromString(sbmlSpecies.getEntityUUID()), newFlatSpecies);
+		newFlatSpecies.setSimpleModelEntityUUID(sbmlSBaseEntity.getEntityUUID());
+		getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), newFlatSpecies);
+		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), newFlatSpecies);
 		return newFlatSpecies;
 	}
 
