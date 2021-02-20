@@ -635,19 +635,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					if (bq.getEndNode().getType() != null && endNode.getType().equals(ExternalResourceType.KEGGGENES)) {
 						// get all NameNodes connected to the external resource 
 						Iterable<NameNode> allNames = this.nameNodeService.findAllByExternalResource(endNode.getEntityUUID());
-						StringBuilder sb = new StringBuilder();
-						boolean first = true;
 						Iterator<NameNode> it = allNames.iterator();
 						while (it.hasNext()) {
-							if (!first) {
-								sb.append(", ");
-							} else {
-								first = false;
-							}
-							sb.append(it.next());
+							target.addSecondaryName(it.next().getName());
 						}
-						this.graphBaseEntityService.addAnnotation(target, AnnotationName.SECONDARYNAMES.getAnnotationName(), "string", sb.toString(), doAppend);
-						
 					} else if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGDRUG)) {
 						target.addLabel("Drug");
 					}
