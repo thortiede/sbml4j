@@ -815,7 +815,7 @@ public class NetworkService {
 	}
 	
 	/**
-	 * Retrieve the entityUUID of a <a href="#{@link}">{@link FlatSpecies}</a> for a symbol.
+	 * Retrieve the entityUUIDs of a <a href="#{@link}">{@link FlatSpecies}</a> for a symbol.
 	 * Searches the nodeSymbol in the Network given. If not found directly, searches the full model
 	 * for occurrences of this symbol and finds the <a href="#{@link}">{@link FlatSpecies}</a> 
 	 * that is derived from it. The symbol on the <a href="#{@link}">{@link FlatSpecies}</a> might differ,
@@ -825,55 +825,25 @@ public class NetworkService {
 	 * 
 	 * @param networkEntityUUID The entityUUID of the network to search in
 	 * @param nodeSymbol The symbol to find
-	 * @return entityUUID of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
+	 * @return List of entityUUID of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
 	 */
-	public String getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
-		String flatSpeciesEntityUUID = this.findEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol);
-		
+	public List<String> getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
+		List<String> foundEntityUUIDs= new ArrayList<>();
 		// 0. Check whether we have that geneSymbol directly in the network
+		String flatSpeciesEntityUUID = this.findEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol);
 		if (flatSpeciesEntityUUID == null) {
-			// 1. Find SBMLSpecies with geneSymbol (or SBMLSpecies connected to externalResource with geneSymbol)
-			for (SBMLSpecies geneSpecies : this.sbmlSpeciesService.findBysBaseName(nodeSymbol)) {
-				String simpleModelGeneEntityUUID = null;
-				if(geneSpecies != null) {
-					simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
-				} else {
-					Iterable<SBMLSpecies> bqSpecies = this.sbmlSpeciesService.findByBQConnectionTo(nodeSymbol, "KEGG");
-					if (bqSpecies == null) {
-						// we could not find that gene
-						return null;
-					} else {
-						Iterator<SBMLSpecies> bqSpeciesIterator = bqSpecies.iterator();
-						while (bqSpeciesIterator.hasNext()) {
-							SBMLSpecies current = bqSpeciesIterator.next();
-							log.debug("Found Species " + current.getsBaseName() + " with uuid: " + current.getEntityUUID());
-							if(geneSpecies == null) {
-								log.debug("Using " + current.getsBaseName());
-								geneSpecies = current;
-								break;
-							}
-						}
-						if(geneSpecies != null) {
-							simpleModelGeneEntityUUID = geneSpecies.getEntityUUID();
-						} else {
-							return null;
-						}
-					}
-				}
-				if (simpleModelGeneEntityUUID == null) {
-					return null;
-				}
-				// 2. Find FlatSpecies in network with networkEntityUUID to use as startPoint for context search
-				//geneSymbolSpecies = this.flatSpeciesRepository.findBySimpleModelEntityUUIDInNetwork(simpleModelGeneEntityUUID, networkEntityUUID);
-				FlatSpecies geneSymbolSpecies = this.flatSpeciesService.findBySimpleModelEntityUUID(networkEntityUUID, simpleModelGeneEntityUUID);
-				if (geneSymbolSpecies == null) {
-					log.debug("Could not find derived FlatSpecies to SBMLSpecies (uuid:" + simpleModelGeneEntityUUID + ") in network with uuid: " + networkEntityUUID);
-					return null;
-				}
-				flatSpeciesEntityUUID = geneSymbolSpecies.getEntityUUID();
+			// could not find the symbol, check secondary names
+			List<FlatSpecies> secondaryNameFlatSpecies = this.flatSpeciesService.findAllBySecondaryName(networkEntityUUID, nodeSymbol);
+			if (secondaryNameFlatSpecies != null && !secondaryNameFlatSpecies.isEmpty()) {
+				secondaryNameFlatSpecies.forEach(f -> foundEntityUUIDs.add(f.getEntityUUID()));
+				return foundEntityUUIDs;
+			} else {
+				return null;
 			}
+		} else {
+			foundEntityUUIDs.add(flatSpeciesEntityUUID);
+			return foundEntityUUIDs;
 		}
-		return flatSpeciesEntityUUID;
 	}
 	
 	/**
