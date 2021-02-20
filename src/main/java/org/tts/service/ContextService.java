@@ -91,9 +91,9 @@ public class ContextService {
 		log.info("Node string for path.expand: " + nodeApocString);
 		Set<String> geneUUIDSet = new HashSet<>();
 		for (String gene : uniqueGenes) {
-			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
-			if (geneFlatSpeciesEntityUUID != null) {
-				geneUUIDSet.add(geneFlatSpeciesEntityUUID);
+			List<String> geneFlatSpeciesEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (geneFlatSpeciesEntityUUIDs != null && !geneFlatSpeciesEntityUUIDs.isEmpty()) {
+				geneUUIDSet.addAll(geneFlatSpeciesEntityUUIDs);
 			}
 		}
 		if (uniqueGenes.size() < 1 || geneUUIDSet.size() < 1) {
@@ -138,18 +138,20 @@ public class ContextService {
 		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		Set<String> networkRelationTypes = mappingNode.getMappingRelationTypes();
 		for (String gene : geneList) {
-			String geneFlatSpeciesEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
-			if (geneFlatSpeciesEntityUUID != null) {
-				targetGeneUUIDSet.add(geneFlatSpeciesEntityUUID);
+			List<String> geneFlatSpeciesEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (geneFlatSpeciesEntityUUIDs != null && !geneFlatSpeciesEntityUUIDs.isEmpty()) {
+				targetGeneUUIDSet.addAll(geneFlatSpeciesEntityUUIDs);
 			}
-			List<String> genePathways = this.pathwayService.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
-			for (String pathwayUUID : genePathways) {
-				if (pathwayGeneMap.containsKey(pathwayUUID)) {
-					pathwayGeneMap.get(pathwayUUID).add(gene);
-				} else {
-					Set<String> pathwayGeneSet = new HashSet<>();
-					pathwayGeneSet.add(gene);
-					pathwayGeneMap.put(pathwayUUID, pathwayGeneSet);
+			for (String geneFlatSpeciesEntityUUID : geneFlatSpeciesEntityUUIDs) {
+				List<String> genePathways = this.pathwayService.findAllForFlatSpeciesEntityUUIDInMapping(geneFlatSpeciesEntityUUID, networkEntityUUID);
+				for (String pathwayUUID : genePathways) {
+					if (pathwayGeneMap.containsKey(pathwayUUID)) {
+						pathwayGeneMap.get(pathwayUUID).add(gene);
+					} else {
+						Set<String> pathwayGeneSet = new HashSet<>();
+						pathwayGeneSet.add(gene);
+						pathwayGeneMap.put(pathwayUUID, pathwayGeneSet);
+					}
 				}
 			}
 		}
@@ -268,7 +270,7 @@ public class ContextService {
 			if (sortedByCount.keySet().size() < 2) {
 				// something went wrong, we should have at least two differnt genes in here
 				// TODO do something
-				log.debug("Could not find two different genes after sorting.. Abort..");
+				log.error("Could not find two different genes after sorting.. Abort..");
 				return null;
 			} else {
 				log.debug("Connecting two most common genes...");
@@ -276,46 +278,54 @@ public class ContextService {
 				Iterator<Map.Entry<String, Integer>> sortedByCountIterator = sortedByCount.entrySet().iterator();
 				String gene1UUID = null;
 				String gene2UUID = null;
-				boolean isGene1 = true;
-				while (sortedByCountIterator.hasNext()) {
-					if (isGene1) {
-						String gene1 = sortedByCountIterator.next().getKey();
-						log.debug("Gene1: " + gene1);
-						gene1UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID,gene1);
-						if (gene1UUID != null) {
-							usedGenes.add(gene1);
-							geneList.remove(gene1);
-						}
-						
-						isGene1 = false;
-					} else {
-						String gene2 = sortedByCountIterator.next().getKey();
-						log.debug("Gene2: " + gene2);
-						gene2UUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene2);
-						if (gene2UUID != null) {
+				String gene1 = null;
+				String gene2 = null;
+				//boolean isGene1 = true;
+				 if (sortedByCountIterator.hasNext()) {
+					 gene1 = sortedByCountIterator.next().getKey();
+				 }
+				 if (sortedByCountIterator.hasNext()) {
+					 gene2 = sortedByCountIterator.next().getKey();
+				 }
+				 if (gene1 == null ||gene2 == null) {
+					 log.error("Unable to identify two most common genes. This is fatal, aborting..");
+					 return null; // TODO actually throw an exception here
+				 }
+				 log.debug("Gene1: " + gene1 + ", Gene2: " +gene2);
+				 
+				 List<String> gene1UUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID,gene1);
+				 if (gene1UUIDs != null && !gene1UUIDs.isEmpty()) {
+					usedGenes.add(gene1);
+					geneList.remove(gene1);
+					for (String foundGene1UUID : gene1UUIDs) {
+						List<String> gene2UUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene2);
+						if (gene2UUIDs != null && !gene2UUIDs.isEmpty()) {
 							usedGenes.add(gene2);
 							geneList.remove(gene2);
+							for (String foundGene2UUID : gene2UUIDs) {
+								Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
+										foundGene1UUID, 
+										foundGene2UUID, 
+										this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
+										"weight", 
+										1.0f);
+								this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, dijkstra);
+								for (FlatEdge edge : allFlatEdges) {
+									usedGenes.add(edge.getInputFlatSpecies().getSymbol());
+									usedGenes.add(edge.getOutputFlatSpecies().getSymbol());
+								}
+							}
+						} // end if (gene2UUIDs != null && !gene2UUIDs.isEmpty()) {
+						else {
+							log.error("Could not find gene2 with symbol " + gene2 + " in network with entityUUID " + networkEntityUUID);
+							return null; // TODO actually throw an exception here
 						}
-						break;
 					}
-				}
-				if (gene1UUID == null || gene2UUID == null) {
-					// again something went wrong
-					// TODO do something
-					return null;
-				} else {
-					Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
-							gene1UUID, 
-							gene2UUID, 
-							this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-							"weight", 
-							1.0f);
-					this.apocService.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, dijkstra);
-					for (FlatEdge edge : allFlatEdges) {
-						usedGenes.add(edge.getInputFlatSpecies().getSymbol());
-						usedGenes.add(edge.getOutputFlatSpecies().getSymbol());
-					}
-				}
+				 } // end if (gene1UUIDs != null && !gene1UUIDs.isEmpty()) {
+				 else {
+					log.error("Could not find gene1 with symbol " + gene1 + " in network with entityUUID " + networkEntityUUID);
+					return null; // TODO actually throw an exception here
+				 }
 			}
 
 		} else {
@@ -407,56 +417,58 @@ public class ContextService {
 			
 			Set<String> targetNodeUUIDs = new HashSet<>();
 			for (String usedGeneSymbol : usedGenes) {
-				targetNodeUUIDs.add(this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, usedGeneSymbol));
+				targetNodeUUIDs.addAll(this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, usedGeneSymbol));
 			}
 			for (String gene : geneList) {
 				boolean isIdenticalNode = false;
 				log.debug("Searching connection for gene: " + gene);
-				String geneEntityUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
-				if(geneEntityUUID != null) {
-					//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
-					//this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, bfsPath);
-					Map<String, List<FlatEdge>> targetToNumEdges = new HashMap<>();
-					for (String targetUUID : targetNodeUUIDs) {
-						if (targetUUID.equals(geneEntityUUID)) {
-							// it is the same gene, we don't need to connect it. 
-							log.debug("Gene " + gene + " is identical to gene with uuid " + targetUUID);
-							isIdenticalNode = true;
-							break;
+				List<String> geneEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+				if (geneEntityUUIDs != null && !geneEntityUUIDs.isEmpty()) {
+					for (String geneEntityUUID : geneEntityUUIDs) {
+						//Iterable<ApocPathReturnType> bfsPath = this.gdsRepository.runBFSonGdsGraph(networkEntityUUID, geneEntityUUID, targetNodeUUIDs);
+						//this.extractFlatEdgesFromApocPathReturnType(allFlatEdges, seenEdges, bfsPath);
+						Map<String, List<FlatEdge>> targetToNumEdges = new HashMap<>();
+						for (String targetUUID : targetNodeUUIDs) {
+							if (targetUUID.equals(geneEntityUUID)) {
+								// it is the same gene, we don't need to connect it. 
+								log.debug("Gene " + gene + " is identical to gene with uuid " + targetUUID);
+								isIdenticalNode = true;
+								break;
+							}
+							Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
+									geneEntityUUID, 
+									targetUUID, 
+									this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction),  
+									"weight", 
+									1.0f);
+							List<FlatEdge> targetFlatEdgeList = new ArrayList<>();
+							this.apocService.extractFlatEdgesFromApocPathReturnTypeWithoutSideeffect(targetFlatEdgeList, seenEdges, dijkstra);
+							targetToNumEdges.put(targetUUID, targetFlatEdgeList);
 						}
-						Iterable<ApocPathReturnType> dijkstra = this.apocService.dijkstraWithDefaultWeight(
-								geneEntityUUID, 
-								targetUUID, 
-								this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction),  
-								"weight", 
-								1.0f);
-						List<FlatEdge> targetFlatEdgeList = new ArrayList<>();
-						this.apocService.extractFlatEdgesFromApocPathReturnTypeWithoutSideeffect(targetFlatEdgeList, seenEdges, dijkstra);
-						targetToNumEdges.put(targetUUID, targetFlatEdgeList);
-					}
-					if(isIdenticalNode) {
-						continue;
-					}
-					int maxNum = 10000000;
-					String lowestTargetGeneUUID = null;
-					for (String targetGeneUUID : targetToNumEdges.keySet()) {
-						int targetNum = targetToNumEdges.get(targetGeneUUID).size();
-						if (targetNum > 0 && targetNum < maxNum) {
-							maxNum = targetNum;
-							lowestTargetGeneUUID = targetGeneUUID;
+						if(isIdenticalNode) {
+							continue;
 						}
-					}
-					if (lowestTargetGeneUUID == null) {
-						log.debug("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
-					} else {
-						log.debug("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
-						for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
-							if (!allFlatEdges.contains(edge)) {
-								allFlatEdges.add(edge);
-								seenEdges.add(edge.getSymbol());
+						int maxNum = 10000000;
+						String lowestTargetGeneUUID = null;
+						for (String targetGeneUUID : targetToNumEdges.keySet()) {
+							int targetNum = targetToNumEdges.get(targetGeneUUID).size();
+							if (targetNum > 0 && targetNum < maxNum) {
+								maxNum = targetNum;
+								lowestTargetGeneUUID = targetGeneUUID;
 							}
 						}
-						targetNodeUUIDs.add(geneEntityUUID);
+						if (lowestTargetGeneUUID == null) {
+							log.debug("Failed to connect gene: " + gene + "(uuid: " + geneEntityUUID + ")");
+						} else {
+							log.debug("Lowest (" + maxNum + ") has " + lowestTargetGeneUUID);
+							for (FlatEdge edge : targetToNumEdges.get(lowestTargetGeneUUID)) {
+								if (!allFlatEdges.contains(edge)) {
+									allFlatEdges.add(edge);
+									seenEdges.add(edge.getSymbol());
+								}
+							}
+							targetNodeUUIDs.add(geneEntityUUID);
+						}
 					}
 				} else {
 					log.debug("Could not find gene " + gene);
