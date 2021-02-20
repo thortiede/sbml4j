@@ -13,6 +13,8 @@
  */
 package org.tts.repository.simpleModel;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
@@ -37,4 +39,39 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "s2 as outputSpecies"
 			)
 	Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID);
+
+	
+	@Query(value = "MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where p.entityUUID = $pathwayEntityUUID "
+			+ "with t "
+			+ "MATCH "
+			+ "(qi:SBMLQualSpecies)"
+			+ "<-[in:IS_INPUT]-"
+			+ "(t)"
+			+ "-[out:IS_OUTPUT]->"
+			+ "(qo:SBMLQualSpecies) "
+			+ "RETURN qi, in,  t, out, qo")
+	Iterable<SBMLSimpleTransition> findAllInPathway(String pathwayEntityUUID);
+
+	@Query(value = "MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where p.entityUUID = $pathwayEntityUUID "
+			+ "and t.sBaseSboTerm in $transitionSBOTerms "
+			+ "with t "
+			+ "MATCH "
+			+ "(qi:SBMLQualSpecies)"
+			+ "<-[in:IS_INPUT]-"
+			+ "(t)"
+			+ "-[out:IS_OUTPUT]->"
+			+ "(qo:SBMLQualSpecies) "
+			+ "where qi.sBaseSboTerm in $nodeSBOTerms "
+			+ "and qo.sBaseSboTerm in $nodeSBOTerms "
+			+ "RETURN qi, in,  t, out, qo")
+	Iterable<SBMLSimpleTransition> findMatchingInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
+			List<String> nodeSBOTerms);
 }
