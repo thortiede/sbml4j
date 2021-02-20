@@ -90,5 +90,18 @@ public class FlatSpeciesService {
 	public Iterable<FlatSpecies> save(Iterable<FlatSpecies> entities, int depth) {
 		return this.flatSpeciesRepository.save(entities, depth);
 	}
+
+	/**
+	 * Find all <a href="#{@link}">{@link FlatSpecies}</a> in network of <a href="#{@link}">{@link MappingNode}</a> with given entityUUID
+	 * whose property secondaryNames contains the given nodeSymbol String .
+	 * 
+	 * Requires that there is a Fulltext-index defined on the property secondaryNames of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbol The String to find
+	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a> having the String nodeSymbol in their secondaryNames String property
+	 */
+	public List<FlatSpecies> findAllBySecondaryName(String networkEntityUUID, String nodeSymbol) {
+		return this.flatSpeciesRepository.findAllBySecondaryName(networkEntityUUID, nodeSymbol);
+	}
 	
 }
