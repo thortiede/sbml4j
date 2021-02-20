@@ -13,15 +13,11 @@
  */
 package org.tts.service.SimpleSBML;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.sbml.jsbml.CVTerm;
-import org.sbml.jsbml.CVTerm.Qualifier;
-import org.sbml.jsbml.Species;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -134,6 +130,7 @@ public class SBMLSpeciesService {
 		return allSpecies;
 	}
 
+	/*
 	public SBMLSpecies findExistingSpeciesToModelSpecies(Species species) {
 		
 		List<String> cvTermUris = new ArrayList<>();
@@ -177,5 +174,5 @@ public class SBMLSpeciesService {
 			}
 		}
 		return foundSBMLSpecies.get(0); // this might not be desired in the future. we might want to be able to work with all found matches
-	}
+	}*/
 }
