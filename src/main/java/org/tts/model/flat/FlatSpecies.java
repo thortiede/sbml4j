@@ -13,6 +13,10 @@
  */
 package org.tts.model.flat;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.neo4j.ogm.annotation.Transient;
 import org.tts.model.common.ContentGraphNode;
 
 
@@ -21,6 +25,11 @@ public class FlatSpecies extends ContentGraphNode {
 	private String simpleModelEntityUUID;
 	
 	private String symbol;
+	
+	private String secondaryNames;
+	
+	@Transient
+	private Set<String> secondaryNamesSet;
 	
 	private String sboTerm;
 	
@@ -38,6 +47,37 @@ public class FlatSpecies extends ContentGraphNode {
 
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
+	}
+	
+	public String getSecondaryNames() {
+		return secondaryNames;
+	}
+
+	public void setSecondaryNames(String secondaryNames) {
+		this.secondaryNames = secondaryNames;
+		this.secondaryNamesSet = new HashSet<>();
+		for (String name : secondaryNames.split(", ")) {
+			secondaryNamesSet.add(name);
+		}
+	}
+
+	public boolean addSecondaryName(String secondaryName) {
+		if (this.secondaryNamesSet == null) {
+			this.secondaryNamesSet = new HashSet<>();
+			for (String name : this.secondaryNames.split(",")) {
+				this.secondaryNamesSet.add(name.strip());
+			}
+		}
+		if (this.secondaryNamesSet.add(secondaryName.strip())) {
+			if (!this.secondaryNames.isBlank()) {
+				this.secondaryNames += ", ";
+			}
+			this.secondaryNames += secondaryName.strip();
+			return true;
+		} else {
+			return false;
+		}
+		
 	}
 	
 	public String getSboTerm() {
