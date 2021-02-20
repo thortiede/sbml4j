@@ -33,12 +33,13 @@ import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.GraphBaseEntity;
+import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphEnum.AnnotationName;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.NetworkMappingType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.tts.model.common.NameNode;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.common.SBMLSpecies;
@@ -76,6 +77,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	@Autowired
 	MappingNodeService mappingNodeService;
+	
+	@Autowired
+	NameNodeService nameNodeService;
 	
 	@Autowired
 	PathwayService pathwayService;
@@ -606,7 +610,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 * Query the biomodelsQualifierRepository for all Biomodels Qualifiers of Type HAS_VERSION, IS, HAS_PROPERTY, IS_ENCODED_BY and IS_DESCRIBED_BY
 	 * 
 	 * @param parentEntityUUID The Node to which the Biomodels Qualifier should be fetched for
-	 * @param target The Flat Species those Qualifiers should be added as Annotations (always as type "string"
+	 * @param target The Flat Species those Qualifiers should be added as Annotations (always as type "string")
 	 */
 	private void getBQAnnotations(String parentEntityUUID, FlatSpecies target) {
 		boolean doAppend = this.sbml4jConfig.getAnnotationConfigProperties().isAppend();
@@ -621,35 +625,33 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					|| bq.getQualifier().equals(Qualifier.BQB_IS_ENCODED_BY)
 					|| bq.getQualifier().equals(Qualifier.BQB_IS_DESCRIBED_BY)
 				) {
-				String uri = bq.getEndNode().getUri();
+				ExternalResourceEntity endNode = bq.getEndNode();
+				String uri = endNode.getUri();
 				if (uri.contains("identifiers.org")) {
 				
 					String[] splitted = uri.split("/");
 					this.graphBaseEntityService.addAnnotation(target, splitted[splitted.length-2].replace('.', '_'), "string", (annotateWithLinks ? uri : splitted[splitted.length-1]), doAppend);
 					
-					if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGGENES) && bq.getEndNode().getSecondaryNames() != null) {
+					if (bq.getEndNode().getType() != null && endNode.getType().equals(ExternalResourceType.KEGGGENES)) {
+						// get all NameNodes connected to the external resource 
+						Iterable<NameNode> allNames = this.nameNodeService.findAllByExternalResource(endNode.getEntityUUID());
 						StringBuilder sb = new StringBuilder();
 						boolean first = true;
-						for (String secName : bq.getEndNode().getSecondaryNames()) {
+						Iterator<NameNode> it = allNames.iterator();
+						while (it.hasNext()) {
 							if (!first) {
 								sb.append(", ");
 							} else {
 								first = false;
 							}
-							sb.append(secName);
+							sb.append(it.next());
 						}
-						GraphBaseEntity annotatedEntity = this.graphBaseEntityService.addAnnotation(target, AnnotationName.SECONDARYNAMES.getAnnotationName(), "string", sb.toString(), doAppend);
-						String secondaryNames = (String) annotatedEntity.getAnnotation().get(AnnotationName.SECONDARYNAMES.getAnnotationName());
-						int numSecondaryNames = secondaryNames.split(", ").length;
-						if (numSecondaryNames > bq.getEndNode().getSecondaryNames().length && !secondaryNames.contains(bq.getEndNode().getName())) {
-							secondaryNames += ", ";
-							secondaryNames += bq.getEndNode().getName();
-							annotatedEntity.getAnnotation().put(AnnotationName.SECONDARYNAMES.getAnnotationName(), secondaryNames);
-						}
+						this.graphBaseEntityService.addAnnotation(target, AnnotationName.SECONDARYNAMES.getAnnotationName(), "string", sb.toString(), doAppend);
+						
 					} else if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGDRUG)) {
 						target.addLabel("Drug");
 					}
-				} else if (bq.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) { // uri.contains("mdanderson")) {
+				} else if (bq.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) {
 					this.graphBaseEntityService.addAnnotation(target, "mdanderson", "string", uri, doAppend);
 				}
 			}
