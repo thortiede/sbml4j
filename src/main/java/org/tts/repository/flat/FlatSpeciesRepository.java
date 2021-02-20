@@ -118,5 +118,16 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "AND f.simpleModelEntityUUID = $simpleModelEntityUUID "
 			+ "RETURN f")
 	FlatSpecies findBySimpleModelEntityUUID(String simpleModelEntityUUID, String networkEntityUUID);
+
+
+	@Query(value="MATCH "
+			+ "(m:MappingNode)"
+			+ "-[w:Warehouse]->"
+			+ "(fs:FlatSpecies) "
+			+ "WHERE m.entityUUID = $networkEntityUUID "
+			+ "AND fs.secondaryNames CONTAINS $nodeSymbol "
+			+ "AND w.warehouseGraphEdgeType=\"CONTAINS\" "
+			+ "RETURN fs")
+	List<FlatSpecies> findAllBySecondaryName(String networkEntityUUID, String nodeSymbol);
 	
 }
