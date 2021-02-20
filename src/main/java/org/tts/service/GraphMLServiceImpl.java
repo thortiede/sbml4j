@@ -96,16 +96,16 @@ public class GraphMLServiceImpl implements GraphMLService {
 					seenEdges.add(edgeSymbol);
 					String inputSpeciesSymbol = edge.getInputFlatSpecies().getSymbol();
 					String outputSpeciesSymbol = edge.getOutputFlatSpecies().getSymbol();
-					String edgeType = edge.getTypeString();
+					//String edgeType = edge.getTypeString();
 					//logger.debug(edgeSymbol + ": " + inputSpeciesSymbol + "-[" + edgeType + "]->" + outputSpeciesSymbol);
 					
 					// get Annotations from InputSpecies
 					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation,
-							inputSpeciesSymbol, edge.getInputFlatSpecies().getAnnotation(), edge.getInputFlatSpecies().getAnnotationType());
+							edge.getInputFlatSpecies());
 					
 					// get Annotations from OutputSpecies					
 					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation,
-							outputSpeciesSymbol, edge.getOutputFlatSpecies().getAnnotation(), edge.getOutputFlatSpecies().getAnnotationType());
+							edge.getOutputFlatSpecies());
 					
 					this.buildEdgeAnnotations(edgeAnnotations, nodeSymbolIdMap, edgesWithAnnotation, inputSpeciesSymbol, outputSpeciesSymbol, edge.getAnnotation(), edge.getAnnotationType(), edge.getTypeString());
 					/*if (!directed) { // this should not be necessary, as the graph is initialized as undirected in the graphML header.
@@ -118,7 +118,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 			// add unconnected FlatSpecies
 			if(unconnectedSpecies != null) {
 				for (FlatSpecies species : unconnectedSpecies) {
-					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation, species.getSymbol(), species.getAnnotation(), species.getAnnotationType());
+					nodeId = this.buildNodeAnnotations(nodeId, nodeAnnotations, nodeSymbolIdMap, nodesWithAnnotation, species);
 				}
 			}
 			
@@ -271,8 +271,11 @@ public class GraphMLServiceImpl implements GraphMLService {
 	 * @return the new value of nodeId (unchanged or changed depending of whether the node has been seen before or not, respectively)
 	 */
 	private int buildNodeAnnotations(int nodeId, Map<String, String> nodeAnnotations,
-			Map<String, String> nodeSymbolIdMap, List<byte[]> nodesWithAnnotation, String speciesSymbol,
-			Map<String, Object> nodeAnnotationMap, Map<String, String> nodeAnnotationTypeMap) {
+			Map<String, String> nodeSymbolIdMap, List<byte[]> nodesWithAnnotation, FlatSpecies node) {
+		
+		Map<String, Object> nodeAnnotationMap = node.getAnnotation();
+		Map<String, String> nodeAnnotationTypeMap = node.getAnnotationType();
+		String speciesSymbol = node.getSymbol();
 		if (!nodeSymbolIdMap.containsKey(speciesSymbol)) {
 			String nodeIdString = String.format("n%d", nodeId);
 			++nodeId;
@@ -283,6 +286,12 @@ public class GraphMLServiceImpl implements GraphMLService {
 			nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_name\">%s</data>\n", speciesSymbol).getBytes());
 			if(!nodeAnnotations.containsKey("name")) {
 				nodeAnnotations.put("name", "String");
+			}
+			// secondary names
+			String secondaryNames = node.getSecondaryNames();
+			if (secondaryNames != null && !secondaryNames.isBlank()) {
+				nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_secondaryNames\">%s</data>\n", secondaryNames).getBytes());
+				nodeAnnotations.put("secondaryNames", "String");
 			}
 			// are there more annotations on this node?
 			
