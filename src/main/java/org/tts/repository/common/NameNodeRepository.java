@@ -13,10 +13,19 @@
  */
 package org.tts.repository.common;
 
+import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.common.NameNode;
 
 public interface NameNodeRepository extends Neo4jRepository<NameNode, Long> {
 
 	public NameNode findByName(String name);
+
+	@Query("MATCH "
+			+ "(e:ExternalResourceEntity)"
+			+ "-[KNOWNAS]->"
+			+ "(n:NameNode) "
+			+ "WHERE e.entityUUID = $externalResourceEntityUUID "
+			+ "RETURN n")
+	public Iterable<NameNode> findAllByExternalResource(String externalResourceEntityUUID);
 }

@@ -28,4 +28,8 @@ public class NameNodeService {
 		return this.nameNodeRepository.findByName(name);
 	}
 
+	public Iterable<NameNode> findAllByExternalResource(String externalResourceEntityUUID) {
+		return this.nameNodeRepository.findAllByExternalResource(externalResourceEntityUUID);
+	}
+	
 }
