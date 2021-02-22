@@ -33,4 +33,12 @@ public interface BiomodelsQualifierRepository extends Neo4jRepository<BiomodelsQ
 			+ "RETURN bq, e")
 	List<BiomodelsQualifier> findAllForSBMLSpecies(String sbmlSpeciesEntityUUID);
 	
+	@Query("MATCH "
+			+ "(s:SBase)"
+			+ "-[bq:BQ]-"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE "
+			+ "s.entityUUID = $sbmlSBaseEntityUUID "
+			+ "RETURN bq, e")
+	List<BiomodelsQualifier> findAllForSBaseEntity(String sbmlSBaseEntityUUID);
 }
