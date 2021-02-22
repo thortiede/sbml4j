@@ -44,4 +44,15 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 																String targetEntityUUID,
 																WarehouseGraphEdgeType edgetype);
 
+	
+	@Query("MATCH "
+			+ "(a:PROV_AGENT)"
+			+ "<-[p:PROV]-"
+			+ "(w:WarehouseGraphNode) "
+			+ "WHERE a.graphAgentName=$graphAgentName "
+			+ "AND p.provenanceGraphEdgeType = \"wasAttributedTo\" "
+			+ "RETURN count(w)")
+	int getNumberOfWarehouseGraphNodesAttributedProvAgent(String graphAgentName);
+		
+	
 }
