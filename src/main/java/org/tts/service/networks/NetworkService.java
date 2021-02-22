@@ -652,7 +652,7 @@ public class NetworkService {
 			}
 			// get the user connected with wasAttributedTo
 			ProvenanceEntity attributedToAgent = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mappingNodeEntityUUID);
-			if (attributedToAgent != null && this.mappingNodeService.getNumberOfMappingNodesAttributedProvAgent(((ProvenanceGraphAgentNode) attributedToAgent).getGraphAgentName()) == 1) {
+			if (attributedToAgent != null && this.warehouseGraphService.getNumberOfWarehouseGraphNodesAttributedProvAgent(((ProvenanceGraphAgentNode) attributedToAgent).getGraphAgentName()) == 1) {
 				this.provenanceGraphService.deleteProvenanceEntity(attributedToAgent);
 			}
 			// then delete the mapping node
@@ -755,6 +755,18 @@ public class NetworkService {
 	public String findEntityUUIDForSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
 		return this.flatSpeciesService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, geneSymbol);
 	}
+	/**
+	 * Finds the entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> with geneSymbol in network.
+	 * Only returns a entityUUID when there is a <a href="#{@link}">{@link FlatSpecies}</a> in network that 
+	 * does have the symbol geneSymbol 
+	 * 
+	 * @param networkEntityUUID The network to search in
+	 * @param geneSymbol The symbol to search
+	 * @return UUID of the <a href="#{@link}">{@link FlatSpecies}</a> with symbol geneSymbol
+	 */
+	public Iterable<FlatSpecies> findAllEntityForSymbolInNetwork(String networkEntityUUID, String geneSymbol) {
+		return this.flatSpeciesService.findAllNetworkNodesForSymbol(networkEntityUUID, geneSymbol);
+	}
 
 	/**
 	 * Copy the <a href="#{@link}">{@link MappingNode}</a> with UUID networkEntityUUID or set name of <a href="#{@link}">{@link MappingNode}</a>
@@ -844,6 +856,41 @@ public class NetworkService {
 			foundEntityUUIDs.add(flatSpeciesEntityUUID);
 			return foundEntityUUIDs;
 		}
+	}
+	
+	/**
+	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a symbol.
+	 * Searches the nodeSymbol in the Network given. If not found directly, searches the full model
+	 * for occurrences of this symbol and finds the <a href="#{@link}">{@link FlatSpecies}</a> 
+	 * that is derived from it. The symbol on the <a href="#{@link}">{@link FlatSpecies}</a> might differ,
+	 * but it is guaranteed, that the <a href="#{@link}">{@link FlatSpecies}</a> - entityUUID returned
+	 * is derived from a <a href="#{@link}">{@link SBMLSpecies}</a> that has that symbol connected to it 
+	 * through a <a href="#{@link}">{@link BiomodelsQualifier}</a> relationship.
+	 * 
+	 * @param networkEntityUUID The entityUUID of the network to search in
+	 * @param nodeSymbol The symbol to find
+	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
+	 */
+	public List<FlatSpecies> getFlatSpeciesOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
+		List<FlatSpecies> foundEntities= new ArrayList<>();
+		// 0. Check whether we have that geneSymbol directly in the network
+		Iterable<FlatSpecies> flatSpeciesForSymbol= this.findAllEntityForSymbolInNetwork(networkEntityUUID, nodeSymbol);
+		if (flatSpeciesForSymbol != null) {
+			flatSpeciesForSymbol.forEach(foundEntities::add);
+		}
+		if (!foundEntities.isEmpty()) {
+			return foundEntities;
+		} else {
+			// could not find the symbol, check secondary names
+			List<FlatSpecies> secondaryNameFlatSpecies = this.flatSpeciesService.findAllBySecondaryName(networkEntityUUID, nodeSymbol);
+			if (secondaryNameFlatSpecies != null && !secondaryNameFlatSpecies.isEmpty()) {
+				secondaryNameFlatSpecies.forEach(foundEntities::add);
+				return foundEntities;
+			} else {
+				return null;
+			}
+		}
+		
 	}
 	
 	/**
