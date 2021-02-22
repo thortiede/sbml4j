@@ -64,20 +64,25 @@ public class FlatSpecies extends ContentGraphNode {
 	public boolean addSecondaryName(String secondaryName) {
 		if (this.secondaryNamesSet == null) {
 			this.secondaryNamesSet = new HashSet<>();
+		}
+		if (this.secondaryNames == null) {
+			this.secondaryNames = secondaryName;
+			this.secondaryNamesSet.add(secondaryName);
+			return true;
+		} else {
 			for (String name : this.secondaryNames.split(",")) {
 				this.secondaryNamesSet.add(name.strip());
 			}
-		}
-		if (this.secondaryNamesSet.add(secondaryName.strip())) {
-			if (!this.secondaryNames.isBlank()) {
-				this.secondaryNames += ", ";
+			if (this.secondaryNamesSet.add(secondaryName.strip())) {
+				if (!this.secondaryNames.isBlank()) {
+					this.secondaryNames += ", ";
+				}
+				this.secondaryNames += secondaryName.strip();
+				return true;
+			} else {
+				return false;
 			}
-			this.secondaryNames += secondaryName.strip();
-			return true;
-		} else {
-			return false;
 		}
-		
 	}
 	
 	public String getSboTerm() {
