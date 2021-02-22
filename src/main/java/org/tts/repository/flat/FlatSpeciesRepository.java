@@ -26,9 +26,9 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	
 	@Query(value= "MATCH "
 			+ "(m:MappingNode)"
-			+ "-[w1:Warehouse]-"
+			+ "-[w1:Warehouse]->"
 			+ "(fs:FlatSpecies)-[r]-(fs2:FlatSpecies)"
-			+ "-[w2:Warehouse]-"
+			+ "<-[w2:Warehouse]-"
 			+ "(m:MappingNode) "
 			+ "WHERE m.entityUUID = $entityUUID "
 			+ "AND w1.warehouseGraphEdgeType = \"CONTAINS\" "
@@ -57,7 +57,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	
 	@Query(value="MATCH "
 			+ "(m:MappingNode)"
-			+ "-[w:Warehouse]-"
+			+ "-[w:Warehouse]->"
 			+ "(fs:FlatSpecies) "
 			+ "WHERE m.entityUUID = $networkUUID "
 			+ "AND fs.symbol = $symbol "
@@ -67,7 +67,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 
 	@Query(value="MATCH "
 			+ "(m:MappingNode)"
-			+ "-[w:Warehouse]-"
+			+ "-[w:Warehouse]->"
 			+ "(fs:FlatSpecies) "
 			+ "WHERE m.entityUUID = $networkUUID "
 			+ "AND fs.symbol IN $nodeSymbols  "
@@ -81,7 +81,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	 */
 	@Query(value="MATCH "
 			+ "(m:MappingNode)"
-			+ "-[w:Warehouse]-"
+			+ "-[w:Warehouse]->"
 			+ "(fs:FlatSpecies) "
 			+ "WHERE m.entityUUID = $networkUUID "
 			+ "AND fs.symbol IN $nodeSymbols  "
