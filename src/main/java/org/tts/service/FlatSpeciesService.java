@@ -13,6 +13,7 @@
  */
 package org.tts.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,28 @@ public class FlatSpeciesService {
 			return false;
 		}
 		return true;
+	}
+	
+	/**
+	 * Search for all <a href="#{@link}">{@link FlatSpecies}</a> entities having the given nodeSymbol in the network
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbol The symbol of the <a href="#{@link}">{@link FlatSpecies}</a> entity
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> having the given nodeSymbol in the symbol property
+	 */
+	public Iterable<FlatSpecies> findAllNetworkNodesForSymbol(String networkEntityUUID, String nodeSymbol){
+		List<String> nodeSymbols = new ArrayList<>();
+		nodeSymbols.add(nodeSymbol);
+		return this.findAllNetworkNodesForSymbols(networkEntityUUID, nodeSymbols);
+	}
+	
+	/**
+	 * Search for all <a href="#{@link}">{@link FlatSpecies}</a> entities having the given nodeSymbols in the network
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbols List of symbols of the <a href="#{@link}">{@link FlatSpecies}</a> entity
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> having the given nodeSymbol in the symbol property
+	 */
+	public Iterable<FlatSpecies> findAllNetworkNodesForSymbols(String networkEntityUUID, List<String> nodeSymbols){
+		return this.flatSpeciesRepository.getNetworkNodes(networkEntityUUID, nodeSymbols);
 	}
 	
 	/**
