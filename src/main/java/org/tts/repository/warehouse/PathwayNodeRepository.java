@@ -121,7 +121,7 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 	 * where w.warehouseGraphEdgeType = "CONTAINS" and s.entityUUID = f.simpleModelEntityUUID return p;
 	 * 
 	 */
-	@Query(""
+/*	@Query(""
 			+ "MATCH "
 			+ "(m:MappingNode)"
 			+ "-[wm:Warehouse]->"
@@ -142,7 +142,7 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "RETURN p.entityUUID")
 	List<String> findAllForFlatSpeciesEntityUUIDInMapping(String flatSpeciesEntityUUID, String mappingEntityUUID);
 
-
+*/
 	@Query(""
 			+ "MATCH "
 			+ "(g1:SBase)<-[w1:Warehouse]-(p1:PathwayNode)-[w2:Warehouse]->(x:SBase)<-[w3:Warehouse]-(p2:PathwayNode)-[w4:Warehouse]->(g2:SBase) "
@@ -218,7 +218,16 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
 			+ "(s:SBMLSpecies) "
 			+ "WHERE s.sBaseSboTerm IN $nodeSBOTerms "
-			+ "RETURN s as species, "
+			+ "WITH r, rel, s "
+			+ "MATCH "
+			+ "(s)"
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "RETURN e, "
+			+ "b, "
+			+ "s as species, "
 			+ "type(rel) as typeOfRelation, "
 			+ "r as reaction")
 	Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(String pathwayUUID,
