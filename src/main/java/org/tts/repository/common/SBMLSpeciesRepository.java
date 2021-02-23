@@ -35,12 +35,10 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 	@Query("MATCH "
 			+ "(s:SBMLSpecies)"
 			+ "-[b:BQ]->"
-			+ "(e:ExternalResourceEntity)"
-			+ "-[KNOWNAS]->"
-			+ "(n:NameNode)"
+			+ "(e:ExternalResourceEntity) "
 			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
 			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
-			+ "AND n.name = $name "
+			+ "AND e.primaryName = $name "
 			+ "AND e.databaseFromUri = $databaseFromUri "
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> findByBQConnectionTo(String name, String databaseFromUri);
@@ -71,10 +69,12 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 	@Query("MATCH "
 			+ "(s:SBMLSpecies)"
 			+ "-[b:BQ]->"
-			+ "(e:ExternalResourceEntity) "
+			+ "(e:ExternalResourceEntity "
+			+ "-[KNOWNAS]->"
+			+ "(n:NameNode) "
 			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
 			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
-			+ "AND $name in e.secondaryNames "
+			+ "AND n.name = $name "
 			+ "RETURN s")
 	public Iterable<SBMLSpecies> findByExternalResourceSecondaryName(String name);
 	
