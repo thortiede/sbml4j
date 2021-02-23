@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.Exception.NetworkAlreadyExistsException;
+import org.tts.Exception.NetworkMappingError;
 import org.tts.config.SBML4jConfig;
 import org.tts.model.api.Output.MetabolicPathwayReturnType;
 import org.tts.model.common.BiomodelsQualifier;
@@ -123,7 +124,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 */
 	@Override
 	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type,
-			ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode, String newMappingName) throws NetworkAlreadyExistsException, Exception {
+			ProvenanceGraphActivityNode activityNode, ProvenanceGraphAgentNode agentNode, String newMappingName) throws NetworkAlreadyExistsException, NetworkMappingError, Exception {
 
 		Instant startTime = Instant.now();
 		logger.info("Started Creating Mapping from Pathway at " + startTime.toString());
@@ -133,7 +134,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		logger.info("Created MappingNode with uuid:" + mappingFromPathway.getEntityUUID());
 		Set<String> relationTypes = new HashSet<>();
 		Set<String> nodeTypes = new HashSet<>();
-		Set<String> flatSpeciesSymbols = new HashSet<>();
+		//Set<String> flatSpeciesSymbols = new HashSet<>();
 		Set<String> relationSymbols = new HashSet<>();
 		List<String> nodeSBOTerms = new ArrayList<>();
 		int numberOfReactions = 0;
@@ -145,20 +146,24 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		// attribute the new Mapping to the agent
 		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 
-		Map<String, FlatSpecies> sbmlSBaseEntityUUIDToFlatSpeciesMap = new HashMap<>();
+		//Map<String, FlatSpecies> sbmlSBaseEntityUUIDToFlatSpeciesMap = new HashMap<>();
 		Map<String, FlatSpecies> sbmlSimpleReactionToFlatSpeciesMap = new HashMap<>();
 
-		List<FlatSpecies> allFlatSpecies = new ArrayList<>();
+		Map<String, FlatSpecies> primaryNameToFlatSpeciesMap = new HashMap<>();
+		
+		//List<FlatSpecies> allFlatSpecies = new ArrayList<>();
 		List<FlatEdge> allFlatEdges = new ArrayList<>();
 		
 		Iterable<FlatSpecies> persistedFlatSpecies;
 		
+	
 		// divert here for different mapping types
 		if (type.equals(NetworkMappingType.METABOLIC) || type.equals(NetworkMappingType.PATHWAYMAPPING)) {
 
 			// gather nodeTypes
 			this.pathwayService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
+			
 			Iterable<MetabolicPathwayReturnType> metPathwayResult = this.pathwayService
 					.getAllMetabolicPathwayReturnTypes(UUID.fromString(pathway.getEntityUUID()), nodeSBOTerms);
 
@@ -176,20 +181,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				startFlatSpeciesExists = false;
 				endFlatSpeciesExists = false;
 				current = metIt.next();
-				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(current.getSpecies().getEntityUUID())) {
-					startFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap.get(current.getSpecies().getEntityUUID());
+				
+				String speciesSymbol = findSBasePrimaryName(current.getSpecies());
+				
+				if (primaryNameToFlatSpeciesMap.containsKey(speciesSymbol)) {
+					startFlatSpecies = primaryNameToFlatSpeciesMap.get(speciesSymbol);
 					startFlatSpeciesExists = true;
 				} else {
 					startFlatSpecies = new FlatSpecies();
 					this.graphBaseEntityService.setGraphBaseEntityProperties(startFlatSpecies);
-					startFlatSpecies.setSymbol(current.getSpecies().getsBaseName());
+					startFlatSpecies.setSymbol(speciesSymbol);
 					startFlatSpecies.setSboTerm(current.getSpecies().getsBaseSboTerm());
 					nodeTypes.add(current.getSpecies().getsBaseSboTerm());
-					startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
-					sbmlSBaseEntityUUIDToFlatSpeciesMap.put(current.getSpecies().getEntityUUID(), startFlatSpecies);
-					if (!flatSpeciesSymbols.add(startFlatSpecies.getSymbol())) {
-						logger.warn("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + startFlatSpecies.getEntityUUID());
+					//startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
+					if (primaryNameToFlatSpeciesMap.put(speciesSymbol, startFlatSpecies) != null) {
+						throw new NetworkMappingError("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping.");
 					}
+					//allFlatSpecies.add(startFlatSpecies);
 				}
 				if (sbmlSimpleReactionToFlatSpeciesMap.containsKey(current.getReaction().getEntityUUID())) {
 					endFlatSpecies = sbmlSimpleReactionToFlatSpeciesMap.get(current.getReaction().getEntityUUID());
@@ -198,15 +206,16 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					endFlatSpecies = new FlatSpecies();
 					this.graphBaseEntityService.setGraphBaseEntityProperties(endFlatSpecies);
 					endFlatSpecies.addLabel(flatReactionLabel);
-					endFlatSpecies.setSymbol(current.getReaction().getsBaseName());
+					endFlatSpecies.setSymbol(current.getReaction().getsBaseName()); // TODO Eventually switch this over to external resource as well.
 					endFlatSpecies.setSboTerm(current.getReaction().getsBaseSboTerm());
 					nodeTypes.add(current.getReaction().getsBaseSboTerm());
-					endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
+					//endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
 					sbmlSimpleReactionToFlatSpeciesMap.put(current.getReaction().getEntityUUID(), endFlatSpecies);
 					numberOfReactions++;
-					if (!flatSpeciesSymbols.add(endFlatSpecies.getSymbol())) {
-						logger.warn("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + endFlatSpecies.getEntityUUID());
+					if (primaryNameToFlatSpeciesMap.put(endFlatSpecies.getSymbol(), endFlatSpecies) != null) {
+						throw new NetworkMappingError("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping.");
 					}
+					//allFlatSpecies.add(endFlatSpecies);
 				}
 				if (startFlatSpeciesExists && endFlatSpeciesExists) {
 					// since both species already exist, they now get an additional relationship
@@ -229,10 +238,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								: (current.getTypeOfRelation().equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
 				allFlatEdges.add(metabolicFlatEdge);
 				relationSymbols.add(relationSymbol);
-			}
-			
-			for (String entry : sbmlSimpleReactionToFlatSpeciesMap.keySet()) {
-				allFlatSpecies.add(sbmlSimpleReactionToFlatSpeciesMap.get(entry));
 			}
 		}
 		
@@ -300,7 +305,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 															nodeSBOTerms);
 			
 			Iterator<SBMLSimpleTransition> it = pathwayTransitions.iterator();
-			SBMLSimpleTransition currentTransition;
+			SBMLSimpleTransition current;
 
 			Set<String> groupNodesAlreadyFlattened = new HashSet<>();
 			Map<String, List<FlatSpecies>> groupNodeUUIDToGroupFlatSpecies = new HashMap<>();
@@ -310,15 +315,17 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				
 				List<FlatSpecies> inputGroupFlatSpecies = null;
 				List<FlatSpecies> outputGroupFlatSpecies = null;
-				currentTransition = it.next();
+				current = it.next();
 				
 				// input species
-				String inputSpeciesUUID = currentTransition.getInputSpecies().getEntityUUID();
-				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(inputSpeciesUUID)) {
-					inputFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap
-							.get(inputSpeciesUUID);
+				SBMLQualSpecies inputQualSpecies = current.getInputSpecies();
+				String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
+				String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
+
+				if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
+					inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
 				} else {
-					if (currentTransition.getInputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
+					if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
 						// First, did we already process this group node?
 						if (!groupNodesAlreadyFlattened.add(inputSpeciesUUID)) {
@@ -327,22 +334,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							// the member species should have transitions together with the sbo 
 							inputGroupFlatSpecies = new ArrayList<>();
 							boolean areAllProteins = true;
-							for(SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
+							for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
 								if(areAllProteins) {
 									// if up to this point all have been proteins (so sbo term has always been 252, then check this one
 									// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
 									areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
 								}
-								if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(inputSpeciesUUID)) {
-									inputGroupFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
+								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
+								
+								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+									inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
-									if (!flatSpeciesSymbols.add(newGroupFlatSpecies.getSymbol())) {
-										logger.warn("Duplicate Symbol " + newGroupFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + newGroupFlatSpecies.getEntityUUID());
+									
+									if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
+										throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
 									}
-									sbmlSBaseEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
-											newGroupFlatSpecies);
 									nodeTypes.add(groupSpecies.getsBaseSboTerm());
 									// finally add this new species to the group specific list for connection
 									inputGroupFlatSpecies.add(newGroupFlatSpecies);
@@ -372,9 +380,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 										transitionFlatEdge.addAnnotationType("TransitionId", "String");
 										transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
 										relationTypes.add(transitionFlatEdge.getTypeString());
-										transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-												inputSpeciesUUID);
-										transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+										//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+										//		inputSpeciesUUID);
+										//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
 										//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
 										allFlatEdges.add(transitionFlatEdge);
 										relationSymbols.add(symbolAndTransitionIdString);
@@ -383,23 +391,25 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							}
 						}
 					} else {
-						inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(currentTransition.getInputSpecies());
-						if (!flatSpeciesSymbols.add(inputFlatSpecies.getSymbol())) {
-							logger.warn("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + inputFlatSpecies.getEntityUUID());
+						inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(inputQualSpecies);
+						if (primaryNameToFlatSpeciesMap.put(inputFlatSpecies.getSymbol(), inputFlatSpecies) != null) {
+							throw new NetworkMappingError("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping.");
 						}
-						nodeTypes.add(currentTransition.getInputSpecies().getsBaseSboTerm());
-						sbmlSBaseEntityUUIDToFlatSpeciesMap.put(inputSpeciesUUID,
-								inputFlatSpecies);
+						nodeTypes.add(inputQualSpecies.getsBaseSboTerm());
 					}
 				}
 				// output species
-				String outputSpeciesUUID = currentTransition.getOutputSpecies().getEntityUUID();
-				if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(outputSpeciesUUID)) {
-					outputFlatSpecies = sbmlSBaseEntityUUIDToFlatSpeciesMap
-							.get(outputSpeciesUUID);
+				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
+				String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
+				String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
+				
+				if (primaryNameToFlatSpeciesMap.containsKey(outputSpeciesSymbol)) {
+					outputFlatSpecies = primaryNameToFlatSpeciesMap
+							.get(outputSpeciesSymbol);
 				} else {
-					if (currentTransition.getOutputSpecies().getsBaseSboTerm().equals("SBO:0000253")) {
-						// This is a group node, we need to treat that// First, did we already process this group node?
+					if (outputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
+						// This is a group node, we need to treat that
+						// First, did we already process this group node?
 						if (!groupNodesAlreadyFlattened.add(outputSpeciesUUID)) {
 							outputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(outputSpeciesUUID);
 						} else {
@@ -412,16 +422,17 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 									// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
 									areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
 								}
-								if (sbmlSBaseEntityUUIDToFlatSpeciesMap.containsKey(groupSpecies.getEntityUUID())) {
-									outputGroupFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(groupSpecies.getEntityUUID()));
+								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
+								
+								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+									outputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
-									if (!flatSpeciesSymbols.add(newGroupFlatSpecies.getSymbol())) {
-										logger.warn("Duplicate Symbol " + newGroupFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + newGroupFlatSpecies.getEntityUUID());
+									
+									if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
+										throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
 									}
-									sbmlSBaseEntityUUIDToFlatSpeciesMap.put(groupSpecies.getEntityUUID(),
-											newGroupFlatSpecies);
 									nodeTypes.add(groupSpecies.getsBaseSboTerm());
 									// finally add this new species to the group specific list for connection
 									outputGroupFlatSpecies.add(newGroupFlatSpecies);
@@ -451,10 +462,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 										transitionFlatEdge.addAnnotationType("TransitionId", "String");
 										transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
 										relationTypes.add(transitionFlatEdge.getTypeString());
-										transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-												outputSpeciesUUID);
-										transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-										//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getOutputSpecies().getEntityUUID(), transitionFlatEdge);
+										//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+										//		inputSpeciesUUID);
+										//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+										//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
 										allFlatEdges.add(transitionFlatEdge);
 										relationSymbols.add(symbolAndTransitionIdString);
 									}
@@ -462,13 +473,11 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 							}
 						}
 					} else {
-						outputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(currentTransition.getOutputSpecies());
-						if (!flatSpeciesSymbols.add(outputFlatSpecies.getSymbol())) {
-							logger.warn("Duplicate Symbol " + outputFlatSpecies.getSymbol() + " in Mapping. Offending FlatSpecies has entityUUID: " + outputFlatSpecies.getEntityUUID());
+						outputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(outputQualSpecies);
+						if (primaryNameToFlatSpeciesMap.put(outputFlatSpecies.getSymbol(), outputFlatSpecies) != null) {
+							throw new NetworkMappingError("Duplicate Symbol " + outputFlatSpecies.getSymbol() + " in Mapping.");
 						}
-						nodeTypes.add(currentTransition.getOutputSpecies().getsBaseSboTerm());
-						sbmlSBaseEntityUUIDToFlatSpeciesMap.put(outputSpeciesUUID,
-								outputFlatSpecies);
+						nodeTypes.add(outputQualSpecies.getsBaseSboTerm());
 					}
 				}
 				
@@ -478,7 +487,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					
 					if (outputFlatSpecies != null) {
 						// no groups, so two normal species, this should be the standard case
-						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, currentTransition);
+						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, current);
 						relationTypes.add(transitionFlatEdge.getTypeString());
 						relationSymbols.add(transitionFlatEdge.getSymbol());
 						allFlatEdges.add(transitionFlatEdge);
@@ -489,7 +498,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					} else {
 						// input is single, output is group
 						for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, currentTransition);
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, current);
 							relationTypes.add(transitionFlatEdge.getTypeString());
 							relationSymbols.add(transitionFlatEdge.getSymbol());
 							allFlatEdges.add(transitionFlatEdge);
@@ -502,7 +511,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				} else if (outputFlatSpecies != null) {
 					// input is group, output is single
 					for (FlatSpecies inputFlatSpeciesOfGroup : inputGroupFlatSpecies) {
-						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, currentTransition);
+						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, current);
 						relationTypes.add(transitionFlatEdge.getTypeString());
 						relationSymbols.add(transitionFlatEdge.getSymbol());
 						allFlatEdges.add(transitionFlatEdge);
@@ -517,7 +526,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						FlatSpecies inputFlatSpeciesOfGroup = inputGroupFlatSpecies.get(i);
 						for (int j = 0; j != outputGroupFlatSpecies.size(); j ++) {
 							FlatSpecies outputFlatSpeciesOfGroup = outputGroupFlatSpecies.get(j);
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, currentTransition);
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, current);
 							relationTypes.add(transitionFlatEdge.getTypeString());
 							relationSymbols.add(transitionFlatEdge.getSymbol());
 							allFlatEdges.add(transitionFlatEdge);
@@ -530,25 +539,24 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				} 
 			}
 		}
-		for (String entry : sbmlSBaseEntityUUIDToFlatSpeciesMap.keySet()) {
-			allFlatSpecies.add(sbmlSBaseEntityUUIDToFlatSpeciesMap.get(entry));
-		}
-		
+			
 		// TODO: Create and Add FlatSpecies for those SBMLSpecies that do not have any connection (aka unconnected nodes)
 		
-		persistedFlatSpecies = this.flatSpeciesService.save(allFlatSpecies, QUERY_DEPTH_ZERO);
+		// save the Species entities
+		persistedFlatSpecies = this.flatSpeciesService.save(primaryNameToFlatSpeciesMap.values(), QUERY_DEPTH_ZERO);
 
+		// then save the edges
 		this.flatEdgeService.save(allFlatEdges, QUERY_DEPTH_ZERO);
 
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		mappingFromPathway.addWarehouseAnnotation("creationendtime", endTime.toString());
-		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(allFlatSpecies.size())); // this includes reactions
+		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(primaryNameToFlatSpeciesMap.size() - numberOfReactions));
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(allFlatEdges.size()));
 		mappingFromPathway.addWarehouseAnnotation("numberofreactions", String.valueOf(numberOfReactions));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
 		mappingFromPathway.setMappingRelationTypes(relationTypes);
-		mappingFromPathway.setMappingNodeSymbols(flatSpeciesSymbols);
+		mappingFromPathway.setMappingNodeSymbols(primaryNameToFlatSpeciesMap.keySet());
 		mappingFromPathway.setMappingRelationSymbols(relationSymbols);
 		mappingFromPathway.setActive(true);
 		MappingNode persistedMappingOfPathway = (MappingNode) this.warehouseGraphService
@@ -565,6 +573,35 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	private String findSBasePrimaryName(SBMLSBaseEntity sBaseEntity)
+			throws NetworkMappingError {
+		String inputSpeciesSymbol = null;
+				
+		String matchingDatabase = this.sbml4jConfig.getExternalResourcesProperties().getBiologicalQualifierProperties().getDefaultDatabase();
+		if (matchingDatabase == null) {
+			throw new NetworkMappingError("Could not find config parameter 'sbml4j.externalresources.biologicalqualifer.default-database'. It is needed to match identical entities from different pathways. Please set it to a biological qualifier database your models use, e.g. KEGG. This is fatal, Aborting");
+		}
+		Iterator<BiomodelsQualifier> bqIt = sBaseEntity.getBiomodelsQualifier().iterator();
+		while (bqIt.hasNext()) {
+			BiomodelsQualifier bq = bqIt.next();
+			ExternalResourceEntity er = bq.getEndNode();
+			if (matchingDatabase.equals(er.getDatabaseFromUri())) {
+				String primaryName = er.getPrimaryName();
+				if (primaryName != null 
+						&& !primaryName.isBlank()) {
+					inputSpeciesSymbol = primaryName;
+				} else {
+					logger.warn("Found default-database external resource but primary name was not present. The entityUUID of the externalResourceEntity is: " + er.getEntityUUID());
+				}
+			}
+		}
+		if (inputSpeciesSymbol == null) {
+			throw new NetworkMappingError("Failed to determine primarySymbol of SBMLSBaseEntity in transition. The SBMLSBaseEntity entityUUID is: " + sBaseEntity.getEntityUUID() + ". This is fatal, Aborting.");
+		} else {
+			return inputSpeciesSymbol;
+		}
 	}
 
 	private FlatEdge createTargetsEdge(FlatSpecies inputFlatSpecies, FlatSpecies outputFlatSpecies) {
@@ -595,7 +632,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		transitionFlatEdge.addAnnotation("SBOTerm", simpleTransition.getsBaseSboTerm());
 
 		transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-		transitionFlatEdge.addAnnotation("TransitionId", simpleTransition.getTransitionId());
+		transitionFlatEdge.addAnnotation("TransitionId", inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(simpleTransition.getsBaseSboTerm()) + "->" + outputFlatSpecies.getSymbol());
 		transitionFlatEdge.addAnnotationType("TransitionId", "String");
 		transitionFlatEdge.setSymbol(inputFlatSpecies.getSymbol() + "-" + transitionFlatEdge.getTypeString()
 				+ "->" + outputFlatSpecies.getSymbol());
@@ -611,15 +648,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	 * 
 	 * @param sbmlSBaseEntity The <a href="#{@link}">{@link SBMLSBaseEntity}</a> to be used as source for the new <a href="#{@link}">{@link FlatSpecies}</a>
 	 * @return The created <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @throws NetworkMappingError 
 	 */
-	private FlatSpecies createFlatSpeciesFromSBMLSBaseEntity(SBMLSBaseEntity sbmlSBaseEntity) {
+	private FlatSpecies createFlatSpeciesFromSBMLSBaseEntity(SBMLSBaseEntity sbmlSBaseEntity) throws NetworkMappingError {
 		FlatSpecies newFlatSpecies = new FlatSpecies();
+		String primaryName = findSBasePrimaryName(sbmlSBaseEntity);
 		this.graphBaseEntityService.setGraphBaseEntityProperties(newFlatSpecies);
-		newFlatSpecies.setSymbol(sbmlSBaseEntity.getsBaseName());
-		
+		newFlatSpecies.setSymbol(primaryName);
 		newFlatSpecies.setSboTerm(sbmlSBaseEntity.getsBaseSboTerm());
-		
-		newFlatSpecies.setSimpleModelEntityUUID(sbmlSBaseEntity.getEntityUUID());
 		getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), newFlatSpecies);
 		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), newFlatSpecies);
 		return newFlatSpecies;
