@@ -37,8 +37,7 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	
 	private String shortIdentifierFromUri;
 	
-	@Deprecated
-	private String name;
+	private String primaryName;
 	
 	@Deprecated
 	private String[] secondaryNames;
@@ -85,13 +84,13 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 	public void setShortIdentifierFromUri(String shortIdentifierFromUri) {
 		this.shortIdentifierFromUri = shortIdentifierFromUri;
 	}
-	@Deprecated
-	public String getName() {
-		return name;
+	
+	public String getPrimaryName() {
+		return primaryName;
 	}
-	@Deprecated
-	public void setName(String name) {
-		this.name = name;
+
+	public void setPrimaryName(String name) {
+		this.primaryName = name;
 	}
 	@Deprecated
 	public String[] getSecondaryNames() {
