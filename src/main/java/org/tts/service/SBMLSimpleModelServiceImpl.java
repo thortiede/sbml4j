@@ -17,8 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -90,7 +92,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
 	GraphBaseEntityRepository graphBaseEntityRepository;
-	HttpService httpService;
+	KEGGHttpService keggHttpService;
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	ProvenanceGraphService provenanceGraphService;
 	UtilityService utilityService;
@@ -107,7 +109,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			ExternalResourceEntityRepository externalResourceEntityRepository,
 			BiomodelsQualifierRepository biomodelsQualifierRepository,
 			GraphBaseEntityRepository graphBaseEntityRepository,
-			HttpService httpService,
+			KEGGHttpService keggHttpService,
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
 			ProvenanceGraphService provenanceGraphService,
 			UtilityService utilityService,
@@ -122,7 +124,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.externalResourceEntityRepository = externalResourceEntityRepository;
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
-		this.httpService = httpService;
+		this.keggHttpService = keggHttpService;
 		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
 		this.provenanceGraphService = provenanceGraphService;
 		this.utilityService = utilityService;
@@ -493,8 +495,14 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
-						List<String> nameList = httpService.getGeneNamesFromKeggURL(resource);
-						for (String name : nameList) {
+						newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
+						Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
+						Iterator<String> nameIterator = nameList.iterator();
+						if (nameIterator.hasNext()) {
+							newExternalResourceEntity.setPrimaryName(nameIterator.next());
+						}
+						while (nameIterator.hasNext()) {
+							String name = nameIterator.next();
 							createNameNode(currentNames, newExternalResourceEntity, name);
 							// MDAnderson
 							if (addMdAnderson && !foundMdAndersonGene && mdAndersonGeneList.contains(name)) {
@@ -513,7 +521,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					} else if(resource.contains("kegg.compound")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
-						setKeggCompoundNames(resource, newExternalResourceEntity);
+						setKeggCompoundNames(currentNames, resource, newExternalResourceEntity);
 					} 
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 1); // TODO can I change this depth to one to persist the nameNodes or does that break BiomodelQualifier connections?
@@ -587,31 +595,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return newBiomodelsQualifier;
 	}	
 	
-	private void setKeggCompoundNames(String resource, ExternalResourceEntity newExternalResourceEntity) {
+	private void setKeggCompoundNames(Map<String, NameNode> seenNames, String resource, ExternalResourceEntity newExternalResourceEntity) {
 		// TODO Here httpService needs to fetch the resource from KEGG Compound and set the name and secondary Name
 		// what about formula? Is this more interesting? -> Do this as annotation
-		this.httpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
-	}
-	
-	private boolean setKeggGeneNames(String resource, ExternalResourceEntity entity) {
-		
-		List<String> keggGeneNames = httpService.getGeneNamesFromKeggURL(resource);
-		if (keggGeneNames != null) {
-			if (!keggGeneNames.isEmpty()) {
-				entity.setName(keggGeneNames.remove(0)); // remove returns the element it removes, so it becomes the name and keggGeneNames holds all secondary names
+		this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
+		if (newExternalResourceEntity.getSecondaryNames() != null && newExternalResourceEntity.getSecondaryNames().length > 0) {
+			for (String secName : newExternalResourceEntity.getSecondaryNames()) {
+				createNameNode(seenNames, newExternalResourceEntity, secName);
 			}
-			if (!keggGeneNames.isEmpty()) {
-				String[] secondaryNames = new String[keggGeneNames.size()];
-				for (int i = 0; i != keggGeneNames.size(); i++) {
-					secondaryNames[i] = keggGeneNames.get(i);
-				}
-				entity.setSecondaryNames(secondaryNames);
-			}
-			return true;
-		} else {
-			return false;
 		}
 	}
+	
 
 	@Override
 	public boolean isValidSBML(File file) {
