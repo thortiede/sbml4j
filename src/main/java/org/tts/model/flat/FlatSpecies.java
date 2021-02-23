@@ -21,7 +21,7 @@ import org.tts.model.common.ContentGraphNode;
 
 
 public class FlatSpecies extends ContentGraphNode {
-
+	@Deprecated
 	private String simpleModelEntityUUID;
 	
 	private String symbol;
@@ -33,10 +33,11 @@ public class FlatSpecies extends ContentGraphNode {
 	
 	private String sboTerm;
 	
-	 public String getSimpleModelEntityUUID() {
+	@Deprecated
+	public String getSimpleModelEntityUUID() {
 		return simpleModelEntityUUID;
 	}
-
+	@Deprecated
 	public void setSimpleModelEntityUUID(String simpleModelEntityUUID) {
 		this.simpleModelEntityUUID = simpleModelEntityUUID;
 	}
