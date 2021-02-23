@@ -359,7 +359,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 			Map<String, String> nodeSymbolIdMap, List<byte[]> edgesWithAnnotation, String inputSpeciesSymbol, String outputSpeciesSymbol,
 			Map<String, Object> edgeAnnotationMap, Map<String, String> edgeAnnotationTypeMap, String edgeTypeString) {
 		
-		edgesWithAnnotation.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n", nodeSymbolIdMap.get(inputSpeciesSymbol), nodeSymbolIdMap.get(outputSpeciesSymbol), (edgeTypeString.equals("STIMULATION") ? "activation" : edgeTypeString.toLowerCase())).getBytes());
+		edgesWithAnnotation.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n", nodeSymbolIdMap.get(inputSpeciesSymbol), nodeSymbolIdMap.get(outputSpeciesSymbol), edgeTypeString.toLowerCase()).getBytes());
 		if(!edgeAnnotations.containsKey("interaction")) {
 			edgeAnnotations.put("interaction", "String");
 		}
