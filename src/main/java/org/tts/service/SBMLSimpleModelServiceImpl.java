@@ -258,6 +258,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap,
 			ProvenanceGraphActivityNode activityNode) {
 		
+		if (sBaseIdToSBMLSpeciesMap == null ||sBaseIdToSBMLSpeciesMap.size() == 0) {
+			// no SBMLSpecies loaded, we cannot load reactions either, unless all species have already been loaded before
+			// very unlikely scenario, revisit if it occurs
+			return new ArrayList<>();
+		}
+		
 		List<SBMLSimpleReaction> sbmlSimpleReactionList = new ArrayList<>();
 		for (Reaction reaction : listOfReactions) {
 			
@@ -318,6 +324,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		//Map<String, SBMLQualSpecies> sBaseIdToQualSpeciesMap = new HashMap<>();
 		//Map<String, SBMLQualSpecies> sBaseNameToQualSpeciesMap = new HashMap<>();
 		List<QualitativeSpecies> groupQualSpeciesList = new ArrayList<>();
+		boolean coreLoaded = true;
+		if (persistedSBMLSpeciesMap == null || persistedSBMLSpeciesMap.size() == 0) {
+			coreLoaded = false;
+		}
+		
 		for (QualitativeSpecies qualSpecies : qualSpeciesListOf) {
 			if(qualSpecies.getName().equals("Group")) {
 				//logger.debug("found qual Species group");
@@ -326,10 +337,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
 				this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newQualSpecies);
 				this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(qualSpecies, newQualSpecies);
-				// uncomment to connect entities to compartments
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
-				newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
+				if (coreLoaded) newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
 				newQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 				
 				newQualSpecies.setCvTermList(qualSpecies.getCVTerms());
@@ -376,7 +386,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLQualSpeciesGroup.setsBaseId(qualSpecies.getId());
 			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + qualSpeciesSbaseName);
 			
-			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
+			if (coreLoaded) newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
 			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
 			

@@ -242,6 +242,7 @@ public class PathwayService {
 				.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.CONTAINS,
 						pathwayNode.getEntityUUID());
 		int nodeCounter = 0;
+		int qualNodeCounter = 0;
 		int transitionCounter = 0;
 		int reactionCounter = 0;
 		List<String> compartmentList = new ArrayList<>();
@@ -263,15 +264,18 @@ public class PathwayService {
 			} else if (node.getClass() == SBMLCompartment.class) {
 				compartmentList.add(((SBMLCompartment) node).getsBaseName());
 			} else if (node.getClass() == SBMLQualSpecies.class || node.getClass() == SBMLQualSpeciesGroup.class) {
-				// there is always a complementary SBMLSpecies or SBMLSpeciesGroup, so we can
-				// ignore those
-				logger.debug("Found QualSpecies or QualSpeciesGroup, ignoring");
+				qualNodeCounter++;
 			} else {
 				logger.warn("Node with entityUUID: " + node.getEntityUUID() + " has unexpected NodeType");
 			}
 		}
 		item.setCompartments(compartmentList);
-		item.setNumberOfNodes(nodeCounter);
+		
+		if (nodeCounter==0 &&qualNodeCounter > 0) {
+			item.setNumberOfNodes(qualNodeCounter);
+		} else {		
+			item.setNumberOfNodes(nodeCounter);
+		}
 		item.setNumberOfTransitions(transitionCounter);
 		item.setNumberOfReactions(reactionCounter);
 	
