@@ -114,12 +114,19 @@ public class MappingNodeService {
 
 	/**
 	 * Find a  <a href="#{@link}">{@link MappingNode}</a>  by its mappingName and the associated user
+	 * Uses the config parameter sbml4j.network.allow-inactive-duplicates to determine if only active networks should be searched for
+	 * If sbml4j.network.allow-inactive-duplicates=true duplicate names are allowed as long as only one version is set to isActive
+	 * This might be desired if sbml4j.network.hard-delete=False, as then delete operations only set the isActive Flag to False
 	 * @param name The mappingName attribute of the  <a href="#{@link}">{@link MappingNode}</a>  to find 
 	 * @param user The name of the  <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> associated with the mapping
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> found, if it exists, null otherwise. 
 	 */
 	public MappingNode findByNetworkNameAndUser(String name, String user) {
-		return this.mappingNodeRepository.findByMappingNameAndUser(name, user);
+		if (this.configService.isAllowInactiveDuplicates()) {
+			return this.mappingNodeRepository.findActiveByMappingNameAndUser(name, user);
+		} else {
+			return this.mappingNodeRepository.findByMappingNameAndUser(name, user);
+		}
 	}
 	
 	/**
