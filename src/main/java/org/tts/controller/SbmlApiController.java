@@ -14,6 +14,8 @@
 package org.tts.controller;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,7 @@ import org.tts.service.ConfigService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.SBMLService;
+import org.tts.service.UtilityService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.utility.FileCheckService;
 import org.tts.service.warehouse.DatabaseNodeService;
@@ -92,6 +95,9 @@ public class SbmlApiController implements SbmlApi {
 	@Autowired
 	WarehouseGraphService warehouseGraphService;
 	
+	@Autowired
+	UtilityService utilityService;
+	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
@@ -106,12 +112,67 @@ public class SbmlApiController implements SbmlApi {
 	public ResponseEntity<List<PathwayInventoryItem>> uploadSBML(@NotNull @Valid String organism,
 			@NotNull @Valid String source, @NotNull @Valid String version, String user,
 			@Valid List<MultipartFile> files) {
-		logger.debug("Serving POST /sbml..");
+		
+		logger.debug("Serving POST /sbml " + (user != null ? " for user " + user : ""));
+		
+		if (user == null || user.isBlank() ||user.isEmpty()) {
+			user = configService.getPublicUser();
+		}
+		if (user == null) {
+			return ResponseEntity.badRequest().header("reason", "No user provided and no public user configured. This is fatal. Aborting. Please provide user in header or configure public user.").build();
+		}
+		
+		/*
+		 * Create Agent for user if not existing
+		 */
+		Map<String, Object> agentNodeProperties = new HashMap<>();
+		agentNodeProperties.put("graphagentname", user);
+		agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
+		ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
+		
+		
+		// Organism
+		Organism org = null;
+		boolean orgExisted = false;
+		if(organism != null) {
+			if(this.organismService.organismExists(organism)) {
+				org = this.organismService.getOrgansimByOrgCode(organism);
+				orgExisted = true;
+				//this.provenanceGraphService.connect(persistGraphActivityNode, org, ProvenanceGraphEdgeType.used);
+			} else {
+				if(organism.length() != 3) {
+					return ResponseEntity.badRequest().header("reason", "Organism needs to be threeLetter Organsim Code (i.e. hsa). You priovided: " + organism).build();
+				} else {
+					org = this.organismService.createOrganism(organism);
+					orgExisted=false;
+					//this.provenanceGraphService.connect(org, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				}
+			}
+		} else { // organism is null
+			return ResponseEntity.badRequest().header("reason", "Need to provide organsim in three Letter Code").build();
+			// one could potentially read the organism from the file, but for now lets have the uploader provide it!
+		}
+		
+		// Database
+		// DatabaseNode has source, version info
+		boolean databaseExisted = false;
+		DatabaseNode database = this.databaseNodeService.getDatabaseNode(source, version, org.getOrgCode());
+		
+		if(database == null) {
+			// should be only the first time
+			logger.info("Creating DatabaseNode for source: " + source + " with version " + version + " and organism " + org.getOrgCode());
+			database = this.databaseNodeService.createDatabaseNode(source, version, org);
+			databaseExisted = false;
+		} else {
+			databaseExisted = true;
+		}
+		
+		
 		List<PathwayInventoryItem> pathwayInventoryList = new ArrayList<>();
 		
 		for (MultipartFile file : files) {
 			logger.debug("Processing file " + file.getOriginalFilename());
-	
+			Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
 			
@@ -131,22 +192,6 @@ public class SbmlApiController implements SbmlApi {
 				return ResponseEntity.badRequest().header("reason", "File ContentType is not application/xml").build();
 			}
 
-			if (user == null || user.isBlank() ||user.isEmpty()) {
-				user = configService.getPublicUser();
-			}
-			if (user == null) {
-				return ResponseEntity.badRequest().header("reason", "No user provided and no public user configured. This is fatal. Aborting. Please provide user in header or configure public user.").build();
-			}
-			
-			/*
-			 * Create Provenance Nodes
-			 */
-			// Create a ProvenanceGraph.Agent Node with it (using the timestamp to make it unique?) - or find Agent in DB and use it
-			Map<String, Object> agentNodeProperties = new HashMap<>();
-			agentNodeProperties.put("graphagentname", user);
-			agentNodeProperties.put("graphagenttype", ProvenanceGraphAgentType.User);
-			ProvenanceGraphAgentNode userAgentNode = this.provenanceGraphService.createProvenanceGraphAgentNode(agentNodeProperties);
-			
 			// Then we need an Activity Node (uploadSBML)
 			//Instant createDate = Instant.now();
 			Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
@@ -158,37 +203,22 @@ public class SbmlApiController implements SbmlApi {
 			
 			// Associate Activity with User Agent
 			this.provenanceGraphService.connect(persistGraphActivityNode, userAgentNode, ProvenanceGraphEdgeType.wasAssociatedWith);
-			
-			// Organism
-			Organism org = null;
-			if(organism != null) {
-				if(this.organismService.organismExists(organism)) {
-					org = this.organismService.getOrgansimByOrgCode(organism);
-					this.provenanceGraphService.connect(persistGraphActivityNode, org, ProvenanceGraphEdgeType.used);
-				} else {
-					if(organism.length() != 3) {
-						return ResponseEntity.badRequest().header("reason", "Organism needs to be threeLetter Organsim Code (i.e. hsa). You priovided: " + organism).build();
-					} else {
-						org = this.organismService.createOrganism(organism);
-						this.provenanceGraphService.connect(org, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-					}
-				}
-			} else { // organism is null
-				return ResponseEntity.badRequest().header("reason", "Need to provide organsim in three Letter Code").build();
-				// one could potentially read the organism from the file, but for now lets have the uploader provide it!
-			}
-					
-			// DatabaseNode has source, version info
-			DatabaseNode database = this.databaseNodeService.getDatabaseNode(source, version, org.getOrgCode());
-			if(database == null) {
-				// should be only the first time
-				logger.info("Creating DatabaseNode for source: " + source + " with version " + version + " and organism " + org.getOrgCode());
-				database = this.databaseNodeService.createDatabaseNode(source, version, org);
-				this.provenanceGraphService.connect(database, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			// Associate Organism with ActivityNode
+			if (orgExisted) {
+				this.provenanceGraphService.connect(persistGraphActivityNode, org, ProvenanceGraphEdgeType.used);
 			} else {
+				this.provenanceGraphService.connect(org, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				orgExisted = true;
+			}
+			// Associate Database with ActivityNode
+			if (databaseExisted) {
 				this.provenanceGraphService.connect(persistGraphActivityNode, database, ProvenanceGraphEdgeType.used);
+			} else {
+				this.provenanceGraphService.connect(database, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				databaseExisted = true;
 			}
 			
+			// File Node
 			FileNode sbmlFileNode = null;
 			// Does node with this filename already exist?
 			// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
@@ -203,7 +233,7 @@ public class SbmlApiController implements SbmlApi {
 			
 			// FileNode needs to connect to DatabaseNode
 			this.provenanceGraphService.connect(sbmlFileNode, database, ProvenanceGraphEdgeType.wasDerivedFrom);
-			
+			Instant createMetadataFinished = Instant.now();
 			// now handle the model itself
 			Model sbmlModel = null;
 			try {
@@ -220,10 +250,11 @@ public class SbmlApiController implements SbmlApi {
 			if(sbmlModel == null) {
 				return ResponseEntity.badRequest().header("reason", "Could not extract an sbmlModel").build();
 			}
+			Instant modelExtractionFinished = Instant.now();
 			// create a Pathway Node for the model
 			// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 			PathwayNode pathwayNode = this.pathwayService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
-			
+			Instant createPathwayNodeFinished = Instant.now();
 			List<ProvenanceEntity> resultSet;
 			try {
 				resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
@@ -231,22 +262,45 @@ public class SbmlApiController implements SbmlApi {
 				for (ProvenanceEntity entity : resultSet) {
 					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
 				}
+				Instant modelPersistingFinished = Instant.now();
 				
-				logger.info("Persisted " + resultSet.size() + " entities for file " + file.getOriginalFilename());			
 				this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 				this.provenanceGraphService.connect(sbmlFileNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 				this.provenanceGraphService.connect(database, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
-				
 				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
+				Instant postMetadataFinished = Instant.now();
+				
+				StringBuilder sb = new StringBuilder();
+				sb.append("Execution times: ");
+				
+				// createPreMetadata
+				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, postMetadataFinished), "total");
+				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, createMetadataFinished), "preMetadata");
+				this.utilityService.appendDurationString(sb, Duration.between(createMetadataFinished, modelExtractionFinished), "modelExtract");
+				this.utilityService.appendDurationString(sb, Duration.between(modelExtractionFinished, createPathwayNodeFinished), "createPWNode");
+				this.utilityService.appendDurationString(sb, Duration.between(createPathwayNodeFinished, modelPersistingFinished), "modelPersist");
+				this.utilityService.appendDurationString(sb, Duration.between(modelPersistingFinished, postMetadataFinished), "postMetadata");
+						
+				logger.info(sb.toString());
+				
 			} catch (Exception e) {
 				// TODO Roll back transaction..
+				logger.error("Error during model persistence. Model " + file.getOriginalFilename() + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
+				logger.error("The error message is: " + e.getMessage());
 				e.printStackTrace();
-				return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
+				logger.error("Continuing with the next model..");
+				
+				//return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
+			} finally {
+				logger.info("Finished processing file " + file.getOriginalFilename());
 			}
 		}
 		return new ResponseEntity<>(pathwayInventoryList, HttpStatus.CREATED);
 	}
+
+
+	
 }
