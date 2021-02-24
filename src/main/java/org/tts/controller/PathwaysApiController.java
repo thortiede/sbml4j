@@ -250,7 +250,7 @@ public class PathwaysApiController implements PathwaysApi {
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, pathwayUser) != null
 				&& this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser) != null) {
 			return ResponseEntity.badRequest()
-					.header("reason", "Network with name " + mappingName + " already exists for user " + pathwayUser)
+					.header("reason", "Network with name " + mappingName + " already exists for user " + pathwayUser + ". The network has UUID: " + this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser).getEntityUUID())
 					.build();
 		}
 		

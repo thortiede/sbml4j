@@ -395,7 +395,7 @@ public class NetworkService {
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
 				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user);
+			throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID());
 		}
 		
 		String activityName = "Create_" + newMappingName;
@@ -592,7 +592,7 @@ public class NetworkService {
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
 				&& this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Network with name " + contextNetworkName + " already exists for user " + user);
+			throw new NetworkAlreadyExistsException(1, "Network with name " + contextNetworkName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user).getEntityUUID());
 		}
 		
 		// 3. We need a graphAgent for creating the new network
@@ -686,7 +686,7 @@ public class NetworkService {
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
 				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user); 
+			throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID()); 
 		}
 		String activityName = "Filter_network_" + networkEntityUUID;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
@@ -807,7 +807,7 @@ public class NetworkService {
 			if (!newMappingName.equals(copiedOrNamedMappingNode.getMappingName()) 
 					&& (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
 							&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null)) {
-				throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user);
+				throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID());
 			}
 			copiedOrNamedMappingNode.setMappingName(newMappingName);
 		}
