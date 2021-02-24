@@ -136,6 +136,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		Set<String> nodeTypes = new HashSet<>();
 		//Set<String> flatSpeciesSymbols = new HashSet<>();
 		Set<String> relationSymbols = new HashSet<>();
+		Set<String> transitionSymbols = new HashSet<>();
 		List<String> nodeSBOTerms = new ArrayList<>();
 		int numberOfReactions = 0;
 
@@ -367,25 +368,29 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
 									if (i != j) {
 										// add two flat edges (i -> j and j -> i)
-										FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
-										this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
-										transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
-										transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
-										transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
-		
-										transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-										String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
-												+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
-										transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
-										transitionFlatEdge.addAnnotationType("TransitionId", "String");
-										transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
-										relationTypes.add(transitionFlatEdge.getTypeString());
-										//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-										//		inputSpeciesUUID);
-										//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-										//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
-										allFlatEdges.add(transitionFlatEdge);
-										relationSymbols.add(symbolAndTransitionIdString);
+										String edgeSymbol = inputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
+										+ "->" + inputGroupFlatSpecies.get(j).getSymbol();
+										if (transitionSymbols.add(edgeSymbol)) {
+											FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+											this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
+											transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
+											transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
+											transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
+			
+											transitionFlatEdge.addAnnotationType("SBOTerm", "String");
+											String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
+													+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
+											transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
+											transitionFlatEdge.addAnnotationType("TransitionId", "String");
+											transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
+											relationTypes.add(transitionFlatEdge.getTypeString());
+											//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+											//		inputSpeciesUUID);
+											//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+											//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+											allFlatEdges.add(transitionFlatEdge);
+											relationSymbols.add(symbolAndTransitionIdString);
+										}
 									}
 								}
 							}
@@ -449,25 +454,28 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								for (int j = 0; j != outputGroupFlatSpecies.size(); j++) {
 									if (i != j) {
 										// add two flat edges (i -> j and j -> i)
-										FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
-										this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
-										transitionFlatEdge.setInputFlatSpecies(outputGroupFlatSpecies.get(i));
-										transitionFlatEdge.setOutputFlatSpecies(outputGroupFlatSpecies.get(j));
-										transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
-		
-										transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-										String symbolAndTransitionIdString = outputGroupFlatSpecies.get(i).getSymbol() + "-" 
-												+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + outputGroupFlatSpecies.get(j).getSymbol();
-										transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
-										transitionFlatEdge.addAnnotationType("TransitionId", "String");
-										transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
-										relationTypes.add(transitionFlatEdge.getTypeString());
-										//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-										//		inputSpeciesUUID);
-										//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-										//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
-										allFlatEdges.add(transitionFlatEdge);
-										relationSymbols.add(symbolAndTransitionIdString);
+										String edgeSymbol = outputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
+										+ "->" + outputGroupFlatSpecies.get(j).getSymbol();
+										if (transitionSymbols.add(edgeSymbol)) {FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+											this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
+											transitionFlatEdge.setInputFlatSpecies(outputGroupFlatSpecies.get(i));
+											transitionFlatEdge.setOutputFlatSpecies(outputGroupFlatSpecies.get(j));
+											transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
+			
+											transitionFlatEdge.addAnnotationType("SBOTerm", "String");
+											String symbolAndTransitionIdString = outputGroupFlatSpecies.get(i).getSymbol() + "-" 
+													+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + outputGroupFlatSpecies.get(j).getSymbol();
+											transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
+											transitionFlatEdge.addAnnotationType("TransitionId", "String");
+											transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
+											relationTypes.add(transitionFlatEdge.getTypeString());
+											//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+											//		inputSpeciesUUID);
+											//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+											//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+											allFlatEdges.add(transitionFlatEdge);
+											relationSymbols.add(symbolAndTransitionIdString);
+										}
 									}
 								}
 							}
@@ -487,37 +495,49 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					
 					if (outputFlatSpecies != null) {
 						// no groups, so two normal species, this should be the standard case
-						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, current);
-						relationTypes.add(transitionFlatEdge.getTypeString());
-						relationSymbols.add(transitionFlatEdge.getSymbol());
-						allFlatEdges.add(transitionFlatEdge);
-						if (inputFlatSpecies.getLabels().contains("Drug")) {
-							FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
-							allFlatEdges.add(targetsEdge);
-						}
-					} else {
-						// input is single, output is group
-						for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, current);
+						String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+						+ "->" + outputFlatSpecies.getSymbol();
+						if (transitionSymbols.add(edgeSymbol)) {
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, current);
 							relationTypes.add(transitionFlatEdge.getTypeString());
 							relationSymbols.add(transitionFlatEdge.getSymbol());
 							allFlatEdges.add(transitionFlatEdge);
 							if (inputFlatSpecies.getLabels().contains("Drug")) {
-								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
+								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
 								allFlatEdges.add(targetsEdge);
+							}
+						}
+					} else {
+						// input is single, output is group
+						for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
+							String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+							+ "->" + outputFlatSpeciesOfGroup.getSymbol();
+							if (transitionSymbols.add(edgeSymbol)) {
+								FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, current);
+								relationTypes.add(transitionFlatEdge.getTypeString());
+								relationSymbols.add(transitionFlatEdge.getSymbol());
+								allFlatEdges.add(transitionFlatEdge);
+								if (inputFlatSpecies.getLabels().contains("Drug")) {
+									FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
+									allFlatEdges.add(targetsEdge);
+								}
 							}
 						}
 					}
 				} else if (outputFlatSpecies != null) {
 					// input is group, output is single
 					for (FlatSpecies inputFlatSpeciesOfGroup : inputGroupFlatSpecies) {
-						FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, current);
-						relationTypes.add(transitionFlatEdge.getTypeString());
-						relationSymbols.add(transitionFlatEdge.getSymbol());
-						allFlatEdges.add(transitionFlatEdge);
-						if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
-							FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
-							allFlatEdges.add(targetsEdge);
+						String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+						+ "->" + outputFlatSpecies.getSymbol();
+						if (transitionSymbols.add(edgeSymbol)) {
+							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, current);
+							relationTypes.add(transitionFlatEdge.getTypeString());
+							relationSymbols.add(transitionFlatEdge.getSymbol());
+							allFlatEdges.add(transitionFlatEdge);
+							if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
+								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
+								allFlatEdges.add(targetsEdge);
+							}
 						}
 					}
 				} else {
@@ -526,13 +546,17 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						FlatSpecies inputFlatSpeciesOfGroup = inputGroupFlatSpecies.get(i);
 						for (int j = 0; j != outputGroupFlatSpecies.size(); j ++) {
 							FlatSpecies outputFlatSpeciesOfGroup = outputGroupFlatSpecies.get(j);
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, current);
-							relationTypes.add(transitionFlatEdge.getTypeString());
-							relationSymbols.add(transitionFlatEdge.getSymbol());
-							allFlatEdges.add(transitionFlatEdge);
-							if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
-								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
-								allFlatEdges.add(targetsEdge);
+							String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+							+ "->" + outputFlatSpeciesOfGroup.getSymbol();
+							if (transitionSymbols.add(edgeSymbol)) {
+								FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, current);
+								relationTypes.add(transitionFlatEdge.getTypeString());
+								relationSymbols.add(transitionFlatEdge.getSymbol());
+								allFlatEdges.add(transitionFlatEdge);
+								if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
+									FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
+									allFlatEdges.add(targetsEdge);
+								}
 							}
 						}
 					}
