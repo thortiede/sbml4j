@@ -13,6 +13,7 @@
  */
 package org.tts.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -80,6 +81,30 @@ public class ApocService {
 		}
 	}
 		
+	
+	/**
+	 * Extract FlatEdge entities from an Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
+	 * Keeps the param skipEdgeSymbols unmodified and only adds new <a href="#{@link}">{@link FlatEdge}</a> entities to allEdges .
+	 * 
+	 * @param skipEdgeSymbols A Set of edge symbols that should not be returned (have been seen already)
+	 * @param multiNodeApocPath The Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a> to extract the <a href="#{@link}">{@link FlatEdge}</a> entities from
+	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities forming the path described in the mutliNodeApicPath
+	 */
+	public List<FlatEdge> getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(Set<String> skipEdgeSymbols,
+			Iterable<ApocPathReturnType> multiNodeApocPath) {
+		List<FlatEdge> flatEdgeList = new ArrayList<>();
+		Set<String> modifiedSeenEdges = new HashSet<>(skipEdgeSymbols);
+		Iterator<ApocPathReturnType> iter = multiNodeApocPath.iterator();
+		while (iter.hasNext()) {
+			ApocPathReturnType current = iter.next();
+			for(FlatEdge edge : current.getPathEdges()) {
+				if(modifiedSeenEdges.add(edge.getSymbol())) {
+					flatEdgeList.add(edge);
+				}
+			}
+		}
+		return flatEdgeList;
+	}
 	public String getNodeOrString(Iterable<String> nodeTypes, String terminateAt) {
 		StringBuilder sb = new StringBuilder();
 		for (String nodeType : nodeTypes) {

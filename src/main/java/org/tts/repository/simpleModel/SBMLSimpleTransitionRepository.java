@@ -13,6 +13,8 @@
  */
 package org.tts.repository.simpleModel;
 
+import java.util.List;
+
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
@@ -37,4 +39,47 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "s2 as outputSpecies"
 			)
 	Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID);
+
+	
+	@Query(value = "MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where p.entityUUID = $pathwayEntityUUID "
+			+ "with t "
+			+ "MATCH "
+			+ "(qi:SBMLQualSpecies)"
+			+ "<-[in:IS_INPUT]-"
+			+ "(t)"
+			+ "-[out:IS_OUTPUT]->"
+			+ "(qo:SBMLQualSpecies) "
+			+ "RETURN qi, in,  t, out, qo")
+	Iterable<SBMLSimpleTransition> findAllInPathway(String pathwayEntityUUID);
+
+	@Query(value = "MATCH "
+			+ "(p:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where p.entityUUID = $pathwayEntityUUID "
+			+ "and t.sBaseSboTerm in $transitionSBOTerms "
+			+ "with t "
+			+ "MATCH "
+			+ "(ei:ExternalResourceEntity)"
+			+ "<-[bi:BQ]-"
+			+ "(qi:SBMLQualSpecies)"
+			+ "<-[in:IS_INPUT]-"
+			+ "(t)"
+			+ "-[out:IS_OUTPUT]->"
+			+ "(qo:SBMLQualSpecies)"
+			+ "-[bo:BQ]->"
+			+ "(eo:ExternalResourceEntity) "
+			+ "WHERE bi.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND bi.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND qi.sBaseSboTerm in $nodeSBOTerms "
+			+ "AND qo.sBaseSboTerm in $nodeSBOTerms "
+			+ "AND bo.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND bo.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "RETURN ei, bi, qi, in,  t, out, qo, bo, eo")
+	Iterable<SBMLSimpleTransition> findMatchingInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
+			List<String> nodeSBOTerms);
 }

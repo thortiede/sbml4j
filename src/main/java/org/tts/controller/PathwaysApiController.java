@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.tts.Exception.NetworkMappingError;
 import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.PathwaysApi;
 import org.tts.model.api.PathwayCollectionCreationItem;
@@ -280,11 +281,17 @@ public class PathwaysApiController implements PathwaysApi {
 			mappingNode = this.networkMappingService.createMappingFromPathway(pathwayNode,
 					NetworkMappingType.valueOf(mappingType), createMappingActivityNode,
 					userAgentNode, mappingName);
+		} catch (NetworkMappingError nme) {
+			log.error(nme.getMessage());
+			//TODO: Do a rollback of the transaction
+			nme.printStackTrace();
+			return ResponseEntity.badRequest().header("reason", nme.getMessage()).build();
 		} catch (Exception e) {
+				
 			// TODO Auto-generated catch block
 			log.error(e.getMessage());
 			e.printStackTrace();
-			return ResponseEntity.badRequest().header("reason", "Failed to create Mapping from pathway").build();
+			return ResponseEntity.badRequest().header("reason", "Failed to create Mapping from pathway: " + e.getMessage()).build();
 		}
 		
 		// build the inventoryItem

@@ -13,6 +13,7 @@
  */
 package org.tts.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,28 @@ public class FlatSpeciesService {
 	}
 	
 	/**
+	 * Search for all <a href="#{@link}">{@link FlatSpecies}</a> entities having the given nodeSymbol in the network
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbol The symbol of the <a href="#{@link}">{@link FlatSpecies}</a> entity
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> having the given nodeSymbol in the symbol property
+	 */
+	public Iterable<FlatSpecies> findAllNetworkNodesForSymbol(String networkEntityUUID, String nodeSymbol){
+		List<String> nodeSymbols = new ArrayList<>();
+		nodeSymbols.add(nodeSymbol);
+		return this.findAllNetworkNodesForSymbols(networkEntityUUID, nodeSymbols);
+	}
+	
+	/**
+	 * Search for all <a href="#{@link}">{@link FlatSpecies}</a> entities having the given nodeSymbols in the network
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbols List of symbols of the <a href="#{@link}">{@link FlatSpecies}</a> entity
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> having the given nodeSymbol in the symbol property
+	 */
+	public Iterable<FlatSpecies> findAllNetworkNodesForSymbols(String networkEntityUUID, List<String> nodeSymbols){
+		return this.flatSpeciesRepository.getNetworkNodes(networkEntityUUID, nodeSymbols);
+	}
+	
+	/**
 	 * Find <a href="#{@link}">{@link FlatSpecies}</a> by its entityUUID
 	 * 
 	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> to find
@@ -68,15 +91,16 @@ public class FlatSpeciesService {
 		return this.flatSpeciesRepository.findEntityUUIDForSymbolInNetwork(networkEntityUUID.toString(), geneSymbol);
 	}
 
-	public FlatSpecies findBySimpleModelEntityUUID(String baseNetworkUUID, String simpleModelGeneEntityUUID) {
+	/*public FlatSpecies findBySimpleModelEntityUUID(String baseNetworkUUID, String simpleModelGeneEntityUUID) {
 		return this.flatSpeciesRepository.findBySimpleModelEntityUUID(simpleModelGeneEntityUUID, baseNetworkUUID);
-	}
+	}*/
 	
 	/**
 	 * Persist a List of <a href="#{@link}">{@link FlatSpecies}</a>
 	 * @param flatSpeciesList The List of <a href="#{@link}">{@link FlatSpecies}</a> to persist
 	 * @return An Iterable of the persisted <a href="#{@link}">{@link FlatSpecies}</a> entities
 	 */
+	@Deprecated
 	public Iterable<FlatSpecies> persistListOfFlatSpecies(List<FlatSpecies> flatSpeciesList) {
 		return this.flatSpeciesRepository.save(flatSpeciesList, 1);
 	}
@@ -89,6 +113,19 @@ public class FlatSpeciesService {
 	 */
 	public Iterable<FlatSpecies> save(Iterable<FlatSpecies> entities, int depth) {
 		return this.flatSpeciesRepository.save(entities, depth);
+	}
+
+	/**
+	 * Find all <a href="#{@link}">{@link FlatSpecies}</a> in network of <a href="#{@link}">{@link MappingNode}</a> with given entityUUID
+	 * whose property secondaryNames contains the given nodeSymbol String .
+	 * 
+	 * Requires that there is a Fulltext-index defined on the property secondaryNames of <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @param nodeSymbol The String to find
+	 * @return List of <a href="#{@link}">{@link FlatSpecies}</a> having the String nodeSymbol in their secondaryNames String property
+	 */
+	public List<FlatSpecies> findAllBySecondaryName(String networkEntityUUID, String nodeSymbol) {
+		return this.flatSpeciesRepository.findAllBySecondaryName(networkEntityUUID, nodeSymbol);
 	}
 	
 }

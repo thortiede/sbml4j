@@ -68,7 +68,9 @@ public class ConfigService {
 			}		
 		}
 		// if we reached here, the network was not attributed to the given user, or the configured public user
-		throw new UserUnauthorizedException(user != null ? "User " +user +" is not authorized to access network with uuid " +uuid : "Network with uuid " +uuid + " not accesible for public user");
+		throw new UserUnauthorizedException(user != null 
+													? "User " +user +" is not authorized to access network with uuid " +uuid 
+													: "Network with uuid " +uuid + " not accesible for public user");
 	}
 	
 	public boolean isPublicUser(String user) {

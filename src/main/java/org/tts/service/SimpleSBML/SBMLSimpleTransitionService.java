@@ -13,9 +13,12 @@
  */
 package org.tts.service.SimpleSBML;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
+import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 /**
@@ -38,5 +41,29 @@ public class SBMLSimpleTransitionService {
 	public Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID) {
 		return this.sbmlSimpleTransitionRepository.getTransitionsForSpecies(speciesEntityUUID);
 	}
+	
+	/**
+	 * Finds all <a href="#{@link}">{@link SBMLSimpleTransition}</a> entities that are connected to a <a href="#{@link}">{@link PathwayNode}</a>
+	 * with a "CONTAINS" - <a href="#{@link}">{@link WarehouseGraphEdge}</a> with the input and output <a href="#{@link}">{@link SBMLQualSpecies}</a>
+	 * @param pathwayEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link SBMLSimpleTransition}</a> that were found for the given pathway
+	 */
+	public Iterable<SBMLSimpleTransition> findAllTransitionsInPathway(String pathwayEntityUUID) {
+		return this.sbmlSimpleTransitionRepository.findAllInPathway(pathwayEntityUUID);
+	}
+	
+	/**
+	 * Finds all <a href="#{@link}">{@link SBMLSimpleTransition}</a> entities that are connected to a <a href="#{@link}">{@link PathwayNode}</a>
+	 * with a "CONTAINS" - <a href="#{@link}">{@link WarehouseGraphEdge}</a> with the input and output <a href="#{@link}">{@link SBMLQualSpecies}</a>
+	 * @param pathwayEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link SBMLSimpleTransition}</a> that were found for the given pathway
+	 */
+	public Iterable<SBMLSimpleTransition> findMatchingTransitionsInPathway(
+												String pathwayEntityUUID, 
+												List<String> transitionSBOTerms, 
+												List<String> nodeSBOTerms) {
+		return this.sbmlSimpleTransitionRepository.findMatchingInPathway(pathwayEntityUUID, transitionSBOTerms, nodeSBOTerms);
+	}
+	
 	
 }

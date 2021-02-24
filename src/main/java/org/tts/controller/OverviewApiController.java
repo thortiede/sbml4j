@@ -154,7 +154,9 @@ public class OverviewApiController implements OverviewApi {
 		// 5. Check whether we know at least one of the genes provided
 		boolean foundGene = false;
 		for (String gene : geneNames) {
-			if (this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene) != null) {
+			List<String> foundGeneEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
+			if (foundGeneEntityUUIDs != null
+					&& !foundGeneEntityUUIDs.isEmpty()) {
 				foundGene = true;
 				break;
 			}

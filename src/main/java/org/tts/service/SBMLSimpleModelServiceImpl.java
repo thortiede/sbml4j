@@ -16,11 +16,11 @@ package org.tts.service;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -50,6 +50,7 @@ import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.GraphEnum.ExternalResourceType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.tts.model.common.HelperQualSpeciesReturn;
+import org.tts.model.common.NameNode;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLQualSpecies;
 import org.tts.model.common.SBMLQualSpeciesGroup;
@@ -91,10 +92,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	ExternalResourceEntityRepository externalResourceEntityRepository;
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
 	GraphBaseEntityRepository graphBaseEntityRepository;
-	HttpService httpService;
+	KEGGHttpService keggHttpService;
 	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	ProvenanceGraphService provenanceGraphService;
 	UtilityService utilityService;
+	NameNodeService nameNodeService;
 	SBML4jConfig sbml4jConfig;
 	
 	int SAVE_DEPTH = 1;
@@ -107,10 +109,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			ExternalResourceEntityRepository externalResourceEntityRepository,
 			BiomodelsQualifierRepository biomodelsQualifierRepository,
 			GraphBaseEntityRepository graphBaseEntityRepository,
-			HttpService httpService,
+			KEGGHttpService keggHttpService,
 			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
 			ProvenanceGraphService provenanceGraphService,
 			UtilityService utilityService,
+			NameNodeService nameNodeService,
 			SBML4jConfig sbml4jConfig) {
 		super();
 		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
@@ -121,10 +124,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.externalResourceEntityRepository = externalResourceEntityRepository;
 		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
 		this.graphBaseEntityRepository = graphBaseEntityRepository;
-		this.httpService = httpService;
+		this.keggHttpService = keggHttpService;
 		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
 		this.provenanceGraphService = provenanceGraphService;
 		this.utilityService = utilityService;
+		this.nameNodeService = nameNodeService;
 		this.sbml4jConfig = sbml4jConfig;
 	}
 
@@ -187,7 +191,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		Map<String, SBMLSpecies> sBaseNameToSBMLSpeciesMap = new HashMap<>();
 		for (Species species : speciesListOf) {
 			if(species.getName().equals("Group")) {
-				logger.debug("found group");
+				//logger.debug("found group");
 				groupSpeciesList.add(species);
 			} else {
 				SBMLSpecies newSpecies = new SBMLSpecies();
@@ -197,13 +201,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(species, newSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setSpeciesProperties(species, newSpecies);
 				
-				SBMLSpecies persistedNewSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-				persistedNewSpecies.setCvTermList(species.getCVTerms());
-				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpecies, activityNode);
-				SBMLSpecies persistedSpeciesWithExternalResources = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
-				speciesList.add(persistedSpeciesWithExternalResources);
+				newSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				newSpecies.setCvTermList(species.getCVTerms());
+				newSpecies = (SBMLSpecies) buildAndPersistExternalResourcesForSBaseEntity(newSpecies, activityNode);
+				newSpecies = this.sbmlSpeciesRepository.save(newSpecies, SAVE_DEPTH);
+				speciesList.add(newSpecies);
 				sBaseNameToSBMLSpeciesMap.put(newSpecies.getsBaseName(), newSpecies);
-				this.provenanceGraphService.connect(persistedSpeciesWithExternalResources, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.provenanceGraphService.connect(newSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the groups nodes
@@ -215,7 +219,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				if(ulNode.getChild(i).getChildCount() > 0) {
 					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
 						String chars = ulNode.getChild(i).getChild(j).getCharacters();
-						logger.debug(chars);
+						//logger.debug(chars);
 						groupMemberSymbols.add(chars);
 					}
 				}
@@ -235,13 +239,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLSpeciesGroup.setsBaseName(speciesSbaseName);
 			newSBMLSpeciesGroup.setsBaseId(species.getId());
 			newSBMLSpeciesGroup.setsBaseMetaId("meta_" + speciesSbaseName);
-			SBMLSpeciesGroup persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-			persistedNewSpeciesGroup.setCvTermList(species.getCVTerms());
-			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(persistedNewSpeciesGroup, activityNode);
-			persistedNewSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
-			speciesList.add(persistedNewSpeciesGroup);
-			sBaseNameToSBMLSpeciesMap.put(speciesSbaseName, persistedNewSpeciesGroup);
-			this.provenanceGraphService.connect(persistedNewSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			newSBMLSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			newSBMLSpeciesGroup.setCvTermList(species.getCVTerms());
+			newSBMLSpeciesGroup = (SBMLSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(newSBMLSpeciesGroup, activityNode);
+			newSBMLSpeciesGroup = this.sbmlSpeciesRepository.save(newSBMLSpeciesGroup, SAVE_DEPTH);
+			speciesList.add(newSBMLSpeciesGroup);
+			sBaseNameToSBMLSpeciesMap.put(speciesSbaseName, newSBMLSpeciesGroup);
+			this.provenanceGraphService.connect(newSBMLSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
 		return sBaseNameToSBMLSpeciesMap;
@@ -316,7 +320,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<QualitativeSpecies> groupQualSpeciesList = new ArrayList<>();
 		for (QualitativeSpecies qualSpecies : qualSpeciesListOf) {
 			if(qualSpecies.getName().equals("Group")) {
-				logger.debug("found qual Species group");
+				//logger.debug("found qual Species group");
 				groupQualSpeciesList.add(qualSpecies);// need to do them after all species have been persisted
 			} else {
 				SBMLQualSpecies newQualSpecies = new SBMLQualSpecies();
@@ -326,13 +330,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(qualSpecies, newQualSpecies, compartmentLookupMap);
 				this.sbmlSimpleModelUtilityServiceImpl.setQualSpeciesProperties(qualSpecies, newQualSpecies);
 				newQualSpecies.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpecies.getName()));
-				SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
+				newQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
 				
-				helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+				newQualSpecies.setCvTermList(qualSpecies.getCVTerms());
+				newQualSpecies = (SBMLQualSpecies) buildAndPersistExternalResourcesForSBaseEntity(newQualSpecies, activityNode);
+				newQualSpecies = this.sbmlQualSpeciesRepository.save(newQualSpecies, SAVE_DEPTH);
+				
+				helperQualSpeciesReturn.addQualSpecies(newQualSpecies);
 				//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 				//sBaseNameToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseName(), persistedNewQualSpecies);
 				
-				this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+				this.provenanceGraphService.connect(newQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			}
 		}
 		// now build the group nodes
@@ -344,7 +352,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				if(ulNode.getChild(i).getChildCount() > 0) {
 					for (int j = 0; j != ulNode.getChild(i).getChildCount(); j++) {
 						String chars = ulNode.getChild(i).getChild(j).getCharacters();
-						logger.debug(chars);
+						//logger.debug(chars);
 						groupMemberSymbols.add(chars);
 					}
 				}
@@ -370,12 +378,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			
 			newSBMLQualSpeciesGroup.setCorrespondingSpecies(persistedSBMLSpeciesMap.get(qualSpeciesSbaseName));
 			
-			SBMLQualSpecies persistedNewQualSpecies = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
-			helperQualSpeciesReturn.addQualSpecies(persistedNewQualSpecies);
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			newSBMLQualSpeciesGroup.setCvTermList(qualSpecies.getCVTerms());
+			newSBMLQualSpeciesGroup = (SBMLQualSpeciesGroup) buildAndPersistExternalResourcesForSBaseEntity(newSBMLQualSpeciesGroup, activityNode);
+			newSBMLQualSpeciesGroup = this.sbmlQualSpeciesRepository.save(newSBMLQualSpeciesGroup, SAVE_DEPTH);
+			
+			helperQualSpeciesReturn.addQualSpecies(newSBMLQualSpeciesGroup);
 			
 			//sBaseIdToQualSpeciesMap.put(persistedNewQualSpecies.getsBaseId(), persistedNewQualSpecies);
 			//helperQualSpeciesReturn.addsBasePair(qualSpecies.getId(), persistedNewQualSpecies);
-			this.provenanceGraphService.connect(persistedNewQualSpecies, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			this.provenanceGraphService.connect(newSBMLQualSpeciesGroup, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
 		}
 		//helperQualSpeciesReturn.setSBaseNameToQualSpeciesMap(sBaseIdToQualSpeciesMap);
@@ -463,6 +477,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		for (CVTerm cvTerm : sBaseEntity.getCvTermList()) {
 			//createExternalResources(cvTerm, qualSpecies);
 			for (String resource : cvTerm.getResources()) {
+				Map<String,NameNode> currentNames = new HashMap<>();
 				// build a BiomodelsQualifier RelationshopEntity
 				BiomodelsQualifier newBiomodelsQualifier = createBiomodelsQualifier(updatedSBaseEntity,
 						cvTerm.getQualifierType(), cvTerm.getQualifier());
@@ -480,29 +495,19 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
-						setKeggGeneNames(resource, newExternalResourceEntity);
-						// check the name
-						if (addMdAnderson && !foundMdAndersonGene && mdAndersonGeneList.contains(newExternalResourceEntity.getName())) {
-							foundMdAndersonGene = true;
-							mdAndersonNamesList.add(newExternalResourceEntity.getName());
-						} else if (addMdAnderson && !foundMdAndersonGene
-								&& newExternalResourceEntity.getSecondaryNames() != null
-								&& !Collections.disjoint(Arrays.asList(newExternalResourceEntity.getSecondaryNames()), mdAndersonGeneList)) {
-							foundMdAndersonGene = true;
-							List<String> secNamesListCopy = new ArrayList<>(Arrays.asList(newExternalResourceEntity.getSecondaryNames()));
-							if (secNamesListCopy.retainAll(mdAndersonGeneList)) {
-								if (secNamesListCopy.isEmpty()) {
-									// did not actually find an MdAnderson Gene Name in the secondary names. Should not happen
-									logger.debug("Should have found MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
-								} else if (secNamesListCopy.size() < 2){
-									mdAndersonNamesList.add(secNamesListCopy.get(0));
-								} else {
-									// multiple hits..
-									logger.debug("Found more than one MdAnderson Gene Name in " + newExternalResourceEntity.getSecondaryNames());
-									for (String mdAndersonNameHit : secNamesListCopy) {
-										mdAndersonNamesList.add(mdAndersonNameHit);
-									}
-								}
+						newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
+						Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
+						Iterator<String> nameIterator = nameList.iterator();
+						if (nameIterator.hasNext()) {
+							newExternalResourceEntity.setPrimaryName(nameIterator.next());
+						}
+						while (nameIterator.hasNext()) {
+							String name = nameIterator.next();
+							createNameNode(currentNames, newExternalResourceEntity, name);
+							// MDAnderson
+							if (addMdAnderson && !foundMdAndersonGene && mdAndersonGeneList.contains(name)) {
+								foundMdAndersonGene = true;
+								mdAndersonNamesList.add(name);
 							}
 						}
 					} else if(resource.contains("kegg.reaction")) {
@@ -511,14 +516,15 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					} else if(resource.contains("kegg.drug")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
-						newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
+						//newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
+						createNameNode(currentNames, newExternalResourceEntity, sBaseEntity.getsBaseName());
 					} else if(resource.contains("kegg.compound")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
-						setKeggCompoundNames(resource, newExternalResourceEntity);
+						setKeggCompoundNames(currentNames, resource, newExternalResourceEntity);
 					} 
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
-					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 0);
+					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 1); // TODO can I change this depth to one to persist the nameNodes or does that break BiomodelQualifier connections?
 					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
 					this.provenanceGraphService.connect(persistedNewExternalResourceEntity, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				}
@@ -544,7 +550,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				} else {
 					ExternalResourceEntity newMdAndersonResourceEntity = new ExternalResourceEntity();
 					this.graphBaseEntityService.setGraphBaseEntityProperties(newMdAndersonResourceEntity);
-					//newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
 					newMdAndersonResourceEntity.setUri(mdAndersonUriStringBuilder.toString());
 					newMdAndersonResourceEntity.setType(ExternalResourceType.MDANDERSON);
 					newMdAndersonResourceEntity.setDatabaseFromUri("MDAnderson");
@@ -561,6 +566,25 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return updatedSBaseEntity;
 	}
 
+	private void createNameNode(Map<String, NameNode> seenNames, ExternalResourceEntity externalResourceEntity,
+			String name) {
+		// check if we have seen this name already for this cvTerm (i.e. there is a duplicate)
+		NameNode nameNode = seenNames.getOrDefault(name, null);
+		// if not, check if we already have a name node with that name in the database
+		if (nameNode == null) {
+			nameNode = this.nameNodeService.findByName(name);
+		}
+		// if not, build a new name node
+		if (nameNode == null) {
+			nameNode = new NameNode();
+			this.graphBaseEntityService.setGraphBaseEntityProperties(nameNode);
+			nameNode.setName(name);
+			seenNames.put(name, nameNode);
+		}
+		nameNode.addResource(externalResourceEntity);
+		externalResourceEntity.addName(nameNode);
+	}
+
 	private BiomodelsQualifier createBiomodelsQualifier(SBMLSBaseEntity startNodeSBaseEntity, Type qualifierType,
 			Qualifier qualifier) {
 		BiomodelsQualifier newBiomodelsQualifier = new BiomodelsQualifier();
@@ -572,31 +596,17 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return newBiomodelsQualifier;
 	}	
 	
-	private void setKeggCompoundNames(String resource, ExternalResourceEntity newExternalResourceEntity) {
+	private void setKeggCompoundNames(Map<String, NameNode> seenNames, String resource, ExternalResourceEntity newExternalResourceEntity) {
 		// TODO Here httpService needs to fetch the resource from KEGG Compound and set the name and secondary Name
 		// what about formula? Is this more interesting? -> Do this as annotation
-		this.httpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
-	}
-	
-	private boolean setKeggGeneNames(String resource, ExternalResourceEntity entity) {
-		
-		List<String> keggGeneNames = httpService.getGeneNamesFromKeggURL(resource);
-		if (keggGeneNames != null) {
-			if (!keggGeneNames.isEmpty()) {
-				entity.setName(keggGeneNames.remove(0)); // remove returns the element it removes, so it becomes the name and keggGeneNames holds all secondary names
+		this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
+		if (newExternalResourceEntity.getSecondaryNames() != null && newExternalResourceEntity.getSecondaryNames().length > 0) {
+			for (String secName : newExternalResourceEntity.getSecondaryNames()) {
+				createNameNode(seenNames, newExternalResourceEntity, secName);
 			}
-			if (!keggGeneNames.isEmpty()) {
-				String[] secondaryNames = new String[keggGeneNames.size()];
-				for (int i = 0; i != keggGeneNames.size(); i++) {
-					secondaryNames[i] = keggGeneNames.get(i);
-				}
-				entity.setSecondaryNames(secondaryNames);
-			}
-			return true;
-		} else {
-			return false;
 		}
 	}
+	
 
 	@Override
 	public boolean isValidSBML(File file) {

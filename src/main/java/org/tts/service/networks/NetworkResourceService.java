@@ -60,9 +60,9 @@ public class NetworkResourceService {
 		// 1. Translate the symbols in geneSet into simplemodel entityUUIDs of network with UUID uuid
 		List<String> flatSpeciesUUIDs = new ArrayList<>();
 		for (String geneSymbol : geneSet) {
-			String speciesUUID = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(uuid, geneSymbol);
-			if(speciesUUID != null) {
-				flatSpeciesUUIDs.add(speciesUUID);
+			List<String> speciesUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(uuid, geneSymbol);
+			if(speciesUUIDs != null && !speciesUUIDs.isEmpty()) {
+				flatSpeciesUUIDs.addAll(speciesUUIDs);
 			} else {
 				log.warn("Could not find FlatSpecies for symbol " + geneSymbol + " in network (" + uuid + ")");
 			}

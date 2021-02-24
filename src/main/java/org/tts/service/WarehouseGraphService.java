@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.tts.model.api.WarehouseInventoryItem;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.provenance.ProvenanceEntity;
+import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.provenance.ProvenanceGraphEdge;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.WarehouseGraphEdge;
 import org.tts.model.warehouse.WarehouseGraphNode;
@@ -202,6 +204,20 @@ public class WarehouseGraphService {
 			item.setName(((MappingNode) warehouseGraphNode).getMappingName());
 		}
 		return item;
+	}
+	
+	
+	
+/************************************************************* Provenance related tasks ***********************************************/		
+
+	/**
+	 * Get the Number of <a href="#{@link}">{@link WarehouseGraphNode}</a> that are connected to the <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>
+	 * with graphAgentName by the <a href="#{@link}">{@link ProvenanceGraphEdge}</a> with provenanceGraphEdgeType wasAttributedTo
+	 * @param graphAgentName The name of the <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>
+	 * @return The number of <a href="#{@link}">{@link WarehouseGraphNode}</a>
+	 */
+	public int getNumberOfWarehouseGraphNodesAttributedProvAgent(String graphAgentName) {
+		return this.warehouseGraphNodeRepository.getNumberOfWarehouseGraphNodesAttributedProvAgent(graphAgentName);
 	}
 
 }

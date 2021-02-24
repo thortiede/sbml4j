@@ -13,6 +13,9 @@
  */
 package org.tts.repository.common;
 
+import java.util.List;
+
+import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
 import org.tts.model.common.SBMLQualSpecies;
@@ -20,8 +23,33 @@ import org.tts.model.common.SBMLQualSpecies;
 @Repository
 public interface SBMLQualSpeciesRepository extends Neo4jRepository<SBMLQualSpecies, Long> {
 
-	SBMLQualSpecies findBysBaseName(String sBaseName);
+	List<SBMLQualSpecies> findBysBaseName(String sBaseName);
 
 	SBMLQualSpecies findBysBaseId(String sBaseId);
+
+	@Query("MATCH "
+			+ "(g:SBMLQualSpeciesGroup)"
+			+ "-[h:HAS_GROUP_MEMBER]->"
+			+ "(s:SBMLQualSpecies) "
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND g.entityUUID = $groupEntityUUID "
+			+ "RETURN s, b, e")
+	Iterable<SBMLQualSpecies> getSBMLQualSpeciesOfGroup(String groupEntityUUID);
+
+	@Query("MATCH "
+			+ "(s:SBMLQualSpecies)"
+			+ "-[b:BQ]->"
+			+ "(e:ExternalResourceEntity)"
+			+ "-[KNOWNAS]->"
+			+ "(n:NameNode)"
+			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND n.name = $name "
+			+ "AND e.databaseFromUri = $databaseFromUri "
+			+ "RETURN s")
+	Iterable<SBMLQualSpecies> findByBQConnectionTo(String name, String databaseFromUri);
 
 }

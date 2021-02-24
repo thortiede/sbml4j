@@ -20,7 +20,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +30,17 @@ import org.springframework.stereotype.Service;
 import org.tts.model.common.ExternalResourceEntity;
 
 @Service
-public class HttpServiceImpl implements HttpService {
+public class KEGGHttpService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
-	@Override
-	public List<String> getGeneNamesFromKeggURL(String resource) {
-		List<String> geneNames = new ArrayList<>();
+	
+	public String getKEGGIdentifier(String resource) {
+		String[] resourceParts =  resource.split("/");
+		return resource.split("/")[resourceParts.length - 1];
+	}
+	
+	public Set<String> getGeneNamesFromKeggURL(String resource) {
+		Set<String> geneNames = new LinkedHashSet<>();
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];
 		try {
@@ -95,7 +102,6 @@ public class HttpServiceImpl implements HttpService {
 		}
 	}
 
-	@Override
 	public ExternalResourceEntity setCompoundAnnotationFromResource(String resource, ExternalResourceEntity entity) {
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];
@@ -187,9 +193,11 @@ public class HttpServiceImpl implements HttpService {
 					} else {
 						// molWeight should have exactly two elements
 					}
+				} else {
+					lastLine = "";
 				}
 			}
-			entity.setName(names.remove(0));
+			entity.setPrimaryName(names.remove(0));
 			
 			if (names.size() > 0) {
 				String[] secNames = new String[names.size()];

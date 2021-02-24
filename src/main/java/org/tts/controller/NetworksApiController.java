@@ -274,7 +274,7 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<Void> deleteNetwork(String user, UUID UUID) {
 		
 		String uuid = UUID.toString();
-		log.info("Serving DELETE /networks/" + (user != null ? " for user " + user : ""));
+		log.info("Serving DELETE /networks/" + uuid + (user != null ? " for user " + user : ""));
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -441,6 +441,7 @@ public class NetworksApiController implements NetworksApi {
 		if(contextResource == null) {
 			return ResponseEntity.badRequest().header("reason", "Failed to create graphML resource").build();
 		}
+		log.info("Finished creating graphml resource for context.");
 		return ResponseEntity.ok(contextResource);
 	}
 	
