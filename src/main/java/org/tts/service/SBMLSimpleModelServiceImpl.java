@@ -15,6 +15,8 @@ package org.tts.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -480,7 +482,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		SBMLSBaseEntity updatedSBaseEntity = sBaseEntity;
 		List<String> mdAndersonGeneList = sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getGenelist();
 		if (addMdAnderson && mdAndersonGeneList != null && mdAndersonGeneList.contains(sBaseEntity.getsBaseName())) {
-			logger.debug("Found MdAnderson Gene in sBaseName: " + sBaseEntity.getsBaseName());
+			//logger.debug("Found MdAnderson Gene in sBaseName: " + sBaseEntity.getsBaseName());
 			foundMdAndersonGene = true;
 			mdAndersonNamesList.add(sBaseEntity.getsBaseName());
 		}
@@ -638,7 +640,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	@Override
 	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) { 
-		
+		Instant begin = Instant.now();
 		Map<String, SBMLSpecies> persistedSBMLSpeciesMap = null;
 		// compartment
 		List<ProvenanceEntity> returnList= new ArrayList<>();
@@ -648,7 +650,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			compartmentLookupMap.put(compartment.getsBaseId(), compartment); // sBaseId here will be the matchingAttribute, might even want to have a map <Entity, matchingAttribute> to be able to match different entities with different attributes
 			returnList.add(compartment);
 		}
-		
+		Instant compInst = Instant.now();
 		// species
 		Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap = new HashMap<>();
 		if (model.getListOfSpecies() != null && model.getListOfSpecies().size() > 0) {
@@ -658,13 +660,21 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				sBaseIdToSBMLSpeciesMap.put(species.getsBaseId(), species);
 			});
 		}
+		Instant speciesInst = Instant.now();
 		// reactions
+		List<SBMLSimpleReaction> persistedSBMLSimpleReactions = null;
 		if(model.getListOfReactions() != null && model.getListOfReactions().size() > 0) {
-			List<SBMLSimpleReaction> persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap, sBaseIdToSBMLSpeciesMap, activityNode);
+			persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap, sBaseIdToSBMLSpeciesMap, activityNode);
 			persistedSBMLSimpleReactions.forEach(reaction->{
 				returnList.add(reaction);
 			});
 		}
+		
+		Map<String, SBMLQualSpecies> persistedQualSpeciesList = null;
+		List<SBMLSimpleTransition> persistedTransitionList = null;
+		Instant reactionsInst = Instant.now();
+		Instant qualSpeciesInst = null;
+		Instant transInst = null;
 		// Qual Model Plugin:
 		if(model.getExtension("qual") != null ) {
 			QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
@@ -673,22 +683,36 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			if(qualModelPlugin.getListOfQualitativeSpecies() != null && qualModelPlugin.getListOfQualitativeSpecies().size() > 0) {
 				HelperQualSpeciesReturn qualSpeciesHelper = buildAndPersistSBMLQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), persistedSBMLSpeciesMap, compartmentLookupMap, activityNode);
 				
-				Map<String, SBMLQualSpecies> persistedQualSpeciesList = qualSpeciesHelper.getSBaseNameToQualSpeciesMap();
+				persistedQualSpeciesList = qualSpeciesHelper.getSBaseNameToQualSpeciesMap();
 				persistedQualSpeciesList.forEach((k, qualSpecies)-> {
 					returnList.add(qualSpecies);
 				});
-				Map<String, SBMLQualSpecies> qualSBaseLookupMap = qualSpeciesHelper.getSBaseIdToQualSpeciesMap();
 				
+				Map<String, SBMLQualSpecies> qualSBaseLookupMap = qualSpeciesHelper.getSBaseIdToQualSpeciesMap();
+				qualSpeciesInst = Instant.now();
 				// transitions (qual model plugin)
 				if(qualModelPlugin.getListOfTransitions() != null && qualModelPlugin.getListOfTransitions().size() > 0) {
-					List<SBMLSimpleTransition> persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions(), activityNode);
+					persistedTransitionList	= buildAndPersistTransitions(qualSBaseLookupMap, qualModelPlugin.getListOfTransitions(), activityNode);
 					persistedTransitionList.forEach(transition-> {
 						returnList.add(transition);
 					});
 				}
+				transInst = Instant.now();
 			}
 		}
-		
+		StringBuilder sb = new StringBuilder();
+		sb.append("PersistanceTime: ");
+		this.utilityService.appendDurationString(sb, Duration.between(begin, compInst), "compartments");
+		this.utilityService.appendDurationString(sb, Duration.between(compInst, speciesInst), "species");
+		this.utilityService.appendDurationString(sb, Duration.between(speciesInst, reactionsInst), "reactions");
+		if (qualSpeciesInst != null) this.utilityService.appendDurationString(sb, Duration.between(reactionsInst, qualSpeciesInst), "qualSpecies");
+		if (transInst != null) this.utilityService.appendDurationString(sb, Duration.between(qualSpeciesInst, transInst), "transitions");
+		logger.info("Persisted " + returnList.size() + " entities. " 	+ (persistedSBMLSpeciesMap != null ? "Species: " + persistedSBMLSpeciesMap.size() + "; ":"")
+																		+ (persistedSBMLSimpleReactions != null ? "Ractions: " + persistedSBMLSimpleReactions.size() + "; " :"")
+																		+ (persistedQualSpeciesList != null ? "QualSpecies: " + persistedQualSpeciesList.size() + "; " :"")
+																		+ (persistedTransitionList != null ? "Transitions: " + persistedTransitionList.size() :"")
+																		);	
+		logger.info(sb.toString());
 		return returnList; // This is the list<sources> of the Knowledge Graph "WarehouseGraphNode" Node, which then serves as Source for the network mappings, derived from full KEGG
 	}
 }
