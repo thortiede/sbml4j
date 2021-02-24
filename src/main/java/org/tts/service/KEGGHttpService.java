@@ -193,6 +193,8 @@ public class KEGGHttpService {
 					} else {
 						// molWeight should have exactly two elements
 					}
+				} else {
+					lastLine = "";
 				}
 			}
 			entity.setPrimaryName(names.remove(0));
