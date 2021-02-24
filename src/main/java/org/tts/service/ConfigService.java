@@ -108,5 +108,9 @@ public class ConfigService {
 		}
 		return publicUser;
 	}
+
+	public boolean isAllowInactiveDuplicates() {
+		return this.sbml4jConfig.getNetworkConfigProperties().isAllowInactiveDuplicates();
+	}
 	
 }
