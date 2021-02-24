@@ -13,6 +13,7 @@
  */
 package org.tts.service;
 
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -116,4 +117,35 @@ public class UtilityService {
 		return allChildren;
 	}
 
+	public void appendDurationString(StringBuilder sb, Duration duration, String name) {
+		sb.append(name);
+		sb.append(": ");
+		boolean hasHours = false;
+		boolean hasMinutes = false;
+		boolean hasSeconds = false;
+		if (duration.toHours() > 0) {
+			sb.append(duration.toHoursPart());
+			sb.append("h");
+			hasHours = true;
+		}
+		if (duration.toMinutes() > 0 || hasHours) {
+			sb.append(duration.toMinutesPart());
+			sb.append("m");
+			hasMinutes = true;
+		}
+		if (duration.toSeconds() > 0 || hasMinutes) {
+			sb.append(duration.toSecondsPart());
+			sb.append("s; ");
+			hasSeconds = true;
+		}
+		if (!hasHours && !hasMinutes &&!hasSeconds) {
+			try {
+				sb.append(duration.toMillis());
+				sb.append("ms; ");
+			} catch (ArithmeticException e) {
+				sb.append(duration.toString());
+			}
+		}
+	}
+	
 }
