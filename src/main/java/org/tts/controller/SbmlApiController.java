@@ -107,7 +107,7 @@ public class SbmlApiController implements SbmlApi {
 			@NotNull @Valid String source, @NotNull @Valid String version, String user,
 			@Valid List<MultipartFile> files) {
 		logger.debug("Serving POST /sbml..");
-		List<PathwayInventoryItem> fileNameToPathwayInventoryList = new ArrayList<>();
+		List<PathwayInventoryItem> pathwayInventoryList = new ArrayList<>();
 		
 		for (MultipartFile file : files) {
 			logger.debug("Processing file " + file.getOriginalFilename());
@@ -240,13 +240,13 @@ public class SbmlApiController implements SbmlApi {
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 				
-				fileNameToPathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
+				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
 			} catch (Exception e) {
 				// TODO Roll back transaction..
 				e.printStackTrace();
 				return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
 			}
 		}
-		return new ResponseEntity<>(fileNameToPathwayInventoryList, HttpStatus.CREATED);
+		return new ResponseEntity<>(pathwayInventoryList, HttpStatus.CREATED);
 	}
 }
