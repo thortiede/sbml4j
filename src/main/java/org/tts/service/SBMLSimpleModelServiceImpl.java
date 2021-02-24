@@ -579,6 +579,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			nameNode = new NameNode();
 			this.graphBaseEntityService.setGraphBaseEntityProperties(nameNode);
 			nameNode.setName(name);
+			seenNames.put(name, nameNode);
 		}
 		nameNode.addResource(externalResourceEntity);
 		externalResourceEntity.addName(nameNode);
