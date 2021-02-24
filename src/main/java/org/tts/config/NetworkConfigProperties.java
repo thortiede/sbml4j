@@ -22,6 +22,8 @@ public class NetworkConfigProperties {
 	
 	private boolean showInactiveNetworks;
 	
+	private boolean allowInactiveDuplicates;
+	
 	private boolean useSharedPathwaySearch;
 	
 	private String publicUser;
@@ -44,6 +46,14 @@ public class NetworkConfigProperties {
 		this.showInactiveNetworks = showInactiveNetworks;
 	}
 	
+	public boolean isAllowInactiveDuplicates() {
+		return allowInactiveDuplicates;
+	}
+
+	public void setAllowInactiveDuplicates(boolean allowInactiveDuplicates) {
+		this.allowInactiveDuplicates = allowInactiveDuplicates;
+	}
+
 	public boolean isUseSharedPathwaySearch() {
 		return useSharedPathwaySearch;
 	}
