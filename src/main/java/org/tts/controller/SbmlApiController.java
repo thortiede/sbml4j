@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.ModelPersistenceException;
 import org.tts.api.SbmlApi;
 import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -49,6 +50,7 @@ import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.ConfigService;
+import org.tts.service.GraphBaseEntityService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.SBMLService;
@@ -79,6 +81,9 @@ public class SbmlApiController implements SbmlApi {
 	
 	@Autowired
 	FileNodeService fileNodeService;
+	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
 	
 	@Autowired
 	OrganismService organismService;
@@ -260,11 +265,11 @@ public class SbmlApiController implements SbmlApi {
 			// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 			PathwayNode pathwayNode = this.pathwayService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
 			Instant createPathwayNodeFinished = Instant.now();
-			List<ProvenanceEntity> resultSet;
+			Map<String, ProvenanceEntity> resultSet;
 			try {
 				resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
 
-				for (ProvenanceEntity entity : resultSet) {
+				for (ProvenanceEntity entity : resultSet.values()) {
 					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
 				}
 				Instant modelPersistingFinished = Instant.now();
@@ -291,6 +296,22 @@ public class SbmlApiController implements SbmlApi {
 						
 				logger.info(sb.toString());
 				
+			} catch (ModelPersistenceException e) {
+				if (e.getMessage().startsWith("SBMLSpecies")) {
+					this.graphBaseEntityService.deleteEntity(pathwayNode);
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded.");
+					logger.error("The error message is: " + e.getMessage());
+					e.printStackTrace();
+					logger.error("Continuing with the next model..");
+				} else {
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
+					logger.error("The error message is: " + e.getMessage());
+					e.printStackTrace();
+					logger.error("Continuing with the next model..");
+					countError++;
+					errorFileNames.append(originalFilename);
+					errorFileNames.append(", ");
+				}
 			} catch (Exception e) {
 				// TODO Roll back transaction..
 				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
