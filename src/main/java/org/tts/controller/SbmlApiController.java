@@ -169,9 +169,14 @@ public class SbmlApiController implements SbmlApi {
 		
 		
 		List<PathwayInventoryItem> pathwayInventoryList = new ArrayList<>();
-		
+		int countTotal = 0;
+		int countError = 0;
+		String originalFilename;
+		StringBuilder errorFileNames = new StringBuilder();
 		for (MultipartFile file : files) {
-			logger.debug("Processing file " + file.getOriginalFilename());
+			countTotal++;
+			originalFilename = file.getOriginalFilename();
+			logger.debug("Processing file " + originalFilename);
 			Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
@@ -185,7 +190,7 @@ public class SbmlApiController implements SbmlApi {
 				//return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 			}
 			
-			logger.info("Serving POST /sbml for File " + file.getOriginalFilename());
+			logger.info("Serving POST /sbml for File " + originalFilename);
 			
 			// is Content Type xml?
 			if(!fileCheckService.isContentXML(file)) {
@@ -196,7 +201,7 @@ public class SbmlApiController implements SbmlApi {
 			//Instant createDate = Instant.now();
 			Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
 			activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.persistFile);
-			activityNodeProvenanceProperties.put("graphactivityname", file.getOriginalFilename()); 
+			activityNodeProvenanceProperties.put("graphactivityname", originalFilename); 
 			//activityNodeProvenanceProperties.put("createdate", createDate);
 			
 			ProvenanceGraphActivityNode persistGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
@@ -222,12 +227,12 @@ public class SbmlApiController implements SbmlApi {
 			FileNode sbmlFileNode = null;
 			// Does node with this filename already exist?
 			// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
-			if(!this.fileNodeService.fileNodeExists(FileNodeType.SBML, org, file.getOriginalFilename())) {
+			if(!this.fileNodeService.fileNodeExists(FileNodeType.SBML, org, originalFilename)) {
 				// does not exist -> create
-				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
+				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, originalFilename);
 				this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			} else {
-				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, file.getOriginalFilename());
+				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, originalFilename);
 				this.provenanceGraphService.connect(persistGraphActivityNode, sbmlFileNode, ProvenanceGraphEdgeType.used);
 			}
 			
@@ -288,17 +293,30 @@ public class SbmlApiController implements SbmlApi {
 				
 			} catch (Exception e) {
 				// TODO Roll back transaction..
-				logger.error("Error during model persistence. Model " + file.getOriginalFilename() + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
+				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
 				logger.error("The error message is: " + e.getMessage());
 				e.printStackTrace();
 				logger.error("Continuing with the next model..");
-				
+				countError++;
+				errorFileNames.append(originalFilename);
+				errorFileNames.append(", ");
 				//return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
 			} finally {
-				logger.info("Finished processing file " + file.getOriginalFilename());
+				logger.info("Finished processing file " + originalFilename);
 			}
 		}
-		return new ResponseEntity<>(pathwayInventoryList, HttpStatus.CREATED);
+		if (countError > 0) {
+			if (countTotal > countError) {
+				//ResponseEntity mixed = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not persist Model in file(s)" + errorFileNames.toString()).build();
+				ResponseEntity<List<PathwayInventoryItem>> m = new ResponseEntity<>(pathwayInventoryList, HttpStatus.UNPROCESSABLE_ENTITY);
+				m.getHeaders().add("reason", "Could not persist Model in file(s)" + errorFileNames.toString());
+				return m;
+			} else {
+				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not persist Model in file(s): " + errorFileNames.toString()).build();
+			}
+		} else {
+			return new ResponseEntity<>(pathwayInventoryList, HttpStatus.CREATED);
+		}
 	}
 
 
