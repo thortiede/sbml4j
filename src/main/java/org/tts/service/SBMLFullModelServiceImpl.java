@@ -123,7 +123,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 	
 	@Override
-	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
+	public Map<String, ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
 		
 		List<ProvenanceEntity> allModelEntities = new ArrayList<>();
 		
