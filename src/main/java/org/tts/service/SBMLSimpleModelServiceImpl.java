@@ -196,6 +196,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<QualitativeSpecies> groupSpeciesList = new ArrayList<>();
 		Map<String,SBMLQualSpecies> sBaseNameToSBMLQualSpeciesMap = new HashMap<>();
 		for (QualitativeSpecies species :qualSpeciesListOf) {
+			logger.debug("Processing QualSpecies: " + species.getName());
 			if(species.getName().equals("Group")) {
 				groupSpeciesList.add(species);
 			} else {
@@ -208,8 +209,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				cvTermsToProcess.put(newQualSpecies.getEntityUUID(), species.getCVTerms());
 				sBaseNameToSBMLQualSpeciesMap.put(newQualSpecies.getsBaseName(), newQualSpecies);
 			}
+			logger.debug("Processing QualSpecies: " + species.getName() + ". Finsihed");
 		}
 		for (QualitativeSpecies species : groupSpeciesList) {
+			logger.debug("Processing QualSpecies Group: " + species.getName());
 			SBMLQualSpeciesGroup newSBMLQualSpeciesGroup = new SBMLQualSpeciesGroup();
 			StringBuilder groupName = new StringBuilder();
 			groupName.append("Group");
@@ -232,7 +235,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSBMLQualSpeciesGroup.setsBaseMetaId("meta_" + groupName.toString());
 			sbmlQualSpeciesToPersist.put(newSBMLQualSpeciesGroup.getEntityUUID(), newSBMLQualSpeciesGroup);
 			sBaseNameToSBMLQualSpeciesMap.put(groupName.toString(), newSBMLQualSpeciesGroup);
-			cvTermsToProcess.put(newSBMLQualSpeciesGroup.getEntityUUID(), species.getCVTerms());	
+			cvTermsToProcess.put(newSBMLQualSpeciesGroup.getEntityUUID(), species.getCVTerms());
+			logger.debug("Processing QualSpecies Group: " + species.getName() + ". Finsihed");
 		}
 	}
 										
@@ -243,6 +247,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<Species> groupSpeciesList = new ArrayList<>();
 		Map<String,SBMLSpecies> sBaseNameToSBMLSpeciesMap = new HashMap<>();
 		for (Species species :speciesListOf) {
+			logger.debug("Processing Species: " + species.getName());
 			if(species.getName().equals("Group")) {
 				groupSpeciesList.add(species);
 			} else {
@@ -255,8 +260,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				cvTermsToProcess.put(newSpecies.getEntityUUID(), species.getCVTerms());
 				sBaseNameToSBMLSpeciesMap.put(newSpecies.getsBaseName(), newSpecies);
 			}
+			logger.debug("Processing Species: " + species.getName() + ". Finished");
 		}
 		for (Species species : groupSpeciesList) {
+			logger.debug("Processing Species Group: " + species.getName());
 			SBMLSpeciesGroup newSBMLSpeciesGroup = new SBMLSpeciesGroup();
 			StringBuilder groupName = new StringBuilder();
 			groupName.append("Group");
@@ -280,47 +287,57 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			sbmlSpeciesToPersist.put(newSBMLSpeciesGroup.getEntityUUID(), newSBMLSpeciesGroup);
 			sBaseNameToSBMLSpeciesMap.put(groupName.toString(), newSBMLSpeciesGroup);
 			cvTermsToProcess.put(newSBMLSpeciesGroup.getEntityUUID(), species.getCVTerms());	
+			logger.debug("Processing Species Group: " + species.getName() + ". Finished");
 		}
 	}
 	
 	private Map<String, Collection<BiomodelsQualifier>> processCVTerms(Map<String, List<CVTerm>> cvTerms) {
+		logger.debug("Begin processing cvTerms");
 		Map<String, Collection<BiomodelsQualifier>> uuidToBQMap = new TreeMap<>();
 		Map<String, NameNode> nameToNameNodeMap = new TreeMap<>();
 		Map<String, ExternalResourceEntity> resourceToExternalResourceEntityMap = new TreeMap<>();
 		for (String uuid : cvTerms.keySet()) {
+			logger.debug("Processing cvTerm for uuid: " + uuid);
 			List<CVTerm> cv = cvTerms.get(uuid);
 			uuidToBQMap.put(uuid, this.processCVTermList(cv, resourceToExternalResourceEntityMap, nameToNameNodeMap));
+			logger.debug("Processing cvTerm for uuid: " + uuid + ". Finished");
 		}
+		logger.debug("Begin processing cvTerms. Finished");
 		return uuidToBQMap;
 	}
 	
 	private Collection<BiomodelsQualifier> processCVTermList(List<CVTerm> cvTerms, Map<String, ExternalResourceEntity> resourceToExternalResourceEntityMap, Map<String, NameNode> nameToNameNodeMap) {
+		logger.debug("Processing cvTerms List");
+		
 		Map<String, BiomodelsQualifier> resourceUriToBiomodelsQualifierMap = new TreeMap<>();
 		
 		for (CVTerm cv : cvTerms) {
 			this.createBiomodelsQualifierFromCVTerm(cv).forEach(resourceUriToBiomodelsQualifierMap::put);
 			this.createExternalResourceEntitiesFromCVTerm(cv, resourceToExternalResourceEntityMap);
 		}
+		logger.debug("Processing cvTerms List. Finished");
+		logger.debug("Matching NameNodes to ExternalResourceEntities");
 		for (String resource : resourceUriToBiomodelsQualifierMap.keySet()) {
+			logger.debug("Resource: " +resource);
 			BiomodelsQualifier bq = resourceUriToBiomodelsQualifierMap.get(resource);
 			ExternalResourceEntity er = resourceToExternalResourceEntityMap.get(resource);
 			if (er.getNames() != null) {
 				List<String> namesToReplace = new ArrayList<>();
 				for (NameNode n : er.getNames()) {
-					if ("IMD2".equals(n.getName())) {
-						logger.debug(n.getName());
-					}
 					NameNode seenNameNode = nameToNameNodeMap.putIfAbsent(n.getName(), n);
 					if (seenNameNode != null) {
+						logger.debug("Already matched NameNode: " +n.getName());
 						// a nameNode with that value has already been produced
 						if (seenNameNode.getId()==null && n.getId() != null) {
 							// the already seen NameNode has no Id Set (does not come from the database) but the current one (n), does, so we need to replace the seen one
 							//seenNameNode.setId(n.getId());
 							//seenNameNode.setVersion(n.getVersion());
 							//seenNameNode.setEntityUUID(n.getEntityUUID());
+							logger.debug("Replace seen one as new one has id");
 							seenNameNode = n;
 						} else {
 							// either both are new, or seenNameNode is new and n is not
+							logger.debug("Replace the one on the externalResource with the seen one.");
 							namesToReplace.add(n.getName());
 						}
 					}
@@ -329,28 +346,33 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			}
 			bq.setEndNode(er);
 		}
+		logger.debug("Matching NameNodes to ExternalResourceEntities.Finished");
 		return resourceUriToBiomodelsQualifierMap.values();
 	}
 	
 	
 	private Map<String, ExternalResourceEntity> createExternalResourceEntitiesFromCVTerm(CVTerm cvTerm, Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap) {
-		
+		logger.debug("Creating ExternalResourceEntities for cvTerm");
 		for (String resource : cvTerm.getResources()) {
 			if (!resourceUriToExternalResourceEntityMap.containsKey(resource)) {
 				if (resourceUriToExternalResourceEntityMap.put(resource, this.createExternalResourceEntityFromResource(resource)) != null) {
-					logger.debug("How can this be?");
+					logger.debug("Created ExternalResourceEntity although resource has already been processed..");
 				}
 			}
 		}
+		logger.debug("Creating ExternalResourceEntities for cvTerm. Finished");
 		return resourceUriToExternalResourceEntityMap;
 	}
 
 	
 	private ExternalResourceEntity createExternalResourceEntityFromResource(String resource) {
+		logger.debug("Searching ExternalResourceEntity for resource " + resource);
 		ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
 		if(existingExternalResourceEntity != null) {
+			logger.debug("Reusing ExternalResourceEntity for resource " + resource);
 			return existingExternalResourceEntity;
 		} else {
+			logger.debug("Creating ExternalResourceEntity for resource " + resource);
 			ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
 			this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
 			
@@ -392,6 +414,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					}
 				}
 			} 
+			logger.debug("Searching ExternalResourceEntity for resource " + resource + ". Finished");
 			return newExternalResourceEntity;
 		}
 
@@ -402,11 +425,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 
 	private Map<String, BiomodelsQualifier> createBiomodelsQualifierFromCVTerm(CVTerm cvTerm) {
+		logger.debug("Creating BiomodelsQualifier for cvTerm");
 		Map<String, BiomodelsQualifier> resourceUriToBiomodelsQualifierMap = new TreeMap<>();
 		for (String resource : cvTerm.getResources()) {
 			resourceUriToBiomodelsQualifierMap.put(resource, createBiomodelsQualifier(
 					cvTerm.getQualifierType(), cvTerm.getQualifier()));
 		}
+		logger.debug("Creating BiomodelsQualifier for cvTerm. Finished");
 		return resourceUriToBiomodelsQualifierMap;
 	}
 
@@ -824,15 +849,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 	private void createNameNode(ExternalResourceEntity externalResourceEntity,
 			String name) {
+		logger.debug("Searching NameNode for name: " + name);
 		NameNode nameNode = this.nameNodeService.findByName(name);
 		// if not found, build a new name node
 		if (nameNode == null) {
+			logger.debug("NameNode not found, building new one.");
 			nameNode = new NameNode();
 			this.graphBaseEntityService.setGraphBaseEntityProperties(nameNode);
 			nameNode.setName(name);
 		}
 		nameNode.addResource(externalResourceEntity);
 		externalResourceEntity.addName(nameNode);
+		logger.debug("Exiting createNameNode");
 	}
 	private BiomodelsQualifier createBiomodelsQualifier(SBMLSBaseEntity startNodeSBaseEntity, Type qualifierType,
 			Qualifier qualifier) {
