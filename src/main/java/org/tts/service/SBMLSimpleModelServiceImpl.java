@@ -886,8 +886,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	@Override
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
 		InputStream fileStream = file.getInputStream();
-		SBMLDocument doc = SBMLReader.read(fileStream); 
-		fileStream.close();
+		SBMLDocument doc;
+		try {
+			doc = SBMLReader.read(fileStream); 
+		} finally {
+			fileStream.close();
+		}
 		return doc.getModel();
 	}
 
