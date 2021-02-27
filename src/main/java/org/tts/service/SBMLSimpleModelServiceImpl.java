@@ -28,6 +28,7 @@ import java.util.TreeMap;
 
 import javax.xml.stream.XMLStreamException;
 
+import org.neo4j.ogm.session.Session;
 import org.sbml.jsbml.CVTerm;
 import org.sbml.jsbml.CVTerm.Qualifier;
 import org.sbml.jsbml.CVTerm.Type;
@@ -88,6 +89,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	@Autowired
 	SBMLSpeciesService sbmlSpeciesService;
 	
+	@Autowired
+	Session session;
 	
 	SBMLSpeciesRepository sbmlSpeciesRepository;
 	SBMLSimpleReactionRepository sbmlSimpleReactionRepository;
@@ -910,9 +913,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				persistBQList.add(bq);
 			});
 		}
+		Instant speciesBuilt = Instant.now();
+		
+		Instant speciesSessionClear = null;
+		Instant speciesPersisted = null;
 		Iterable<BiomodelsQualifier> persistedBiomodelQualifier = null;
 		try {
+			this.session.clear();
+			speciesSessionClear = Instant.now();
 			persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+			speciesPersisted = Instant.now();
 		} catch (Exception e) {
 			// retry once
 			e.printStackTrace();
@@ -959,6 +969,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		List<SBMLSimpleTransition> persistedTransitionList = null;
 		Instant reactionsInst = Instant.now();
 		Instant qualSpeciesInst = null;
+		
+		Instant qualSpeciesBuilt  = null;
+		Instant qualSpeciesSessionClear = null;
+		Instant qualSpeciesPersisted = null;
 		Instant transInst = null;
 		// Qual Model Plugin:
 		if(model.getExtension("qual") != null ) {
@@ -989,9 +1003,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 						qualPersistBQList.add(bq);
 					}
 				}
+				qualSpeciesBuilt = Instant.now();
 				Iterable<BiomodelsQualifier> qualPersistedBiomodelQualifier = null;
 				try {
+					this.session.clear();
+					qualSpeciesSessionClear = Instant.now();
 					qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+					qualSpeciesPersisted = Instant.now();
 				} catch (Exception e) {
 					// retry once
 					e.printStackTrace();
@@ -1031,9 +1049,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		StringBuilder sb = new StringBuilder();
 		sb.append("PersistanceTime: ");
 		this.utilityService.appendDurationString(sb, Duration.between(begin, compInst), "compartments");
-		this.utilityService.appendDurationString(sb, Duration.between(compInst, speciesInst), "species");
+		this.utilityService.appendDurationString(sb, Duration.between(compInst, speciesBuilt), "speciesbuilt");
+		if (speciesSessionClear != null) this.utilityService.appendDurationString(sb, Duration.between(speciesBuilt, speciesSessionClear), "speciesSessionClear");
+		if (speciesSessionClear != null && speciesPersisted != null) this.utilityService.appendDurationString(sb, Duration.between(speciesSessionClear, speciesPersisted), "speciesPersisted");
+		if (speciesPersisted != null) this.utilityService.appendDurationString(sb, Duration.between(speciesPersisted, speciesInst), "speciesDone");
+		if(speciesSessionClear == null || speciesPersisted == null) this.utilityService.appendDurationString(sb, Duration.between(compInst, speciesBuilt), "speciesbuilt");
+		
 		this.utilityService.appendDurationString(sb, Duration.between(speciesInst, reactionsInst), "reactions");
-		if (qualSpeciesInst != null) this.utilityService.appendDurationString(sb, Duration.between(reactionsInst, qualSpeciesInst), "qualSpecies");
+		if(qualSpeciesBuilt != null) this.utilityService.appendDurationString(sb, Duration.between(reactionsInst, qualSpeciesBuilt), "qualSpeciesBuilt");
+		if (qualSpeciesSessionClear != null) this.utilityService.appendDurationString(sb, Duration.between(qualSpeciesBuilt, qualSpeciesSessionClear), "qualSpeciesSessionClear");
+		if (qualSpeciesSessionClear != null && qualSpeciesPersisted != null) this.utilityService.appendDurationString(sb, Duration.between(qualSpeciesSessionClear, qualSpeciesPersisted), "qualSpeciesPersisted");
+		if (qualSpeciesPersisted != null && qualSpeciesInst != null) this.utilityService.appendDurationString(sb, Duration.between(qualSpeciesPersisted, qualSpeciesInst), "qualSpeciesDone");
+				
 		if (transInst != null) this.utilityService.appendDurationString(sb, Duration.between(qualSpeciesInst, transInst), "transitions");
 		logger.info("Persisted " + returnList.size() + " entities. " 	+ (persistedSBMLSpeciesMap != null ? "Species: " + persistedSBMLSpeciesMap.size() + "; ":"")
 																		+ (persistedSBMLSimpleReactions != null ? "Ractions: " + persistedSBMLSimpleReactions.size() + "; " :"")
