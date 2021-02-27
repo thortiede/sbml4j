@@ -61,7 +61,7 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class NetworksApiController implements NetworksApi {
 
-		Logger log = LoggerFactory.getLogger(NetworksApiController.class);
+	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
 	
 	@Autowired
 	ConfigService configService;
