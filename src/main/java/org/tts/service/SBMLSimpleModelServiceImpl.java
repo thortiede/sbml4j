@@ -907,11 +907,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 	}
 	
-	private List<SBMLSimpleTransition> processQualTransitionsNoDB(
+	private void processQualTransitionsNoDB(
 			ListOf<Transition> transitionListOf,
 			Map<String, SBMLQualSpecies> sBaseIdToSBMLQualSpeciesMap,
+			Map<String, SBMLSimpleTransition> entityUUIDToSBMLSimpleTransitionMap,
 			Map<String, List<CVTerm>> sbmlSBaseEntityUUIDTocvTermsMap) {
-		List<SBMLSimpleTransition> transitionList = new ArrayList<>();
+		
 		for (Transition transition : transitionListOf) {
 			
 			SBMLQualSpecies inputQualSpecies = null;
@@ -952,11 +953,10 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			newSimpleTransition.setInputSpecies(inputQualSpecies);
 			newSimpleTransition.setOutputSpecies(outputQualSpecies);
 			
-			transitionList.add(newSimpleTransition);
 			sbmlSBaseEntityUUIDTocvTermsMap.put(newSimpleTransition.getEntityUUID(), transition.getCVTerms());
-			
+			entityUUIDToSBMLSimpleTransitionMap.put(newSimpleTransition.getEntityUUID(), newSimpleTransition);
 		}
-		return transitionList;
+
 	}
 	 /*********OLDOLDOLDOLD OLD OLD OLDOLDOLDOLDOLD ****************/
 	private Map<String, SBMLSpecies> buildAndPersistSBMLSpecies(
@@ -1378,7 +1378,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 		// reactions
 		Map<String, SBMLSimpleReaction> entityUUIDToSBMLSimpleReactionsMap = new TreeMap<>();
-		List<SBMLSimpleReaction> modelReactions = this.processReactionsNoDB(model.getListOfReactions(), sBaseIdToSBMLCompartmentMap, sBaseIdToSBMLSpeciesMap, entityUUIDToSBMLSimpleReactionsMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
+		this.processReactionsNoDB(model.getListOfReactions(), sBaseIdToSBMLCompartmentMap, sBaseIdToSBMLSpeciesMap, entityUUIDToSBMLSimpleReactionsMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
 
 		// Qual Model Plugin:
 		if(model.getExtension("qual") != null ) {
@@ -1392,8 +1392,8 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				sBaseIdToSBMLQualSpeciesMap.put(qualSpecies.getsBaseId(), qualSpecies);
 			}
 			// Transitions
-			List<SBMLSimpleTransition> modelTransitions = this.processQualTransitionsNoDB(qualModelPlugin.getListOfTransitions(), sBaseIdToSBMLQualSpeciesMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
-			// TODO:This is where I was last..
+			Map<String, SBMLSimpleTransition> entityUUIDToSBMLSimpleTransitionMap = new TreeMap<>();
+			this.processQualTransitionsNoDB(qualModelPlugin.getListOfTransitions(), sBaseIdToSBMLQualSpeciesMap, entityUUIDToSBMLSimpleTransitionMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
 		}
 		
 		
