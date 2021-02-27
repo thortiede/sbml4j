@@ -103,4 +103,72 @@ public interface SbmlApi {
     });
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
+  
+  /**
+   * POST /sbml : Upload SBML Model to create a Pathway
+   *
+   * @param organism The three-letter organism code (required)
+   * @param source The name of the source this SBML originates from (required)
+   * @param version The version of the source this SBML originates from
+   *     (required)
+   * @param user The user which requests the creation, the configured public
+   *     user will be used if omitted (optional)
+   * @param files  (optional)
+   * @return Pathways from models created (status code 201)
+   *         or Bad Request (status code 400)
+   */
+  @ApiOperation(value = "Upload SBML Files to an empty database and initialize it with the contained models",
+                nickname = "initDB", notes = "",
+                response = PathwayInventoryItem.class,
+                responseContainer = "List",
+                tags =
+                    {
+                        "sbml",
+                    })
+  @ApiResponses(value =
+                {
+                  @ApiResponse(code = 201,
+                               message = "Pathways from models created",
+                               response = PathwayInventoryItem.class,
+                               responseContainer = "List")
+                  ,
+                      @ApiResponse(code = 400, message = "Bad Request")
+                })
+  @PostMapping(value = "/init", produces = {"application/json"},
+               consumes = {"multipart/form-data"})
+  default ResponseEntity<List<PathwayInventoryItem>>
+  initDB(
+      @NotNull @ApiParam(value = "The three-letter organism code",
+                         required = true) @Valid
+      @RequestParam(value = "organism", required = true) String organism,
+      @NotNull
+      @ApiParam(value = "The name of the source this SBML originates from",
+                required = true) @Valid
+      @RequestParam(value = "source", required = true) String source,
+      @NotNull
+      @ApiParam(value = "The version of the source this SBML originates from",
+                required = true) @Valid
+      @RequestParam(value = "version", required = true) String version,
+      @ApiParam(
+          value =
+              "The user which requests the creation, the configured public user will be used if omitted")
+      @RequestHeader(value = "user", required = false) String user,
+      @ApiParam(value = "") @Valid @RequestPart(value = "files",
+                                                required = false)
+      List<MultipartFile> files) {
+    getRequest().ifPresent(request -> {
+      for (MediaType mediaType :
+           MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+          String exampleString =
+              "{ \"transitionTypes\" : [ \"stimulation\", \"stimulation\" ], \"name\" : \"Example Pathway\", \"organismCode\" : \"hsa\", \"numberOfTransitions\" : 6, \"numberOfNodes\" : 0, \"numberOfReactions\" : 1, \"UUID\" : \"046b6c7f-0b8a-43b9-b35d-6489e6daee91\", \"nodeTypes\" : [ \"polypeptide chain\", \"polypeptide chain\" ], \"pathwayId\" : \"path_hsa05225\", \"compartments\" : [ \"Cytosol\", \"Cytosol\" ] }";
+          ApiUtil.setExampleResponse(request, "application/json",
+                                     exampleString);
+          break;
+        }
+      }
+    });
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+  
 }
