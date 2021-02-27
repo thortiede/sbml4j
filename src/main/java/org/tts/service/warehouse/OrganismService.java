@@ -52,7 +52,18 @@ public class OrganismService {
 			return this.organismRepository.save(newOrganism);
 		}
 	}
-
+	/**
+	 * Create a new <a href="#{@link}">{@link Organism}</a> with three letter code orgCode
+	 * Does not check for existing OrganismNodes, always creates one
+	 * @param orgCode The three letter organism Code
+	 * @return The <a href="#{@link}">{@link Organism}</a> entity with three letter code orgCode. Entity is not persisted to database
+	 */
+	public Organism prepareOrganism(String orgCode) {
+		Organism newOrganism = new Organism();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newOrganism);
+		newOrganism.setOrgCode(orgCode);
+		return newOrganism;
+	}
 	/**
 	 * Retrieve an <a href="#{@link}">{@link Organism}</a> from the database
 	 * 

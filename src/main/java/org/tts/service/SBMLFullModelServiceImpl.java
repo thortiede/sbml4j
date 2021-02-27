@@ -48,6 +48,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.tts.model.common.BiomodelsQualifier;
 import org.tts.model.common.ExternalResourceEntity;
 import org.tts.model.common.HelperQualSpeciesReturn;
+import org.tts.model.common.NameNode;
 import org.tts.model.common.SBMLCompartment;
 import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
 import org.tts.model.common.SBMLQualSpecies;
@@ -993,7 +994,9 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public Map<String, ProvenanceEntity> buildModel(Model model) {
+	public Map<String, SBMLSBaseEntity> buildModel(Model model,
+			Map<String, SBMLCompartment> sBaseIdToSBMLCompartmentMap, Map<String, NameNode> nameToNameNodeMap,
+			Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap) {
 		// TODO Auto-generated method stub
 		return null;
 	}

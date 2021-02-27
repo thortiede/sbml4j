@@ -23,6 +23,10 @@ import javax.xml.stream.XMLStreamException;
 import org.sbml.jsbml.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.Exception.ModelPersistenceException;
+import org.tts.model.common.ExternalResourceEntity;
+import org.tts.model.common.NameNode;
+import org.tts.model.common.SBMLCompartment;
+import org.tts.model.common.SBMLSBaseEntity;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.warehouse.FileNode;
@@ -43,7 +47,8 @@ public interface SBMLService {
 	 */
 	public Map<String, ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode) throws ModelPersistenceException;	
 	
-	
-	public Map<String, ProvenanceEntity> buildModel(Model model);
+	public Map<String, SBMLSBaseEntity> buildModel(Model model, Map<String, SBMLCompartment> sBaseIdToSBMLCompartmentMap,
+			Map<String, NameNode> nameToNameNodeMap,
+			Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap);
 	
 }

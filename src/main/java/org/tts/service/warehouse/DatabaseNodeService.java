@@ -55,6 +55,23 @@ public class DatabaseNodeService {
 
 		return this.databaseNodeRepository.save(database);
 	}
+	/**
+	 * Create a <a href="#{@link}">{@link DatabaseNode}</a> for the input parameters
+	 * Does not check for existing <a href="#{@link}">{@link DatabaseNode}</a>
+	 * @param source The source name of the <a href="#{@link}">{@link DatabaseNode}</a> 
+	 * @param sourceVersion The version of the <a href="#{@link}">{@link DatabaseNode}</a> 
+	 * @param org The <a href="#{@link}">{@link Organism}</a> associated with this <a href="#{@link}">{@link DatabaseNode}</a> 
+	 * @return The <a href="#{@link}">{@link DatabaseNode}</a> matching the input parameters. Entity is not persisted in the database
+	 */
+	public DatabaseNode prepareDatabaseNode(String source, String sourceVersion, Organism org) {
+		DatabaseNode database = new DatabaseNode();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(database);
+		database.setOrganism(org);
+		database.setSource(source);
+		database.setSourceVersion(sourceVersion);
+		return database;
+	}
+	
 	
 	/**
 	 * Get a <a href="#{@link}">{@link DatabaseNode}</a> by the entityUUID

@@ -96,6 +96,22 @@ public class ProvenanceGraphService {
 	}
 
 	/**
+	 * Creates a ProvenanceGraphAgentNode that type and the given name
+	 * Does not check for existing nodes!
+	 * @param name The name of the agent
+	 * @param graphAgentType The ProvenanceGraphAgentType for the node to create
+	 * @return A ProvenanceGraphAgentNode with name and graphAgentType, which is not written to the database yet.
+	 */
+	public ProvenanceGraphAgentNode prepareProvenanceGraphAgentNode(String name, ProvenanceGraphAgentType graphAgentType) {
+		log.info("Preparing ProvenanceGraphAgentNode for " + name);
+		ProvenanceGraphAgentNode provenanceGraphAgentNode = new ProvenanceGraphAgentNode();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(provenanceGraphAgentNode);
+		provenanceGraphAgentNode.setGraphAgentType(graphAgentType);
+		provenanceGraphAgentNode.setGraphAgentName(name);
+		return provenanceGraphAgentNode;
+	}
+	
+	/**
 	 * Creates a ProvenanceGraphActivityNode if not already present for Key: graphactivitytype and 
 	 * @param activityNodeProperties Properties map to be put in the provenance properties filed of the node
 	 * @param activityType the type of the activity from GraphEnum.ProvenanceGraphActivityType
@@ -119,6 +135,24 @@ public class ProvenanceGraphService {
 		
 		return this.provenanceGraphActivityNodeRepository.save(provenanceGraphActivityNode);
 	}
+
+	/**
+	 * Creates a ProvenanceGraphAgentNode that type and the given name
+	 * @param activityType The ProvenanceGraphActivityType to set
+	 * @param name The name of the activity
+	 * @return A ProvenanceGraphActivityNode with given type and name, which is not written to the database yet.
+	 */
+	public synchronized ProvenanceGraphActivityNode prepareProvenanceGraphActivityNode(
+			ProvenanceGraphActivityType activityType, String name) {
+	
+		ProvenanceGraphActivityNode provenanceGraphActivityNode = new ProvenanceGraphActivityNode();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(provenanceGraphActivityNode);
+		provenanceGraphActivityNode.setGraphActivityType(activityType);
+		provenanceGraphActivityNode.setGraphActivityName(name);
+		
+		return provenanceGraphActivityNode;
+	}
+	
 
 	/**
 	 * connect two provenance entities. The entity is not returned. 

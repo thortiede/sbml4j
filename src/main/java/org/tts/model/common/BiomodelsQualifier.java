@@ -23,6 +23,43 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @RelationshipEntity(type = "BQ")
 public class BiomodelsQualifier extends ContentGraphEdge {
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((endNode == null) ? 0 : endNode.getEntityUUID().hashCode());
+		result = prime * result + ((qualifier == null) ? 0 : qualifier.hashCode());
+		result = prime * result + ((startNode == null) ? 0 : startNode.getEntityUUID().hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		BiomodelsQualifier other = (BiomodelsQualifier) obj;
+		if (endNode == null) {
+			if (other.endNode != null)
+				return false;
+		} else if (!endNode.getEntityUUID().equals(other.endNode.getEntityUUID()))
+			return false;
+		if (qualifier != other.qualifier)
+			return false;
+		if (startNode == null) {
+			if (other.startNode != null)
+				return false;
+		} else if (!startNode.getEntityUUID().equals(other.startNode.getEntityUUID()))
+			return false;
+		if (type != other.type)
+			return false;
+		return true;
+	}
+
 	private CVTerm.Type type;
 	
 	private CVTerm.Qualifier qualifier;

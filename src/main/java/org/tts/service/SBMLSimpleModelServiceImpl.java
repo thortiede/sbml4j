@@ -557,16 +557,11 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 	/**************************** build without persist *******************/
 	
-	private Map<String, SBMLCompartment> createCompartmentsOfModel(Model model){
-		Map<String, SBMLCompartment> sBaseIdToCompartmentMap = new TreeMap<>();
-		
+	private void processCompartments(Model model, Map<String, SBMLCompartment> sBaseIdToCompartmentMap){
 		for (Compartment comp : model.getListOfCompartments()) {
-			SBMLCompartment sbmlComp = this.createSBMLCompartment(comp);
-			sBaseIdToCompartmentMap.put(sbmlComp.getsBaseId(), sbmlComp);
+			sBaseIdToCompartmentMap.putIfAbsent(comp.getId(), this.createSBMLCompartment(comp));
 		}
-		return sBaseIdToCompartmentMap;
 	}
-	
 	private SBMLCompartment createSBMLCompartment(Compartment compartment) {
 		SBMLCompartment sbmlCompartment = new SBMLCompartment();
 		this.graphBaseEntityService.setGraphBaseEntityProperties(sbmlCompartment);
@@ -681,13 +676,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			Map<String, List<CVTerm>> sbmlSBaseEntityUUIDTocvTermsMap,
 			Map<String, NameNode> nameToNameNodeMap,
 			Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap,
-			Map<String, Collection<BiomodelsQualifier>> speciesEntityUUIDToBiomodelsQualifierMap) {
+			Map<String, Collection<BiomodelsQualifier>> sbmlSBaseEntityUUIDToBiomodelsQualifierMap) {
 		
 		logger.debug("Processing cvTerms");
 		for (String uuid : sbmlSBaseEntityUUIDTocvTermsMap.keySet()) {
 			logger.debug("Processing cvTerm for uuid: " + uuid);
 			List<CVTerm> cv = sbmlSBaseEntityUUIDTocvTermsMap.get(uuid);
-			speciesEntityUUIDToBiomodelsQualifierMap.put(uuid, this.processCVTermListNoDB(cv, resourceUriToExternalResourceEntityMap, nameToNameNodeMap));
+			sbmlSBaseEntityUUIDToBiomodelsQualifierMap.put(uuid, this.processCVTermListNoDB(cv, resourceUriToExternalResourceEntityMap, nameToNameNodeMap));
 			logger.debug("Processing cvTerm for uuid: " + uuid + ". Finished");
 		}
 		logger.debug("Processing cvTerms. Finished");
@@ -747,7 +742,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		logger.debug("Creating ExternalResourceEntities for cvTerm");
 		for (String resource : cvTerm.getResources()) {
 			if (!resourceUriToExternalResourceEntityMap.containsKey(resource)) {
-				ExternalResourceEntity er = this.createExternalResourceEntityFromResourceNoDB(resource, resourceUriToExternalResourceEntityMap, nameToNameNodeMap);
+				ExternalResourceEntity er = this.createExternalResourceEntityFromResourceNoDB(resource, nameToNameNodeMap);
 				if (resourceUriToExternalResourceEntityMap.put(resource, er) != null) {
 					logger.debug("Created ExternalResourceEntity although resource has already been processed..");
 				}
@@ -769,60 +764,53 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 	
 	private ExternalResourceEntity createExternalResourceEntityFromResourceNoDB(
-					String resource, 
-					Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap,
+					String resource,
 					Map<String, NameNode> nameToNameNodeMap) {
-		logger.debug("Searching ExternalResourceEntity for resource " + resource);
-		ExternalResourceEntity existingExternalResourceEntity = resourceUriToExternalResourceEntityMap.get(resource);
-		if(existingExternalResourceEntity != null) {
-			logger.debug("Reusing ExternalResourceEntity for resource " + resource);
-			return existingExternalResourceEntity;
-		} else {
-			logger.debug("Creating ExternalResourceEntity for resource " + resource);
-			ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
-			this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
+		
+		logger.debug("Creating ExternalResourceEntity for resource " + resource);
+		ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
+		this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
+		
+		newExternalResourceEntity.setUri(resource);
+		if (resource.contains("kegg.genes")) {
+			newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
+			newExternalResourceEntity.setDatabaseFromUri("KEGG");
+			newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
+			Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
 			
-			newExternalResourceEntity.setUri(resource);
-			if (resource.contains("kegg.genes")) {
-				newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
-				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-				newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
-				Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
-				
-				Iterator<String> nameIterator = nameList.iterator();
-				if (nameIterator.hasNext()) {
-					newExternalResourceEntity.setPrimaryName(nameIterator.next());
-				}
-				while (nameIterator.hasNext()) {
-					String name = nameIterator.next();
+			Iterator<String> nameIterator = nameList.iterator();
+			if (nameIterator.hasNext()) {
+				newExternalResourceEntity.setPrimaryName(nameIterator.next());
+			}
+			while (nameIterator.hasNext()) {
+				String name = nameIterator.next();
+				this.processNameOfExternalResource(name, newExternalResourceEntity, nameToNameNodeMap);
+			}
+		} else if(resource.contains("kegg.reaction")) {
+			newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);
+			newExternalResourceEntity.setDatabaseFromUri("KEGG");
+		} else if(resource.contains("kegg.drug")) {
+			newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
+			newExternalResourceEntity.setDatabaseFromUri("KEGG");
+			//newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
+			List<String> secondaryNames = this.keggHttpService.getDrugInformationFromKEGGDrugURL(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
+			if (secondaryNames != null && !secondaryNames.isEmpty()) {
+				for (String name : secondaryNames) {
 					this.processNameOfExternalResource(name, newExternalResourceEntity, nameToNameNodeMap);
 				}
-			} else if(resource.contains("kegg.reaction")) {
-				newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);
-				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-			} else if(resource.contains("kegg.drug")) {
-				newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
-				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-				//newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
-				List<String> secondaryNames = this.keggHttpService.getDrugInformationFromKEGGDrugURL(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
-				if (secondaryNames != null && !secondaryNames.isEmpty()) {
-					for (String name : secondaryNames) {
-						this.processNameOfExternalResource(name, newExternalResourceEntity, nameToNameNodeMap);
-					}
+			}
+		} else if(resource.contains("kegg.compound")) {
+			newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
+			newExternalResourceEntity.setDatabaseFromUri("KEGG");
+			List<String> secondaryNames = this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
+			if (secondaryNames != null && !secondaryNames.isEmpty()) {
+				for (String name : secondaryNames) {
+					this.processNameOfExternalResource(name, newExternalResourceEntity, nameToNameNodeMap);
 				}
-			} else if(resource.contains("kegg.compound")) {
-				newExternalResourceEntity.setType(ExternalResourceType.KEGGCOMPOUND);
-				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-				List<String> secondaryNames = this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
-				if (secondaryNames != null && !secondaryNames.isEmpty()) {
-					for (String name : secondaryNames) {
-						this.processNameOfExternalResource(name, newExternalResourceEntity, nameToNameNodeMap);
-					}
-				}
-			} 
-			logger.debug("Searching ExternalResourceEntity for resource " + resource + ". Finished");
-			return newExternalResourceEntity;
-		}
+			}
+		} 
+		logger.debug("Searching ExternalResourceEntity for resource " + resource + ". Finished");
+		return newExternalResourceEntity;
 	}
 
 	private void processNameOfExternalResource(String name, ExternalResourceEntity externalResourceEntity, Map<String, NameNode> nameToNameNodeMap) {
@@ -1358,10 +1346,16 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 
 	@Override
-	public Map<String, ProvenanceEntity> buildModel(Model model) {
-		Map<String,ProvenanceEntity> allProvenanceEntities = new TreeMap<>();
+	public Map<String, SBMLSBaseEntity> buildModel(
+			Model model,
+			Map<String, SBMLCompartment> sBaseIdToSBMLCompartmentMap,
+			Map<String, NameNode> nameToNameNodeMap,
+			Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap) {
+		//Map<String,ProvenanceEntity> allProvenanceEntities = new TreeMap<>();
+		
+		Map<String, SBMLSBaseEntity> entityUUIDToSBMLSBaseEntityMap = new TreeMap<>(); // this gets filled for each model
 		// Compartments
-		Map<String, SBMLCompartment> sBaseIdToSBMLCompartmentMap = this.createCompartmentsOfModel(model); // these can already exist before the model
+		this.processCompartments(model, sBaseIdToSBMLCompartmentMap); // these can already exist before the model
 		
 		// Species
 		Map<String, SBMLSpecies> entityUUIDToSBMLSpeciesMap = new TreeMap<>();// this is filled for each model again
@@ -1375,45 +1369,59 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			SBMLSpecies species = entityUUIDToSBMLSpeciesMap.get(speciesUUID);
 			sBaseIdToSBMLSpeciesMap.put(species.getsBaseId(), species);
 			sBaseNameToSBMLSpeciesMap.put(species.getsBaseName(), species);
+			entityUUIDToSBMLSBaseEntityMap.put(speciesUUID, species);
 		}
 		// reactions
 		Map<String, SBMLSimpleReaction> entityUUIDToSBMLSimpleReactionsMap = new TreeMap<>();
 		this.processReactionsNoDB(model.getListOfReactions(), sBaseIdToSBMLCompartmentMap, sBaseIdToSBMLSpeciesMap, entityUUIDToSBMLSimpleReactionsMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
 
+		entityUUIDToSBMLSimpleReactionsMap.forEach(entityUUIDToSBMLSBaseEntityMap::put);
+		
 		// Qual Model Plugin:
+		Map<String, SBMLQualSpecies> entityUUIDToSBMLQualSpeciesMap = null;
+		Map<String, SBMLSimpleTransition> entityUUIDToSBMLSimpleTransitionMap = null;
 		if(model.getExtension("qual") != null ) {
 			QualModelPlugin qualModelPlugin = (QualModelPlugin) model.getExtension("qual");
 			
 			// QualSpecies
-			Map<String, SBMLQualSpecies> entityUUIDToSBMLQualSpeciesMap = new TreeMap<>();// this is filled for each model again
+			entityUUIDToSBMLQualSpeciesMap = new TreeMap<>();// this is filled for each model again
 			this.processQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), sBaseIdToSBMLCompartmentMap, entityUUIDToSBMLQualSpeciesMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
 			Map<String, SBMLQualSpecies> sBaseIdToSBMLQualSpeciesMap = new HashMap<>();
-			for (SBMLQualSpecies qualSpecies : entityUUIDToSBMLQualSpeciesMap.values()) {
-				sBaseIdToSBMLQualSpeciesMap.put(qualSpecies.getsBaseId(), qualSpecies);
+			for (String uuid : entityUUIDToSBMLQualSpeciesMap.keySet()) {
+				SBMLQualSpecies qualSpecies = entityUUIDToSBMLQualSpeciesMap.get(uuid);
+				sBaseIdToSBMLQualSpeciesMap.put(uuid, qualSpecies);
+				entityUUIDToSBMLSBaseEntityMap.put(uuid, qualSpecies);
 			}
 			// Transitions
-			Map<String, SBMLSimpleTransition> entityUUIDToSBMLSimpleTransitionMap = new TreeMap<>();
+			entityUUIDToSBMLSimpleTransitionMap = new TreeMap<>();
 			this.processQualTransitionsNoDB(qualModelPlugin.getListOfTransitions(), sBaseIdToSBMLQualSpeciesMap, entityUUIDToSBMLSimpleTransitionMap, sbmlSBaseEntityUUIDToCvTermsOfSBase);
+			entityUUIDToSBMLSimpleTransitionMap.forEach(entityUUIDToSBMLSBaseEntityMap::put);
+			
 		}
 		
 		
-		Map<String, NameNode> nameToNameNodeMap = new TreeMap<>(); // these can already exist before the model
-		Map<String, ExternalResourceEntity> resourceUriToExternalResourceEntityMap = new TreeMap<>(); // these can already exist before the model
-		Map<String, Collection<BiomodelsQualifier>> speciesEntityUUIDToBiomodelsQualifierMap = new TreeMap<>(); // these are always new
+		if (nameToNameNodeMap == null) {
+			nameToNameNodeMap = new TreeMap<>(); // these can already exist before the model
+		}
+		if(resourceUriToExternalResourceEntityMap == null) {
+			resourceUriToExternalResourceEntityMap = new TreeMap<>(); // these can already exist before the model
+		}
+		Map<String, Collection<BiomodelsQualifier>> sbmlSBaseEntityUUIDToBiomodelsQualifierMap = new TreeMap<>(); // these are always new
 		
 		// CVTerms
-		this.processCVTermsNoDB(sbmlSBaseEntityUUIDToCvTermsOfSBase, nameToNameNodeMap, resourceUriToExternalResourceEntityMap, speciesEntityUUIDToBiomodelsQualifierMap);
+		this.processCVTermsNoDB(sbmlSBaseEntityUUIDToCvTermsOfSBase, nameToNameNodeMap, resourceUriToExternalResourceEntityMap, sbmlSBaseEntityUUIDToBiomodelsQualifierMap);
 		
-		List<BiomodelsQualifier> persistBQList = new ArrayList<>();
-		for (String speciesUUID :speciesEntityUUIDToBiomodelsQualifierMap.keySet()) {
-			speciesEntityUUIDToBiomodelsQualifierMap.get(speciesUUID).forEach(bq -> {
-				SBMLSpecies startNode = entityUUIDToSBMLSpeciesMap.get(speciesUUID);
+		//List<BiomodelsQualifier> persistBQList = new ArrayList<>();
+		for (String speciesUUID :sbmlSBaseEntityUUIDToBiomodelsQualifierMap.keySet()) {
+			sbmlSBaseEntityUUIDToBiomodelsQualifierMap.get(speciesUUID).forEach(bq -> {
+				SBMLSBaseEntity startNode = entityUUIDToSBMLSBaseEntityMap.get(speciesUUID);
 				bq.setStartNode(startNode);
-				persistBQList.add(bq);
+				startNode.addBiomodelsQualifier(bq);
+				//persistBQList.add(bq);
 				
 			});
 		}
 		
-		return allProvenanceEntities;
+		return entityUUIDToSBMLSBaseEntityMap;
 	}
 }
