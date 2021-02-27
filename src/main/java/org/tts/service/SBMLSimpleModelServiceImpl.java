@@ -15,6 +15,7 @@ package org.tts.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -884,7 +885,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 
 	@Override
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
-		SBMLDocument doc = SBMLReader.read(file.getInputStream()); 
+		InputStream fileStream = file.getInputStream();
+		SBMLDocument doc = SBMLReader.read(fileStream); 
+		fileStream.close();
 		return doc.getModel();
 	}
 
@@ -926,6 +929,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		} catch (Exception e) {
 			// retry once
 			e.printStackTrace();
+			this.session.clear();
 			try {
 				persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 			} catch (Exception e2) {
@@ -1013,6 +1017,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				} catch (Exception e) {
 					// retry once
 					e.printStackTrace();
+					this.session.clear();
 					try {
 						qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 					} catch (Exception e2) {
