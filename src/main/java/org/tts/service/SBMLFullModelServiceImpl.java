@@ -992,4 +992,10 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		}
 	}
 
+	@Override
+	public Map<String, ProvenanceEntity> buildModel(Model model) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
