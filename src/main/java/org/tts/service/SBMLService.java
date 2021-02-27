@@ -42,4 +42,8 @@ public interface SBMLService {
 	 * @return Map of entityUUID of a ProvenanceEntity to the ProvenanceEntity that got persisted (or were already in the database) and are part of the model
 	 */
 	public Map<String, ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode) throws ModelPersistenceException;	
+	
+	
+	public Map<String, ProvenanceEntity> buildModel(Model model);
+	
 }
