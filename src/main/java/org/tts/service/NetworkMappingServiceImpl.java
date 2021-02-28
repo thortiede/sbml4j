@@ -325,6 +325,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 				if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
 					inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
+					this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
 				} else {
 					if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
@@ -344,7 +345,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
 								
 								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
 									inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
@@ -411,6 +414,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				if (primaryNameToFlatSpeciesMap.containsKey(outputSpeciesSymbol)) {
 					outputFlatSpecies = primaryNameToFlatSpeciesMap
 							.get(outputSpeciesSymbol);
+					this.updateFlatSpeciesWithSBase(outputFlatSpecies, outputQualSpecies);
 				} else {
 					if (outputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
@@ -430,7 +434,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
 								
 								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
-									outputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
+									outputGroupFlatSpecies.add(groupFlatSpecies);
+									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
@@ -597,6 +603,12 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	private void updateFlatSpeciesWithSBase(FlatSpecies flatSpecies, SBMLSBaseEntity sbmlSBaseEntity) {
+		//getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), flatSpecies); // they are always the same as they lead to the same externalResourceEntities. TODO: Is that always the case?
+		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), flatSpecies); // these differ as they sit on the sbase
+		
 	}
 
 	private String findSBasePrimaryName(SBMLSBaseEntity sBaseEntity)
