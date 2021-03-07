@@ -26,6 +26,7 @@ import org.tts.Exception.ModelPersistenceException;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.warehouse.FileNode;
+import org.tts.model.warehouse.PathwayNode;
 
 public interface SBMLService {
 
@@ -41,5 +42,5 @@ public interface SBMLService {
 	 * @param sbmlFileNode The name of the file this model originates from
 	 * @return Map of entityUUID of a ProvenanceEntity to the ProvenanceEntity that got persisted (or were already in the database) and are part of the model
 	 */
-	public Map<String, ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode) throws ModelPersistenceException;	
+	public void buildAndPersist(Model model, FileNode sbmlFileNode, ProvenanceGraphActivityNode activityNode, PathwayNode pathwayNode) throws ModelPersistenceException; //Map<String, ProvenanceEntity>
 }

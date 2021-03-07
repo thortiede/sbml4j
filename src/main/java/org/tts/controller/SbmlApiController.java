@@ -182,7 +182,7 @@ public class SbmlApiController implements SbmlApi {
 			countTotal++;
 			originalFilename = file.getOriginalFilename();
 			logger.debug("Processing file " + originalFilename);
-			Instant beginOfFile = Instant.now();
+			//Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
 			
@@ -243,7 +243,7 @@ public class SbmlApiController implements SbmlApi {
 			
 			// FileNode needs to connect to DatabaseNode
 			this.provenanceGraphService.connect(sbmlFileNode, database, ProvenanceGraphEdgeType.wasDerivedFrom);
-			Instant createMetadataFinished = Instant.now();
+			//Instant createMetadataFinished = Instant.now();
 			// now handle the model itself
 			Model sbmlModel = null;
 			try {
@@ -260,19 +260,19 @@ public class SbmlApiController implements SbmlApi {
 			if(sbmlModel == null) {
 				return ResponseEntity.badRequest().header("reason", "Could not extract an sbmlModel").build();
 			}
-			Instant modelExtractionFinished = Instant.now();
+			//Instant modelExtractionFinished = Instant.now();
 			// create a Pathway Node for the model
 			// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 			PathwayNode pathwayNode = this.pathwayService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
-			Instant createPathwayNodeFinished = Instant.now();
-			Map<String, ProvenanceEntity> resultSet;
+			//Instant createPathwayNodeFinished = Instant.now();
+			//Map<String, ProvenanceEntity> resultSet;
 			try {
-				resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
+				this.sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode);
 
-				for (ProvenanceEntity entity : resultSet.values()) {
-					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
-				}
-				Instant modelPersistingFinished = Instant.now();
+				//for (ProvenanceEntity entity : resultSet.values()) {
+				//	this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
+				//}
+				//Instant modelPersistingFinished = Instant.now();
 				
 				this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
@@ -281,20 +281,20 @@ public class SbmlApiController implements SbmlApi {
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
-				Instant postMetadataFinished = Instant.now();
+				//Instant postMetadataFinished = Instant.now();
 				
-				StringBuilder sb = new StringBuilder();
-				sb.append("Execution times: ");
+				//StringBuilder sb = new StringBuilder();
+				//sb.append("Execution times: ");
 				
 				// createPreMetadata
-				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, postMetadataFinished), "total");
+				/*this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, postMetadataFinished), "total");
 				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, createMetadataFinished), "preMetadata");
 				this.utilityService.appendDurationString(sb, Duration.between(createMetadataFinished, modelExtractionFinished), "modelExtract");
 				this.utilityService.appendDurationString(sb, Duration.between(modelExtractionFinished, createPathwayNodeFinished), "createPWNode");
 				this.utilityService.appendDurationString(sb, Duration.between(createPathwayNodeFinished, modelPersistingFinished), "modelPersist");
 				this.utilityService.appendDurationString(sb, Duration.between(modelPersistingFinished, postMetadataFinished), "postMetadata");
 						
-				logger.info(sb.toString());
+				logger.info(sb.toString());*/
 				
 			} catch (ModelPersistenceException e) {
 				if (e.getMessage().startsWith("SBMLSpecies")) {
