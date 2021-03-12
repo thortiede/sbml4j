@@ -20,12 +20,12 @@ import org.tts.model.warehouse.PathwayCollectionNode;
 public interface PathwayCollectionNodeRepository extends Neo4jRepository<PathwayCollectionNode, Long> {
 
 	
-	@Query("MATCH "
+	@Query("MATCH p="
 			+ "(pc:PathwayCollectionNode)"
 			+ "-[fo:FOR]->"
 			+ "(o:Organism) "
 			+ "where pc.pathwayCollectionName = $pathwayCollectionName "
-			+ "RETURN pc, fo, o")
+			+ "RETURN p")
 	public Iterable<PathwayCollectionNode> findAllByPathwayCollectionName(String pathwayCollectionName);
 	
 }
