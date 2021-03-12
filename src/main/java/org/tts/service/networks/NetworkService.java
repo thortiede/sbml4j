@@ -1122,7 +1122,7 @@ public class NetworkService {
 		// connect the unconnected species
 		Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
 		while (newFlatSpeciesIterator.hasNext()) {
-			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, false);
 		}
 	}
 

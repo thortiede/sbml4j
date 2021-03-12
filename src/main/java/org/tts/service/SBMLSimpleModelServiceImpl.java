@@ -1084,7 +1084,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		logger.info(sb.toString());
 */
 		for (ProvenanceEntity entity : returnList.values()) {
-			this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS, false);
 		}
 		//return returnList; // This is the list<sources> of the Knowledge Graph "WarehouseGraphNode" Node, which then serves as Source for the network mappings, derived from full KEGG
 	}

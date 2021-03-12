@@ -178,7 +178,9 @@ public class SbmlApiController implements SbmlApi {
 		int countError = 0;
 		String originalFilename;
 		StringBuilder errorFileNames = new StringBuilder();
+		int filenum = 0;
 		for (MultipartFile file : files) {
+			filenum++;
 			countTotal++;
 			originalFilename = file.getOriginalFilename();
 			logger.debug("Processing file " + originalFilename);
@@ -267,6 +269,9 @@ public class SbmlApiController implements SbmlApi {
 			//Instant createPathwayNodeFinished = Instant.now();
 			//Map<String, ProvenanceEntity> resultSet;
 			try {
+				if (filenum >10 ) {
+					logger.info("Model number " +filenum);
+				}
 				this.sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode);
 
 				//for (ProvenanceEntity entity : resultSet.values()) {
