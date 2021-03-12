@@ -317,7 +317,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 		if (processTransitionsNeeded) {
 			Iterable<SBMLSimpleTransition> pathwayTransitions = 
-					this.sbmlSimpleTransitionService.findMatchingTransitionsInPathway(
+					this.sbmlSimpleTransitionService.findMatchingTransitionPathsInPathway(
 															pathway.getEntityUUID(),
 															transitionSBOTerms, 
 															nodeSBOTerms);

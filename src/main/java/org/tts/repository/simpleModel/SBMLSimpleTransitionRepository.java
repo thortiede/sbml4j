@@ -82,4 +82,24 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "RETURN ei, bi, qi, in,  t, out, qo, bo, eo")
 	Iterable<SBMLSimpleTransition> findMatchingInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
 			List<String> nodeSBOTerms);
+	
+	@Query(value = "MATCH "
+			+ "(pw:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where pw.entityUUID = $pathwayEntityUUID "
+			+ "and t.sBaseSboTerm in $transitionSBOTerms "
+			+ "with t "
+			+ "MATCH p="
+			+ "(t)"
+			+ "-[tr:IS_OUTPUT|IS_INPUT]->"
+			+ "(q:SBMLQualSpecies)"
+			+ "-[bq:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE bq.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND bq.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND q.sBaseSboTerm in $nodeSBOTerms "
+			+ "RETURN p")
+	Iterable<SBMLSimpleTransition> findMatchingPathsInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
+			List<String> nodeSBOTerms);
 }
