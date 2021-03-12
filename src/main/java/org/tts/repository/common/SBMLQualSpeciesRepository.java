@@ -31,12 +31,14 @@ public interface SBMLQualSpeciesRepository extends Neo4jRepository<SBMLQualSpeci
 			+ "(g:SBMLQualSpeciesGroup)"
 			+ "-[h:HAS_GROUP_MEMBER]->"
 			+ "(s:SBMLQualSpecies) "
+			+ "WHERE g.entityUUID = $groupEntityUUID "
+			+ "WITH s MATCH p="
+			+ "(s)"
 			+ "-[b:BQ]->"
 			+ "(e:ExternalResourceEntity) "
 			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
 			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
-			+ "AND g.entityUUID = $groupEntityUUID "
-			+ "RETURN s, b, e")
+			+ "RETURN p")
 	Iterable<SBMLQualSpecies> getSBMLQualSpeciesOfGroup(String groupEntityUUID);
 
 	@Query("MATCH "
