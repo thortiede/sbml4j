@@ -179,11 +179,12 @@ public class SbmlApiController implements SbmlApi {
 		String originalFilename;
 		StringBuilder errorFileNames = new StringBuilder();
 		int filenum = 0;
+		int filestotal = files.size();
 		for (MultipartFile file : files) {
 			filenum++;
 			countTotal++;
 			originalFilename = file.getOriginalFilename();
-			logger.debug("Processing file " + originalFilename);
+			logger.debug("Processing file " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			//Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
@@ -197,7 +198,7 @@ public class SbmlApiController implements SbmlApi {
 				//return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 			}
 			
-			logger.info("Serving POST /sbml for File " + originalFilename);
+			logger.info("Serving POST /sbml for File " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			
 			// is Content Type xml?
 			if(!fileCheckService.isContentXML(file)) {
@@ -269,9 +270,6 @@ public class SbmlApiController implements SbmlApi {
 			//Instant createPathwayNodeFinished = Instant.now();
 			//Map<String, ProvenanceEntity> resultSet;
 			try {
-				if (filenum >10 ) {
-					logger.info("Model number " +filenum);
-				}
 				this.sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode);
 
 				//for (ProvenanceEntity entity : resultSet.values()) {
