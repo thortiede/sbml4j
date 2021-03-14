@@ -337,6 +337,13 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				
 				// input species
 				SBMLQualSpecies inputQualSpecies = current.getInputSpecies();
+				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
+				
+				if (inputQualSpecies == null || outputQualSpecies == null) {
+					// apparently one of the transitionpartners was not in the allowed nodeSBOList, skip transition
+					continue;
+				}
+				
 				String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
 				String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
 
@@ -424,7 +431,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					}
 				}
 				// output species
-				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
 				String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
 				String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
 				
