@@ -597,12 +597,12 @@ public class NetworkService {
 		
 		// 3. We need a graphAgent for creating the new network
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null && !this.configService.isPublicUser(user)) {
+		if(agent == null) { // && !this.configService.isPublicUser(user)) {
 			// create a new agent for this operation
 			agent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
-		} else {
-			throw new Exception("Failed to assign user to context mapping.");
-		}
+		} //else {
+			//throw new Exception("Failed to assign user to context mapping.");
+		//}
 		// 4. get the context
 		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(parentMapping.getEntityUUID(), geneNames, minSize, maxSize, terminateAt, direction);
 		if(contextFlatEdges == null) {
@@ -875,7 +875,7 @@ public class NetworkService {
 		List<FlatSpecies> foundEntities= new ArrayList<>();
 		// 0. Check whether we have that geneSymbol directly in the network
 		Iterable<FlatSpecies> flatSpeciesForSymbol= this.findAllEntityForSymbolInNetwork(networkEntityUUID, nodeSymbol);
-		if (flatSpeciesForSymbol != null) {
+		if (flatSpeciesForSymbol != null && flatSpeciesForSymbol.iterator().hasNext()) {
 			flatSpeciesForSymbol.forEach(foundEntities::add);
 		}
 		if (!foundEntities.isEmpty()) {
