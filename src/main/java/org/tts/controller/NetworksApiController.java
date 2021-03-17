@@ -554,9 +554,9 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		int maxDepth; 
-		if (minSize != null) {
+		if (maxSize != null) {
 			maxDepth = maxSize.intValue();
-		} else if (this.configService.getContextMinSize() != null) {
+		} else if (this.configService.getContextMaxSize() != null) {
 			maxDepth = this.configService.getContextMaxSize().intValue();
 		} else {
 			return ResponseEntity.badRequest()
