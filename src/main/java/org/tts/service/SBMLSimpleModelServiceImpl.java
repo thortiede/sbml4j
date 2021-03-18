@@ -16,8 +16,6 @@ package org.tts.service;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -502,7 +500,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			
 			// reaction not yet in db, build and persist it
 			SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
-			this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(newReaction);
+			this.graphBaseEntityService.setGraphBaseEntityProperties(newReaction);
 			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(reaction, newReaction);
 			// uncomment to connect entities to compartments
 			this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
@@ -929,17 +927,29 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		try {
 			this.session.clear();
 			//speciesSessionClear = Instant.now();
-			persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+			//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+			persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 			//speciesPersisted = Instant.now();
 		} catch (Exception e) {
 			// retry once
 			e.printStackTrace();
 			this.session.clear();
+			System.gc();
 			try {
-				persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+				//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+				persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 			} catch (Exception e2) {
 				e2.printStackTrace();
-				throw new ModelPersistenceException("SBMLSpecies: Failed to persist. " + e2.getMessage());
+				// try again with other save method
+				this.session.clear();
+				System.gc();
+				try {
+					persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+					//persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
+				} catch (Exception e3) {
+					throw new ModelPersistenceException("SBMLSpecies: Failed to persist. " + e3.getMessage());
+				}
+			
 			}
 		}
 		Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap = new HashMap<>();
@@ -1017,17 +1027,28 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				try {
 					this.session.clear();
 					//qualSpeciesSessionClear = Instant.now();
-					qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+					//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+					qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
 					//qualSpeciesPersisted = Instant.now();
 				} catch (Exception e) {
 					// retry once
 					e.printStackTrace();
 					this.session.clear();
+					System.gc();
 					try {
-						qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+						//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+						qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
 					} catch (Exception e2) {
 						e2.printStackTrace();
-						throw new ModelPersistenceException("SBMLQualSpecies: Failed to persist. " + e2.getMessage());
+						this.session.clear();
+						System.gc();
+						try {
+							qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
+							//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
+						} catch (Exception e3) {
+							e2.printStackTrace();
+							throw new ModelPersistenceException("SBMLQualSpecies: Failed to persist. " + e3.getMessage());
+						}
 					}
 				}
 				Map<String, SBMLQualSpecies> sBaseIdToSBMLQualSpeciesMap = new HashMap<>();
