@@ -176,14 +176,14 @@ public class SbmlApiController implements SbmlApi {
 		List<PathwayInventoryItem> pathwayInventoryList = new ArrayList<>();
 		int countTotal = 0;
 		int countError = 0;
-		String originalFilename;
+		
 		StringBuilder errorFileNames = new StringBuilder();
 		int filenum = 0;
 		int filestotal = files.size();
 		for (MultipartFile file : files) {
 			filenum++;
 			countTotal++;
-			originalFilename = file.getOriginalFilename();
+			String originalFilename = file.getOriginalFilename();
 			logger.debug("Processing file " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			//Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
