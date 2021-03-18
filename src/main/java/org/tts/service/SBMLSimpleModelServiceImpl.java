@@ -197,7 +197,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	}
 
 	
-	@SuppressWarnings("unused")
 	private void processQualSpecies(	ListOf<QualitativeSpecies> qualSpeciesListOf,
 										Map<String, SBMLCompartment> compartmentLookupMap,
 										Map<String, SBMLQualSpecies> sbmlQualSpeciesToPersist,
@@ -316,9 +315,6 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			if (er.getNames() != null) {
 				List<String> namesToReplace = new ArrayList<>();
 				for (NameNode n : er.getNames()) {
-					if ("IMD2".equals(n.getName())) {
-						logger.debug(n.getName());
-					}
 					NameNode seenNameNode = nameToNameNodeMap.putIfAbsent(n.getName(), n);
 					if (seenNameNode != null) {
 						// a nameNode with that value has already been produced
@@ -867,9 +863,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	private void setKeggCompoundNames(Map<String, NameNode> seenNames, String resource, ExternalResourceEntity newExternalResourceEntity) {
 		// TODO Here httpService needs to fetch the resource from KEGG Compound and set the name and secondary Name
 		// what about formula? Is this more interesting? -> Do this as annotation
-		this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
-		if (newExternalResourceEntity.getSecondaryNames() != null && newExternalResourceEntity.getSecondaryNames().length > 0) {
-			for (String secName : newExternalResourceEntity.getSecondaryNames()) {
+		List<String> secondaryNames = this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity);
+		if (!secondaryNames.isEmpty()) {
+			for (String secName : secondaryNames) {
 				createNameNode(seenNames, newExternalResourceEntity, secName);
 			}
 		}
