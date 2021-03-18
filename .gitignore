@@ -43,3 +43,6 @@ external_libs_and_tools/
 
 ### VisualVM
 *.class
+
+### Heap dumps
+*.hprof
