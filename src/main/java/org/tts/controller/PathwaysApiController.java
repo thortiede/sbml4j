@@ -286,6 +286,12 @@ public class PathwaysApiController implements PathwaysApi {
 			//TODO: Do a rollback of the transaction
 			nme.printStackTrace();
 			return ResponseEntity.badRequest().header("reason", nme.getMessage()).build();
+		} catch (IllegalArgumentException e) {
+			if (e.getMessage().contains("NetworkMappingType")) {
+				return ResponseEntity.badRequest().header("reason", "Illegal value (" +mappingType+") for mappingType. Allowed values: PPI, SIGNALLING, REGULATORY, METABOLIC, PATHWAYMAPPING").build();
+			} else {
+				return ResponseEntity.badRequest().header("reason", "Illegal parameter value in request.").build();
+			}
 		} catch (Exception e) {
 				
 			// TODO Auto-generated catch block
