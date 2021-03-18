@@ -62,7 +62,11 @@ public class GraphBaseEntityService {
 						separator = sbml4jConfig.getAnnotationConfigProperties().getSeparator(AnnotationName.get(annotationName));
 					}
 					String existingAnnotationString = (String) entity.getAnnotation().get(annotationName);
-					newAnnotationValue = existingAnnotationString + separator + (String) annotationValue;
+					if (existingAnnotationString.contains((String) annotationValue)) { // this might be expensive but prevents duplicates
+						return entity;
+					} else {
+						newAnnotationValue = existingAnnotationString + separator + (String) annotationValue;
+					}
 				}
 			}
 			entity.addAnnotation(annotationName, newAnnotationValue);
