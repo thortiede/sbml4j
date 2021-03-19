@@ -113,4 +113,30 @@ public class ConfigService {
 		return this.sbml4jConfig.getNetworkConfigProperties().isAllowInactiveDuplicates();
 	}
 	
+	
+	
+	public boolean isSymbolInMDAnderson(String symbol) {
+		return this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getGenelist().contains(symbol);
+	}
+	
+	public boolean isAddMDAnderson() {
+		return this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().isAddMdAndersonAnnotation();
+	}
+	
+	/**
+	 * Create a url in the form https://pct.mdanderson.org/home/ABL1?section=Overview from the symbol
+	 * @param symbol The Symbol to create the URL for
+	 * @return String containing the full URL, or NULL if the symbol is not part of MDAnderson
+	 */
+	public String getMDAndersonString(String symbol) {
+		if (isSymbolInMDAnderson(symbol)) {
+			return this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getBaseurl()
+				+ symbol
+				+ "?section="
+				+ this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getSection();
+		} else {
+			return null;
+		}
+	}
+	
 }
