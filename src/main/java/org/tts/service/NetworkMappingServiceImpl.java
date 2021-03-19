@@ -114,6 +114,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	@Autowired
 	SBML4jConfig sbml4jConfig;
 	
+	@Autowired
+	ConfigService configService;
+	
 	private static int QUERY_DEPTH_ZERO = 0;
 	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -724,8 +727,16 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		newFlatSpecies.setSymbol(primaryName);
 		newFlatSpecies.setSboTerm(sbmlSBaseEntity.getsBaseSboTerm());
 		getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), newFlatSpecies);
+		if (this.configService.isAddMDAnderson()) getMDAndersonAnnotation(primaryName, newFlatSpecies);
 		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), newFlatSpecies);
 		return newFlatSpecies;
+	}
+
+	private void getMDAndersonAnnotation(String primaryName, FlatSpecies newFlatSpecies) {
+		String mdAndersonURL = this.configService.getMDAndersonString(primaryName);
+		if (mdAndersonURL != null) {
+			this.graphBaseEntityService.addAnnotation(newFlatSpecies, "mdanderson", "string", mdAndersonURL, this.sbml4jConfig.getAnnotationConfigProperties().isAppend());
+		}
 	}
 
 	/**
@@ -764,8 +775,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					} else if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGDRUG)) {
 						target.addLabel("Drug");
 					}
-				} else if (bq.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) {
-					this.graphBaseEntityService.addAnnotation(target, "mdanderson", "string", uri, doAppend);
 				}
 			}
 		}
