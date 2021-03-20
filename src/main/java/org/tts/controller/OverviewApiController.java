@@ -13,6 +13,7 @@
  */
 package org.tts.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.tts.model.api.OverviewNetworkItem;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.flat.FlatEdge;
+import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.service.ConfigService;
@@ -85,13 +87,16 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
-		log.info("Serving POST /overview for user " + user + " with overviewNetworkItem: " + overviewNetworkItem.toString());
+		log.info("Serving POST /overview" +  (user != null ? " for user " + user : "") + " with overviewNetworkItem: " + overviewNetworkItem.toString());
 		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
 		boolean baseNetworkUUIDprovided = false;
 		if (overviewNetworkItem.getBaseNetworkUUID() == null) {
 			networkEntityUUID = this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getBaseNetworkUUID();
+			if (networkEntityUUID == null || networkEntityUUID.isBlank()) {
+				return ResponseEntity.badRequest().header("reason", "No baseNetworkEntityUUID provided in body and no default network configured. Unable to generate context without one or the other.").build();
+			}
 			log.debug("Using baseNetwork given by properties: " + networkEntityUUID);
 		} else {
 			networkEntityUUID = overviewNetworkItem.getBaseNetworkUUID().toString();
@@ -102,7 +107,18 @@ public class OverviewApiController implements OverviewApi {
 		if (overviewNetworkItem.getAnnotationName() == null || overviewNetworkItem.getAnnotationName().equals("")) {
 			return ResponseEntity.badRequest().header("reason", "Annotation name not provided in request body in the annotationName - field.").build();
 		}
-		// 2. Does the network exist?
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(networkEntityUUID, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+		
+		// 3. Does the network exist?
 		MappingNode parentMapping = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		if (parentMapping == null) {
 			if (baseNetworkUUIDprovided) {
@@ -111,16 +127,15 @@ public class OverviewApiController implements OverviewApi {
 				return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration.").build();
 			}
 		}
-		// 3a. Get the network name
+		// 4a. Get the gene names
 		List<String> geneNames = overviewNetworkItem.getGenes();
 		// 4b. Any genes provided?
 		if (geneNames == null || geneNames.isEmpty()) {
 			return ResponseEntity.badRequest().header("reason", "Genes not provided in body").build();
 		}
-		String networkName = null;
-		if (overviewNetworkItem.getNetworkName() != null && !overviewNetworkItem.getNetworkName().equals("")) {
-			networkName = overviewNetworkItem.getNetworkName();
-		} else {
+		// 5. Get the networkName
+		String networkName = overviewNetworkItem.getNetworkName();
+		if (overviewNetworkItem.getNetworkName() == null || overviewNetworkItem.getNetworkName().isBlank()) {
 			StringBuilder networkNameSB = new StringBuilder();
 			networkNameSB.append("Overview-network");
 			for (String gene : geneNames) {
@@ -132,7 +147,7 @@ public class OverviewApiController implements OverviewApi {
 			networkName = networkNameSB.toString();
 		}
 		
-		// 3c. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
+		// 6. Check if a network with this name already exists for that user (as it has to be unique and we need to check that here)
 		MappingNode existingNetwork = this.mappingNodeService.findByNetworkNameAndUser(networkName, user);
 		if (existingNetwork != null) {
 			log.info("Found existing network with name " + networkName + " for user " + user + ". Deleting existing network.");
@@ -148,33 +163,34 @@ public class OverviewApiController implements OverviewApi {
 			}
 		}
 		
-		// 4. Create the user if not existent
+		// 7. Create the user if not existent
 		ProvenanceGraphAgentNode graphAgent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
 		
-		// 5. Check whether we know at least one of the genes provided
+		// 8. Check whether we know at least one of the genes provided and get the entityUUIDs of the FlatSpecies
 		boolean foundGene = false;
+		List<String> geneSpeciesEntityUUIDList = new ArrayList<>();
 		for (String gene : geneNames) {
 			List<String> foundGeneEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
 			if (foundGeneEntityUUIDs != null
 					&& !foundGeneEntityUUIDs.isEmpty()) {
 				foundGene = true;
-				break;
+				geneSpeciesEntityUUIDList.addAll(foundGeneEntityUUIDs);
 			}
 		}
 		if (!foundGene) {
 			return ResponseEntity.badRequest().header("reason", "Could not find any of the provided genes. Cannot calculate overview network.").build();
 		}
 		
-		// 6. Create the MappingNode to use
+		// 9. Create the MappingNode to use
 		MappingNode overviewNetwork = this.networkService.createMappingPre(graphAgent, parentMapping, networkName, "Create_" + networkName, ProvenanceGraphActivityType.createContext, parentMapping.getMappingType());
 		
-		// 7. Get the FlatEdges making up the context
+		// 10. Get the FlatEdges making up the context
 		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(
 											  networkEntityUUID
 											, geneNames 
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMinSize()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMaxSize()
-											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug() == true ? "Drug" : ""
+											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug() == true ? "Drugtarget" : ""
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection());
 		if(contextFlatEdges == null) {
 			this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
@@ -182,15 +198,16 @@ public class OverviewApiController implements OverviewApi {
 		}
 		log.info("Created overview network species and relationships of network " + overviewNetwork.getMappingName());
 		Map<String, Object> nodeAnnotation = new HashMap<>();
-		for (String geneName : geneNames) {
-			nodeAnnotation.put(geneName, true);
+		List<FlatSpecies> geneSpecies = this.networkService.getNetworkNodes(geneSpeciesEntityUUIDList);
+		for (FlatSpecies fs : geneSpecies) {
+			nodeAnnotation.put(fs.getSymbol(), true);
 		}
-		// 8. Add the annotation inline
+		// 11. Add the annotation inline
 		this.networkService.addNodeAnnotation(contextFlatEdges, overviewNetworkItem.getAnnotationName(), "boolean", nodeAnnotation);
 		log.info("Added annotation " + overviewNetworkItem.getAnnotationName() + " to network" + overviewNetwork.getMappingName());
-		// 9. Create a networkName for the new network file
+
 		
-		// 10. Connect the FlatEdges to the mappingNode
+		// 12. Connect the FlatEdges to the mappingNode
 		overviewNetwork = this.networkService.createMappingFromFlatEdges(graphAgent, networkEntityUUID, contextFlatEdges, overviewNetwork);
 		log.info("Created network " + overviewNetwork.getMappingName() + ". Returning.");
 		// 10. Return the InventoryItem of the new Network
