@@ -108,17 +108,7 @@ public class OverviewApiController implements OverviewApi {
 			return ResponseEntity.badRequest().header("reason", "Annotation name not provided in request body in the annotationName - field.").build();
 		}
 		
-		// 2. Is the given user or the public user authorized for this network?
-		String networkUser = null;
-		try {
-			networkUser = this.configService.getUserNameAttributedToNetwork(networkEntityUUID, user);
-		} catch (UserUnauthorizedException e) {
-			return ResponseEntity.badRequest()
-					.header("reason", e.getMessage())
-					.build();
-		}
-		
-		// 3. Does the network exist?
+		// 2. Does the network exist?
 		MappingNode parentMapping = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		if (parentMapping == null) {
 			if (baseNetworkUUIDprovided) {
@@ -127,6 +117,17 @@ public class OverviewApiController implements OverviewApi {
 				return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration.").build();
 			}
 		}
+		
+		// 3. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(networkEntityUUID, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+		user = user != null ? user.strip() : networkUser;
 		// 4a. Get the gene names
 		List<String> geneNames = overviewNetworkItem.getGenes();
 		// 4b. Any genes provided?
@@ -168,13 +169,13 @@ public class OverviewApiController implements OverviewApi {
 		
 		// 8. Check whether we know at least one of the genes provided and get the entityUUIDs of the FlatSpecies
 		boolean foundGene = false;
-		List<String> geneSpeciesEntityUUIDList = new ArrayList<>();
+		List<FlatSpecies> geneSpecies=new ArrayList<>();
 		for (String gene : geneNames) {
-			List<String> foundGeneEntityUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(networkEntityUUID, gene);
-			if (foundGeneEntityUUIDs != null
-					&& !foundGeneEntityUUIDs.isEmpty()) {
+			List<FlatSpecies> foundGeneEntities = this.networkService.getFlatSpeciesOfSymbolInNetwork(networkEntityUUID, gene);
+			if (foundGeneEntities != null
+					&& !foundGeneEntities.isEmpty()) {
 				foundGene = true;
-				geneSpeciesEntityUUIDList.addAll(foundGeneEntityUUIDs);
+				geneSpecies.addAll(foundGeneEntities);
 			}
 		}
 		if (!foundGene) {
@@ -198,7 +199,7 @@ public class OverviewApiController implements OverviewApi {
 		}
 		log.info("Created overview network species and relationships of network " + overviewNetwork.getMappingName());
 		Map<String, Object> nodeAnnotation = new HashMap<>();
-		List<FlatSpecies> geneSpecies = this.networkService.getNetworkNodes(geneSpeciesEntityUUIDList);
+
 		for (FlatSpecies fs : geneSpecies) {
 			nodeAnnotation.put(fs.getSymbol(), true);
 		}
