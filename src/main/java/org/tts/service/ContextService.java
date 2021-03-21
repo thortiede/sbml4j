@@ -14,12 +14,11 @@
 package org.tts.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -79,17 +78,19 @@ public class ContextService {
 		if (genes == null) {
 			return null;
 		}
+		
 		List<String> uniqueGenes = genes.stream().distinct().collect(Collectors.toList());
 		log.info("Gathering context edges for input: " + uniqueGenes.toString() + " on network with uuid " + networkEntityUUID);
 		log.info("TerminateAt is " + (terminateAt != null ? terminateAt : "not given") + ", direction is " + direction + ", sizes are:" + minSize + "/" + maxSize);
 		FilterOptions filterOptions = this.mappingNodeService.getFilterOptions(networkEntityUUID);
 		String relationShipApocString = this.apocService.getRelationShipOrString(filterOptions.getRelationTypes(), new HashSet<>(), direction);
+		Set<String> networkNodeLabels = this.networkService.getNetworkNodeLabels(networkEntityUUID);
 		List<FlatEdge> allEdges = new ArrayList<>();
 		Set<String> seenEdges = new HashSet<>();
 		List<FlatSpecies> geneListFlatSpecies = new ArrayList<>();
 		
 		// get nodeApocString
-		String nodeApocString = this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt);
+		String nodeApocString = this.apocService.getNodeOrString(networkNodeLabels, terminateAt);
 		log.info("Node string for path.expand: " + nodeApocString);
 		Set<String> geneUUIDSet = new HashSet<>();
 		for (String gene : uniqueGenes) {
@@ -124,6 +125,8 @@ public class ContextService {
 			int minSize, int maxSize, String terminateAt, String direction) {
 		
 		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		Set<String> networkNodeLabels = this.networkService.getNetworkNodeLabels(networkEntityUUID);
+		
 		Set<String> networkRelationTypes = mappingNode.getMappingRelationTypes();
 		List<FlatEdge> allEdges = new ArrayList<>();
 		List<FlatSpecies> targetSpecies = new ArrayList<>();
@@ -131,34 +134,56 @@ public class ContextService {
 		Set<String> seenEdges = new HashSet<>();
 		if (geneListFlatSpecies.size() < 2) {
 			return null;
-		} else if (geneListFlatSpecies.size() == 2) {
-			Iterable<ApocPathReturnType> contextNet = this.apocService.dijkstraWithDefaultWeight(
-					geneListFlatSpecies.get(0).getEntityUUID(), 
-					geneListFlatSpecies.get(1).getEntityUUID(), 
-					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-					"weight", 
-					1.0f);
-			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
 		} else {
-			Map<String, FlatSpecies> sortedByNameFlatSpeciesMap = new TreeMap<>();
-			for (FlatSpecies fs : geneListFlatSpecies) {
-				if (sortedByNameFlatSpeciesMap.put(fs.getSymbol(), fs) != null) {
-					// The map already had an entry with that symbol. It should not happen, but just in case it does:
-					log.warn("Duplicate Symbol in mapping Context creation: " +fs.getSymbol() + ". Now using FlatSpecies with uuid " + fs.getEntityUUID() + " to create the context for this symbol.");
+			Collections.sort(geneListFlatSpecies, Comparator.comparing(FlatSpecies::getSymbol));
+			boolean foundInitialPath = false;
+			FlatSpecies first = null;
+			FlatSpecies second = null;
+			for (int i = 0; i != geneListFlatSpecies.size()-1; i++) {
+				if(foundInitialPath) {
+					break;
+				} else {
+					first = geneListFlatSpecies.get(i);
+					for (int j = i+1; j != geneListFlatSpecies.size(); j++) {
+						second = geneListFlatSpecies.get(j);
+						log.info("Attempting to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ") with shortest path.");
+						List<FlatEdge> newEdges = getShortestPathEdges(direction, networkRelationTypes, seenEdges, first, second);
+						if (newEdges.isEmpty()) {
+							log.info("Failed to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ").");
+						} else {
+							foundInitialPath = true;
+							for (FlatEdge edge : newEdges) {
+								if (seenEdges.add(edge.getSymbol())) {
+									allEdges.add(edge);
+									if (targetSpeciesUUID.add(edge.getInputFlatSpecies().getEntityUUID())) {
+										targetSpecies.add(edge.getInputFlatSpecies());
+									}
+									if (targetSpeciesUUID.add(edge.getOutputFlatSpecies().getEntityUUID())) {
+										targetSpecies.add(edge.getOutputFlatSpecies());
+									}
+								}
+							}
+							break;
+						}
+					}
 				}
 			}
-			// Now the sortedByNameFlatSpeciesMap contains the FlatSpecies in a sorted manner by the symbol
-			// just double check we still have at least 2 FlatSpecies
-			if (sortedByNameFlatSpeciesMap.keySet().size() < 2) {
-				return null;
-			} 
-			Iterator<FlatSpecies> it = sortedByNameFlatSpeciesMap.values().iterator();
-			FlatSpecies first = it.next();
-			// add the context around this gene also to the context net
+			if (!foundInitialPath) {
+				// failed to connect any of the genes, no context can be calculated
+				return null; // rather throw an exception here TODO
+			} else {
+				log.info("Connected gene "+ first.getSymbol() + " and " + second.getSymbol() + " with a shortest path");
+				
+			}
+			// now we have the initial path between the Species first and second
+			// also add the contexts around those genes to the target lists and remove them from the geneListFlatSpcecies
+			
+			// add the context around the first gene to the context net
+			String nodeOrString = this.apocService.getNodeOrString(networkNodeLabels, terminateAt);
 			Iterable<ApocPathReturnType> firstGeneContextNet = this.apocService.pathExpand(
 					first.getEntityUUID(), 
 					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-					this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt),
+					nodeOrString,
 					minSize, 
 					maxSize);
 			List<FlatEdge> firstGeneContextFlatEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, firstGeneContextNet);
@@ -177,14 +202,13 @@ public class ContextService {
 					}
 				}
 			}
-			it.remove();
 			log.info("Calculated context around gene with symbol: " +first.getSymbol());
-			FlatSpecies second = it.next();
-			// add the context around this gene also to the context net
+			
+			// add the context around the second gene to the context net
 			Iterable<ApocPathReturnType> secondGeneContextNet = this.apocService.pathExpand(
 					second.getEntityUUID(), 
 					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-					this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt),
+					nodeOrString,
 					minSize, 
 					maxSize);
 			List<FlatEdge> secondGeneContextFlatEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, secondGeneContextNet);
@@ -203,36 +227,20 @@ public class ContextService {
 					}
 				}
 			}
-			it.remove();
 			log.info("Calculated context around gene with symbol: " + second.getSymbol());
 			
-			Iterable<ApocPathReturnType> contextNet = this.apocService.dijkstraWithDefaultWeight(
-					first.getEntityUUID(), 
-					second.getEntityUUID(), 
-					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-					"weight", 
-					1.0f);
-			List<FlatEdge> newEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, contextNet);
-			for (FlatEdge edge : newEdges) {
-				if (seenEdges.add(edge.getSymbol())) {
-					allEdges.add(edge);
-				
-					if (targetSpeciesUUID.add(edge.getInputFlatSpecies().getEntityUUID())) {
-						targetSpecies.add(edge.getInputFlatSpecies());
-					}
-					if (targetSpeciesUUID.add(edge.getOutputFlatSpecies().getEntityUUID())) {
-						targetSpecies.add(edge.getOutputFlatSpecies());
-					}
-				}
-			}
-			log.info("Connected genes "+ first.getSymbol() + " and " + second.getSymbol() + " with a shortest path.");
+			// now remove first and second
+			geneListFlatSpecies.remove(first);
+			geneListFlatSpecies.remove(second);
+			
+			
+			
 			// now we connected the first two genes with a shortest path
 			// allEdges contains the edges that make up that path
 			// targetSpecies contains all the Species on this path (including the first and second species from our named list
 			
 			// connect the other species to this path and extend the path
-			while (it.hasNext()) {
-				FlatSpecies fs = it.next();
+			for (FlatSpecies fs: geneListFlatSpecies) {
 				int smallestNumberOfEdges = Integer.MAX_VALUE;
 				List<FlatEdge> shortestPathEdges = new ArrayList<>();
 				for (FlatSpecies ts : targetSpecies) {
@@ -246,6 +254,7 @@ public class ContextService {
 							"weight", 
 							1.0f);
 					List<FlatEdge> targetSpeciesEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, targetSpeciesPath);
+					if(targetSpeciesEdges.isEmpty()) continue;
 					if (targetSpeciesEdges.size() < smallestNumberOfEdges) {
 						smallestNumberOfEdges = targetSpeciesEdges.size();
 						shortestPathEdges = targetSpeciesEdges;
@@ -295,11 +304,21 @@ public class ContextService {
 					}
 				}
 				log.info("Calculated context around gene with symbol: " + fs.getSymbol());
-				
-				it.remove();
 			}
 		}
 		return allEdges;
+	}
+
+	private List<FlatEdge> getShortestPathEdges(String direction, Set<String> networkRelationTypes,
+			Set<String> seenEdges, FlatSpecies first, FlatSpecies second) {
+		Iterable<ApocPathReturnType> contextNet = this.apocService.dijkstraWithDefaultWeight(
+				first.getEntityUUID(), 
+				second.getEntityUUID(), 
+				this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
+				"weight", 
+				1.0f);
+		List<FlatEdge> newEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, contextNet);
+		return newEdges;
 	}
 
 	/**
