@@ -58,18 +58,23 @@ public class NetworkResourceService {
 	public Resource getNetwork(String uuid, List<String> geneSet, boolean directed) {
 		
 		// 1. Translate the symbols in geneSet into simplemodel entityUUIDs of network with UUID uuid
-		List<String> flatSpeciesUUIDs = new ArrayList<>();
+		List<FlatSpecies> geneSetFlatSpecies = new ArrayList<>();
+		List<String> geneSetFlatSpeciesUUIDs = new ArrayList<>();
 		for (String geneSymbol : geneSet) {
-			List<String> speciesUUIDs = this.networkService.getFlatSpeciesEntityUUIDOfSymbolInNetwork(uuid, geneSymbol);
-			if(speciesUUIDs != null && !speciesUUIDs.isEmpty()) {
-				flatSpeciesUUIDs.addAll(speciesUUIDs);
+			List<FlatSpecies> foundSpecies = this.networkService.getFlatSpeciesOfSymbolInNetwork(uuid, geneSymbol);
+			if(foundSpecies != null && !foundSpecies.isEmpty()) {
+				for (FlatSpecies fs:foundSpecies) {
+					if (geneSetFlatSpeciesUUIDs.contains(fs.getEntityUUID())) {
+						geneSetFlatSpecies.add(fs);
+						geneSetFlatSpeciesUUIDs.add(fs.getEntityUUID());
+					}
+				}
 			} else {
 				log.warn("Could not find FlatSpecies for symbol " + geneSymbol + " in network (" + uuid + ")");
 			}
 		}
 		
-		Iterable<FlatSpecies> geneSetFlatSpecies = this.networkService.getNetworkNodes(flatSpeciesUUIDs);
-		Iterable<FlatEdge> geneSetFlatEdges = this.networkService.getGeneSet(uuid, flatSpeciesUUIDs);
+		Iterable<FlatEdge> geneSetFlatEdges = this.networkService.getGeneSet(uuid, geneSetFlatSpeciesUUIDs);
 		ByteArrayOutputStream graphMLStream = getByteArrayOutputStreamOfNetworkContents(directed, geneSetFlatSpecies,
 				geneSetFlatEdges);
 		return new ByteArrayResource(graphMLStream.toByteArray(), "geneset.graphml");
