@@ -23,13 +23,13 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 
 	
 	
-	@Query("MATCH "
+	@Query("MATCH p="
 			+ "(d:DatabaseNode)"
 			+ "-[fo:FOR]->"
 			+ "(o:Organism) "
 			+ "where d.source = $source "
 			+ "and d.sourceVersion = $sourceVersion "
-			+ "RETURN d, fo, o")
+			+ "RETURN p")
 	List<DatabaseNode> findBySourceAndSourceVersion(String source, String sourceVersion);
 
 	DatabaseNode findByEntityUUID(String entityUUID);
@@ -47,17 +47,19 @@ public interface DatabaseNodeRepository extends Neo4jRepository<DatabaseNode, Lo
 	DatabaseNode findByPathway(String pathwayEntityUUID);
 	
 	@Query("MATCH "
-			+ "(p:PathwayNode)"
+			+ "(pw:PathwayNode)"
 			+ "-[provpw:PROV]->"
 			+ "(f:FileNode)"
 			+ "-[provfn:PROV]->"
-			+ "(d:DatabaseNode)"
-			+ "-[fo:FOR]->"
-			+ "(o:Organism) "
-			+ "where p.entityUUID in $pathwayEntityUUIDList "
+			+ "(d:DatabaseNode) "
+			+ "where pw.entityUUID in $pathwayEntityUUIDList "
 			+ "and provpw.provenanceGraphEdgeType = \"wasDerivedFrom\" "
 			+ "and provfn.provenanceGraphEdgeType = \"wasDerivedFrom\" "
-			+ "return d, fo, o")
+			+ "WITH d MATCH p="
+			+ "(d)"
+			+ "-[fo:FOR]->"
+			+ "(o:Organism) "
+			+ "return p")
 	List<DatabaseNode> findByPathwayList(List<String> pathwayEntityUUIDList);
 	
 }

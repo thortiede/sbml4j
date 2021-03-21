@@ -80,6 +80,35 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "AND bo.type = \"BIOLOGICAL_QUALIFIER\" "
 			+ "AND bo.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
 			+ "RETURN ei, bi, qi, in,  t, out, qo, bo, eo")
+	@Deprecated
+	/**
+	 * Method to fetch all transitions in a pathway.
+	 * @deprecated Assembles result by hand, which is slow. Use findMatchingPathsInPathway instead, which uses a path to return the result and is much faster.
+	 * @param pathwayEntityUUID
+	 * @param transitionSBOTerms
+	 * @param nodeSBOTerms
+	 * @return
+	 */
 	Iterable<SBMLSimpleTransition> findMatchingInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
+			List<String> nodeSBOTerms);
+	
+	@Query(value = "MATCH "
+			+ "(pw:PathwayNode)"
+			+ "-[w:Warehouse]->"
+			+ "(t:SBMLSimpleTransition) "
+			+ "where pw.entityUUID = $pathwayEntityUUID "
+			+ "and t.sBaseSboTerm in $transitionSBOTerms "
+			+ "with t "
+			+ "MATCH p="
+			+ "(t)"
+			+ "-[tr:IS_OUTPUT|IS_INPUT]->"
+			+ "(q:SBMLQualSpecies)"
+			+ "-[bq:BQ]->"
+			+ "(e:ExternalResourceEntity) "
+			+ "WHERE bq.type = \"BIOLOGICAL_QUALIFIER\" "
+			+ "AND bq.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
+			+ "AND q.sBaseSboTerm in $nodeSBOTerms "
+			+ "RETURN p")
+	Iterable<SBMLSimpleTransition> findMatchingPathsInPathway(String pathwayEntityUUID, List<String> transitionSBOTerms,
 			List<String> nodeSBOTerms);
 }

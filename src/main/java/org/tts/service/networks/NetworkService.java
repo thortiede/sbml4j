@@ -597,12 +597,12 @@ public class NetworkService {
 		
 		// 3. We need a graphAgent for creating the new network
 		ProvenanceGraphAgentNode agent = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
-		if(agent == null && !this.configService.isPublicUser(user)) {
+		if(agent == null) { // && !this.configService.isPublicUser(user)) {
 			// create a new agent for this operation
 			agent = this.provenanceGraphService.createProvenanceGraphAgentNode(user, ProvenanceGraphAgentType.User);
-		} else {
-			throw new Exception("Failed to assign user to context mapping.");
-		}
+		} //else {
+			//throw new Exception("Failed to assign user to context mapping.");
+		//}
 		// 4. get the context
 		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(parentMapping.getEntityUUID(), geneNames, minSize, maxSize, terminateAt, direction);
 		if(contextFlatEdges == null) {
@@ -839,6 +839,7 @@ public class NetworkService {
 	 * @param nodeSymbol The symbol to find
 	 * @return List of entityUUID of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
 	 */
+	@Deprecated
 	public List<String> getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
 		List<String> foundEntityUUIDs= new ArrayList<>();
 		// 0. Check whether we have that geneSymbol directly in the network
@@ -875,7 +876,7 @@ public class NetworkService {
 		List<FlatSpecies> foundEntities= new ArrayList<>();
 		// 0. Check whether we have that geneSymbol directly in the network
 		Iterable<FlatSpecies> flatSpeciesForSymbol= this.findAllEntityForSymbolInNetwork(networkEntityUUID, nodeSymbol);
-		if (flatSpeciesForSymbol != null) {
+		if (flatSpeciesForSymbol != null && flatSpeciesForSymbol.iterator().hasNext()) {
 			flatSpeciesForSymbol.forEach(foundEntities::add);
 		}
 		if (!foundEntities.isEmpty()) {
@@ -1122,7 +1123,7 @@ public class NetworkService {
 		// connect the unconnected species
 		Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
 		while (newFlatSpeciesIterator.hasNext()) {
-			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, false);
 		}
 	}
 

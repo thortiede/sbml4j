@@ -13,10 +13,14 @@
  */
 package org.tts.controller;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -41,6 +45,8 @@ public class DocumentationApiController implements DocumentationApi {
 	@Autowired
 	private GraphBaseEntityService graphBaseEntityService;
 	
+	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
+	
 	/**
 	 * get a static representation of the API Description
 	 * 
@@ -57,7 +63,7 @@ public class DocumentationApiController implements DocumentationApi {
 	 * @return String containing the current version of SBML4j
 	 */
 	public ResponseEntity<String> getVersion() {
-		return new ResponseEntity<String>("0.2.1", HttpStatus.OK);
+		return new ResponseEntity<String>("0.2.8", HttpStatus.OK);
 	}
 	
 	/**
@@ -99,6 +105,24 @@ public class DocumentationApiController implements DocumentationApi {
 		} catch (Exception e) {
 			return new ResponseEntity<String>("Database not operational ( " + e.getMessage() + ")", HttpStatus.OK);
 		}
+	}
+	
+	/**
+	 * Check the assigned memory
+	 * 
+	 * This method will check and print the initial heapMemory and max heapMemory available
+	 * The results are printed to log (INFO level) and are returned as String
+	 * 
+	 * @return String containing the memory settings
+	 */
+	public ResponseEntity<String> getMemorySetup() {
+		int mb = 1024 * 1024;
+		MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+		long xmx = memoryBean.getHeapMemoryUsage().getMax() / mb;
+		long xms = memoryBean.getHeapMemoryUsage().getInit() / mb;
+		log.info("Initial Memory (xms): " +xms +"mb");
+		log.info("Max Memory (xmx): "+ xmx + "mb");
+		return new ResponseEntity<String>("Initial Memory (xms): " + xms + "mb / Max Memory (xmx): " + xmx + "mb", HttpStatus.OK);
 	}
 	
 }

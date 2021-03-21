@@ -15,6 +15,7 @@ package org.tts.model.common;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -151,9 +152,45 @@ public class ExternalResourceEntity extends ProvenanceEntity {
 			this.names = new ArrayList<>();
 			this.nameNodeUUIDs = new HashSet<>();
 		}
+		if (!this.names.isEmpty()) {
+			if(this.nameNodeUUIDs == null) {
+				this.nameNodeUUIDs = new HashSet<>();
+			}
+			if (this.nameNodeUUIDs.size() != this.names.size()) {
+				for (NameNode n : this.names) {
+					this.nameNodeUUIDs.add(n.getName());
+				}
+			}
+		}
 		if (this.nameNodeUUIDs.add(nameNode.getEntityUUID())) {
 			this.names.add(nameNode);
 		}
+	}
+
+	public void replaceName(String name, NameNode node) {
+		if (this.names == null) {
+			this.names = new ArrayList<>();
+			this.nameNodeUUIDs = new HashSet<>();
+		}
+		if (!this.names.isEmpty()) {
+			if(this.nameNodeUUIDs == null) {
+				this.nameNodeUUIDs = new HashSet<>();
+			}
+			if (this.nameNodeUUIDs.size() != this.names.size()) {
+				for (NameNode n : this.names) {
+					this.nameNodeUUIDs.add(n.getName());
+				}
+			}
+		}
+		Iterator<NameNode> nameIt = this.names.iterator();
+		while (nameIt.hasNext()) {
+			NameNode cur = nameIt.next();
+			if (name.equals(cur.getName())) {
+				nameIt.remove();
+				break;
+			}
+		}
+		this.names.add(node);
 	}
 	
 }

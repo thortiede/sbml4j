@@ -65,5 +65,16 @@ public class SBMLSimpleTransitionService {
 		return this.sbmlSimpleTransitionRepository.findMatchingInPathway(pathwayEntityUUID, transitionSBOTerms, nodeSBOTerms);
 	}
 	
-	
+	/**
+	 * Finds all <a href="#{@link}">{@link SBMLSimpleTransition}</a> entities that are connected to a <a href="#{@link}">{@link PathwayNode}</a>
+	 * with a "CONTAINS" - <a href="#{@link}">{@link WarehouseGraphEdge}</a> with the input and output <a href="#{@link}">{@link SBMLQualSpecies}</a>
+	 * @param pathwayEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
+	 * @return Iterable of <a href="#{@link}">{@link SBMLSimpleTransition}</a> that were found for the given pathway
+	 */
+	public Iterable<SBMLSimpleTransition> findMatchingTransitionPathsInPathway(
+												String pathwayEntityUUID, 
+												List<String> transitionSBOTerms, 
+												List<String> nodeSBOTerms) {
+		return this.sbmlSimpleTransitionRepository.findMatchingPathsInPathway(pathwayEntityUUID, transitionSBOTerms, nodeSBOTerms);
+	}
 }

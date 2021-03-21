@@ -61,7 +61,7 @@ import org.tts.service.warehouse.MappingNodeService;
 @Controller
 public class NetworksApiController implements NetworksApi {
 
-		Logger log = LoggerFactory.getLogger(NetworksApiController.class);
+	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
 	
 	@Autowired
 	ConfigService configService;
@@ -167,7 +167,7 @@ public class NetworksApiController implements NetworksApi {
 		// 4. add the data to the network
 		MappingNode newNetwork;
 		try {
-			newNetwork = this.networkService.addCsvDataToNetwork(networkUser, data, type, uuid, networkname, prefixName, derive);
+			newNetwork = this.networkService.addCsvDataToNetwork(user != null ? user.strip() : networkUser, data, type, uuid, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
@@ -213,7 +213,7 @@ public class NetworksApiController implements NetworksApi {
 		MappingNode newNetwork;
 		// 4. Add MyDrug Nodes/Edges
 		try {
-			newNetwork = this.myDrugService.addMyDrugToNetwork(networkUser, uuid, myDrugURL, networkname, prefixName, derive);
+			newNetwork = this.myDrugService.addMyDrugToNetwork(user != null ? user.strip() : networkUser, uuid, myDrugURL, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
@@ -394,9 +394,9 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		int maxDepth; 
-		if (minSize != null) {
+		if (maxSize != null) {
 			maxDepth = maxSize.intValue();
-		} else if (this.configService.getContextMinSize() != null) {
+		} else if (this.configService.getContextMaxSize() != null) {
 			maxDepth = this.configService.getContextMaxSize().intValue();
 		} else {
 			return ResponseEntity.badRequest()
@@ -554,9 +554,9 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		int maxDepth; 
-		if (minSize != null) {
+		if (maxSize != null) {
 			maxDepth = maxSize.intValue();
-		} else if (this.configService.getContextMinSize() != null) {
+		} else if (this.configService.getContextMaxSize() != null) {
 			maxDepth = this.configService.getContextMaxSize().intValue();
 		} else {
 			return ResponseEntity.badRequest()
@@ -564,7 +564,9 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		String terminateAtString;
-		if (terminateAt == null && this.configService.getContextTerminateAt() != null) {
+		if (terminateAt != null) {
+			terminateAtString = terminateAt;
+		} else if (terminateAt == null && this.configService.getContextTerminateAt() != null) {
 			terminateAtString = this.configService.getContextTerminateAt();
 		} else {
 			terminateAtString = null;
@@ -583,7 +585,7 @@ public class NetworksApiController implements NetworksApi {
 		// 3. Create the context network
 		MappingNode contextNetwork;
 		try {
-			contextNetwork = this.networkService.createContextNetwork(networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
+			contextNetwork = this.networkService.createContextNetwork(user != null ? user.strip() : networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
 					directionString, networkname, prefixName);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()

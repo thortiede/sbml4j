@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.ModelPersistenceException;
 import org.tts.api.SbmlApi;
 import org.tts.model.api.PathwayInventoryItem;
 import org.tts.model.common.GraphEnum.FileNodeType;
@@ -49,6 +50,7 @@ import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.service.ConfigService;
+import org.tts.service.GraphBaseEntityService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
 import org.tts.service.SBMLService;
@@ -79,6 +81,9 @@ public class SbmlApiController implements SbmlApi {
 	
 	@Autowired
 	FileNodeService fileNodeService;
+	
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
 	
 	@Autowired
 	OrganismService organismService;
@@ -171,13 +176,16 @@ public class SbmlApiController implements SbmlApi {
 		List<PathwayInventoryItem> pathwayInventoryList = new ArrayList<>();
 		int countTotal = 0;
 		int countError = 0;
-		String originalFilename;
+		
 		StringBuilder errorFileNames = new StringBuilder();
+		int filenum = 0;
+		int filestotal = files.size();
 		for (MultipartFile file : files) {
+			filenum++;
 			countTotal++;
-			originalFilename = file.getOriginalFilename();
-			logger.debug("Processing file " + originalFilename);
-			Instant beginOfFile = Instant.now();
+			String originalFilename = file.getOriginalFilename();
+			logger.debug("Processing file " + originalFilename + " (" + filenum + "/" + filestotal + ")");
+			//Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
 			
@@ -190,7 +198,7 @@ public class SbmlApiController implements SbmlApi {
 				//return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 			}
 			
-			logger.info("Serving POST /sbml for File " + originalFilename);
+			logger.info("Serving POST /sbml for File " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			
 			// is Content Type xml?
 			if(!fileCheckService.isContentXML(file)) {
@@ -238,7 +246,7 @@ public class SbmlApiController implements SbmlApi {
 			
 			// FileNode needs to connect to DatabaseNode
 			this.provenanceGraphService.connect(sbmlFileNode, database, ProvenanceGraphEdgeType.wasDerivedFrom);
-			Instant createMetadataFinished = Instant.now();
+			//Instant createMetadataFinished = Instant.now();
 			// now handle the model itself
 			Model sbmlModel = null;
 			try {
@@ -255,19 +263,19 @@ public class SbmlApiController implements SbmlApi {
 			if(sbmlModel == null) {
 				return ResponseEntity.badRequest().header("reason", "Could not extract an sbmlModel").build();
 			}
-			Instant modelExtractionFinished = Instant.now();
+			//Instant modelExtractionFinished = Instant.now();
 			// create a Pathway Node for the model
 			// TODO Likewise with the fileNode, the pathway Node and all Entities within it need to be able to be present for a combination of Org AND Database!!
 			PathwayNode pathwayNode = this.pathwayService.createPathwayNode(sbmlModel.getId(), sbmlModel.getName(), org);
-			Instant createPathwayNodeFinished = Instant.now();
-			List<ProvenanceEntity> resultSet;
+			//Instant createPathwayNodeFinished = Instant.now();
+			//Map<String, ProvenanceEntity> resultSet;
 			try {
-				resultSet = sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode);
+				this.sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode);
 
-				for (ProvenanceEntity entity : resultSet) {
-					this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
-				}
-				Instant modelPersistingFinished = Instant.now();
+				//for (ProvenanceEntity entity : resultSet.values()) {
+				//	this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
+				//}
+				//Instant modelPersistingFinished = Instant.now();
 				
 				this.provenanceGraphService.connect(pathwayNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				this.provenanceGraphService.connect(pathwayNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
@@ -276,21 +284,37 @@ public class SbmlApiController implements SbmlApi {
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
 				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
-				Instant postMetadataFinished = Instant.now();
+				//Instant postMetadataFinished = Instant.now();
 				
-				StringBuilder sb = new StringBuilder();
-				sb.append("Execution times: ");
+				//StringBuilder sb = new StringBuilder();
+				//sb.append("Execution times: ");
 				
 				// createPreMetadata
-				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, postMetadataFinished), "total");
+				/*this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, postMetadataFinished), "total");
 				this.utilityService.appendDurationString(sb, Duration.between(beginOfFile, createMetadataFinished), "preMetadata");
 				this.utilityService.appendDurationString(sb, Duration.between(createMetadataFinished, modelExtractionFinished), "modelExtract");
 				this.utilityService.appendDurationString(sb, Duration.between(modelExtractionFinished, createPathwayNodeFinished), "createPWNode");
 				this.utilityService.appendDurationString(sb, Duration.between(createPathwayNodeFinished, modelPersistingFinished), "modelPersist");
 				this.utilityService.appendDurationString(sb, Duration.between(modelPersistingFinished, postMetadataFinished), "postMetadata");
 						
-				logger.info(sb.toString());
+				logger.info(sb.toString());*/
 				
+			} catch (ModelPersistenceException e) {
+				if (e.getMessage().startsWith("SBMLSpecies")) {
+					this.graphBaseEntityService.deleteEntity(pathwayNode);
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded.");
+					logger.error("The error message is: " + e.getMessage());
+					e.printStackTrace();
+					logger.error("Continuing with the next model..");
+				} else {
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
+					logger.error("The error message is: " + e.getMessage());
+					e.printStackTrace();
+					logger.error("Continuing with the next model..");
+					countError++;
+					errorFileNames.append(originalFilename);
+					errorFileNames.append(", ");
+				}
 			} catch (Exception e) {
 				// TODO Roll back transaction..
 				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");

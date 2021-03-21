@@ -74,7 +74,7 @@ public class PathwayCollectionNodeService {
 			ProvenanceGraphAgentNode agentNode) {
 		
 		PathwayCollectionNode pathwayCollectionNode = this.createPathwayCollectionNode(
-				pathwayCollectionCreationItem.getName(), pathwayCollectionCreationItem.getDescription(),
+				"PCN_of_" + pathwayCollectionCreationItem.getName(), "PathwayCollectionNode of collection: " + pathwayCollectionCreationItem.getDescription(),
 				databaseNode.getOrganism());
 
 		// connect provenance and to database node

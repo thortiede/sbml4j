@@ -108,95 +108,96 @@ public class MyDrugService {
 			matchString.append("\\\"");
 			matchString.append(nodeSymbol);
 			matchString.append("\\\"");
-			FlatSpecies flatSpeciesToNodeSymbol = this.flatSpeciesService.findByEntityUUID(
-					this.networkService.findEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol));
-			addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, nodeSymbol, flatSpeciesToNodeSymbol);
-			String secondaryNames = (String) flatSpeciesToNodeSymbol.getAnnotation().get(AnnotationName.SECONDARYNAMES.getAnnotationName());
-			if (secondaryNames != null) {
-				for (String secondaryName : secondaryNames.split(", ")) {
-					matchString.append(", ");
-					matchString.append("\\\"");
-					matchString.append(secondaryName);
-					matchString.append("\\\"");
-					addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, secondaryName, flatSpeciesToNodeSymbol);
-				}
-			}
-			// do one query here for this one symbol/FlatSpecies
-			JsonNode drugNodes = this.runHttpRESTQuery(myDrugURL, "/db/data/transaction/", "POST", matchStringPre.toString() + matchString.toString() + matchStringPost.toString(), returnString);
-			if (drugNodes == null) {
-				// something went wrong with this query?
-				logger.info("NULL return of myDrug query for FlatSpecies with uuid: " + flatSpeciesToNodeSymbol.getEntityUUID());
-				continue;
-			} else {
-				JsonNode resultsNode = drugNodes.get("results");
-				if (!resultsNode.isArray()) {
-					logger.info("Unexpected result type for FlatSpecies (" + flatSpeciesToNodeSymbol.getEntityUUID() + ") from mydrug query: " + resultsNode.toString());
-					continue;
-				}
-				// check for error here, and whether "columns" is actually present
-				JsonNode columnsArrayNode = resultsNode.get(0).get("columns");
-				JsonNode dataArrayNode = resultsNode.get(0).get("data");
-				if (!dataArrayNode.isArray()) {
-					logger.info("dataArrayNode is not an Array for FlatSpecies (" + flatSpeciesToNodeSymbol.getEntityUUID()+ ") of resultsNode: " + resultsNode.toString());
-					continue;
-				}
-				for (int i = 0; i!= dataArrayNode.size(); i++) {
-					FlatSpecies myDrugSpecies = null;
-					FlatEdge targetsEdge = null;
-					boolean foundTarget = false;
-					boolean reusingMyDrugSpecies = false;
-					JsonNode rowNode = dataArrayNode.get(i).get("row");
-					for (int j = 0; j!= rowNode.size(); j++) {
-						logger.debug(columnsArrayNode.get(j).asText() + ": " + rowNode.get(j).asText());
-						if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().equals("a.name")) {
-							if (drugNameSpeciesMap.containsKey(rowNode.get(j).asText())) {
-								logger.debug("Already created this FlatSpecies for myDrug: " + rowNode.get(j).asText() );
-								myDrugSpecies = drugNameSpeciesMap.get(rowNode.get(j).asText());
-								reusingMyDrugSpecies = true;
-							} else {
-								logger.debug("New FlatSpecies for myDrug: " + rowNode.get(j).asText() );
-								myDrugSpecies = new FlatSpecies();
-								this.graphBaseEntityService.setGraphBaseEntityProperties(myDrugSpecies);
-								myDrugSpecies.addLabel("Drug");
-								myDrugSpecies.setSymbol(rowNode.get(j).asText());
-								myDrugSpecies.setSboTerm("Drug");
-								newNodeSymbols.add(rowNode.get(j).asText());
-								
-								drugNameSpeciesMap.put(rowNode.get(j).asText(), myDrugSpecies);
-							}
-						} else if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().startsWith("a.") && !rowNode.get(j).isNull()) {
-							if(myDrugSpecies != null) {
-								this.graphBaseEntityService.addAnnotation(myDrugSpecies, columnsArrayNode.get(j).asText().substring(2), "string", rowNode.get(j).asText(), true);
-							} else {
-								logger.error("Adding annotation to not initialized FlatSpecies " + columnsArrayNode.get(j).asText().substring(2) + " with " + rowNode.get(j).asText());
-								continue;
-							}
-						} else if (!foundTarget && columnsArrayNode.get(j).asText().startsWith("b.") && !rowNode.get(j).isNull()) {
-							if (myDrugSpecies != null) {
-								if(symbolToFlatSpeciesMap.keySet().contains(rowNode.get(j).asText())) {
-									for(FlatSpecies sp : symbolToFlatSpeciesMap.get(rowNode.get(j).asText())) {
-										targetsEdge = this.flatEdgeService.createFlatEdge("targets");
-										this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
-										targetsEdge.setInputFlatSpecies(myDrugSpecies);
-										targetsEdge.setOutputFlatSpecies(sp);
-										targetsEdge.setSymbol(myDrugSpecies.getSymbol() + "-TARGETS->"
-												+ sp.getSymbol());
-										newRelationSymbols.add(targetsEdge.getSymbol());
-										//mappingNode.addMappingRelatonSymbol(targetsEdge.getSymbol());
-										foundTarget = true;
-										myDrugFlatSpeciesList.add(myDrugSpecies);
-										drugNameSpeciesMap.put(myDrugSpecies.getSymbol(), myDrugSpecies);
-										myDrugFlatEdgeList.add(targetsEdge);
-									}
-								}
-							} else {
-								logger.error("Trying to use not initialized FlatSpecies " + columnsArrayNode.get(j).asText().substring(2) + " with " + rowNode.get(j).asText());
-								continue;
-							}
-						}		
+			for (FlatSpecies flatSpeciesToNodeSymbol : 
+					this.networkService.findAllEntityForSymbolInNetwork(networkEntityUUID, nodeSymbol)) {
+				addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, nodeSymbol, flatSpeciesToNodeSymbol);
+				String secondaryNames = (String) flatSpeciesToNodeSymbol.getSecondaryNames();
+				if (secondaryNames != null) {
+					for (String secondaryName : secondaryNames.split(", ")) {
+						matchString.append(", ");
+						matchString.append("\\\"");
+						matchString.append(secondaryName);
+						matchString.append("\\\"");
+						addSymbolToFlatSpeciesMapping(symbolToFlatSpeciesMap, secondaryName, flatSpeciesToNodeSymbol);
 					}
-					if (!foundTarget) {
-						logger.debug("Could not find target for: " + myDrugSpecies.getSymbol());
+				}
+				// do one query here for this one symbol/FlatSpecies
+				JsonNode drugNodes = this.runHttpRESTQuery(myDrugURL, "/db/data/transaction/", "POST", matchStringPre.toString() + matchString.toString() + matchStringPost.toString(), returnString);
+				if (drugNodes == null) {
+					// something went wrong with this query?
+					logger.info("NULL return of myDrug query for FlatSpecies with uuid: " + flatSpeciesToNodeSymbol.getEntityUUID());
+					continue;
+				} else {
+					JsonNode resultsNode = drugNodes.get("results");
+					if (!resultsNode.isArray()) {
+						logger.info("Unexpected result type for FlatSpecies (" + flatSpeciesToNodeSymbol.getEntityUUID() + ") from mydrug query: " + resultsNode.toString());
+						continue;
+					}
+					// check for error here, and whether "columns" is actually present
+					JsonNode columnsArrayNode = resultsNode.get(0).get("columns");
+					JsonNode dataArrayNode = resultsNode.get(0).get("data");
+					if (!dataArrayNode.isArray()) {
+						logger.info("dataArrayNode is not an Array for FlatSpecies (" + flatSpeciesToNodeSymbol.getEntityUUID()+ ") of resultsNode: " + resultsNode.toString());
+						continue;
+					}
+					for (int i = 0; i!= dataArrayNode.size(); i++) {
+						FlatSpecies myDrugSpecies = null;
+						FlatEdge targetsEdge = null;
+						boolean foundTarget = false;
+						boolean reusingMyDrugSpecies = false;
+						JsonNode rowNode = dataArrayNode.get(i).get("row");
+						for (int j = 0; j!= rowNode.size(); j++) {
+							logger.debug(columnsArrayNode.get(j).asText() + ": " + rowNode.get(j).asText());
+							if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().equals("a.name")) {
+								if (drugNameSpeciesMap.containsKey(rowNode.get(j).asText())) {
+									logger.debug("Already created this FlatSpecies for myDrug: " + rowNode.get(j).asText() );
+									myDrugSpecies = drugNameSpeciesMap.get(rowNode.get(j).asText());
+									reusingMyDrugSpecies = true;
+								} else {
+									logger.debug("New FlatSpecies for myDrug: " + rowNode.get(j).asText() );
+									myDrugSpecies = new FlatSpecies();
+									this.graphBaseEntityService.setGraphBaseEntityProperties(myDrugSpecies);
+									myDrugSpecies.addLabel("Drug");
+									myDrugSpecies.setSymbol(rowNode.get(j).asText());
+									myDrugSpecies.setSboTerm("Drug");
+									newNodeSymbols.add(rowNode.get(j).asText());
+									
+									drugNameSpeciesMap.put(rowNode.get(j).asText(), myDrugSpecies);
+								}
+							} else if (!reusingMyDrugSpecies && columnsArrayNode.get(j).asText().startsWith("a.") && !rowNode.get(j).isNull()) {
+								if(myDrugSpecies != null) {
+									this.graphBaseEntityService.addAnnotation(myDrugSpecies, columnsArrayNode.get(j).asText().substring(2), "string", rowNode.get(j).asText(), true);
+								} else {
+									logger.error("Adding annotation to not initialized FlatSpecies " + columnsArrayNode.get(j).asText().substring(2) + " with " + rowNode.get(j).asText());
+									continue;
+								}
+							} else if (!foundTarget && columnsArrayNode.get(j).asText().startsWith("b.") && !rowNode.get(j).isNull()) {
+								if (myDrugSpecies != null) {
+									if(symbolToFlatSpeciesMap.keySet().contains(rowNode.get(j).asText())) {
+										for(FlatSpecies sp : symbolToFlatSpeciesMap.get(rowNode.get(j).asText())) {
+											targetsEdge = this.flatEdgeService.createFlatEdge("targets");
+											this.graphBaseEntityService.setGraphBaseEntityProperties(targetsEdge);
+											targetsEdge.setInputFlatSpecies(myDrugSpecies);
+											targetsEdge.setOutputFlatSpecies(sp);
+											targetsEdge.setSymbol(myDrugSpecies.getSymbol() + "-TARGETS->"
+													+ sp.getSymbol());
+											newRelationSymbols.add(targetsEdge.getSymbol());
+											//mappingNode.addMappingRelatonSymbol(targetsEdge.getSymbol());
+											foundTarget = true;
+											myDrugFlatSpeciesList.add(myDrugSpecies);
+											drugNameSpeciesMap.put(myDrugSpecies.getSymbol(), myDrugSpecies);
+											myDrugFlatEdgeList.add(targetsEdge);
+										}
+									}
+								} else {
+									logger.error("Trying to use not initialized FlatSpecies " + columnsArrayNode.get(j).asText().substring(2) + " with " + rowNode.get(j).asText());
+									continue;
+								}
+							}		
+						}
+						if (!foundTarget) {
+							logger.debug("Could not find target for: " + myDrugSpecies.getSymbol());
+						}
 					}
 				}
 			}

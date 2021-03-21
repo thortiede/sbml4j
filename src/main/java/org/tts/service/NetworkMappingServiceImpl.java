@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.neo4j.ogm.session.Session;
 import org.sbml.jsbml.CVTerm.Qualifier;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.provenance.ProvenanceGraphAgentNode;
+import org.tts.model.simple.SBMLSimpleReaction;
 import org.tts.model.simple.SBMLSimpleTransition;
 import org.tts.model.warehouse.MappingNode;
 import org.tts.model.warehouse.PathwayNode;
@@ -96,6 +98,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	@Autowired
 	SBMLSimpleTransitionService sbmlSimpleTransitionService;
+	
+	@Autowired
+	Session session;
 
 	@Autowired
 	UtilityService utilityService;
@@ -108,6 +113,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	@Autowired
 	SBML4jConfig sbml4jConfig;
+	
+	@Autowired
+	ConfigService configService;
 	
 	private static int QUERY_DEPTH_ZERO = 0;
 	
@@ -176,6 +184,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 
 			String flatReactionLabel = "FlatReaction";
 			
+			Set<String> elementSet = new HashSet<>();
+			
 			boolean startFlatSpeciesExists;
 			boolean endFlatSpeciesExists;
 			while (metIt.hasNext()) {
@@ -183,62 +193,72 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				endFlatSpeciesExists = false;
 				current = metIt.next();
 				
-				String speciesSymbol = findSBasePrimaryName(current.getSpecies());
+				SBMLSpecies speciesOfReaction = current.getSpecies();
+				SBMLSimpleReaction reaction = current.getReaction();
+				String typeOfRelation = current.getTypeOfRelation();
+				String elementString = speciesOfReaction.getEntityUUID() + typeOfRelation + reaction.getEntityUUID();
+				if (elementSet.add(elementString)) {
 				
-				if (primaryNameToFlatSpeciesMap.containsKey(speciesSymbol)) {
-					startFlatSpecies = primaryNameToFlatSpeciesMap.get(speciesSymbol);
-					startFlatSpeciesExists = true;
-				} else {
-					startFlatSpecies = new FlatSpecies();
-					this.graphBaseEntityService.setGraphBaseEntityProperties(startFlatSpecies);
-					startFlatSpecies.setSymbol(speciesSymbol);
-					startFlatSpecies.setSboTerm(current.getSpecies().getsBaseSboTerm());
-					nodeTypes.add(current.getSpecies().getsBaseSboTerm());
-					//startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
-					if (primaryNameToFlatSpeciesMap.put(speciesSymbol, startFlatSpecies) != null) {
-						throw new NetworkMappingError("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping.");
+					String speciesSymbol = findSBasePrimaryName(speciesOfReaction);
+					
+					if (primaryNameToFlatSpeciesMap.containsKey(speciesSymbol)) {
+						startFlatSpecies = primaryNameToFlatSpeciesMap.get(speciesSymbol);
+						startFlatSpeciesExists = true;
+					} else {
+						startFlatSpecies = new FlatSpecies();
+						this.graphBaseEntityService.setGraphBaseEntityProperties(startFlatSpecies);
+						startFlatSpecies.setSymbol(speciesSymbol);
+						startFlatSpecies.setSboTerm(speciesOfReaction.getsBaseSboTerm());
+						nodeTypes.add(speciesOfReaction.getsBaseSboTerm());
+						//startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
+						if (primaryNameToFlatSpeciesMap.put(speciesSymbol, startFlatSpecies) != null) {
+							throw new NetworkMappingError("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping.");
+						}
+						//allFlatSpecies.add(startFlatSpecies);
 					}
-					//allFlatSpecies.add(startFlatSpecies);
-				}
-				if (sbmlSimpleReactionToFlatSpeciesMap.containsKey(current.getReaction().getEntityUUID())) {
-					endFlatSpecies = sbmlSimpleReactionToFlatSpeciesMap.get(current.getReaction().getEntityUUID());
-					endFlatSpeciesExists = true;
-				} else {
-					endFlatSpecies = new FlatSpecies();
-					this.graphBaseEntityService.setGraphBaseEntityProperties(endFlatSpecies);
-					endFlatSpecies.addLabel(flatReactionLabel);
-					endFlatSpecies.setSymbol(current.getReaction().getsBaseName()); // TODO Eventually switch this over to external resource as well.
-					endFlatSpecies.setSboTerm(current.getReaction().getsBaseSboTerm());
-					nodeTypes.add(current.getReaction().getsBaseSboTerm());
-					//endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
-					sbmlSimpleReactionToFlatSpeciesMap.put(current.getReaction().getEntityUUID(), endFlatSpecies);
-					numberOfReactions++;
-					if (primaryNameToFlatSpeciesMap.put(endFlatSpecies.getSymbol(), endFlatSpecies) != null) {
-						throw new NetworkMappingError("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping.");
+					
+					if (sbmlSimpleReactionToFlatSpeciesMap.containsKey(reaction.getEntityUUID())) {
+						endFlatSpecies = sbmlSimpleReactionToFlatSpeciesMap.get(reaction.getEntityUUID());
+						endFlatSpeciesExists = true;
+					} else {
+						endFlatSpecies = new FlatSpecies();
+						this.graphBaseEntityService.setGraphBaseEntityProperties(endFlatSpecies);
+						endFlatSpecies.addLabel(flatReactionLabel);
+						endFlatSpecies.setSymbol(reaction.getsBaseName()); // TODO Eventually switch this over to external resource as well.
+						endFlatSpecies.setSboTerm(reaction.getsBaseSboTerm());
+						nodeTypes.add(reaction.getsBaseSboTerm());
+						//endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
+						sbmlSimpleReactionToFlatSpeciesMap.put(reaction.getEntityUUID(), endFlatSpecies);
+						numberOfReactions++;
+						if (primaryNameToFlatSpeciesMap.put(endFlatSpecies.getSymbol(), endFlatSpecies) != null) {
+							throw new NetworkMappingError("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping.");
+						}
+						//allFlatSpecies.add(endFlatSpecies);
 					}
-					//allFlatSpecies.add(endFlatSpecies);
+					if (startFlatSpeciesExists && endFlatSpeciesExists) {
+						// since both species already exist, they now get an additional relationship
+						// within the metabolic network: well not necessarily.
+						// But it also happens as The MetabolicReturnType has multiple duplicates because of the NameNode-ExtResource relation
+						logger.debug("SBMLSpecies with entityUUID: " + current.getSpecies().getEntityUUID()
+								+ " and SBMLSimpleReaction with entityUUID: " + current.getReaction().getEntityUUID()
+								+ " have more than one relationship in pathway with entityUUID: "
+								+ pathway.getEntityUUID());
+					}
+					
+					metabolicFlatEdge = this.flatEdgeService.createFlatEdge(typeOfRelation);
+					this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
+					String relationSymbol = startFlatSpecies.getSymbol() + "-" + typeOfRelation + "->"
+							+ endFlatSpecies.getSymbol();
+					metabolicFlatEdge.setSymbol(relationSymbol);
+					metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
+					metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
+					// TODO: The relationType needs to be determined in a better way.
+					relationTypes.add(typeOfRelation.equals("IS_PRODUCT") ? "PRODUCTOF"
+							: (typeOfRelation.equals("IS_REACTANT") ? "REACTANTOF"
+									: (typeOfRelation.equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
+					allFlatEdges.add(metabolicFlatEdge);
+					relationSymbols.add(relationSymbol);
 				}
-				if (startFlatSpeciesExists && endFlatSpeciesExists) {
-					// since both species already exist, they now get an additional relationship
-					// within the metabolic network
-					logger.debug("SBMLSpecies with entityUUID: " + current.getSpecies().getEntityUUID()
-							+ " and SBMLSimpleReaction with entityUUID: " + current.getReaction().getEntityUUID()
-							+ " have more than one relationship in pathway with entityUUID: "
-							+ pathway.getEntityUUID());
-				}
-				metabolicFlatEdge = this.flatEdgeService.createFlatEdge(current.getTypeOfRelation());
-				this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
-				String relationSymbol = startFlatSpecies.getSymbol() + "-" + current.getTypeOfRelation() + "->"
-						+ endFlatSpecies.getSymbol();
-				metabolicFlatEdge.setSymbol(relationSymbol);
-				metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
-				metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
-				// TODO: The relationType needs to be determined in a better way.
-				relationTypes.add(current.getTypeOfRelation().equals("IS_PRODUCT") ? "PRODUCTOF"
-						: (current.getTypeOfRelation().equals("IS_REACTANT") ? "REACTANTOF"
-								: (current.getTypeOfRelation().equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
-				allFlatEdges.add(metabolicFlatEdge);
-				relationSymbols.add(relationSymbol);
 			}
 		}
 		
@@ -300,7 +320,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 		if (processTransitionsNeeded) {
 			Iterable<SBMLSimpleTransition> pathwayTransitions = 
-					this.sbmlSimpleTransitionService.findMatchingTransitionsInPathway(
+					this.sbmlSimpleTransitionService.findMatchingTransitionPathsInPathway(
 															pathway.getEntityUUID(),
 															transitionSBOTerms, 
 															nodeSBOTerms);
@@ -320,11 +340,19 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				
 				// input species
 				SBMLQualSpecies inputQualSpecies = current.getInputSpecies();
+				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
+				
+				if (inputQualSpecies == null || outputQualSpecies == null) {
+					// apparently one of the transitionpartners was not in the allowed nodeSBOList, skip transition
+					continue;
+				}
+				
 				String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
 				String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
 
 				if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
 					inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
+					this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
 				} else {
 					if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
@@ -344,7 +372,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
 								
 								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
 									inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
@@ -404,13 +434,13 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					}
 				}
 				// output species
-				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
 				String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
 				String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
 				
 				if (primaryNameToFlatSpeciesMap.containsKey(outputSpeciesSymbol)) {
 					outputFlatSpecies = primaryNameToFlatSpeciesMap
 							.get(outputSpeciesSymbol);
+					this.updateFlatSpeciesWithSBase(outputFlatSpecies, outputQualSpecies);
 				} else {
 					if (outputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
 						// This is a group node, we need to treat that
@@ -430,7 +460,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
 								
 								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
-									outputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
+									outputGroupFlatSpecies.add(groupFlatSpecies);
+									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
 								} else {
 									// haven't seen this Species before
 									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
@@ -565,10 +597,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		}
 			
 		// TODO: Create and Add FlatSpecies for those SBMLSpecies that do not have any connection (aka unconnected nodes)
-		
+		this.session.clear();
 		// save the Species entities
 		persistedFlatSpecies = this.flatSpeciesService.save(primaryNameToFlatSpeciesMap.values(), QUERY_DEPTH_ZERO);
-
+		this.session.clear();
 		// then save the edges
 		this.flatEdgeService.save(allFlatEdges, QUERY_DEPTH_ZERO);
 
@@ -588,15 +620,22 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		logger.info(Instant.now().toString() + ": Persisted FlatSpecies. Starting to connect");
 		int fsConnectCounter = 1;
 
+		this.session.clear();
 		for (FlatSpecies fs : persistedFlatSpecies) {
 			logger.debug("Building ConnectionSet #" + fsConnectCounter++ + ": FlatSpecies: " + fs.getEntityUUID());
 			// do not build the wasDerivedFrom and DERIVEDFROM connections. They take very long and are never traversed/used later on
 			//this.provenanceGraphService.connect(fs,	fs.getSimpleModelEntityUUID(), ProvenanceGraphEdgeType.wasDerivedFrom);
 			//this.warehouseGraphService.connect(fs, fs.getSimpleModelEntityUUID(), WarehouseGraphEdgeType.DERIVEDFROM);
 			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS);
+			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS, false);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	private void updateFlatSpeciesWithSBase(FlatSpecies flatSpecies, SBMLSBaseEntity sbmlSBaseEntity) {
+		//getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), flatSpecies); // they are always the same as they lead to the same externalResourceEntities. TODO: Is that always the case?
+		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), flatSpecies); // these differ as they sit on the sbase
+		
 	}
 
 	private String findSBasePrimaryName(SBMLSBaseEntity sBaseEntity)
@@ -622,7 +661,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			}
 		}
 		if (inputSpeciesSymbol == null) {
-			throw new NetworkMappingError("Failed to determine primarySymbol of SBMLSBaseEntity in transition. The SBMLSBaseEntity entityUUID is: " + sBaseEntity.getEntityUUID() + ". This is fatal, Aborting.");
+			// Fall back to sBaseName
+			logger.warn("SBMLSBaseEntity with uuid " + sBaseEntity.getEntityUUID() + " has no primarySymbol assigned through an ExternalResourceEntity. Falling back to using sBaseName");
+			inputSpeciesSymbol = sBaseEntity.getsBaseName();
+			if (inputSpeciesSymbol == null) {
+				throw new NetworkMappingError("Failed to determine primarySymbol of SBMLSBaseEntity in transition. The SBMLSBaseEntity entityUUID is: " + sBaseEntity.getEntityUUID() + ". This is fatal, Aborting.");
+			} else {
+				return inputSpeciesSymbol;
+			}
 		} else {
 			return inputSpeciesSymbol;
 		}
@@ -681,8 +727,16 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		newFlatSpecies.setSymbol(primaryName);
 		newFlatSpecies.setSboTerm(sbmlSBaseEntity.getsBaseSboTerm());
 		getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), newFlatSpecies);
+		if (this.configService.isAddMDAnderson()) getMDAndersonAnnotation(primaryName, newFlatSpecies);
 		getPathwayAnnotations(UUID.fromString(sbmlSBaseEntity.getEntityUUID()), newFlatSpecies);
 		return newFlatSpecies;
+	}
+
+	private void getMDAndersonAnnotation(String primaryName, FlatSpecies newFlatSpecies) {
+		String mdAndersonURL = this.configService.getMDAndersonString(primaryName);
+		if (mdAndersonURL != null) {
+			this.graphBaseEntityService.addAnnotation(newFlatSpecies, "mdanderson", "string", mdAndersonURL, this.sbml4jConfig.getAnnotationConfigProperties().isAppend());
+		}
 	}
 
 	/**
@@ -721,8 +775,6 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					} else if (bq.getEndNode().getType() != null && bq.getEndNode().getType().equals(ExternalResourceType.KEGGDRUG)) {
 						target.addLabel("Drug");
 					}
-				} else if (bq.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) {
-					this.graphBaseEntityService.addAnnotation(target, "mdanderson", "string", uri, doAppend);
 				}
 			}
 		}

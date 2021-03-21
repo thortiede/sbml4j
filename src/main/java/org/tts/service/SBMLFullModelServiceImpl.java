@@ -65,6 +65,7 @@ import org.tts.model.full.ext.qual.SBMLQualTransition;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.warehouse.FileNode;
+import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
 import org.tts.repository.common.ExternalResourceEntityRepository;
 import org.tts.repository.common.GraphBaseEntityRepository;
@@ -123,7 +124,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 	}
 	
 	@Override
-	public List<ProvenanceEntity> buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode) {
+	public void buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode, PathwayNode pathwayNode) { //Map<String, ProvenanceEntity>
 		
 		List<ProvenanceEntity> allModelEntities = new ArrayList<>();
 		
@@ -133,7 +134,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		if (sbmlDocumentEntity == null) {
 			// somthing went wrong, we should abort
 			logger.info("Could not create SBMLDocumentEntity for file: " + filename + ". Aborting..");
-			return null;
+			return; // null;
 		} else {
 			// SBMLDocumentEntity is finished
 			allModelEntities.add(sbmlDocumentEntity);
@@ -144,7 +145,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		if (sbmlCompartmentList == null) {
 			// something went wrong, we should abort
 			logger.info("Could not create SBMLCompartments for file: " + filename + ". Aborting..");
-			return null;
+			return;// null;
 		} 
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLCompartment compartment : sbmlCompartmentList) {
@@ -198,7 +199,7 @@ public class SBMLFullModelServiceImpl implements SBMLService {
 		
 		// set parentDocument of all DocumentExtensions after document is finsied
 		
-		return null;
+		//return null;
 	}
 	
 

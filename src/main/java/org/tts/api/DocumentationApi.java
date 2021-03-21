@@ -160,4 +160,39 @@ public interface DocumentationApi {
     });
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
+  /**
+   * GET /version : Get the version of sbml4j running
+   *
+   * @return successful operation (status code 200)
+   */
+  @ApiOperation(value = "Get the java memory setup of sbml4j running",
+                nickname = "getMemorySetup", notes = "", response = String.class,
+                tags =
+                    {
+                        "documentation",
+                    })
+  @ApiResponses(value =
+                {
+                  @ApiResponse(code = 200, message = "successful operation",
+                               response = String.class)
+                })
+  @GetMapping(value = "/memory", produces = {"application/json"})
+  default ResponseEntity<String>
+  getMemorySetup() {
+    getRequest().ifPresent(request -> {
+      for (MediaType mediaType :
+           MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+          String exampleString = "\"Initial Memory (xms): 512mb / Max Memory (xmx) : 4096mb\"";
+          ApiUtil.setExampleResponse(request, "application/json",
+                                     exampleString);
+          break;
+        }
+      }
+    });
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+  
+  
+  
 }
