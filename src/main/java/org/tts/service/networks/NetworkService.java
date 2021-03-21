@@ -839,6 +839,7 @@ public class NetworkService {
 	 * @param nodeSymbol The symbol to find
 	 * @return List of entityUUID of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
 	 */
+	@Deprecated
 	public List<String> getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
 		List<String> foundEntityUUIDs= new ArrayList<>();
 		// 0. Check whether we have that geneSymbol directly in the network
