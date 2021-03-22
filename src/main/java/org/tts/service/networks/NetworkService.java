@@ -152,7 +152,7 @@ public class NetworkService {
 		for (MultipartFile file : data) {
 			log.debug("Processing file " + file.getOriginalFilename());
 			annotationMap = this.csvService.parseCsv(file); // can throw IOException
-			while (networkSpeciesIterator.hasNext()) {
+			while (networkSpeciesIterator.hasNext()) { // TODO: Instead loop over the annotationMap and find the species matching the symbol (this will also match the secondary names then) and add the annotation to any found species (might be multiple)
 				FlatSpecies current = networkSpeciesIterator.next();
 				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
 					// we have a match and want this species to be annotated with the data and have the label added

@@ -28,7 +28,8 @@ public class CsvService implements RowProcessor {
 	Map<String, List< Map<String, String> > > geneToAnnotationMap;
 	
 	public Map<String, List< Map<String, String> > > parseCsv(MultipartFile file) throws IOException {
-		
+		// TODO:Funnel in the column number that holds the matching gene symbol
+		// Then use it in rowProcessed to match the correct column instead of 0
 		 
 		
 		logger.debug("Parsing file " + file.getOriginalFilename());
