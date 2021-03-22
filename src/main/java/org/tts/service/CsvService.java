@@ -4,13 +4,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,9 +23,16 @@ import com.univocity.parsers.csv.CsvParserSettings;
 @Service
 public class CsvService implements RowProcessor {
 
+	@Autowired
+	ConfigService configService;
+	
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	Map<String, List< Map<String, String> > > geneToAnnotationMap;
+	
+	private int matchRowNum;
+	
+	private boolean isMatchingRowDetermined = false;
 	
 	public Map<String, List< Map<String, String> > > parseCsv(MultipartFile file) throws IOException {
 		// TODO:Funnel in the column number that holds the matching gene symbol
@@ -64,18 +71,39 @@ public class CsvService implements RowProcessor {
 	public void processStarted(ParsingContext context) {
 		logger.debug("Reached processStarted");
 		geneToAnnotationMap = new HashMap<>();
+		// are there matching column names configured?
+		if (!this.configService.areMatchingColumnsConfigured()) {
+			logger.warn("No matching column configured for gene symbol matching. Falling back to first column. Please configure at least one element in the 'sbml4j.csv.matching-column-name' config option.");
+			this.matchRowNum = 0;
+			this.isMatchingRowDetermined = true;
+		}
 		
 	}
 
 	@Override
 	public void rowProcessed(String[] row, ParsingContext context) {
-		if (!this.geneToAnnotationMap.containsKey(row[0])) {
-			this.geneToAnnotationMap.put(row[0], new ArrayList<>());
+		if (!this.isMatchingRowDetermined) {
+			for (int i = 0; i!= context.headers().length; i++) {
+				if (this.configService.isInMatchingColums(context.headers()[i])) {
+					this.matchRowNum = i;
+					this.isMatchingRowDetermined = true;
+					break;
+				}
+			}
+			if (!this.isMatchingRowDetermined) {
+				// we could not find a column name matching any of the configured names
+				logger.warn("Unable to determine matching row. Falling back to first column");
+				this.matchRowNum = 0;
+				this.isMatchingRowDetermined = true;
+			}
 		}
-		List<Map<String, String> > annotationMap = geneToAnnotationMap.get(row[0]);
+		if (!this.geneToAnnotationMap.containsKey(row[this.matchRowNum])) {
+			this.geneToAnnotationMap.put(row[this.matchRowNum], new ArrayList<>());
+		}
+		List<Map<String, String> > annotationMap = geneToAnnotationMap.get(row[this.matchRowNum]);
 		Map<String, String> entryMap = new HashMap<>();
-		for (int i=1; i != row.length; i++) {
-			if (!(row[i] == null)) {
+		for (int i=0; i != row.length; i++) {
+			if (i != this.matchRowNum && !(row[i] == null)) {
 				entryMap.put(context.headers()[i], row[i]);
 			}
 		}
