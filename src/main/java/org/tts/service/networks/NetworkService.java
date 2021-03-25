@@ -145,37 +145,54 @@ public class NetworkService {
 		Map<String, List<Map<String, String>>> annotationMap;
 		MappingNode newNetwork = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
 				derive, type + "_on_");
-
-		
-		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(newNetwork.getEntityUUID());
-		Iterator<FlatSpecies> networkSpeciesIterator = networkSpecies.iterator();
+		String annotatedNetworkEntityUUID = newNetwork.getEntityUUID();
 		for (MultipartFile file : data) {
 			log.debug("Processing file " + file.getOriginalFilename());
 			annotationMap = this.csvService.parseCsv(file); // can throw IOException
-			while (networkSpeciesIterator.hasNext()) { // TODO: Instead loop over the annotationMap and find the species matching the symbol (this will also match the secondary names then) and add the annotation to any found species (might be multiple)
-				FlatSpecies current = networkSpeciesIterator.next();
-				if (annotationMap.containsKey(current.getSymbol())) { // might not only match the symbol, we should also try to find it through externalResources TODO
-					// we have a match and want this species to be annotated with the data and have the label added
-					this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
-					List<Map<String, String>> currentAnnotation = annotationMap.remove(current.getSymbol());
+			Map<String, FlatSpecies> annotatedSpecies = new HashMap<>();
+			for(String geneSymbol :annotationMap.keySet()) {
+				List<FlatSpecies> currentList = this.getFlatSpeciesOfSymbolInNetwork(annotatedNetworkEntityUUID, geneSymbol);
+				if (currentList == null)
+					continue;
+				for (FlatSpecies current : currentList) {
+					List<Map<String, String>> currentAnnotation = annotationMap.get(geneSymbol);
 					if (currentAnnotation == null) {
 						// just a safe guard
 						log.warn("Failed to retrieve annotation element for symbol: " + current.getSymbol() + " although it should be present (annotation element might be null)");
 						continue;
 					}
+					
 					int annotationNum = 1;
-					for (Map<String, String> indiviualAnnotationMap : currentAnnotation) {
-						
-						for (String key : indiviualAnnotationMap.keySet()) {
-							String value = indiviualAnnotationMap.get(key);
+					boolean addedAnnotation = false;
+					for (Map<String, String> individualAnnotationMap : currentAnnotation) {
+						// just for excluding other species for now
+						/*if (individualAnnotationMap.get("Species") == null 
+								|| (individualAnnotationMap.get("Species") != null 
+									&& !individualAnnotationMap.get("Species").startsWith("Humans"))
+								) {
+							continue;
+						}*/
+						for (String key : individualAnnotationMap.keySet()) {
+							String value = individualAnnotationMap.get(key);
+							//if ("NA".equals(value)) {
+							//	continue;
+							//}
 							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key.replace('.', '_'), "string", value, false);
 						}
 						annotationNum++;
+						addedAnnotation = true;
 					}
-					current.addLabel(type);
+					if (addedAnnotation) {
+						this.graphBaseEntityService.addAnnotation(current, type, "boolean", true, false);
+						current.addLabel(type);
+						annotatedSpecies.putIfAbsent(current.getEntityUUID(), current);
+					}
+					
+					
 				}
 			}
-			this.flatSpeciesService.save(networkSpecies, 0);
+			log.info("Added annotation to " + annotatedSpecies.size() + " nodes in network with uuid: " + annotatedNetworkEntityUUID + " from file " + file.getOriginalFilename());
+			this.flatSpeciesService.save(annotatedSpecies.values(), 0);
 		}
 		this.updateMappingNodeMetadata(newNetwork);
 		return newNetwork;
