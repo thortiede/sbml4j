@@ -162,6 +162,6 @@ public class ConfigService {
 	 * @return true if the String other is in the List, false otherwise
 	 */
 	public boolean isInMatchingColums(String other) {
-		return this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName().contains(other.toLowerCase());
+		return this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName().contains(other.strip().toLowerCase());
 	}
 }
