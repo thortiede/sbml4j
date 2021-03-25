@@ -168,7 +168,7 @@ public class NetworkService {
 						
 						for (String key : indiviualAnnotationMap.keySet()) {
 							String value = indiviualAnnotationMap.get(key);
-							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key, "string", value, false);
+							this.graphBaseEntityService.addAnnotation(current, type + "_" + annotationNum + "_" + key.replace('.', '_'), "string", value, false);
 						}
 						annotationNum++;
 					}
@@ -237,7 +237,7 @@ public class NetworkService {
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 */
 	public MappingNode annotateNetwork(	String user, 
-										@Valid AnnotationItem annotationItem,
+										AnnotationItem annotationItem,
 										String networkEntityUUID,
 										String networkname,
 										boolean prefixName,
