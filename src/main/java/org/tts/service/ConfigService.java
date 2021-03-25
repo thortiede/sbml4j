@@ -139,4 +139,29 @@ public class ConfigService {
 		}
 	}
 	
+	/**
+	 * {@link CsvConfigProperties}
+	 */
+	
+	/**
+	 * Checks if any matching column names are configured
+	 * @return true if at least one column name is configured, false otherwise
+	 */
+	public boolean areMatchingColumnsConfigured() {
+		if (this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName() != null
+				&& !this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName().isEmpty()) {
+			return true;
+		} else {
+			return false;
+		}		
+	}
+	
+	/**
+	 * Checks if the given String is in the List of configured column names for matching the genesymbol
+	 * @param other The String to check
+	 * @return true if the String other is in the List, false otherwise
+	 */
+	public boolean isInMatchingColums(String other) {
+		return this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName().contains(other.toLowerCase());
+	}
 }
