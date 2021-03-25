@@ -97,6 +97,10 @@ public class CsvService implements RowProcessor {
 				this.isMatchingRowDetermined = true;
 			}
 		}
+		if (row[this.matchRowNum] == null) {
+			// the matching column is not populated in this row
+			return;
+		}
 		if (!this.geneToAnnotationMap.containsKey(row[this.matchRowNum])) {
 			this.geneToAnnotationMap.put(row[this.matchRowNum], new ArrayList<>());
 		}
