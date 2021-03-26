@@ -422,7 +422,7 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		// 5. Get the context
-		List<FlatEdge> contextFlatEdges = this.networkService.getNetworkContextFlatEdges(uuid, geneNames, minDepth, maxDepth, terminateAtString, directionString);
+		List<FlatEdge> contextFlatEdges = this.networkService.getNetworkContextFlatEdges(uuid, geneNames, minDepth, maxDepth, terminateAtString, directionString, weightproperty);
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Failed to gather context from parent network").build();
 		}
@@ -586,7 +586,7 @@ public class NetworksApiController implements NetworksApi {
 		MappingNode contextNetwork;
 		try {
 			contextNetwork = this.networkService.createContextNetwork(user != null ? user.strip() : networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
-					directionString, networkname, prefixName);
+					directionString, weightproperty, networkname, prefixName);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
