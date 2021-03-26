@@ -584,7 +584,7 @@ public class NetworkService {
 	 * @throws Exception if something else fails during context creation (message gives reason)
 	 */
 	public MappingNode createContextNetwork(String user, List<String> geneNames, MappingNode parentMapping, Integer minSize,
-			Integer maxSize, String terminateAt, String direction, String networkname, Boolean prefixName)
+			Integer maxSize, String terminateAt, String direction, String weightproperty, String networkname, Boolean prefixName)
 			throws NetworkAlreadyExistsException,Exception {
 		// 1. Determine the name of the network
 		String contextNetworkName;
@@ -621,7 +621,7 @@ public class NetworkService {
 			//throw new Exception("Failed to assign user to context mapping.");
 		//}
 		// 4. get the context
-		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(parentMapping.getEntityUUID(), geneNames, minSize, maxSize, terminateAt, direction);
+		List<FlatEdge> contextFlatEdges = this.contextService.getNetworkContextFlatEdges(parentMapping.getEntityUUID(), geneNames, minSize, maxSize, terminateAt, direction, weightproperty);
 		if(contextFlatEdges == null) {
 			throw new Exception("Failed to gather context from parent network");
 		}
@@ -922,8 +922,8 @@ public class NetworkService {
 	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
 	 */
 	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
-			int maxSize, String terminateAt, String direction) {
-		return this.contextService.getNetworkContextFlatEdges(networkEntityUUID, genes, minSize, maxSize, terminateAt, direction);
+			int maxSize, String terminateAt, String direction, String weightproperty) {
+		return this.contextService.getNetworkContextFlatEdges(networkEntityUUID, genes, minSize, maxSize, terminateAt, direction, weightproperty);
 	}
 	/**
 	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a list of entityUUIDs
