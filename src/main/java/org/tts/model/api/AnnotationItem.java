@@ -11,17 +11,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+
 /**
  * The fields of the AnnotationItem are used to create annotations in a network
  * as follows:  Must provide  - either all fields associated with nodes
- * (nodeAnnotation, nodeAnnotationName, nodeAnnotationType) - or all fields
- * associated wth relations (relationAnnotation, relationAnnotationName,
- * relationAnnotationType)  - or both.  Fields related to nodes: -
- * nodeAnnotationName denotes the name under which the annotations in the
- * nodeAnnotation field of the request body are attached to nodes   -
- * nodeAnnotationType is used as type with which the annotations in the
- * nodeAnnotation field of the request body are attached to nodes. Is also used
- * to read out the annotation in said format when extracting network   -
+ * (nodeAnnotation, nodeAnnotationName) - or all fields associated wth relations
+ * (relationAnnotation, relationAnnotationName)  - or both.  Fields related to
+ * nodes: - nodeAnnotationName denotes the name under which the annotations in
+ * the nodeAnnotation field of the request body are attached to nodes -
  * nodeAnnotation is a dictionary of \&quot;node-symbol\&quot;:
  * \&quot;annotation\&quot; - pairs where node-symbol must match one of the node
  * symbols in the network (see field nodeSymbols in FilterOptions); the
@@ -29,9 +26,6 @@ import io.swagger.annotations.ApiModelProperty;
  * using the type in nodeAnnotationType      Fields related to relations: -
  * relationAnnotationName denotes the name under which the annotations in the
  * relationAnnotation field of the request body are attached to relations   -
- * relationAnnotationType is used as type with which the annotations in the
- * relationAnnotation field of the request body are attached to relations. Is
- * also used to read out the annotation in said format when extracting network -
  * relationAnnotation is a dictionary of \&quot;relation-symbol\&quot;:
  * \&quot;annotation\&quot; - pairs where realation-symbol must match one of the
  * relation symbols in the network (see field relationSymbols in FilterOptions);
@@ -40,22 +34,18 @@ import io.swagger.annotations.ApiModelProperty;
  */
 @ApiModel(
     description =
-        "The fields of the AnnotationItem are used to create annotations in a network as follows:  Must provide  - either all fields associated with nodes (nodeAnnotation, nodeAnnotationName, nodeAnnotationType) - or all fields associated wth relations (relationAnnotation, relationAnnotationName, relationAnnotationType)  - or both.  Fields related to nodes: - nodeAnnotationName denotes the name under which the annotations in the nodeAnnotation field of the request body are attached to nodes   - nodeAnnotationType is used as type with which the annotations in the nodeAnnotation field of the request body are attached to nodes. Is also used to read out the annotation in said format when extracting network   - nodeAnnotation is a dictionary of \"node-symbol\": \"annotation\" - pairs where node-symbol must match one of the node symbols in the network (see field nodeSymbols in FilterOptions); the annotation is added to the node under the name defined in nodeAnnotationName using the type in nodeAnnotationType      Fields related to relations: - relationAnnotationName denotes the name under which the annotations in the relationAnnotation field of the request body are attached to relations   - relationAnnotationType is used as type with which the annotations in the relationAnnotation field of the request body are attached to relations. Is also used to read out the annotation in said format when extracting network - relationAnnotation is a dictionary of \"relation-symbol\": \"annotation\" - pairs where realation-symbol must match one of the relation symbols in the network (see field relationSymbols in FilterOptions); the annotation is added to the relation under the name defined in relationAnnotationName using the type in relationAnnotationType ")
+        "The fields of the AnnotationItem are used to create annotations in a network as follows:  Must provide  - either all fields associated with nodes (nodeAnnotation, nodeAnnotationName) - or all fields associated wth relations (relationAnnotation, relationAnnotationName)  - or both.  Fields related to nodes: - nodeAnnotationName denotes the name under which the annotations in the nodeAnnotation field of the request body are attached to nodes - nodeAnnotation is a dictionary of \"node-symbol\": \"annotation\" - pairs where node-symbol must match one of the node symbols in the network (see field nodeSymbols in FilterOptions); the annotation is added to the node under the name defined in nodeAnnotationName using the type in nodeAnnotationType      Fields related to relations: - relationAnnotationName denotes the name under which the annotations in the relationAnnotation field of the request body are attached to relations   - relationAnnotation is a dictionary of \"relation-symbol\": \"annotation\" - pairs where realation-symbol must match one of the relation symbols in the network (see field relationSymbols in FilterOptions); the annotation is added to the relation under the name defined in relationAnnotationName using the type in relationAnnotationType ")
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+          date = "2021-03-26T13:08:34.054518+01:00[Europe/Berlin]")
 public class AnnotationItem {
   @JsonProperty("nodeAnnotationName") private String nodeAnnotationName;
-
-  @JsonProperty("nodeAnnotationType") private String nodeAnnotationType;
 
   @JsonProperty("nodeAnnotation")
   @Valid
   private Map<String, Object> nodeAnnotation = null;
 
   @JsonProperty("relationAnnotationName") private String relationAnnotationName;
-
-  @JsonProperty("relationAnnotationType") private String relationAnnotationType;
 
   @JsonProperty("relationAnnotation")
   @Valid
@@ -82,28 +72,6 @@ public class AnnotationItem {
     this.nodeAnnotationName = nodeAnnotationName;
   }
 
-  public AnnotationItem nodeAnnotationType(String nodeAnnotationType) {
-    this.nodeAnnotationType = nodeAnnotationType;
-    return this;
-  }
-
-  /**
-   * The type of the annotation values (e.g. string, int, boolean)
-   * @return nodeAnnotationType
-   */
-  @ApiModelProperty(
-      example = "boolean",
-      value = "The type of the annotation values (e.g. string, int, boolean)")
-
-  public String
-  getNodeAnnotationType() {
-    return nodeAnnotationType;
-  }
-
-  public void setNodeAnnotationType(String nodeAnnotationType) {
-    this.nodeAnnotationType = nodeAnnotationType;
-  }
-
   public AnnotationItem
   nodeAnnotation(Map<String, Object> nodeAnnotation) {
     this.nodeAnnotation = nodeAnnotation;
@@ -112,7 +80,7 @@ public class AnnotationItem {
 
   public AnnotationItem
   putNodeAnnotationItem(String key,
-		  Object nodeAnnotationItem) {
+                        Object nodeAnnotationItem) {
     if (this.nodeAnnotation == null) {
       this.nodeAnnotation = new HashMap<>();
     }
@@ -159,28 +127,6 @@ public class AnnotationItem {
     this.relationAnnotationName = relationAnnotationName;
   }
 
-  public AnnotationItem relationAnnotationType(String relationAnnotationType) {
-    this.relationAnnotationType = relationAnnotationType;
-    return this;
-  }
-
-  /**
-   * The type of the annotation values (e.g. string, int, boolean)
-   * @return relationAnnotationType
-   */
-  @ApiModelProperty(
-      example = "int",
-      value = "The type of the annotation values (e.g. string, int, boolean)")
-
-  public String
-  getRelationAnnotationType() {
-    return relationAnnotationType;
-  }
-
-  public void setRelationAnnotationType(String relationAnnotationType) {
-    this.relationAnnotationType = relationAnnotationType;
-  }
-
   public AnnotationItem
   relationAnnotation(Map<String, Object> relationAnnotation) {
     this.relationAnnotation = relationAnnotation;
@@ -189,7 +135,7 @@ public class AnnotationItem {
 
   public AnnotationItem
   putRelationAnnotationItem(String key,
-		  Object relationAnnotationItem) {
+                            Object relationAnnotationItem) {
     if (this.relationAnnotation == null) {
       this.relationAnnotation = new HashMap<>();
     }
@@ -228,22 +174,17 @@ public class AnnotationItem {
     AnnotationItem annotationItem = (AnnotationItem)o;
     return Objects.equals(this.nodeAnnotationName,
                           annotationItem.nodeAnnotationName) &&
-        Objects.equals(this.nodeAnnotationType,
-                       annotationItem.nodeAnnotationType) &&
         Objects.equals(this.nodeAnnotation, annotationItem.nodeAnnotation) &&
         Objects.equals(this.relationAnnotationName,
                        annotationItem.relationAnnotationName) &&
-        Objects.equals(this.relationAnnotationType,
-                       annotationItem.relationAnnotationType) &&
         Objects.equals(this.relationAnnotation,
                        annotationItem.relationAnnotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeAnnotationName, nodeAnnotationType, nodeAnnotation,
-                        relationAnnotationName, relationAnnotationType,
-                        relationAnnotation);
+    return Objects.hash(nodeAnnotationName, nodeAnnotation,
+                        relationAnnotationName, relationAnnotation);
   }
 
   @Override
@@ -254,17 +195,11 @@ public class AnnotationItem {
     sb.append("    nodeAnnotationName: ")
         .append(toIndentedString(nodeAnnotationName))
         .append("\n");
-    sb.append("    nodeAnnotationType: ")
-        .append(toIndentedString(nodeAnnotationType))
-        .append("\n");
     sb.append("    nodeAnnotation: ")
         .append(toIndentedString(nodeAnnotation))
         .append("\n");
     sb.append("    relationAnnotationName: ")
         .append(toIndentedString(relationAnnotationName))
-        .append("\n");
-    sb.append("    relationAnnotationType: ")
-        .append(toIndentedString(relationAnnotationType))
         .append("\n");
     sb.append("    relationAnnotation: ")
         .append(toIndentedString(relationAnnotation))
