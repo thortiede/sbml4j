@@ -385,7 +385,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 					}
 					break;
 				case "integer":
-					int edgeAnnotationInt = (int) edgeAnnotationMap.get(annotationKey);
+					long edgeAnnotationInt = (long) edgeAnnotationMap.get(annotationKey);
 					edgesWithAnnotation.add(String.format("\t\t\t<data key=\"e_%s\">%d</data>\n", annotationKey, edgeAnnotationInt).getBytes());
 					if (!edgeAnnotations.containsKey(annotationKey)) {
 						edgeAnnotations.put(annotationKey, annotationType);
