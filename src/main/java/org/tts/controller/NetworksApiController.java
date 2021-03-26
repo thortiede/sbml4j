@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.AnnotationException;
 import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.NetworksApi;
@@ -126,6 +127,10 @@ public class NetworksApiController implements NetworksApi {
 			annotatedNetwork = this.networkService.annotateNetwork(user != null ? user.strip() : networkUser,
 												annotationItem, uuid, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (AnnotationException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();
