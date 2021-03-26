@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.AnnotationException;
 import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
@@ -258,7 +259,7 @@ public class NetworkService {
 										String networkEntityUUID,
 										String networkname,
 										boolean prefixName,
-										boolean derive) throws NetworkAlreadyExistsException {
+										boolean derive) throws NetworkAlreadyExistsException, AnnotationException {
 		if (derive) {
 			log.info("Deriving network from " + networkEntityUUID + " and adding annotation.");
 		} else {
@@ -267,125 +268,162 @@ public class NetworkService {
 		
 		StringBuilder prefixSB = new StringBuilder();
 		prefixSB.append("Annotate_with");
-		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
+		if (annotationItem.getNodeAnnotationName() != null) {
 			prefixSB.append("_node.");
 			prefixSB.append(annotationItem.getNodeAnnotationName());
-			prefixSB.append(".");
-			prefixSB.append(annotationItem.getNodeAnnotationType());
 		}
-		if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
+		if (annotationItem.getRelationAnnotationName() != null) {
 			prefixSB.append("_relation.");
 			prefixSB.append(annotationItem.getRelationAnnotationName());
 			prefixSB.append(".");
-			prefixSB.append(annotationItem.getRelationAnnotationType());
 		}
 		String prefixString = prefixSB.toString();
 		MappingNode mappingToAnnotate = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
 				derive, prefixString);
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
-		if (annotationItem.getNodeAnnotationName() != null && annotationItem.getNodeAnnotationType() != null) {
-			addNodeAnnotation(networkRelations, 
-					annotationItem.getNodeAnnotationName(), annotationItem.getNodeAnnotationType(), annotationItem.getNodeAnnotation());
+		if (annotationItem.getNodeAnnotationName() != null) {
+			if (annotationItem.getNodeAnnotation() == null) {
+				log.error("Found nodeAnnotationName but no nodeAnnotation object. Aborting");
+				throw new AnnotationException("Found nodeAnnotationName but no nodeAnnotation object.");
+			}
+			String nodeAnnotationType = null;
+			boolean isNodeAnnotationTypeDetermined = false;
+			for (String key : annotationItem.getNodeAnnotation().keySet()) {
+				Object value = annotationItem.getNodeAnnotation().get(key);
+				if (value instanceof Integer) {
+				
+					if (!isNodeAnnotationTypeDetermined) {
+						isNodeAnnotationTypeDetermined  = true;
+						nodeAnnotationType = "integer";
+					} else {
+						if (!"integer".equals(nodeAnnotationType)) {
+							log.warn("Found two different types of annotation for nodes: integer and " + nodeAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							nodeAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof Double) {
+
+					if (!isNodeAnnotationTypeDetermined) {
+						isNodeAnnotationTypeDetermined = true;
+						nodeAnnotationType = "double";
+					} else {
+						if (!"double".equals(nodeAnnotationType)) {
+							log.warn("Found two different types of annotation for nodes: double and " + nodeAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							nodeAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof Boolean) {
+
+					if (!isNodeAnnotationTypeDetermined) {
+						isNodeAnnotationTypeDetermined = true;
+						nodeAnnotationType = "boolean";
+					} else {
+						if (!"boolean".equals(nodeAnnotationType)) {
+							log.warn("Found two different types of annotation for nodes: boolean and " + nodeAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							nodeAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof String) {
+					if (!isNodeAnnotationTypeDetermined) {
+						isNodeAnnotationTypeDetermined = true;
+						nodeAnnotationType = "string";
+					} else {
+						if (!"string".equals(nodeAnnotationType)) {
+							log.warn("Found two different types of annotation for nodes: string and " + nodeAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							nodeAnnotationType = "string";
+							break;
+						}
+					}
+				} else {
+					log.warn("Found unexpected type of annotation for nodes:" + value.getClass().descriptorString() + ". Treating all annotations for nodes as string");
+					isNodeAnnotationTypeDetermined = true;
+					nodeAnnotationType = "string";
+					break;
+				}
+				
+			}
+			
+			addNodeAnnotation(networkRelations,
+					annotationItem.getNodeAnnotationName(), nodeAnnotationType, annotationItem.getNodeAnnotation());
 			mappingToAnnotate.addAnnotationType("node." + annotationItem.getNodeAnnotationName(),
-					annotationItem.getNodeAnnotationType());
+					nodeAnnotationType);
 		}
-		if (annotationItem.getRelationAnnotationName() != null && annotationItem.getRelationAnnotationType() != null) {
+		
+		if (annotationItem.getRelationAnnotationName() != null) {
+			if (annotationItem.getRelationAnnotation() == null) {
+				log.error("Found relationAnnotationName but no relationAnnotation object. Aborting");
+				throw new AnnotationException("Found relationAnnotationName but no relationAnnotation object.");
+			}
+			String relationAnnotationType = null;
+			boolean isRelationAnnotationTypeDetermined = false;
+			for (String key : annotationItem.getRelationAnnotation().keySet()) {
+				Object value = annotationItem.getRelationAnnotation().get(key);
+				if (value instanceof Integer) {
+				
+					if (!isRelationAnnotationTypeDetermined) {
+						isRelationAnnotationTypeDetermined  = true;
+						relationAnnotationType = "integer";
+					} else {
+						if (!"integer".equals(relationAnnotationType)) {
+							log.warn("Found two different types of annotation for relations: integer and " + relationAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							relationAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof Double) {
+
+					if (!isRelationAnnotationTypeDetermined) {
+						isRelationAnnotationTypeDetermined = true;
+						relationAnnotationType = "double";
+					} else {
+						if (!"double".equals(relationAnnotationType)) {
+							log.warn("Found two different types of annotation for relations: double and " + relationAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							relationAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof Boolean) {
+
+					if (!isRelationAnnotationTypeDetermined) {
+						isRelationAnnotationTypeDetermined = true;
+						relationAnnotationType = "boolean";
+					} else {
+						if (!"boolean".equals(relationAnnotationType)) {
+							log.warn("Found two different types of annotation for relations: boolean and " + relationAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							relationAnnotationType = "string";
+							break;
+						}
+					}
+				} else if (value instanceof String) {
+					if (!isRelationAnnotationTypeDetermined) {
+						isRelationAnnotationTypeDetermined = true;
+						relationAnnotationType = "string";
+					} else {
+						if (!"string".equals(relationAnnotationType)) {
+							log.warn("Found two different types of annotation for relations: string and " + relationAnnotationType + ". Need to have unique annotation type. Falling back to string.");
+							relationAnnotationType = "string";
+							break;
+						}
+					}
+				} else {
+					log.warn("Found unexpected type of annotation for relations: " + value.getClass().descriptorString() + ". Treating all annotations for relations as string");
+					isRelationAnnotationTypeDetermined = true;
+					relationAnnotationType = "string";
+					break;
+				}
+			}
+			
 			addRelationAnnotation(networkRelations, 
-					annotationItem.getRelationAnnotationName(), annotationItem.getRelationAnnotationType(), annotationItem.getRelationAnnotation());
+					annotationItem.getRelationAnnotationName(), relationAnnotationType, annotationItem.getRelationAnnotation());
 			mappingToAnnotate.addAnnotationType("relation." + annotationItem.getRelationAnnotationName(), 
-					annotationItem.getRelationAnnotationType());
+					relationAnnotationType);
 		}
 		this.flatEdgeService.save(networkRelations, 1);
 		return this.mappingNodeService.save(mappingToAnnotate, 0);
-	}
-
-	/**
-	 * Create a new <a href="#{@link}">{@link MappingNode}</a> and annotate the created mapping
-	 * @param user The user that the new <a href="#{@link}">{@link MappingNode}</a> is associated with
-	 * @param annotationItem The <a href="#{@link}">{@link AnnotationItem}</a> that holds the annotation to add
-	 * @param networkEntityUUID The base network to derive the annotated <a href="#{@link}">{@link MappingNode}</a> from
-	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
-	 */
-	@Deprecated
-	public MappingNode annotateNetwork(String user, @Valid AnnotationItem annotationItem, String networkEntityUUID) {
-		
-		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		String newMappingName = parent.getMappingName() + "_annotate_with" + 
-				(annotationItem.getNodeAnnotationName() != null ? "_nodeAnnotation:" + annotationItem.getNodeAnnotationName() : "") + 
-				(annotationItem.getRelationAnnotationName() != null ? "_relationAnnotation:" + annotationItem.getRelationAnnotationName() : "");
-		
-		String activityName = "Add_annotation_to_mapping_" + networkEntityUUID + 
-				(annotationItem.getNodeAnnotationName() != null ? "_nodeAnnotation:" + annotationItem.getNodeAnnotationName() : "") + 
-				(annotationItem.getRelationAnnotationName() != null ? "_relationAnnotation:" + annotationItem.getRelationAnnotationName() : "");
-		
-		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
-		NetworkMappingType mappingType = parent.getMappingType();
-		
-		
-		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
-				mappingType);
-
-		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
-		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
-		Iterator<FlatEdge> resettedEdgeIterator = resettedEdges.iterator();
-		
-		this.session.clear();
-		
-		boolean addNodeAnnotation = false;
-		Map<String, Object> nodeSymbolsToAnnotation = annotationItem.getNodeAnnotation();
-		String nodeAnnotationName = annotationItem.getNodeAnnotationName();
-		String nodeAnnotationType = annotationItem.getNodeAnnotationType();
-		if(nodeSymbolsToAnnotation != null && nodeSymbolsToAnnotation.size() > 0 && nodeAnnotationName != null && nodeAnnotationType != null) {
-			addNodeAnnotation = true;
-		}
-		boolean addEdgeAnnotation = false;
-		Map<String, Object> edgeSymbolsToAnnotation = annotationItem.getRelationAnnotation();
-		String edgeAnnotationName = annotationItem.getRelationAnnotationName();
-		String edgeAnnotationType = annotationItem.getRelationAnnotationType();
-		if(edgeSymbolsToAnnotation != null && nodeSymbolsToAnnotation.size() > 0 && edgeAnnotationName != null && edgeAnnotationType != null) {
-			addEdgeAnnotation = true;
-		}
-		Set<String> annotatedFlatSpeciesUUID = new HashSet<>();
-		while (resettedEdgeIterator.hasNext()) {
-			FlatEdge currentEdge = resettedEdgeIterator.next();
-			if (addEdgeAnnotation && edgeSymbolsToAnnotation.containsKey(currentEdge.getSymbol())) {
-				// add annotation to this edge
-				this.graphBaseEntityService.addAnnotation(currentEdge, edgeAnnotationName, edgeAnnotationType, edgeSymbolsToAnnotation.get(currentEdge.getSymbol()), false);
-			}
-			if (addNodeAnnotation && !annotatedFlatSpeciesUUID.contains(currentEdge.getInputFlatSpecies().getEntityUUID())
-						&& nodeSymbolsToAnnotation.containsKey(currentEdge.getInputFlatSpecies().getSymbol())) {
-				this.graphBaseEntityService.addAnnotation(currentEdge.getInputFlatSpecies(), nodeAnnotationName, nodeAnnotationType, 
-						nodeSymbolsToAnnotation.get(currentEdge.getInputFlatSpecies().getSymbol()), false);
-			}
-			if (addNodeAnnotation && !annotatedFlatSpeciesUUID.contains(currentEdge.getOutputFlatSpecies().getEntityUUID())
-					&& nodeSymbolsToAnnotation.containsKey(currentEdge.getOutputFlatSpecies().getSymbol())) {
-				this.graphBaseEntityService.addAnnotation(currentEdge.getOutputFlatSpecies(), nodeAnnotationName, nodeAnnotationType, 
-					nodeSymbolsToAnnotation.get(currentEdge.getOutputFlatSpecies().getSymbol()), false);
-			}
-		}
-		Iterable<FlatEdge> persistedEdges = this.flatEdgeService.save(resettedEdges, 1);
-		this.connectContainsFlatEdgeSpecies(newMapping, persistedEdges);
-		
-		// update MappingNode
-		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
-		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
-		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
-		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
-		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
-		
-		if(addNodeAnnotation) {
-			newMapping.addAnnotationType("node." + nodeAnnotationName,
-					nodeAnnotationType);
-		}
-		if(addEdgeAnnotation) {
-			newMapping.addAnnotationType("relation." + edgeAnnotationName, edgeAnnotationType);
-		}
-		
-		return this.mappingNodeService.save(newMapping, 0);
 	}
 
 	/**
