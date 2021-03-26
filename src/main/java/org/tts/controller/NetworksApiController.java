@@ -358,7 +358,7 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<Resource> getContext(UUID UUID, @NotNull @Valid String genes, String user,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
-			@Valid Boolean directed) {
+			@Valid Boolean directed, @Valid String weightproperty) {
 		
 		String uuid = UUID.toString();
 		log.info("Serving GET /networks/" + uuid + "/context " + (user != null ? " for user " + user : "") + " with genes " + genes);
@@ -520,7 +520,7 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> postContext(UUID UUID, @Valid NodeList nodeList, String user,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
-			@Valid String networkname, @Valid Boolean prefixName) {
+			@Valid String networkname, @Valid Boolean prefixName, @Valid String weightproperty) {
 		String uuid = UUID.toString();
 		log.info("Serving POST /networks/" + uuid + "/context" + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
 		// 0. Extract the genes
