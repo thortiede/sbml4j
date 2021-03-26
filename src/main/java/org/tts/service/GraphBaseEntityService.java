@@ -54,7 +54,7 @@ public class GraphBaseEntityService {
 	public GraphBaseEntity addAnnotation(GraphBaseEntity entity, String annotationName, String annotationType, Object annotationValue,
 			boolean appendExisting) {
 		if(annotationType.equals("string")) {
-			String newAnnotationValue = (String) annotationValue;
+			String newAnnotationValue = annotationValue.toString();
 			if(appendExisting) {
 				String separator = ", "; // this is the default separator
 				if (entity.getAnnotation().containsKey(annotationName)) {
@@ -74,8 +74,15 @@ public class GraphBaseEntityService {
 		} else {
 			// differnt type than string, nothing we can append to at this point
 			if(entity.getAnnotation().get(annotationName) == null || !this.sbml4jConfig.getAnnotationConfigProperties().isKeepFirst()) {
-				entity.addAnnotation(annotationName, annotationValue);
+				if("integer".equals(annotationType)) {
+					// The neo4j database cannot handle the Java Type Integer.
+					// Those values need to be converted to Long
+					entity.addAnnotation(annotationName, Long.valueOf(((Integer) annotationValue).intValue()));
+				} else {
+					entity.addAnnotation(annotationName, annotationValue);
+				}
 				entity.addAnnotationType(annotationName, annotationType);
+				
 			}
 		}
 		return entity;
