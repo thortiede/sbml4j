@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
+import org.tts.Exception.AnnotationException;
 import org.tts.Exception.NetworkAlreadyExistsException;
 import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.NetworksApi;
@@ -126,6 +127,10 @@ public class NetworksApiController implements NetworksApi {
 			annotatedNetwork = this.networkService.annotateNetwork(user != null ? user.strip() : networkUser,
 												annotationItem, uuid, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (AnnotationException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();
@@ -358,7 +363,7 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<Resource> getContext(UUID UUID, @NotNull @Valid String genes, String user,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
-			@Valid Boolean directed) {
+			@Valid Boolean directed, @Valid String weightproperty) {
 		
 		String uuid = UUID.toString();
 		log.info("Serving GET /networks/" + uuid + "/context " + (user != null ? " for user " + user : "") + " with genes " + genes);
@@ -422,7 +427,7 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		// 5. Get the context
-		List<FlatEdge> contextFlatEdges = this.networkService.getNetworkContextFlatEdges(uuid, geneNames, minDepth, maxDepth, terminateAtString, directionString);
+		List<FlatEdge> contextFlatEdges = this.networkService.getNetworkContextFlatEdges(uuid, geneNames, minDepth, maxDepth, terminateAtString, directionString, weightproperty);
 		if(contextFlatEdges == null) {
 			return ResponseEntity.badRequest().header("reason", "Failed to gather context from parent network").build();
 		}
@@ -520,7 +525,7 @@ public class NetworksApiController implements NetworksApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> postContext(UUID UUID, @Valid NodeList nodeList, String user,
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
-			@Valid String networkname, @Valid Boolean prefixName) {
+			@Valid String networkname, @Valid Boolean prefixName, @Valid String weightproperty) {
 		String uuid = UUID.toString();
 		log.info("Serving POST /networks/" + uuid + "/context" + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
 		// 0. Extract the genes
@@ -586,7 +591,7 @@ public class NetworksApiController implements NetworksApi {
 		MappingNode contextNetwork;
 		try {
 			contextNetwork = this.networkService.createContextNetwork(user != null ? user.strip() : networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
-					directionString, networkname, prefixName);
+					directionString, weightproperty, networkname, prefixName);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())

@@ -30,7 +30,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T14:01:17.376485+01:00[Europe/Berlin]")
+          date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
 @Validated
 @Api(value = "Overview", description = "the Overview API")
 public interface OverviewApi {

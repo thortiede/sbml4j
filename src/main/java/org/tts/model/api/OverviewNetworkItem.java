@@ -17,19 +17,25 @@ import io.swagger.annotations.ApiModelProperty;
  * in &#39;baseNetworkUUID&#39;. If the latter is omitted, a default Network
  * defined by the service will be used. Typically this  will contain all
  * relations and reactions known to the database. The given genes will retrieve
- * a boolean annotation  given by annotationName. The networkName will be used
- * if given.  A standard name is generated when ommited.
+ * a boolean annotation  given by annotationName. If the edgeweightproperty is
+ * provided the named property on relations  will be used to find shortest paths
+ * according to this weight  between pairs of genes in the process of generating
+ * the network. All relations will be treated of having the same weight if it is
+ * ommited. The networkName will be used if given.  A standard name is generated
+ * when ommited.
  */
 @ApiModel(
     description =
-        "Submit a list of genes to build a overview network based on the network given in 'baseNetworkUUID'. If the latter is omitted, a default Network defined by the service will be used. Typically this  will contain all relations and reactions known to the database. The given genes will retrieve a boolean annotation  given by annotationName. The networkName will be used if given.  A standard name is generated when ommited. ")
+        "Submit a list of genes to build a overview network based on the network given in 'baseNetworkUUID'. If the latter is omitted, a default Network defined by the service will be used. Typically this  will contain all relations and reactions known to the database. The given genes will retrieve a boolean annotation  given by annotationName. If the edgeweightproperty is provided the named property on relations  will be used to find shortest paths according to this weight  between pairs of genes in the process of generating the network. All relations will be treated of having the same weight if it is ommited. The networkName will be used if given.  A standard name is generated when ommited. ")
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+          date = "2021-03-26T13:08:34.054518+01:00[Europe/Berlin]")
 public class OverviewNetworkItem {
   @JsonProperty("baseNetworkUUID") private UUID baseNetworkUUID;
 
   @JsonProperty("genes") @Valid private List<String> genes = null;
+
+  @JsonProperty("edgeweightproperty") private String edgeweightproperty;
 
   @JsonProperty("annotationName") private String annotationName;
 
@@ -81,6 +87,25 @@ public class OverviewNetworkItem {
 
   public void setGenes(List<String> genes) { this.genes = genes; }
 
+  public OverviewNetworkItem edgeweightproperty(String edgeweightproperty) {
+    this.edgeweightproperty = edgeweightproperty;
+    return this;
+  }
+
+  /**
+   * Get edgeweightproperty
+   * @return edgeweightproperty
+   */
+  @ApiModelProperty(example = "myweight", value = "")
+
+  public String getEdgeweightproperty() {
+    return edgeweightproperty;
+  }
+
+  public void setEdgeweightproperty(String edgeweightproperty) {
+    this.edgeweightproperty = edgeweightproperty;
+  }
+
   public OverviewNetworkItem annotationName(String annotationName) {
     this.annotationName = annotationName;
     return this;
@@ -131,6 +156,8 @@ public class OverviewNetworkItem {
     return Objects.equals(this.baseNetworkUUID,
                           overviewNetworkItem.baseNetworkUUID) &&
         Objects.equals(this.genes, overviewNetworkItem.genes) &&
+        Objects.equals(this.edgeweightproperty,
+                       overviewNetworkItem.edgeweightproperty) &&
         Objects.equals(this.annotationName,
                        overviewNetworkItem.annotationName) &&
         Objects.equals(this.networkName, overviewNetworkItem.networkName);
@@ -138,7 +165,8 @@ public class OverviewNetworkItem {
 
   @Override
   public int hashCode() {
-    return Objects.hash(baseNetworkUUID, genes, annotationName, networkName);
+    return Objects.hash(baseNetworkUUID, genes, edgeweightproperty,
+                        annotationName, networkName);
   }
 
   @Override
@@ -150,6 +178,9 @@ public class OverviewNetworkItem {
         .append(toIndentedString(baseNetworkUUID))
         .append("\n");
     sb.append("    genes: ").append(toIndentedString(genes)).append("\n");
+    sb.append("    edgeweightproperty: ")
+        .append(toIndentedString(edgeweightproperty))
+        .append("\n");
     sb.append("    annotationName: ")
         .append(toIndentedString(annotationName))
         .append("\n");

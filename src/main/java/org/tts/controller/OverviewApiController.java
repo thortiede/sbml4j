@@ -192,7 +192,8 @@ public class OverviewApiController implements OverviewApi {
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMinSize()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMaxSize()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug() == true ? "Drugtarget" : ""
-											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection());
+											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection()
+											, overviewNetworkItem.getEdgeweightproperty());
 		if(contextFlatEdges == null) {
 			this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();

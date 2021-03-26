@@ -31,7 +31,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T14:01:17.376485+01:00[Europe/Berlin]")
+          date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
 @Validated
 @Api(value = "Analysis", description = "the Analysis API")
 public interface AnalysisApi {
@@ -86,9 +86,10 @@ public interface AnalysisApi {
    * GET /geneSet : provide a list of genes and get a network containing all
    * genes and their respective relations
    *
-   * @param user The user which requests the creation (required)
    * @param geneSymbols The geneSymbols for which the analysis should be fetched
    *     (required)
+   * @param user The user which requests the gene set, the configured public
+   *     user will be used if omitted (optional)
    * @param UUID The UUID of the parent network to derive a new network from, if
    *     omitted the full model will be used (optional)
    * @param directed Boolean flag wether the resulting network-graph should be
@@ -122,15 +123,15 @@ public interface AnalysisApi {
   @GetMapping(value = "/geneSet", produces = {"application/octet-stream"})
   default ResponseEntity<org.springframework.core.io.Resource>
   getGeneSet(
-	  @ApiParam(
-		  value =
-		       "The user which requests the gene set, the configured public user will be used if omitted")
-	  @RequestHeader(value = "user", required = false) String user,
       @NotNull @ApiParam(
           value = "The geneSymbols for which the analysis should be fetched",
           required = true) @Valid @RequestParam(value = "geneSymbols",
                                                 required = true)
       List<String> geneSymbols,
+      @ApiParam(
+          value =
+              "The user which requests the gene set, the configured public user will be used if omitted")
+      @RequestHeader(value = "user", required = false) String user,
       @ApiParam(
           value =
               "The UUID of the parent network to derive a new network from, if omitted the full model will be used")

@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T14:01:17.376485+01:00[Europe/Berlin]")
+          date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
 @Validated
 @Api(value = "Documentation", description = "the Documentation API")
 public interface DocumentationApi {
@@ -160,39 +160,4 @@ public interface DocumentationApi {
     });
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
-  /**
-   * GET /version : Get the version of sbml4j running
-   *
-   * @return successful operation (status code 200)
-   */
-  @ApiOperation(value = "Get the java memory setup of sbml4j running",
-                nickname = "getMemorySetup", notes = "", response = String.class,
-                tags =
-                    {
-                        "documentation",
-                    })
-  @ApiResponses(value =
-                {
-                  @ApiResponse(code = 200, message = "successful operation",
-                               response = String.class)
-                })
-  @GetMapping(value = "/memory", produces = {"application/json"})
-  default ResponseEntity<String>
-  getMemorySetup() {
-    getRequest().ifPresent(request -> {
-      for (MediaType mediaType :
-           MediaType.parseMediaTypes(request.getHeader("Accept"))) {
-        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
-          String exampleString = "\"Initial Memory (xms): 512mb / Max Memory (xmx) : 4096mb\"";
-          ApiUtil.setExampleResponse(request, "application/json",
-                                     exampleString);
-          break;
-        }
-      }
-    });
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-  }
-  
-  
-  
 }

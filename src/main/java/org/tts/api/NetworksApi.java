@@ -39,7 +39,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T14:01:17.376485+01:00[Europe/Berlin]")
+          date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
 @Validated
 @Api(value = "Networks", description = "the Networks API")
 public interface NetworksApi {
@@ -497,16 +497,16 @@ public interface NetworksApi {
    * @param genes  (required)
    * @param user The user which requests the creation, the configured public
    *     user will be used if omitted (optional)
-   * @param minSize The minimum depth of the context search (optional, default
-   *     to 1)
-   * @param maxSize The maximum depth of the context search (optional, default
-   *     to 3)
+   * @param minSize The minimum depth of the context search (optional)
+   * @param maxSize The maximum depth of the context search (optional)
    * @param terminateAt find nodes of this type and stop the expansion there
    *     (upload a csv with that type first to be able to use this) (optional)
    * @param direction The direction of the context expansion (upstream,
    *     downstream, both) (optional, default to both)
    * @param directed Denotes whether the return network graph is directed
    *     (optional, default to false)
+   * @param weightproperty The name of the annotation used as weight for
+   *     calculating shortest paths between entities (optional)
    * @return Bad Request (status code 400)
    *         or The current user is forbidden from accessing this data (status
    * code 403) or successful operation (status code 200)
@@ -564,7 +564,12 @@ public interface NetworksApi {
       @ApiParam(value = "Denotes whether the return network graph is directed",
                 defaultValue = "false") @Valid
       @RequestParam(value = "directed", required = false,
-                    defaultValue = "false") Boolean directed) {
+                    defaultValue = "false") Boolean directed,
+      @ApiParam(
+          value =
+              "The name of the annotation used as weight for calculating shortest paths between entities")
+      @Valid @RequestParam(value = "weightproperty",
+                           required = false) String weightproperty) {
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
 
@@ -666,7 +671,7 @@ public interface NetworksApi {
            MediaType.parseMediaTypes(request.getHeader("Accept"))) {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
           String exampleString =
-              "{ \"annotation\" : { \"nodeAnnotationType\" : \"boolean\", \"relationAnnotationType\" : \"int\", \"relationAnnotation\" : { \"BRAF-stimulation->BRCA\" : 1, \"BRCA-inhibition->BRAF\" : 5 }, \"nodeAnnotationName\" : \"DriverGene\", \"relationAnnotationName\" : \"traversalScore\", \"nodeAnnotation\" : { \"BRAF\" : true, \"BRCA\" : false } }, \"filter\" : { \"relationTypes\" : [ \"stimulation\", \"stimulation\" ], \"nodeSymbols\" : [ \"BRCA1\", \"BRCA1\" ], \"relationSymbols\" : [ \"BRCA1-stimulation->BRAF\", \"BRCA1-stimulation->BRAF\" ], \"nodeTypes\" : [ \"polypeptide chain\", \"polypeptide chain\" ] } }";
+              "{ \"annotation\" : { \"relationAnnotation\" : { \"BRAF-stimulation->BRCA\" : 1, \"BRCA-inhibition->BRAF\" : 5 }, \"nodeAnnotationName\" : \"DriverGene\", \"relationAnnotationName\" : \"traversalScore\", \"nodeAnnotation\" : { \"BRAF\" : true, \"BRCA\" : false } }, \"filter\" : { \"relationTypes\" : [ \"stimulation\", \"stimulation\" ], \"nodeSymbols\" : [ \"BRCA1\", \"BRCA1\" ], \"relationSymbols\" : [ \"BRCA1-stimulation->BRAF\", \"BRCA1-stimulation->BRAF\" ], \"nodeTypes\" : [ \"polypeptide chain\", \"polypeptide chain\" ] } }";
           ApiUtil.setExampleResponse(request, "application/json",
                                      exampleString);
           break;
@@ -730,10 +735,8 @@ public interface NetworksApi {
    *     (required)
    * @param user The user which requests the creation, the configured public
    *     user will be used if omitted (optional)
-   * @param minSize The minimum depth of the context search (optional, default
-   *     to 1)
-   * @param maxSize The maximum depth of the context search (optional, default
-   *     to 3)
+   * @param minSize The minimum depth of the context search (optional)
+   * @param maxSize The maximum depth of the context search (optional)
    * @param terminateAt find nodes of this type and stop the expansion there
    *     (upload a csv with that type first to be able to use this) (optional)
    * @param direction The direction of the context expansion (upstream,
@@ -743,6 +746,8 @@ public interface NetworksApi {
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
    *     created network (false) (optional, default to true)
+   * @param weightproperty The name of the annotation used as weight for
+   *     calculating shortest paths between entities (optional)
    * @return Bad Request (status code 400)
    *         or The current user is forbidden from accessing this data (status
    * code 403) or context network created (status code 201)
@@ -805,7 +810,12 @@ public interface NetworksApi {
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
           defaultValue = "true") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName) {
+                    defaultValue = "true") Boolean prefixName,
+      @ApiParam(
+          value =
+              "The name of the annotation used as weight for calculating shortest paths between entities")
+      @Valid @RequestParam(value = "weightproperty",
+                           required = false) String weightproperty) {
     getRequest().ifPresent(request -> {
       for (MediaType mediaType :
            MediaType.parseMediaTypes(request.getHeader("Accept"))) {

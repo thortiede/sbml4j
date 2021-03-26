@@ -74,7 +74,7 @@ public class ContextService {
 	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities that make up the context
 	 */
 	public List<FlatEdge> getNetworkContextFlatEdges(String networkEntityUUID, List<String> genes, int minSize,
-			int maxSize, String terminateAt, String direction) {
+			int maxSize, String terminateAt, String direction, String weightproperty) {
 		if (genes == null) {
 			return null;
 		}
@@ -115,14 +115,14 @@ public class ContextService {
 			// multi gene context
 			// do not use old shared pathway search
 			// allEdges = this.getNetworkContextUsingSharedPathwaySearch(networkEntityUUID, geneListFlatSpecies, minSize, maxSize, terminateAt, direction);
-			allEdges = this.getMultiGeneNetworkContext(networkEntityUUID, geneListFlatSpecies, minSize, maxSize, terminateAt, direction);
+			allEdges = this.getMultiGeneNetworkContext(networkEntityUUID, geneListFlatSpecies, minSize, maxSize, terminateAt, direction, weightproperty);
 		}
 		log.info("Finished calculating context network.");
 		return allEdges;
 	}
 	
 	private List<FlatEdge> getMultiGeneNetworkContext(String networkEntityUUID, List<FlatSpecies> geneListFlatSpecies,
-			int minSize, int maxSize, String terminateAt, String direction) {
+			int minSize, int maxSize, String terminateAt, String direction, String weightproperty) {
 		
 		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		Set<String> networkNodeLabels = this.networkService.getNetworkNodeLabels(networkEntityUUID);
@@ -147,7 +147,7 @@ public class ContextService {
 					for (int j = i+1; j != geneListFlatSpecies.size(); j++) {
 						second = geneListFlatSpecies.get(j);
 						log.info("Attempting to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ") with shortest path.");
-						List<FlatEdge> newEdges = getShortestPathEdges(direction, networkRelationTypes, seenEdges, first, second);
+						List<FlatEdge> newEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty, seenEdges, first, second);
 						if (newEdges.isEmpty()) {
 							log.info("Failed to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ").");
 						} else {
@@ -247,13 +247,9 @@ public class ContextService {
 					if (smallestNumberOfEdges < 2) {
 						break;
 					}
-					Iterable<ApocPathReturnType> targetSpeciesPath = this.apocService.dijkstraWithDefaultWeight(
-							fs.getEntityUUID(), 
-							ts.getEntityUUID(), 
-							this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-							"weight", 
-							1.0f);
-					List<FlatEdge> targetSpeciesEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, targetSpeciesPath);
+					List<FlatEdge> targetSpeciesEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty,
+								seenEdges, fs, ts);
+					
 					if(targetSpeciesEdges.isEmpty()) continue;
 					if (targetSpeciesEdges.size() < smallestNumberOfEdges) {
 						smallestNumberOfEdges = targetSpeciesEdges.size();
@@ -309,13 +305,18 @@ public class ContextService {
 		return allEdges;
 	}
 
-	private List<FlatEdge> getShortestPathEdges(String direction, Set<String> networkRelationTypes,
+	private List<FlatEdge> getShortestPathEdges(String direction, Set<String> networkRelationTypes, String weightproperty,
 			Set<String> seenEdges, FlatSpecies first, FlatSpecies second) {
+		String weight;
+		if (weightproperty != null)
+			weight = "annotation." + weightproperty;
+		else
+			weight = "none";
 		Iterable<ApocPathReturnType> contextNet = this.apocService.dijkstraWithDefaultWeight(
 				first.getEntityUUID(), 
 				second.getEntityUUID(), 
 				this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
-				"weight", 
+				weight, 
 				1.0f);
 		List<FlatEdge> newEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, contextNet);
 		return newEdges;
