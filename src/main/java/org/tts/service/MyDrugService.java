@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.model.common.GraphEnum.AnnotationName;
+import org.tts.Exception.NetworkDeletionException;
 import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.flat.FlatEdge;
 import org.tts.model.flat.FlatSpecies;
@@ -82,8 +82,9 @@ public class MyDrugService {
 	 * @param derive Whether to create a copy of the existing network (true), or add data to the network without copying it (false).
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> which has the Drug-Node-<a href="#{@link}">{@link FlatSpecies}</a> added.
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 */
-	public MappingNode addMyDrugToNetwork(String user, String networkEntityUUID, String myDrugURL, String networkname, boolean prefixName, boolean derive) throws NetworkAlreadyExistsException {
+	public MappingNode addMyDrugToNetwork(String user, String networkEntityUUID, String myDrugURL, String networkname, boolean prefixName, boolean derive) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		
 		MappingNode mappingNode = this.networkService.getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName, derive, "MyDrugNodesOn_");
 		

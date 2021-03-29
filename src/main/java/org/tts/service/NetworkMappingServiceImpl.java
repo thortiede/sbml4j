@@ -122,13 +122,16 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	/**
-	 * Create a <a href="#{@link}">{@link MappingNpde}</a> from a <a href="#{@link}">{@link PathwayNode}</a> by mapping entities
+	 * Create a <a href="#{@link}">{@link MappingNode}</a> from a <a href="#{@link}">{@link PathwayNode}</a> by mapping entities
 	 * @param pathway The <a href="#{@link}">{@link PathwayNode}</a> to be mapped
 	 * @param type The <a href="#{@link}">{@link NetworkMappingType}</a> that should be applied in the mappingProcess
 	 * @param activityNode The <a href="#{@link}">{@link ProvenanceGraphActivityNode}</a> this mapping is generated from
 	 * @param agentNode The The <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> that this mapping was attributed to
 	 * @param newMappingName A string representing the name of the Mapping to be created (Needs to be checked for uniqueness before passing it in this method)
-	 * @return The created <a href="#{@link}">{@link MappingNpde}</a> that contains the new Mapping
+	 * @return The created <a href="#{@link}">{@link MappingNode}</a> that contains the new Mapping
+	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the same name already exists for the <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>
+	 * @throws NetworkMappingError If an error occurs during creation of the entities of the mapping
+	 * @throws Exception if an unexpected error occurs
 	 */
 	@Override
 	public MappingNode createMappingFromPathway(PathwayNode pathway, NetworkMappingType type,
