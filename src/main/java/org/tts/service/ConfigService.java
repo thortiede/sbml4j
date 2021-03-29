@@ -113,6 +113,18 @@ public class ConfigService {
 		return this.sbml4jConfig.getNetworkConfigProperties().isAllowInactiveDuplicates();
 	}
 	
+	public boolean isHardDeleteNetwork() {
+		return this.sbml4jConfig.getNetworkConfigProperties().isHardDelete();
+	}
+	
+	public boolean isDeleteExistingNetwork() {
+		return this.sbml4jConfig.getNetworkConfigProperties().isDeleteExisting();
+	}
+	
+	public boolean isDeleteDerivedNetworks() {
+		return this.sbml4jConfig.getNetworkConfigProperties().isDeleteDerived();
+	}
+	
 	
 	
 	public boolean isSymbolInMDAnderson(String symbol) {
