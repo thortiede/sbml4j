@@ -27,6 +27,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.tts.Exception.NetworkDeletionException;
 import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.OverviewApi;
 import org.tts.config.OverviewNetworkConfig;
@@ -155,7 +156,11 @@ public class OverviewApiController implements OverviewApi {
 			// delete the network before continuing
 			boolean isDeleted = false;
 			if (sbml4jConfig.getNetworkConfigProperties().isHardDelete()) {
-				isDeleted = this.networkService.deleteNetwork(existingNetwork.getEntityUUID());
+				try {
+					isDeleted = this.networkService.deleteNetwork(existingNetwork.getEntityUUID());
+				} catch (NetworkDeletionException e) {
+					return ResponseEntity.badRequest().header("reason", "Found existing network with name " + networkName + " but failed to delete it. Additonal Info: " + e.getMessage()).build();
+				}
 			} else {
 				isDeleted = this.networkService.deactivateNetwork(existingNetwork.getEntityUUID());
 			}
@@ -195,7 +200,11 @@ public class OverviewApiController implements OverviewApi {
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection()
 											, overviewNetworkItem.getEdgeweightproperty());
 		if(contextFlatEdges == null) {
-			this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
+			try {
+				this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
+			} catch (NetworkDeletionException e) {
+				return ResponseEntity.badRequest().header("reason", "Could not get network context. Attempted to delete newly created Network, but failed. The UUID is: " + overviewNetwork.getEntityUUID() + ". Additional info: " + e.getMessage()).build();
+			}
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
 		}
 		log.info("Created overview network species and relationships of network " + overviewNetwork.getMappingName());

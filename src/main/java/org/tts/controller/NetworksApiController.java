@@ -32,6 +32,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.Exception.AnnotationException;
 import org.tts.Exception.NetworkAlreadyExistsException;
+import org.tts.Exception.NetworkDeletionException;
 import org.tts.Exception.UserUnauthorizedException;
 import org.tts.api.NetworksApi;
 import org.tts.config.SBML4jConfig;
@@ -134,6 +135,10 @@ public class NetworksApiController implements NetworksApi {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();
+		} catch (NetworkDeletionException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 	
 		// 4. Return the InventoryItem of the new Network
@@ -181,6 +186,10 @@ public class NetworksApiController implements NetworksApi {
 			return ResponseEntity.badRequest()
 					.header("reason", "Could not read input file: " + e.getMessage())
 					.build();
+		} catch (NetworkDeletionException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", "Could not read input file: " + e.getMessage())
+					.build();
 		}
 		
 		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
@@ -220,6 +229,10 @@ public class NetworksApiController implements NetworksApi {
 		try {
 			newNetwork = this.myDrugService.addMyDrugToNetwork(user != null ? user.strip() : networkUser, uuid, myDrugURL, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (NetworkDeletionException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();
@@ -269,6 +282,10 @@ public class NetworksApiController implements NetworksApi {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();
+		} catch (NetworkDeletionException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
 		}
 		// 5. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()), HttpStatus.CREATED);
@@ -308,7 +325,12 @@ public class NetworksApiController implements NetworksApi {
 		// 4. Delete network / Deactivate network
 		boolean isDeleted = false;
 		if (sbml4jConfig.getNetworkConfigProperties().isHardDelete()) {
-			isDeleted = this.networkService.deleteNetwork(UUID.toString());
+			try {
+				isDeleted = this.networkService.deleteNetwork(UUID.toString());
+			} catch (NetworkDeletionException e) {
+				e.printStackTrace();
+				return ResponseEntity.badRequest().header("reason", "Failed to delete existing network with uuid: " + UUID.toString() + ".Additional Info: " + e.getMessage()).build();
+			}
 		} else {
 			isDeleted = this.networkService.deactivateNetwork(UUID.toString());
 		}
@@ -347,6 +369,10 @@ public class NetworksApiController implements NetworksApi {
 			filteredNetwork = this.networkService.filterNetwork(user != null ? user.strip() : networkUser,
 												filterOptions, uuid, networkname, prefixName);
 		} catch (NetworkAlreadyExistsException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		} catch (NetworkDeletionException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())
 					.build();

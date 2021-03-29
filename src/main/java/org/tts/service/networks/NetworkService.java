@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.tts.Exception.AnnotationException;
 import org.tts.Exception.NetworkAlreadyExistsException;
+import org.tts.Exception.NetworkDeletionException;
 import org.tts.model.api.AnnotationItem;
 import org.tts.model.api.FilterOptions;
 import org.tts.model.api.NetworkInventoryItem;
@@ -133,6 +134,7 @@ public class NetworkService {
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> which holds the <a href="#{@link}">{@link FlatSpecies}</a> having the data added to them.
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 * @throws IOException If an input file cannot be read
+	 * @throws NetworkDeletionException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but the deletion failed
 	 */
 	public MappingNode addCsvDataToNetwork(	String user,
 											List<MultipartFile> data,
@@ -140,7 +142,7 @@ public class NetworkService {
 											String networkEntityUUID,
 											String networkname,
 											boolean prefixName,
-											boolean derive) throws NetworkAlreadyExistsException, IOException{
+											boolean derive) throws NetworkAlreadyExistsException, IOException, NetworkDeletionException{
 		
 
 		Map<String, List<Map<String, String>>> annotationMap;
@@ -253,13 +255,15 @@ public class NetworkService {
 	 * @param derive whether to derive a new network and put annotation on it (true), or directly add annotation on given network (false)
 	 * @return The new <a href="#{@link}">{@link MappingNode}</a>
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but could not be deleted
+	 * @throws AnnotationException If the given annotation object is incomplete
 	 */
 	public MappingNode annotateNetwork(	String user, 
 										AnnotationItem annotationItem,
 										String networkEntityUUID,
 										String networkname,
 										boolean prefixName,
-										boolean derive) throws NetworkAlreadyExistsException, AnnotationException {
+										boolean derive) throws NetworkAlreadyExistsException, AnnotationException, NetworkDeletionException {
 		if (derive) {
 			log.info("Deriving network from " + networkEntityUUID + " and adding annotation.");
 		} else {
@@ -436,8 +440,9 @@ public class NetworkService {
 	 * @param prefixName Whether to use the given name as prefix to the old name (true) or replace the old name with the given name (false)
 	 * @return The newly created <a href="#{@link}">{@link MappingNode}</a>
 	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName) throws NetworkAlreadyExistsException {
+	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		log.info("Copying network with uuid: " + networkEntityUUID);
 		
 		// Activity
@@ -448,9 +453,14 @@ public class NetworkService {
 		// The name should be unique per user
 		// if user already exists AND a mapping with that name already exists, then error
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		MappingNode existingMappingNode = this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user);
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
-				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID());
+				&& existingMappingNode != null) {
+			if (this.configService.isDeleteExistingNetwork()) {
+				this.deleteNetwork(existingMappingNode.getEntityUUID());
+			} else {
+				throw new NetworkAlreadyExistsException(1, "Network with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + existingMappingNode.getEntityUUID());
+			}
 		}
 		
 		String activityName = "Create_" + newMappingName;
@@ -619,11 +629,12 @@ public class NetworkService {
 	 * @param prefixName Whether to prefix the given networkname to the parentMapping name
 	 * @return The created <a href="#{@link}">{@link MappingNode}</a> holding the context network
 	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 * @throws Exception if something else fails during context creation (message gives reason)
 	 */
 	public MappingNode createContextNetwork(String user, List<String> geneNames, MappingNode parentMapping, Integer minSize,
 			Integer maxSize, String terminateAt, String direction, String weightproperty, String networkname, Boolean prefixName)
-			throws NetworkAlreadyExistsException,Exception {
+			throws NetworkAlreadyExistsException,NetworkDeletionException, Exception {
 		// 1. Determine the name of the network
 		String contextNetworkName;
 		if (networkname != null) {
@@ -645,9 +656,14 @@ public class NetworkService {
 		// 2. Check if that name already exists
 		// if user already exists AND a mapping with that name already exists, then error
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		MappingNode existingMappingNode = this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user);
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
-				&& this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Network with name " + contextNetworkName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(contextNetworkName, user).getEntityUUID());
+				&& existingMappingNode != null) {
+			if (this.configService.isDeleteExistingNetwork()) {
+				this.deleteNetwork(existingMappingNode.getEntityUUID());
+			} else {
+				throw new NetworkAlreadyExistsException(1, "Network with name " + contextNetworkName + " already exists for user " + user + ". The UUID is: " + existingMappingNode.getEntityUUID());
+			}
 		}
 		
 		// 3. We need a graphAgent for creating the new network
@@ -689,8 +705,21 @@ public class NetworkService {
 	 * @param mappingNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
 	 * @return true if the <a href="#{@link}">{@link MappingNode}</a> and all connected entities were removed from the database, false if something went wrong
 	 */
-	public boolean deleteNetwork(String mappingNodeEntityUUID) {
-		
+	public boolean deleteNetwork(String mappingNodeEntityUUID) throws NetworkDeletionException {
+		log.info("Deleting network with entityUUID: " + mappingNodeEntityUUID);
+		// are networks derived from this network?
+	
+		Iterable<ProvenanceEntity> derivedNetworks = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, mappingNodeEntityUUID);
+		Iterator<ProvenanceEntity> derivedNetIterator = derivedNetworks.iterator();
+		while (derivedNetIterator.hasNext()) {
+			if (this.configService.isDeleteDerivedNetworks()) {
+				String nextUUID = derivedNetIterator.next().getEntityUUID();
+				this.deleteNetwork(nextUUID);
+			} else {
+				log.warn("Failed to delete network with uuid: " + mappingNodeEntityUUID + ". It has networks derived from it, but config forbids deleting derived networks.");
+				throw new NetworkDeletionException(1, "Cannot delete network with uuid: " + mappingNodeEntityUUID + ". It has networks derived from it, but config forbids deleting derived networks.");
+			}
+		}
 		try {
 			List<FlatSpecies> flatSpeciesToDelete = this.mappingNodeService.getMappingFlatSpecies(mappingNodeEntityUUID);
 			if (flatSpeciesToDelete != null) {
@@ -698,7 +727,7 @@ public class NetworkService {
 			}
 			List<FlatSpecies> notDeletedFlatSpecies = this.mappingNodeService.getMappingFlatSpecies(mappingNodeEntityUUID);
 			if (notDeletedFlatSpecies != null && notDeletedFlatSpecies.size() > 0) {
-				return false;
+				throw new NetworkDeletionException(2, "Cannot delete network with uuid: " + mappingNodeEntityUUID + ". Reason: There were remaining Nodes in the network after attempting to delete it");
 			}
 			// get the activity connected to the mappingNode with wasGeneratedBy
 			ProvenanceEntity generatorActivity = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, mappingNodeEntityUUID);
@@ -713,8 +742,8 @@ public class NetworkService {
 			// then delete the mapping node
 			this.provenanceGraphService.deleteProvenanceEntity(this.mappingNodeService.findByEntityUUID(mappingNodeEntityUUID));
 		} catch (Exception e) {
-			log.warn("Could not cleanly delete Mapping with uuid: " + mappingNodeEntityUUID);
-			return false;
+			log.warn("Could not cleanly delete Mapping with uuid: " + mappingNodeEntityUUID + ". Reason: " + e.getMessage());
+			throw new NetworkDeletionException(2, "Cannot delete network with uuid: " + mappingNodeEntityUUID + ". Reason: " + e.getMessage());
 		}
 		
 		return true;
@@ -727,21 +756,27 @@ public class NetworkService {
 	 * @param user The user to associate the filtered network to
 	 * @return The <a href="#{@link}">{@link MappingNode}</a> of the filtered network
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 */
 	public MappingNode filterNetwork(	String user,
 										FilterOptions filterOptions,
 										String networkEntityUUID,
 										String networkname, 
-										boolean prefixName) throws NetworkAlreadyExistsException {
+										boolean prefixName) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		String newMappingName = buildMappingName(networkname, prefixName, parent.getMappingName());
 		// check if name already exists for user
 		// if user already exists AND a mapping with that name already exists, then error
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+		MappingNode exisitingMappingNode = this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user);
 		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
-				&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null) {
-			throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID()); 
+				&& exisitingMappingNode != null) {
+			if (this.configService.isDeleteExistingNetwork()) {
+				this.deleteNetwork(exisitingMappingNode.getEntityUUID());
+			} else {
+				throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + exisitingMappingNode.getEntityUUID()); 
+			}
 		}
 		String activityName = "Filter_network_" + networkEntityUUID;
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
@@ -834,9 +869,10 @@ public class NetworkService {
 	 * @param prefixString The String to prefix the existing name with, if applicable
 	 * @return The copied or named <a href="#{@link}">{@link MappingNode}</a> 
 	 * @throws NetworkAlreadyExistsException If a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
+	 * @throws NetworkDeletionException 
 	 */
 	public MappingNode getCopiedOrNamedMappingNode(String user, String networkEntityUUID, String networkname,
-			boolean prefixName, boolean derive, String prefixString) throws NetworkAlreadyExistsException {
+			boolean prefixName, boolean derive, String prefixString) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		MappingNode copiedOrNamedMappingNode = null;
 		if (derive) {
 			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname != null ? networkname : prefixString, prefixName);
@@ -862,7 +898,11 @@ public class NetworkService {
 			if (!newMappingName.equals(copiedOrNamedMappingNode.getMappingName()) 
 					&& (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
 							&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null)) {
-				throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID());
+				if (this.configService.isDeleteExistingNetwork()) {
+					this.deleteNetwork(copiedOrNamedMappingNode.getEntityUUID());
+				} else {
+					throw new NetworkAlreadyExistsException(1, "Mapping with name " + newMappingName + " already exists for user " + user + ". The UUID is: " + this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user).getEntityUUID());
+				}
 			}
 			copiedOrNamedMappingNode.setMappingName(newMappingName);
 		}

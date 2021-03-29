@@ -30,6 +30,10 @@ public class NetworkConfigProperties {
 	
 	private boolean forceDeleteOfPublicNetwork;
 	
+	private boolean deleteExisting;
+	
+	private boolean deleteDerived;
+	
 	public boolean isHardDelete() {
 		return hardDelete;
 	}
@@ -76,5 +80,21 @@ public class NetworkConfigProperties {
 
 	public void setForceDeleteOfPublicNetwork(boolean forceDeleteOfPublicNetwork) {
 		this.forceDeleteOfPublicNetwork = forceDeleteOfPublicNetwork;
+	}
+
+	public boolean isDeleteExisting() {
+		return deleteExisting;
+	}
+
+	public void setDeleteExisting(boolean deleteExisting) {
+		this.deleteExisting = deleteExisting;
+	}
+
+	public boolean isDeleteDerived() {
+		return deleteDerived;
+	}
+
+	public void setDeleteDerived(boolean deleteDerived) {
+		this.deleteDerived = deleteDerived;
 	}
 }
