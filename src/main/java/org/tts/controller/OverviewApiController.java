@@ -92,31 +92,36 @@ public class OverviewApiController implements OverviewApi {
 		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
-		boolean baseNetworkUUIDprovided = false;
+		MappingNode parentMapping = null;
 		if (overviewNetworkItem.getBaseNetworkUUID() == null) {
-			networkEntityUUID = this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getBaseNetworkUUID();
-			if (networkEntityUUID == null || networkEntityUUID.isBlank()) {
+			String defaultBaseNetworkName = this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getBaseNetworkName();
+			if (defaultBaseNetworkName == null) {
 				return ResponseEntity.badRequest().header("reason", "No baseNetworkEntityUUID provided in body and no default network configured. Unable to generate context without one or the other.").build();
 			}
-			log.debug("Using baseNetwork given by properties: " + networkEntityUUID);
+			parentMapping = this.mappingNodeService.findByNetworkNameAndUser(defaultBaseNetworkName, this.configService.getPublicUser());
+			if (parentMapping == null) {
+				if (user != null) {
+					parentMapping = this.mappingNodeService.findByNetworkNameAndUser(defaultBaseNetworkName, user);
+					if (parentMapping == null) {
+						return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration with name " + defaultBaseNetworkName + ". Tried with public user and provided user: " + this.configService.getPublicUser()).build();
+					}
+				} else {
+					return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration with name " + defaultBaseNetworkName + ".").build();
+				}
+			}
+			networkEntityUUID = parentMapping.getEntityUUID();
+			log.debug("Using baseNetwork given by properties with name: " + defaultBaseNetworkName);
 		} else {
 			networkEntityUUID = overviewNetworkItem.getBaseNetworkUUID().toString();
-			baseNetworkUUIDprovided = true;
-			log.debug("Using baseNetwork given input: " + networkEntityUUID);
+			log.debug("Using baseNetwork given in input: " + networkEntityUUID);
+			parentMapping = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+			if(parentMapping == null) {
+				return ResponseEntity.badRequest().header("reason", "Could not find the base network provided via the baseNetworkUUID.").build();
+			}
 		}
-		// 1b. AnnotationName provided?
+		// 2b. AnnotationName provided?
 		if (overviewNetworkItem.getAnnotationName() == null || overviewNetworkItem.getAnnotationName().equals("")) {
 			return ResponseEntity.badRequest().header("reason", "Annotation name not provided in request body in the annotationName - field.").build();
-		}
-		
-		// 2. Does the network exist?
-		MappingNode parentMapping = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		if (parentMapping == null) {
-			if (baseNetworkUUIDprovided) {
-				return ResponseEntity.badRequest().header("reason", "Could not find the base network provided via the baseNetworkUUID.").build();
-			} else {
-				return ResponseEntity.badRequest().header("reason", "Could not find the default base network provided in the configuration.").build();
-			}
 		}
 		
 		// 3. Is the given user or the public user authorized for this network?
@@ -129,6 +134,7 @@ public class OverviewApiController implements OverviewApi {
 					.build();
 		}
 		user = user != null ? user.strip() : networkUser;
+		
 		// 4a. Get the gene names
 		List<String> geneNames = overviewNetworkItem.getGenes();
 		// 4b. Any genes provided?
@@ -196,7 +202,7 @@ public class OverviewApiController implements OverviewApi {
 											, geneNames 
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMinSize()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getMaxSize()
-											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().isTerminateAtDrug() == true ? "Drugtarget" : ""
+											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getTerminateAt()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection()
 											, overviewNetworkItem.getEdgeweightproperty());
 		if(contextFlatEdges == null) {
