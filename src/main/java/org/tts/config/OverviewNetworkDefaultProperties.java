@@ -18,18 +18,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "overviewnetwork.default")
 public class OverviewNetworkDefaultProperties {
 
-	private String baseNetworkUUID;
+	private String baseNetworkName;
 	private int minSize;
 	private int maxSize;
-	private boolean terminateAtDrug;
+	private String terminateAt;
 	private String direction;
 	
 	
-	public String getBaseNetworkUUID() {
-		return baseNetworkUUID;
+	public String getBaseNetworkName() {
+		return baseNetworkName;
 	}
-	public void setBaseNetworkUUID(String baseNetworkUUID) {
-		this.baseNetworkUUID = baseNetworkUUID;
+	public void setBaseNetworkName(String baseNetworkName) {
+		this.baseNetworkName = baseNetworkName;
 	}
 	public int getMinSize() {
 		return minSize;
@@ -43,11 +43,11 @@ public class OverviewNetworkDefaultProperties {
 	public void setMaxSize(int maxSize) {
 		this.maxSize = maxSize;
 	}
-	public boolean isTerminateAtDrug() {
-		return terminateAtDrug;
+	public String getTerminateAt() {
+		return terminateAt;
 	}
-	public void setTerminateAtDrug(boolean terminateAtDrug) {
-		this.terminateAtDrug = terminateAtDrug;
+	public void setTerminateAt(String terminateAt) {
+		this.terminateAt = terminateAt;
 	}
 	public String getDirection() {
 		return direction;
