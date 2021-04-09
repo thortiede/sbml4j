@@ -16,6 +16,8 @@ package org.tts.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tts.model.api.WarehouseInventoryItem;
@@ -53,6 +55,8 @@ public class WarehouseGraphService {
 	
 	@Autowired
 	WarehouseGraphNodeRepository warehouseGraphNodeRepository;
+	
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
 /************************************************************* Repository Methods *************************************************/		
@@ -149,7 +153,7 @@ public class WarehouseGraphService {
 		newEdge.setWarehouseGraphEdgeType(edgetype);
 		newEdge.setStartNode(source);
 		newEdge.setEndNode(target);
-
+		logger.debug("Connecting " +source.getEntityUUID() + " and " + target.getEntityUUID() + " with " + edgetype.toString());
 		this.warehouseGraphEdgeRepository.save(newEdge, 0);
 		return true;
 
