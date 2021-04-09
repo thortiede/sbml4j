@@ -84,13 +84,12 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "-[w:Warehouse]->"
 			+ "(fs:FlatSpecies) "
 			+ "WHERE m.entityUUID = $networkUUID "
-			+ "AND fs.symbol IN $nodeSymbols  "
 			+ "AND w.warehouseGraphEdgeType=\"CONTAINS\" "
 			+ "AND NOT EXISTS {"
 			+ "(fs)-[]-(fs2:FlatSpecies)<-[w2:Warehouse]-(m) "
 			+ "WHERE w2.warehouseGraphEdgeType=\"CONTAINS\" } "
 			+ "RETURN fs")
-	Iterable<FlatSpecies> getUnconnectedNetworkNodes(String networkUUID, List<String> nodeSymbols);
+	Iterable<FlatSpecies> getUnconnectedNetworkNodes(String networkUUID);
 	
 	
 //match (s:SBMLSpecies {entityUUID:"b0d96c9e-24ce-4833-810d-f0868044c439"})<-[p:PROV*1.. {provenanceGraphEdgeType:"wasDerivedFrom"}]-(f:FlatSpecies {symbol:"PPP3"})<-[w:Warehouse {warehouseGraphEdgeType:"CONTAINS"}]-(m:MappingNode {entityUUID:"410ecb59-2ec5-456b-9812-c97faef4c781"}) return s, p, f, m

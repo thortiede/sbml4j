@@ -72,6 +72,15 @@ public class FlatSpeciesService {
 	}
 	
 	/**
+	 * Find all <a href="#{@link}">{@link FlatSpecies}</a> entities that are unconnected to any other <a href="#{@link}">{@link FlatSpecies}</a> in the network
+	 * @param networkEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to search in
+	 * @return Iterable of <a href="#{@link}">{@link FlatSpecies}</a> found
+	 */
+	public Iterable<FlatSpecies> findAllUnconnectedSpeciesInNetwork(String networkEntityUUID) {
+		return this.flatSpeciesRepository.getUnconnectedNetworkNodes(networkEntityUUID);
+	}
+	
+	/**
 	 * Find <a href="#{@link}">{@link FlatSpecies}</a> by its entityUUID
 	 * 
 	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> to find

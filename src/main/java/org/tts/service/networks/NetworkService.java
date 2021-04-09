@@ -470,13 +470,13 @@ public class NetworkService {
 		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
 				mappingType);
 		// Get all FlatSpecies of the network to copy
-		Iterable<FlatSpecies> networkSpecies = this.getNetworkNodes(networkEntityUUID);
+		Iterable<FlatSpecies> unconnectedNetworkSpecies = this.flatSpeciesService.findAllUnconnectedSpeciesInNetwork(networkEntityUUID);
 		
 		// Get and reset all the new <a href="#{@link}">{@link FlatEdge}</a> entities
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(networkEntityUUID);
 		Iterable<FlatEdge> resettedEdges = resetFlatEdges(networkRelations);
 		// reset any remaining unconnected species
-		Iterable<FlatSpecies> unconnectedSpecies = resetFlatSpecies(networkSpecies);
+		Iterable<FlatSpecies> unconnectedSpecies = resetFlatSpecies(unconnectedNetworkSpecies);
 		
 		// clear the session to re-fetch all entities on request and not reuse old ids
 		this.session.clear();
@@ -484,9 +484,9 @@ public class NetworkService {
 		// save the new Edges
 		Iterable<FlatEdge> newFlatEdges = this.flatEdgeService.save(resettedEdges, 1);
 		// save the unconnected Species
-		Iterable<FlatSpecies> newFlatSpecies = this.flatSpeciesService.save(unconnectedSpecies, 0);
+		Iterable<FlatSpecies> newUnonnectedFlatSpecies = this.flatSpeciesService.save(unconnectedSpecies, 0);
 		
-		connectContains(newMapping, newFlatEdges, newFlatSpecies);
+		connectContains(newMapping, newFlatEdges, newUnonnectedFlatSpecies);
 		
 		// update MappingNode
 		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
