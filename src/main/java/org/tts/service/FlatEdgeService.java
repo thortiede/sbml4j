@@ -153,8 +153,12 @@ public class FlatEdgeService {
  	 * @param entityUUID The entityUUID of a <a href="#{@link}">{@link MappingNode}</a> that contains the requested <a href="#{@link}">{@link FlatEdge}</a> entities
 	 * @return Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities
 	 */
-	public Iterable<FlatEdge> getNetworkFlatEdges(String entityUUID) {
-		return this.flatEdgeRepository.getNetworkContentsFromUUID(entityUUID);
+	public List<FlatEdge> getNetworkFlatEdges(String entityUUID) {
+		List<FlatEdge> flatEdges = this.flatEdgeRepository.getNetworkContentsFromUUID(entityUUID);
+		List<FlatEdge> selfRelations = this.flatEdgeRepository.getSelfRelationsFromUUID(entityUUID);
+		selfRelations.forEach(flatEdges::add);
+		
+		return flatEdges;
 	}
 	
 	/**

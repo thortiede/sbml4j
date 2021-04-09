@@ -35,7 +35,18 @@ public interface FlatEdgeRepository extends Neo4jRepository<FlatEdge, Long> {
 			+ "WHERE w1.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "AND w2.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "RETURN s, r, s2")
-	Iterable<FlatEdge> getNetworkContentsFromUUID(String entityUUID);
+	List<FlatEdge> getNetworkContentsFromUUID(String entityUUID);
+	
+	
+	@Query("match (m:MappingNode)"
+			+ "-[w1:Warehouse]->"
+			+ "(s:FlatSpecies) "
+			+ "WHERE m.entityUUID = $entityUUID "
+			+ "AND w1.warehouseGraphEdgeType = \"CONTAINS\" "
+			+ "WITH s match "
+			+ "(s)-[r]->(s) "
+			+ "RETURN s, r")
+	List<FlatEdge> getSelfRelationsFromUUID(String entityUUID);
 	
 	@Query("match (m:MappingNode) "
 			+ "WHERE m.entityUUID = $networkEntityUUID "
