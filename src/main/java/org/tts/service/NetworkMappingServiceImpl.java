@@ -610,7 +610,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		Instant endTime = Instant.now();
 		mappingFromPathway.addWarehouseAnnotation("creationstarttime", startTime.toString());
 		mappingFromPathway.addWarehouseAnnotation("creationendtime", endTime.toString());
-		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(primaryNameToFlatSpeciesMap.size() - numberOfReactions));
+		mappingFromPathway.addWarehouseAnnotation("numberofnodes", String.valueOf(primaryNameToFlatSpeciesMap.size()));
 		mappingFromPathway.addWarehouseAnnotation("numberofrelations", String.valueOf(allFlatEdges.size()));
 		mappingFromPathway.addWarehouseAnnotation("numberofreactions", String.valueOf(numberOfReactions));
 		mappingFromPathway.setMappingNodeTypes(nodeTypes);
