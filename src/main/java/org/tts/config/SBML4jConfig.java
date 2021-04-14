@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, 
 	ExternalResourcesProperties.class, MdAndersonProperties.class, BiologicalQualifierProperties.class, KEGGDatabaseProperties.class,
-	ContextConfigProperties.class, CsvConfigProperties.class})
+	ContextConfigProperties.class, CsvConfigProperties.class, GeneralConfigProperties.class})
 public class SBML4jConfig {
 	@Autowired
 	private OutputConfigProperties outputConfigProperties;
@@ -49,6 +49,9 @@ public class SBML4jConfig {
 
 	@Autowired
 	private CsvConfigProperties csvConfigProperties;
+	
+	@Autowired
+	private GeneralConfigProperties generalConfigProperties;
 	
 	public OutputConfigProperties getOutputConfigProperties() {
 		return outputConfigProperties;
@@ -96,5 +99,13 @@ public class SBML4jConfig {
 
 	public void setCsvConfigProperties(CsvConfigProperties csvConfigProperties) {
 		this.csvConfigProperties = csvConfigProperties;
+	}
+
+	public GeneralConfigProperties getGeneralConfigProperties() {
+		return generalConfigProperties;
+	}
+
+	public void setGeneralConfigProperties(GeneralConfigProperties generalConfigProperties) {
+		this.generalConfigProperties = generalConfigProperties;
 	}
 }
