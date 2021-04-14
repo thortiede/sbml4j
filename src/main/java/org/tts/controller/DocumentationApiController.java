@@ -58,7 +58,7 @@ public class DocumentationApiController implements DocumentationApi {
 	 * @return static HTML page containing api endpoint descriptions
 	 */
 	public RedirectView getBaseDocumentation() {
-		String redirectUrl = this.configService.getApi_documenation_url();
+		String redirectUrl = this.configService.getApi_documentation_url();
 		log.info("Serving api documentation. Redirecting to " +redirectUrl);
 		return new RedirectView(redirectUrl);
 	}

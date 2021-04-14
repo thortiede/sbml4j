@@ -182,8 +182,8 @@ public class ConfigService {
 	 * {@link GeneralConfigProperties}
 	 */
 	
-	public String getApi_documenation_url() {
-		return this.sbml4jConfig.getGeneralConfigProperties().getApi_documenation_url();
+	public String getApi_documentation_url() {
+		return this.sbml4jConfig.getGeneralConfigProperties().getApi_documentation_url();
 	}
 	
 	
