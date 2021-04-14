@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.servlet.view.RedirectView;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -45,7 +46,7 @@ public interface DocumentationApi {
                                response = Object.class)
                 })
   @GetMapping(value = "/help", produces = {"text/html"})
-  default ResponseEntity<Object>
+  default RedirectView
   getBaseDocumentation() {
     getRequest().ifPresent(request -> {
       for (MediaType mediaType :
@@ -57,7 +58,7 @@ public interface DocumentationApi {
         }
       }
     });
-    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+    return new RedirectView(null);//(HttpStatus.NOT_IMPLEMENTED);
   }
 
   /**
