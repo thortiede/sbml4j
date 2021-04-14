@@ -176,4 +176,15 @@ public class ConfigService {
 	public boolean isInMatchingColums(String other) {
 		return this.sbml4jConfig.getCsvConfigProperties().getMatchingColumnName().contains(other.strip().toLowerCase());
 	}
+	
+
+	/**
+	 * {@link GeneralConfigProperties}
+	 */
+	
+	public String getApi_documenation_url() {
+		return this.sbml4jConfig.getGeneralConfigProperties().getApi_documenation_url();
+	}
+	
+	
 }
