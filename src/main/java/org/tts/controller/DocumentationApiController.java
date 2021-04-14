@@ -26,8 +26,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.servlet.view.RedirectView;
 import org.tts.api.DocumentationApi;
 import org.tts.model.common.GraphBaseEntity;
+import org.tts.service.ConfigService;
 import org.tts.service.GraphBaseEntityService;
 
 /**
@@ -45,6 +47,9 @@ public class DocumentationApiController implements DocumentationApi {
 	@Autowired
 	private GraphBaseEntityService graphBaseEntityService;
 	
+	@Autowired
+	private ConfigService configService;
+	
 	Logger log = LoggerFactory.getLogger(NetworksApiController.class);
 	
 	/**
@@ -52,8 +57,10 @@ public class DocumentationApiController implements DocumentationApi {
 	 * 
 	 * @return static HTML page containing api endpoint descriptions
 	 */
-	public ResponseEntity<Object> getBaseDocumentation() {
-		return new ResponseEntity<>("index", HttpStatus.OK);
+	public RedirectView getBaseDocumentation() {
+		String redirectUrl = this.configService.getApi_documenation_url();
+		log.info("Serving api documentation. Redirecting to " +redirectUrl);
+		return new RedirectView(redirectUrl);
 	}
 	
 	/**
