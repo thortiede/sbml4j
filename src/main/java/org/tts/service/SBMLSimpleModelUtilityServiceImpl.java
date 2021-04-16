@@ -38,6 +38,7 @@ import org.tts.model.common.SBMLSpecies;
 import org.tts.model.full.SBMLDocumentEntity;
 import org.tts.model.full.SBMLModelEntity;
 import org.tts.model.simple.SBMLSimpleReaction;
+import org.tts.model.warehouse.DatabaseNode;
 
 @Service
 public class SBMLSimpleModelUtilityServiceImpl {
@@ -96,11 +97,12 @@ public class SBMLSimpleModelUtilityServiceImpl {
 	 * @param source The Compartment entity from jSBML ({@link org.sbml.jsbml.Compartment}) from which the attributes are to be taken
 	 * @param target The SBMLComartment entity to which the attributes are to be applied to
 	 */
-	void setCompartmentProperties(Compartment source, SBMLCompartment target) {
+	void setCompartmentProperties(Compartment source, SBMLCompartment target, DatabaseNode database) {
 		target.setSpatialDimensions(source.getSpatialDimensions());
 		target.setSize(source.getSize());
 		target.setConstant(source.getConstant());
 		target.setUnits(source.getUnits()); // at some point we want to link to a unit definiton here
+		target.setDatabase(database);
 	}
 	
 	/**
