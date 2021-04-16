@@ -81,6 +81,16 @@ public class WarehouseGraphService {
 		return this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(type, startNodeEntityUUID);
 	}
 	
+	/**
+	 * Find the List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to the given endNode with the given relation type
+	 * @param type The <a href="#{@link}">{@link WarehouseGraphEdgeType}</a>
+	 * @param endNodeEntityUUID The entityUUID of the endNode of the <a href="#{@link}">{@link WarehouseGraphEdge}</a>
+	 * @return List of <a href="#{@link}">{@link ProvenanceEntity}</a> that are connected to endNode by type
+	 */
+	public List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType type, String endNodeEntityUUID) {
+		return this.warehouseGraphNodeRepository.findAllByWarehouseGraphEdgeTypeAndStartNode(type, endNodeEntityUUID);
+	}
+	
 	
 /************************************************************* Connect Warehouse Entities ************************************************/	
 
