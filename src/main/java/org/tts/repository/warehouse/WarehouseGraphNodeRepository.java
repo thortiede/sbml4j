@@ -32,6 +32,16 @@ public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseG
 			+ "RETURN p")
 	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType warehouseGraphEdgeType,
 			String startNodeEntityUUID);
+	
+	@Query(value="MATCH"
+			+ "(s:ProvenanceEntity)"
+			+ "-[e:Warehouse]->"
+			+ "(p:ProvenanceEntity) "
+			+ "WHERE p.entityUUID = $endNodeEntityUUID "
+			+ "AND e.warehouseGraphEdgeType = $warehouseGraphEdgeType "
+			+ "RETURN s")
+	List<ProvenanceEntity> findAllByWarehouseGraphEdgeTypeAndEndNode(WarehouseGraphEdgeType warehouseGraphEdgeType,
+			String endNodeEntityUUID);
 
 	@Query(value = "MATCH p=(e1:ProvenanceEntity)-"
 			+ "[w:Warehouse]-"
