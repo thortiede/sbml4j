@@ -13,7 +13,6 @@
  */
 package org.tts.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -67,6 +66,7 @@ import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
 import org.tts.model.simple.SBMLSimpleReaction;
 import org.tts.model.simple.SBMLSimpleTransition;
+import org.tts.model.warehouse.DatabaseNode;
 import org.tts.model.warehouse.FileNode;
 import org.tts.model.warehouse.PathwayNode;
 import org.tts.repository.common.BiomodelsQualifierRepository;
@@ -80,7 +80,7 @@ import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 import org.tts.service.SimpleSBML.SBMLSpeciesService;
 
 @Service
-public class SBMLSimpleModelServiceImpl implements SBMLService {
+public class SBMLSimpleModelService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -114,7 +114,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 	int SAVE_DEPTH = 1;
 
 	@Autowired
-	public SBMLSimpleModelServiceImpl(SBMLSpeciesRepository sbmlSpeciesRepository,
+	public SBMLSimpleModelService(SBMLSpeciesRepository sbmlSpeciesRepository,
 			SBMLSimpleReactionRepository sbmlSimpleReactionRepository,
 			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
 			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
@@ -144,42 +144,42 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.sbml4jConfig = sbml4jConfig;
 	}
 
-	private List<SBMLCompartment> getCompartmentList(Model model, ProvenanceGraphActivityNode persistActivity) {
+	private List<SBMLCompartment> getCompartmentList(Model model, ProvenanceGraphActivityNode persistActivity, DatabaseNode database) {
 		List<SBMLCompartment> sbmlCompartmentList = new ArrayList<>();
 		for(Compartment compartment : model.getListOfCompartments()) {
 			//SBMLCompartment sbmlCompartment = new SBMLCompartment();
 			// check if a compartment with that name (and those settings does already exist)
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
-				SBMLCompartment existingCompartment = (SBMLCompartment) this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 2);
-				if (existingCompartment != null 
-						&& existingCompartment.getsBaseName().equals(compartment.getName())
-						//&& existingCompartment.getSize() == compartment.getSize()
-						//&& existingCompartment.getSpatialDimensions() == compartment.getSpatialDimensions()
-						//&& existingCompartment.isConstant() == compartment.getConstant() 
-						) {
-					// they are obviously the same, so take the one already persisted
-					//sbmlCompartment = existingCompartment;
-					sbmlCompartmentList.add(existingCompartment);
-					this.provenanceGraphService.connect(persistActivity, existingCompartment, ProvenanceGraphEdgeType.used);
-					// other cases would be, that the name and Id are the same, but are actually different compartments
-					// with different properties.
-					// then append the name of the new compartment with a number (or something) and link all entities in this
-					// model to that new one.
-					// This means that further down, when looking up compartment, we can no longer match by sbaseId directly
-					// but also need a mapping info from the original sbasid (that all entities in jsbml will reference)
-					// to the newly given name.
-					// but for now, as kegg only has one default compartment and it's the only time we load more than one model
-					// we keep it like that.
-				} else {
+				boolean foundCompartment = false;
+				for (SBMLSBaseEntity existingSBase : this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 0)) {
+					SBMLCompartment existingCompartment = (SBMLCompartment) existingSBase;
+					if (existingCompartment != null 
+							&& existingCompartment.getDatabase().equals(database)) {
+						// is the compartment with the same sBaseId from the same database?
+						sbmlCompartmentList.add((SBMLCompartment)existingCompartment);
+						this.provenanceGraphService.connect(persistActivity, existingCompartment, ProvenanceGraphEdgeType.used);
+						foundCompartment = true;
+						break;
+					}
+				}
+				// other cases would be, that the name and Id are the same, but are actually different compartments
+				// with different properties.
+				// then append the name of the new compartment with a number (or something) and link all entities in this
+				// model to that new one.
+				// This means that further down, when looking up compartment, we can no longer match by sbaseId directly
+				// but also need a mapping info from the original sbasid (that all entities in jsbml will reference)
+				// to the newly given name.
+				// but for now, as kegg only has one default compartment and it's the only time we load more than one model
+				// we keep it like that.
+				if (!foundCompartment) {
 					SBMLCompartment sbmlCompartment = new SBMLCompartment();
-					this.sbmlSimpleModelUtilityServiceImpl.setGraphBaseEntityProperties(sbmlCompartment);
+					this.graphBaseEntityService.setGraphBaseEntityProperties(sbmlCompartment);
 					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(compartment, sbmlCompartment);
-					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentProperties(compartment, sbmlCompartment);
+					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentProperties(compartment, sbmlCompartment, database);
 					sbmlCompartment = this.sbmlSBaseEntityRepository.save(sbmlCompartment, SAVE_DEPTH);
 					sbmlCompartmentList.add(sbmlCompartment);
 					this.provenanceGraphService.connect(sbmlCompartment, persistActivity, ProvenanceGraphEdgeType.wasGeneratedBy);
-					
 				}
 			} catch (ClassCastException e) {	
 				e.printStackTrace();
@@ -869,20 +869,7 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		}
 	}
 	
-
-	@Override
-	public boolean isValidSBML(File file) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isSBMLVersionCompatible(File file) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
+	
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
 		InputStream fileStream = file.getInputStream();
 		SBMLDocument doc;
@@ -894,13 +881,18 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		return doc.getModel();
 	}
 
-	@Override
-	public void buildAndPersist(Model model, FileNode sbmlfile, ProvenanceGraphActivityNode activityNode, PathwayNode pathwayNode) throws ModelPersistenceException { //Map<String, ProvenanceEntity>
+	
+	public void buildAndPersist(
+			Model model, 
+			FileNode sbmlfile, 
+			ProvenanceGraphActivityNode activityNode, 
+			PathwayNode pathwayNode,
+			DatabaseNode database) throws ModelPersistenceException { //Map<String, ProvenanceEntity>
 		//Instant begin = Instant.now();
 		Map<String, SBMLSpecies> persistedSBMLSpeciesMap = new TreeMap<>();
 		// compartment
 		Map<String, ProvenanceEntity> returnList= new TreeMap<>();
-		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model, activityNode);
+		List<SBMLCompartment> sbmlCompartmentList = getCompartmentList(model, activityNode, database);
 		Map<String, SBMLCompartment> compartmentLookupMap = new HashMap<>();
 		for (SBMLCompartment compartment : sbmlCompartmentList) {
 			compartmentLookupMap.put(compartment.getsBaseId(), compartment); // sBaseId here will be the matchingAttribute, might even want to have a map <Entity, matchingAttribute> to be able to match different entities with different attributes
@@ -913,22 +905,33 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 		this.processSpecies(model.getListOfSpecies(), compartmentLookupMap, persistedSBMLSpeciesMap, speciesUUIDToCVTermMap);
 		Map<String, Collection<BiomodelsQualifier>> speciesUUIDToBiomodelsQualfierMap = this.processCVTerms(speciesUUIDToCVTermMap);
 		List<BiomodelsQualifier> persistBQList = new ArrayList<>();
-		for (String speciesUUID :speciesUUIDToBiomodelsQualfierMap.keySet()) {
-			speciesUUIDToBiomodelsQualfierMap.get(speciesUUID).forEach(bq -> {
-				bq.setStartNode(persistedSBMLSpeciesMap.get(speciesUUID));
-				persistBQList.add(bq);
-			});
+		List<SBMLSpecies> speciesWithoutBQ = new ArrayList<>();
+		for (String speciesUUID : speciesUUIDToBiomodelsQualfierMap.keySet()) {
+			Collection<BiomodelsQualifier> bqList = speciesUUIDToBiomodelsQualfierMap.get(speciesUUID);
+			if (bqList == null || bqList.isEmpty()) {
+				speciesWithoutBQ.add(persistedSBMLSpeciesMap.get(speciesUUID));
+			} else {
+				for (BiomodelsQualifier bq : bqList) {
+					bq.setStartNode(persistedSBMLSpeciesMap.get(speciesUUID));
+					persistBQList.add(bq);
+				}
+			}
+		
 		}
 		//Instant speciesBuilt = Instant.now();
 		
 		//Instant speciesSessionClear = null;
 		//Instant speciesPersisted = null;
 		Iterable<BiomodelsQualifier> persistedBiomodelQualifier = null;
+		Iterable<SBMLSpecies> sbmlSpeciesWithoutBQPersisted = null;
 		try {
 			this.session.clear();
 			//speciesSessionClear = Instant.now();
 			//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 			persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
+			if (!speciesWithoutBQ.isEmpty()) {
+				sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.saveAll(speciesWithoutBQ);
+			}
 			//speciesPersisted = Instant.now();
 		} catch (Exception e) {
 			// retry once
@@ -938,6 +941,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 			try {
 				//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 				persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
+				if (!speciesWithoutBQ.isEmpty()) {
+					sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.saveAll(speciesWithoutBQ);
+				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
 				// try again with other save method
@@ -945,6 +951,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				System.gc();
 				try {
 					persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+					if (!speciesWithoutBQ.isEmpty()) {
+						sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.save(speciesWithoutBQ, 1);
+					}
 					//persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 				} catch (Exception e3) {
 					throw new ModelPersistenceException("SBMLSpecies: Failed to persist. " + e3.getMessage());
@@ -960,6 +969,13 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				sBaseIdToSBMLSpeciesMap.put(startNode.getsBaseId(), (SBMLSpecies) startNode);
 				sBaseNameToSBMLSpeciesMap.put(startNode.getsBaseName(), (SBMLSpecies) startNode);
 				returnList.putIfAbsent(startNode.getEntityUUID(), startNode);
+			}
+			if (sbmlSpeciesWithoutBQPersisted != null) {
+				for (SBMLSpecies persistedSBMLSpeciesWithoutBQ : sbmlSpeciesWithoutBQPersisted) {
+					sBaseIdToSBMLSpeciesMap.put(persistedSBMLSpeciesWithoutBQ.getsBaseId(), persistedSBMLSpeciesWithoutBQ);
+					sBaseNameToSBMLSpeciesMap.put(persistedSBMLSpeciesWithoutBQ.getsBaseName(), persistedSBMLSpeciesWithoutBQ);
+					returnList.putIfAbsent(persistedSBMLSpeciesWithoutBQ.getEntityUUID(), persistedSBMLSpeciesWithoutBQ);
+				}
 			}
 		} catch (ClassCastException e) {
 			e.printStackTrace();
@@ -1014,21 +1030,32 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 				this.processQualSpecies(qualModelPlugin.getListOfQualitativeSpecies(), compartmentLookupMap, persistedSBMLQualSpeciesMap, qualSpeciesUUIDToCVTermMap);
 				Map<String, Collection<BiomodelsQualifier>> qualSpeciesUUIDToBiomodelsQualfierMap = this.processCVTerms(qualSpeciesUUIDToCVTermMap);
 				List<BiomodelsQualifier> qualPersistBQList = new ArrayList<>();
+				List<SBMLQualSpecies> qualSpeciesWithoutBQ = new ArrayList<>();
 				for (String qualSpeciesUUID :qualSpeciesUUIDToBiomodelsQualfierMap.keySet()) {
-					for (BiomodelsQualifier bq : qualSpeciesUUIDToBiomodelsQualfierMap.get(qualSpeciesUUID)) {
-						SBMLQualSpecies startNode = persistedSBMLQualSpeciesMap.get(qualSpeciesUUID);
-						startNode.setCorrespondingSpecies(sBaseNameToSBMLSpeciesMap.get(startNode.getsBaseName()));
-						bq.setStartNode(startNode);
-						qualPersistBQList.add(bq);
+					Collection<BiomodelsQualifier> bqList = qualSpeciesUUIDToBiomodelsQualfierMap.get(qualSpeciesUUID);
+					if (bqList == null || bqList.isEmpty()) {
+						// the qualSpecies with qualSpeciesUUID does not have biomodelsqualifier on it
+						qualSpeciesWithoutBQ.add(persistedSBMLQualSpeciesMap.get(qualSpeciesUUID));
+					} else {
+						for (BiomodelsQualifier bq : bqList) {
+							SBMLQualSpecies startNode = persistedSBMLQualSpeciesMap.get(qualSpeciesUUID);
+							startNode.setCorrespondingSpecies(sBaseNameToSBMLSpeciesMap.get(startNode.getsBaseName()));
+							bq.setStartNode(startNode);
+							qualPersistBQList.add(bq);
+						}
 					}
 				}
 				//qualSpeciesBuilt = Instant.now();
 				Iterable<BiomodelsQualifier> qualPersistedBiomodelQualifier = null;
+				Iterable<SBMLQualSpecies> qualSpeciesWithoutBQPersisted = null;
 				try {
 					this.session.clear();
 					//qualSpeciesSessionClear = Instant.now();
 					//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 					qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
+					if (!qualSpeciesWithoutBQ.isEmpty()) {
+						qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.saveAll(qualSpeciesWithoutBQ);
+					}
 					//qualSpeciesPersisted = Instant.now();
 				} catch (Exception e) {
 					// retry once
@@ -1038,6 +1065,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 					try {
 						//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 						qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
+						if (!qualSpeciesWithoutBQ.isEmpty()) {
+							qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.saveAll(qualSpeciesWithoutBQ);
+						}
 					} catch (Exception e2) {
 						e2.printStackTrace();
 						this.session.clear();
@@ -1045,6 +1075,9 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 						try {
 							qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 							//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
+							if (!qualSpeciesWithoutBQ.isEmpty()) {
+								qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.save(qualSpeciesWithoutBQ, 1);
+							}
 						} catch (Exception e3) {
 							e2.printStackTrace();
 							throw new ModelPersistenceException("SBMLQualSpecies: Failed to persist. " + e3.getMessage());
@@ -1058,6 +1091,12 @@ public class SBMLSimpleModelServiceImpl implements SBMLService {
 						SBMLSBaseEntity startNode = persistedBQ.getStartNode();
 						sBaseIdToSBMLQualSpeciesMap.put(startNode.getsBaseId(), (SBMLQualSpecies) startNode);
 						returnList.putIfAbsent(startNode.getEntityUUID(), startNode);
+					}
+					if (qualSpeciesWithoutBQPersisted != null) {
+						for (SBMLQualSpecies persistedQualSpeciesWithoutBQ :qualSpeciesWithoutBQPersisted) {
+							sBaseIdToSBMLQualSpeciesMap.put(persistedQualSpeciesWithoutBQ.getsBaseId(), persistedQualSpeciesWithoutBQ);
+							returnList.putIfAbsent(persistedQualSpeciesWithoutBQ.getEntityUUID(), persistedQualSpeciesWithoutBQ);
+						}
 					}
 				} catch (ClassCastException e) {
 					e.printStackTrace();
