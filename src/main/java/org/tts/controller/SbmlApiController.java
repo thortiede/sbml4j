@@ -14,8 +14,6 @@
 package org.tts.controller;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +27,6 @@ import org.sbml.jsbml.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -41,7 +38,6 @@ import org.tts.model.common.GraphEnum.FileNodeType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
 import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.tts.model.common.Organism;
 import org.tts.model.provenance.ProvenanceEntity;
 import org.tts.model.provenance.ProvenanceGraphActivityNode;
@@ -53,7 +49,7 @@ import org.tts.service.ConfigService;
 import org.tts.service.GraphBaseEntityService;
 import org.tts.service.PathwayService;
 import org.tts.service.ProvenanceGraphService;
-import org.tts.service.SBMLService;
+import org.tts.service.SBMLSimpleModelService;
 import org.tts.service.UtilityService;
 import org.tts.service.WarehouseGraphService;
 import org.tts.service.utility.FileCheckService;
@@ -95,7 +91,7 @@ public class SbmlApiController implements SbmlApi {
 	ProvenanceGraphService provenanceGraphService;
 	
 	@Autowired
-	@Qualifier("SBMLSimpleModelServiceImpl") SBMLService sbmlService;
+	SBMLSimpleModelService sbmlsimpleModelService;
 	
 	@Autowired
 	WarehouseGraphService warehouseGraphService;
@@ -250,7 +246,7 @@ public class SbmlApiController implements SbmlApi {
 			// now handle the model itself
 			Model sbmlModel = null;
 			try {
-				sbmlModel =  sbmlService.extractSBMLModel(file);
+				sbmlModel =  sbmlsimpleModelService.extractSBMLModel(file);
 			} catch (XMLStreamException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -270,7 +266,7 @@ public class SbmlApiController implements SbmlApi {
 			//Instant createPathwayNodeFinished = Instant.now();
 			//Map<String, ProvenanceEntity> resultSet;
 			try {
-				this.sbmlService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode);
+				this.sbmlsimpleModelService.buildAndPersist(sbmlModel, sbmlFileNode, persistGraphActivityNode, pathwayNode, database);
 
 				//for (ProvenanceEntity entity : resultSet.values()) {
 				//	this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS);
