@@ -13,6 +13,9 @@
  */
 package org.tts.model.common;
 
+import org.neo4j.ogm.annotation.Relationship;
+import org.tts.model.warehouse.DatabaseNode;
+
 /**
  * Class SBMLCompartment
  * Modeled after the Compartment class from the SBML Standard level-3 version-2
@@ -39,6 +42,9 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 	 * Once we build those, we need to change this to a Relationship
 	 */
 	private String units;
+	
+	@Relationship(type="OF", direction = Relationship.OUTGOING)
+	private DatabaseNode database;
 	
 	public double getSpatialDimensions() {
 		return spatialDimensions;
@@ -70,5 +76,13 @@ public class SBMLCompartment extends SBMLSBaseEntity {
 
 	public void setUnits(String units) {
 		this.units = units;
+	}
+
+	public DatabaseNode getDatabase() {
+		return database;
+	}
+
+	public void setDatabase(DatabaseNode database) {
+		this.database = database;
 	}	
 }
