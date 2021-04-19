@@ -342,260 +342,258 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				current = it.next();
 				
 				// input species
-				SBMLQualSpecies inputQualSpecies = current.getInputSpecies();
-				SBMLQualSpecies outputQualSpecies = current.getOutputSpecies();
-				
-				if (inputQualSpecies == null || outputQualSpecies == null) {
-					// apparently one of the transitionpartners was not in the allowed nodeSBOList, skip transition
-					continue;
-				}
-				
-				String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
-				String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
-
-				if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
-					inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
-					this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
-				} else {
-					if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
-						// This is a group node, we need to treat that
-						// First, did we already process this group node?
-						if (!groupNodesAlreadyFlattened.add(inputSpeciesUUID)) {
-							inputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(inputSpeciesUUID);
-						} else {
-							// the member species should have transitions together with the sbo 
-							inputGroupFlatSpecies = new ArrayList<>();
-							boolean areAllProteins = true;
-							for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
-								if(areAllProteins) {
-									// if up to this point all have been proteins (so sbo term has always been 252, then check this one
-									// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
-									areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
-								}
-								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
-								
-								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
-									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
-									inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
-									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
-								} else {
-									// haven't seen this Species before
-									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
-									
-									if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
-										throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
-									}
-									nodeTypes.add(groupSpecies.getsBaseSboTerm());
-									// finally add this new species to the group specific list for connection
-									inputGroupFlatSpecies.add(newGroupFlatSpecies);
-								}
-							}
-							// add these flatSpecies to map for later reference when we see this group again
-							groupNodeUUIDToGroupFlatSpecies.put(inputSpeciesUUID, inputGroupFlatSpecies);
-							
-							// now groupFlatSpecies contains all FlatSpecies that belong to this group.
-							// connect them with flatEdges
-							//	  a) if all participants are proteins: SBO:0000526 protein complex formation
-							//	  b) otherwise SBO:0000344 molecular interaction
-							for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
-								for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
-									if (i != j) {
-										// add two flat edges (i -> j and j -> i)
-										String edgeSymbol = inputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
-										+ "->" + inputGroupFlatSpecies.get(j).getSymbol();
-										if (transitionSymbols.add(edgeSymbol)) {
-											FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
-											this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
-											transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
-											transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
-											transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
-			
-											transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-											String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
-													+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
-											transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
-											transitionFlatEdge.addAnnotationType("TransitionId", "String");
-											transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
-											relationTypes.add(transitionFlatEdge.getTypeString());
-											//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-											//		inputSpeciesUUID);
-											//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-											//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
-											allFlatEdges.add(transitionFlatEdge);
-											relationSymbols.add(symbolAndTransitionIdString);
-										}
-									}
-								}
-							}
-						}
-					} else {
-						inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(inputQualSpecies);
-						if (primaryNameToFlatSpeciesMap.put(inputFlatSpecies.getSymbol(), inputFlatSpecies) != null) {
-							throw new NetworkMappingError("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping.");
-						}
-						nodeTypes.add(inputQualSpecies.getsBaseSboTerm());
-					}
-				}
-				// output species
-				String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
-				String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
-				
-				if (primaryNameToFlatSpeciesMap.containsKey(outputSpeciesSymbol)) {
-					outputFlatSpecies = primaryNameToFlatSpeciesMap
-							.get(outputSpeciesSymbol);
-					this.updateFlatSpeciesWithSBase(outputFlatSpecies, outputQualSpecies);
-				} else {
-					if (outputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
-						// This is a group node, we need to treat that
-						// First, did we already process this group node?
-						if (!groupNodesAlreadyFlattened.add(outputSpeciesUUID)) {
-							outputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(outputSpeciesUUID);
-						} else {
-							// the member species should have transitions together with the sbo 
-							outputGroupFlatSpecies = new ArrayList<>();
-							boolean areAllProteins = true;
-							for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(outputSpeciesUUID)) {
-								if(areAllProteins) {
-									// if up to this point all have been proteins (so sbo term has always been 252, then check this one
-									// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
-									areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
-								}
-								String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
-								
-								if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
-									FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
-									outputGroupFlatSpecies.add(groupFlatSpecies);
-									this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
-								} else {
-									// haven't seen this Species before
-									FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
-									
-									if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
-										throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
-									}
-									nodeTypes.add(groupSpecies.getsBaseSboTerm());
-									// finally add this new species to the group specific list for connection
-									outputGroupFlatSpecies.add(newGroupFlatSpecies);
-								}
-							}
-							// add these flatSpecies to map for later reference when we see this group again
-							groupNodeUUIDToGroupFlatSpecies.put(outputSpeciesUUID, outputGroupFlatSpecies);
-							
-							// now groupFlatSpecies contains all FlatSpecies that belong to this group.
-							// connect them with flatEdges
-							//	  a) if all participants are proteins: SBO:0000526 protein complex formation
-							//	  b) otherwise SBO:0000344 molecular interaction
-							for (int i = 0; i != outputGroupFlatSpecies.size(); i++) {
-								for (int j = 0; j != outputGroupFlatSpecies.size(); j++) {
-									if (i != j) {
-										// add two flat edges (i -> j and j -> i)
-										String edgeSymbol = outputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
-										+ "->" + outputGroupFlatSpecies.get(j).getSymbol();
-										if (transitionSymbols.add(edgeSymbol)) {FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
-											this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
-											transitionFlatEdge.setInputFlatSpecies(outputGroupFlatSpecies.get(i));
-											transitionFlatEdge.setOutputFlatSpecies(outputGroupFlatSpecies.get(j));
-											transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
-			
-											transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-											String symbolAndTransitionIdString = outputGroupFlatSpecies.get(i).getSymbol() + "-" 
-													+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + outputGroupFlatSpecies.get(j).getSymbol();
-											transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
-											transitionFlatEdge.addAnnotationType("TransitionId", "String");
-											transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
-											relationTypes.add(transitionFlatEdge.getTypeString());
-											//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-											//		inputSpeciesUUID);
-											//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-											//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
-											allFlatEdges.add(transitionFlatEdge);
-											relationSymbols.add(symbolAndTransitionIdString);
-										}
-									}
-								}
-							}
-						}
-					} else {
-						outputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(outputQualSpecies);
-						if (primaryNameToFlatSpeciesMap.put(outputFlatSpecies.getSymbol(), outputFlatSpecies) != null) {
-							throw new NetworkMappingError("Duplicate Symbol " + outputFlatSpecies.getSymbol() + " in Mapping.");
-						}
-						nodeTypes.add(outputQualSpecies.getsBaseSboTerm());
-					}
-				}
-				
-				// now build the transition or transitions, if we had one or two groups
-				
-				if (inputFlatSpecies != null) {
+				for (SBMLQualSpecies inputQualSpecies : current.getInputSpecies()) {
 					
-					if (outputFlatSpecies != null) {
-						// no groups, so two normal species, this should be the standard case
-						String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
-						+ "->" + outputFlatSpecies.getSymbol();
-						if (transitionSymbols.add(edgeSymbol)) {
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, current);
-							relationTypes.add(transitionFlatEdge.getTypeString());
-							relationSymbols.add(transitionFlatEdge.getSymbol());
-							allFlatEdges.add(transitionFlatEdge);
-							if (inputFlatSpecies.getLabels().contains("Drug")) {
-								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
-								allFlatEdges.add(targetsEdge);
+					for (SBMLQualSpecies outputQualSpecies : current.getOutputSpecies()) {
+						
+						String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
+						String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
+		
+						if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
+							inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
+							this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
+						} else {
+							if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
+								// This is a group node, we need to treat that
+								// First, did we already process this group node?
+								if (!groupNodesAlreadyFlattened.add(inputSpeciesUUID)) {
+									inputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(inputSpeciesUUID);
+								} else {
+									// the member species should have transitions together with the sbo 
+									inputGroupFlatSpecies = new ArrayList<>();
+									boolean areAllProteins = true;
+									for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
+										if(areAllProteins) {
+											// if up to this point all have been proteins (so sbo term has always been 252, then check this one
+											// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
+											areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
+										}
+										String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
+										
+										if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+											FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
+											inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+											this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
+										} else {
+											// haven't seen this Species before
+											FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
+											
+											if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
+												throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
+											}
+											nodeTypes.add(groupSpecies.getsBaseSboTerm());
+											// finally add this new species to the group specific list for connection
+											inputGroupFlatSpecies.add(newGroupFlatSpecies);
+										}
+									}
+									// add these flatSpecies to map for later reference when we see this group again
+									groupNodeUUIDToGroupFlatSpecies.put(inputSpeciesUUID, inputGroupFlatSpecies);
+									
+									// now groupFlatSpecies contains all FlatSpecies that belong to this group.
+									// connect them with flatEdges
+									//	  a) if all participants are proteins: SBO:0000526 protein complex formation
+									//	  b) otherwise SBO:0000344 molecular interaction
+									for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
+										for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
+											if (i != j) {
+												// add two flat edges (i -> j and j -> i)
+												String edgeSymbol = inputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
+												+ "->" + inputGroupFlatSpecies.get(j).getSymbol();
+												if (transitionSymbols.add(edgeSymbol)) {
+													FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+													this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
+													transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
+													transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
+													transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
+					
+													transitionFlatEdge.addAnnotationType("SBOTerm", "String");
+													String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
+															+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
+													transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
+													transitionFlatEdge.addAnnotationType("TransitionId", "String");
+													transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
+													relationTypes.add(transitionFlatEdge.getTypeString());
+													//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+													//		inputSpeciesUUID);
+													//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+													//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+													allFlatEdges.add(transitionFlatEdge);
+													relationSymbols.add(symbolAndTransitionIdString);
+												}
+											}
+										}
+									}
+								}
+							} else {
+								inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(inputQualSpecies);
+								if (primaryNameToFlatSpeciesMap.put(inputFlatSpecies.getSymbol(), inputFlatSpecies) != null) {
+									throw new NetworkMappingError("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping.");
+								}
+								nodeTypes.add(inputQualSpecies.getsBaseSboTerm());
 							}
 						}
-					} else {
-						// input is single, output is group
-						for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
-							String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
-							+ "->" + outputFlatSpeciesOfGroup.getSymbol();
-							if (transitionSymbols.add(edgeSymbol)) {
-								FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, current);
-								relationTypes.add(transitionFlatEdge.getTypeString());
-								relationSymbols.add(transitionFlatEdge.getSymbol());
-								allFlatEdges.add(transitionFlatEdge);
-								if (inputFlatSpecies.getLabels().contains("Drug")) {
-									FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
-									allFlatEdges.add(targetsEdge);
+						// output species
+						String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
+						String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
+						
+						if (primaryNameToFlatSpeciesMap.containsKey(outputSpeciesSymbol)) {
+							outputFlatSpecies = primaryNameToFlatSpeciesMap
+									.get(outputSpeciesSymbol);
+							this.updateFlatSpeciesWithSBase(outputFlatSpecies, outputQualSpecies);
+						} else {
+							if (outputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
+								// This is a group node, we need to treat that
+								// First, did we already process this group node?
+								if (!groupNodesAlreadyFlattened.add(outputSpeciesUUID)) {
+									outputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(outputSpeciesUUID);
+								} else {
+									// the member species should have transitions together with the sbo 
+									outputGroupFlatSpecies = new ArrayList<>();
+									boolean areAllProteins = true;
+									for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(outputSpeciesUUID)) {
+										if(areAllProteins) {
+											// if up to this point all have been proteins (so sbo term has always been 252, then check this one
+											// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
+											areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
+										}
+										String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
+										
+										if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+											FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
+											outputGroupFlatSpecies.add(groupFlatSpecies);
+											this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
+										} else {
+											// haven't seen this Species before
+											FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
+											
+											if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
+												throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
+											}
+											nodeTypes.add(groupSpecies.getsBaseSboTerm());
+											// finally add this new species to the group specific list for connection
+											outputGroupFlatSpecies.add(newGroupFlatSpecies);
+										}
+									}
+									// add these flatSpecies to map for later reference when we see this group again
+									groupNodeUUIDToGroupFlatSpecies.put(outputSpeciesUUID, outputGroupFlatSpecies);
+									
+									// now groupFlatSpecies contains all FlatSpecies that belong to this group.
+									// connect them with flatEdges
+									//	  a) if all participants are proteins: SBO:0000526 protein complex formation
+									//	  b) otherwise SBO:0000344 molecular interaction
+									for (int i = 0; i != outputGroupFlatSpecies.size(); i++) {
+										for (int j = 0; j != outputGroupFlatSpecies.size(); j++) {
+											if (i != j) {
+												// add two flat edges (i -> j and j -> i)
+												String edgeSymbol = outputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
+												+ "->" + outputGroupFlatSpecies.get(j).getSymbol();
+												if (transitionSymbols.add(edgeSymbol)) {FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+													this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
+													transitionFlatEdge.setInputFlatSpecies(outputGroupFlatSpecies.get(i));
+													transitionFlatEdge.setOutputFlatSpecies(outputGroupFlatSpecies.get(j));
+													transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
+					
+													transitionFlatEdge.addAnnotationType("SBOTerm", "String");
+													String symbolAndTransitionIdString = outputGroupFlatSpecies.get(i).getSymbol() + "-" 
+															+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + outputGroupFlatSpecies.get(j).getSymbol();
+													transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
+													transitionFlatEdge.addAnnotationType("TransitionId", "String");
+													transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
+													relationTypes.add(transitionFlatEdge.getTypeString());
+													//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+													//		inputSpeciesUUID);
+													//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+													//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+													allFlatEdges.add(transitionFlatEdge);
+													relationSymbols.add(symbolAndTransitionIdString);
+												}
+											}
+										}
+									}
+								}
+							} else {
+								outputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(outputQualSpecies);
+								if (primaryNameToFlatSpeciesMap.put(outputFlatSpecies.getSymbol(), outputFlatSpecies) != null) {
+									throw new NetworkMappingError("Duplicate Symbol " + outputFlatSpecies.getSymbol() + " in Mapping.");
+								}
+								nodeTypes.add(outputQualSpecies.getsBaseSboTerm());
+							}
+						}
+						
+						// now build the transition or transitions, if we had one or two groups
+						
+						if (inputFlatSpecies != null) {
+							
+							if (outputFlatSpecies != null) {
+								// no groups, so two normal species, this should be the standard case
+								String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+								+ "->" + outputFlatSpecies.getSymbol();
+								if (transitionSymbols.add(edgeSymbol)) {
+									FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpecies, current);
+									relationTypes.add(transitionFlatEdge.getTypeString());
+									relationSymbols.add(transitionFlatEdge.getSymbol());
+									allFlatEdges.add(transitionFlatEdge);
+									if (inputFlatSpecies.getLabels().contains("Drug")) {
+										FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
+										allFlatEdges.add(targetsEdge);
+									}
+								}
+							} else {
+								// input is single, output is group
+								for (FlatSpecies outputFlatSpeciesOfGroup : outputGroupFlatSpecies) {
+									String edgeSymbol = inputFlatSpecies.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+									+ "->" + outputFlatSpeciesOfGroup.getSymbol();
+									if (transitionSymbols.add(edgeSymbol)) {
+										FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpecies, outputFlatSpeciesOfGroup, current);
+										relationTypes.add(transitionFlatEdge.getTypeString());
+										relationSymbols.add(transitionFlatEdge.getSymbol());
+										allFlatEdges.add(transitionFlatEdge);
+										if (inputFlatSpecies.getLabels().contains("Drug")) {
+											FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
+											allFlatEdges.add(targetsEdge);
+										}
+									}
+								}
+							}
+						} else if (outputFlatSpecies != null) {
+							// input is group, output is single
+							for (FlatSpecies inputFlatSpeciesOfGroup : inputGroupFlatSpecies) {
+								String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+								+ "->" + outputFlatSpecies.getSymbol();
+								if (transitionSymbols.add(edgeSymbol)) {
+									FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, current);
+									relationTypes.add(transitionFlatEdge.getTypeString());
+									relationSymbols.add(transitionFlatEdge.getSymbol());
+									allFlatEdges.add(transitionFlatEdge);
+									if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
+										FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
+										allFlatEdges.add(targetsEdge);
+									}
+								}
+							}
+						} else {
+							// input is group, output is group
+							for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
+								FlatSpecies inputFlatSpeciesOfGroup = inputGroupFlatSpecies.get(i);
+								for (int j = 0; j != outputGroupFlatSpecies.size(); j ++) {
+									FlatSpecies outputFlatSpeciesOfGroup = outputGroupFlatSpecies.get(j);
+									String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
+									+ "->" + outputFlatSpeciesOfGroup.getSymbol();
+									if (transitionSymbols.add(edgeSymbol)) {
+										FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, current);
+										relationTypes.add(transitionFlatEdge.getTypeString());
+										relationSymbols.add(transitionFlatEdge.getSymbol());
+										allFlatEdges.add(transitionFlatEdge);
+										if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
+											FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
+											allFlatEdges.add(targetsEdge);
+										}
+									}
 								}
 							}
 						}
 					}
-				} else if (outputFlatSpecies != null) {
-					// input is group, output is single
-					for (FlatSpecies inputFlatSpeciesOfGroup : inputGroupFlatSpecies) {
-						String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
-						+ "->" + outputFlatSpecies.getSymbol();
-						if (transitionSymbols.add(edgeSymbol)) {
-							FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpecies, current);
-							relationTypes.add(transitionFlatEdge.getTypeString());
-							relationSymbols.add(transitionFlatEdge.getSymbol());
-							allFlatEdges.add(transitionFlatEdge);
-							if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
-								FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
-								allFlatEdges.add(targetsEdge);
-							}
-						}
-					}
-				} else {
-					// input is group, output is group
-					for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
-						FlatSpecies inputFlatSpeciesOfGroup = inputGroupFlatSpecies.get(i);
-						for (int j = 0; j != outputGroupFlatSpecies.size(); j ++) {
-							FlatSpecies outputFlatSpeciesOfGroup = outputGroupFlatSpecies.get(j);
-							String edgeSymbol = inputFlatSpeciesOfGroup.getSymbol() + "-" + this.utilityService.translateSBOString(current.getsBaseSboTerm())
-							+ "->" + outputFlatSpeciesOfGroup.getSymbol();
-							if (transitionSymbols.add(edgeSymbol)) {
-								FlatEdge transitionFlatEdge = createFlatEdgeFromSimpleTransition(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup, current);
-								relationTypes.add(transitionFlatEdge.getTypeString());
-								relationSymbols.add(transitionFlatEdge.getSymbol());
-								allFlatEdges.add(transitionFlatEdge);
-								if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
-									FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
-									allFlatEdges.add(targetsEdge);
-								}
-							}
-						}
-					}
-				} 
+				}
 			}
 		}
 			

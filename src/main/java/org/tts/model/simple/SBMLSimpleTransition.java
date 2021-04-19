@@ -13,6 +13,8 @@
  */
 package org.tts.model.simple;
 
+import java.util.List;
+
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.tts.model.common.SBMLQualSpecies;
@@ -22,10 +24,10 @@ import org.tts.model.common.SBMLSBaseEntity;
 public class SBMLSimpleTransition extends SBMLSBaseEntity {
 
 	@Relationship(type = "IS_INPUT")
-	private SBMLQualSpecies inputSpecies;
+	private List<SBMLQualSpecies> inputSpecies;
 	
 	@Relationship(type = "IS_OUTPUT")
-	private SBMLQualSpecies outputSpecies;
+	private List<SBMLQualSpecies> outputSpecies;
 
 	private String transitionId;
 	
@@ -37,19 +39,19 @@ public class SBMLSimpleTransition extends SBMLSBaseEntity {
 		this.transitionId = transitionId;
 	}
 
-	public SBMLQualSpecies getInputSpecies() {
+	public List<SBMLQualSpecies> getInputSpecies() {
 		return inputSpecies;
 	}
 
-	public void setInputSpecies(SBMLQualSpecies inputSpecies) {
+	public void setInputSpecies(List<SBMLQualSpecies> inputSpecies) {
 		this.inputSpecies = inputSpecies;
 	}
 
-	public SBMLQualSpecies getOutputSpecies() {
+	public List<SBMLQualSpecies> getOutputSpecies() {
 		return outputSpecies;
 	}
 
-	public void setOutputSpecies(SBMLQualSpecies outputSpecies) {
+	public void setOutputSpecies(List<SBMLQualSpecies> outputSpecies) {
 		this.outputSpecies = outputSpecies;
 	}
 	
