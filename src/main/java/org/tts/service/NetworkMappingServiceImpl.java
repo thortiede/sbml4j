@@ -342,6 +342,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				current = it.next();
 				
 				// input species
+				if (current.getInputSpecies() == null || current.getOutputSpecies() == null) {
+					logger.debug("Transition without input or without output. Skipping transition with uuid: " + current.getEntityUUID());
+					continue;
+				}
 				for (SBMLQualSpecies inputQualSpecies : current.getInputSpecies()) {
 					
 					for (SBMLQualSpecies outputQualSpecies : current.getOutputSpecies()) {
