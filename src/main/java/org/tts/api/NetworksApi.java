@@ -39,7 +39,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
+          date = "2021-04-20T18:35:12.112356+02:00[Europe/Berlin]")
 @Validated
 @Api(value = "Networks", description = "the Networks API")
 public interface NetworksApi {
@@ -61,7 +61,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @param derive Flag whether to derive a new network and add annotation to it
    *     (true) or add annotation to existing network without deriving
    *     subnetwork (false) (optional, default to true)
@@ -104,9 +104,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName,
+                    defaultValue = "false") Boolean prefixName,
       @ApiParam(
           value =
               "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)",
@@ -140,7 +140,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @param derive Flag whether to derive a new network and add annotation to it
    *     (true) or add annotation to existing network without deriving
    *     subnetwork (false) (optional, default to true)
@@ -182,9 +182,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName,
+                    defaultValue = "false") Boolean prefixName,
       @ApiParam(
           value =
               "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)",
@@ -222,7 +222,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @param derive Flag whether to derive a new network and add annotation to it
    *     (true) or add annotation to existing network without deriving
    *     subnetwork (false) (optional, default to true)
@@ -272,9 +272,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName,
+                    defaultValue = "false") Boolean prefixName,
       @ApiParam(
           value =
               "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)",
@@ -306,7 +306,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @param suffixName Flag whether to suffix the given networkname on the
    *     generated default-name (orgCode-mappingType-source-version) (true) or
    *     use networkname as sole name for the created network (false) (optional,
@@ -350,9 +350,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName,
+                    defaultValue = "false") Boolean prefixName,
       @ApiParam(
           value =
               "Flag whether to suffix the given networkname on the generated default-name (orgCode-mappingType-source-version) (true) or use networkname as sole name for the created network (false)",
@@ -430,7 +430,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @return Invalid input (status code 400)
    *         or network created (status code 201)
    */
@@ -470,9 +470,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName) {
+                    defaultValue = "false") Boolean prefixName) {
     getRequest().ifPresent(request -> {
       for (MediaType mediaType :
            MediaType.parseMediaTypes(request.getHeader("Accept"))) {
@@ -745,7 +745,7 @@ public interface NetworksApi {
    *     (optional)
    * @param prefixName Flag whether to prefix the given networkname on the
    *     original network name (true) or use networkname as sole name for the
-   *     created network (false) (optional, default to true)
+   *     created network (false) (optional, default to false)
    * @param weightproperty The name of the annotation used as weight for
    *     calculating shortest paths between entities (optional)
    * @return Bad Request (status code 400)
@@ -808,9 +808,9 @@ public interface NetworksApi {
       @ApiParam(
           value =
               "Flag whether to prefix the given networkname on the original network name (true) or use networkname as sole name for the created network (false)",
-          defaultValue = "true") @Valid
+          defaultValue = "false") @Valid
       @RequestParam(value = "prefixName", required = false,
-                    defaultValue = "true") Boolean prefixName,
+                    defaultValue = "false") Boolean prefixName,
       @ApiParam(
           value =
               "The name of the annotation used as weight for calculating shortest paths between entities")
