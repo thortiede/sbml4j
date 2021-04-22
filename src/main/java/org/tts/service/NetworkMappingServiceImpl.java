@@ -348,94 +348,95 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 				}
 				for (SBMLQualSpecies inputQualSpecies : current.getInputSpecies()) {
 					
-					for (SBMLQualSpecies outputQualSpecies : current.getOutputSpecies()) {
-						
-						String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
-						String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
-		
-						if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
-							inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
-							this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
-						} else {
-							if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
-								// This is a group node, we need to treat that
-								// First, did we already process this group node?
-								if (!groupNodesAlreadyFlattened.add(inputSpeciesUUID)) {
-									inputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(inputSpeciesUUID);
-								} else {
-									// the member species should have transitions together with the sbo 
-									inputGroupFlatSpecies = new ArrayList<>();
-									boolean areAllProteins = true;
-									for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
-										if(areAllProteins) {
-											// if up to this point all have been proteins (so sbo term has always been 252, then check this one
-											// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
-											areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
-										}
-										String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
-										
-										if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
-											FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
-											inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
-											this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
-										} else {
-											// haven't seen this Species before
-											FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
-											
-											if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
-												throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
-											}
-											nodeTypes.add(groupSpecies.getsBaseSboTerm());
-											// finally add this new species to the group specific list for connection
-											inputGroupFlatSpecies.add(newGroupFlatSpecies);
-										}
-									}
-									// add these flatSpecies to map for later reference when we see this group again
-									groupNodeUUIDToGroupFlatSpecies.put(inputSpeciesUUID, inputGroupFlatSpecies);
-									
-									// now groupFlatSpecies contains all FlatSpecies that belong to this group.
-									// connect them with flatEdges
-									//	  a) if all participants are proteins: SBO:0000526 protein complex formation
-									//	  b) otherwise SBO:0000344 molecular interaction
-									for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
-										for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
-											if (i != j) {
-												// add two flat edges (i -> j and j -> i)
-												String edgeSymbol = inputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
-												+ "->" + inputGroupFlatSpecies.get(j).getSymbol();
-												if (transitionSymbols.add(edgeSymbol)) {
-													FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
-													this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
-													transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
-													transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
-													transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
-					
-													transitionFlatEdge.addAnnotationType("SBOTerm", "String");
-													String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
-															+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
-													transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
-													transitionFlatEdge.addAnnotationType("TransitionId", "String");
-													transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
-													relationTypes.add(transitionFlatEdge.getTypeString());
-													//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
-													//		inputSpeciesUUID);
-													//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
-													//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
-													allFlatEdges.add(transitionFlatEdge);
-													relationSymbols.add(symbolAndTransitionIdString);
-												}
-											}
-										}
-									}
-								}
+					String inputSpeciesUUID = inputQualSpecies.getEntityUUID();
+					String inputSpeciesSymbol = findSBasePrimaryName(inputQualSpecies);
+	
+					if (primaryNameToFlatSpeciesMap.containsKey(inputSpeciesSymbol)) {
+						inputFlatSpecies = primaryNameToFlatSpeciesMap.get(inputSpeciesSymbol);
+						this.updateFlatSpeciesWithSBase(inputFlatSpecies, inputQualSpecies);
+					} else {
+						if (inputQualSpecies.getsBaseSboTerm().equals("SBO:0000253")) {
+							// This is a group node, we need to treat that
+							// First, did we already process this group node?
+							if (!groupNodesAlreadyFlattened.add(inputSpeciesUUID)) {
+								inputGroupFlatSpecies = groupNodeUUIDToGroupFlatSpecies.get(inputSpeciesUUID);
 							} else {
-								inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(inputQualSpecies);
-								if (primaryNameToFlatSpeciesMap.put(inputFlatSpecies.getSymbol(), inputFlatSpecies) != null) {
-									throw new NetworkMappingError("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping.");
+								// the member species should have transitions together with the sbo 
+								inputGroupFlatSpecies = new ArrayList<>();
+								boolean areAllProteins = true;
+								for (SBMLQualSpecies groupSpecies : this.sbmlQualSpeciesService.getSBMLQualSpeciesOfGroup(inputSpeciesUUID)) {
+									if(areAllProteins) {
+										// if up to this point all have been proteins (so sbo term has always been 252, then check this one
+										// if one has not been 252 (so a compound or such), it will have been set to false, and must stay this way).
+										areAllProteins = groupSpecies.getsBaseSboTerm().equals("SBO:0000252");
+									}
+									String groupSpeciesSymbol = findSBasePrimaryName(groupSpecies);
+									
+									if (primaryNameToFlatSpeciesMap.containsKey(groupSpeciesSymbol)) {
+										FlatSpecies groupFlatSpecies = primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol);
+										inputGroupFlatSpecies.add(primaryNameToFlatSpeciesMap.get(groupSpeciesSymbol));
+										this.updateFlatSpeciesWithSBase(groupFlatSpecies, groupSpecies);
+									} else {
+										// haven't seen this Species before
+										FlatSpecies newGroupFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(groupSpecies);
+										
+										if (primaryNameToFlatSpeciesMap.put(groupSpeciesSymbol, newGroupFlatSpecies) != null) {
+											throw new NetworkMappingError("Duplicate Symbol " + groupSpeciesSymbol + " in Mapping.");
+										}
+										nodeTypes.add(groupSpecies.getsBaseSboTerm());
+										// finally add this new species to the group specific list for connection
+										inputGroupFlatSpecies.add(newGroupFlatSpecies);
+									}
 								}
-								nodeTypes.add(inputQualSpecies.getsBaseSboTerm());
+								// add these flatSpecies to map for later reference when we see this group again
+								groupNodeUUIDToGroupFlatSpecies.put(inputSpeciesUUID, inputGroupFlatSpecies);
+								
+								// now groupFlatSpecies contains all FlatSpecies that belong to this group.
+								// connect them with flatEdges
+								//	  a) if all participants are proteins: SBO:0000526 protein complex formation
+								//	  b) otherwise SBO:0000344 molecular interaction
+								for (int i = 0; i != inputGroupFlatSpecies.size(); i++) {
+									for (int j = 0; j != inputGroupFlatSpecies.size(); j++) {
+										if (i != j) {
+											// add two flat edges (i -> j and j -> i)
+											String edgeSymbol = inputGroupFlatSpecies.get(i).getSymbol() + "-" + this.utilityService.translateSBOString(areAllProteins ? "SBO:0000526" : "SBO:0000344")
+											+ "->" + inputGroupFlatSpecies.get(j).getSymbol();
+											if (transitionSymbols.add(edgeSymbol)) {
+												FlatEdge transitionFlatEdge = this.flatEdgeService.createFlatEdge(areAllProteins ? "SBO:0000526" : "SBO:0000344");
+												this.graphBaseEntityService.setGraphBaseEntityProperties(transitionFlatEdge);
+												transitionFlatEdge.setInputFlatSpecies(inputGroupFlatSpecies.get(i));
+												transitionFlatEdge.setOutputFlatSpecies(inputGroupFlatSpecies.get(j));
+												transitionFlatEdge.addAnnotation("SBOTerm", areAllProteins ? "SBO:0000526" : "SBO:0000344");
+				
+												transitionFlatEdge.addAnnotationType("SBOTerm", "String");
+												String symbolAndTransitionIdString = inputGroupFlatSpecies.get(i).getSymbol() + "-" 
+														+ (areAllProteins ? "proteincomplexformation" : "molecularinteraction") + "->" + inputGroupFlatSpecies.get(j).getSymbol();
+												transitionFlatEdge.addAnnotation("TransitionId", symbolAndTransitionIdString);
+												transitionFlatEdge.addAnnotationType("TransitionId", "String");
+												transitionFlatEdge.setSymbol(symbolAndTransitionIdString);
+												relationTypes.add(transitionFlatEdge.getTypeString());
+												//transitionFlatEdge.addAnnotation("sbmlSimpleModelEntityUUID",
+												//		inputSpeciesUUID);
+												//transitionFlatEdge.addAnnotationType("sbmlSimpleModelEntityUUID", "String");
+												//sbmlSimpleTransitionToFlatEdgeMap.put(currentTransition.getInputSpecies().getEntityUUID(), transitionFlatEdge);
+												allFlatEdges.add(transitionFlatEdge);
+												relationSymbols.add(symbolAndTransitionIdString);
+											}
+										}
+									}
+								}
 							}
+						} else {
+							inputFlatSpecies = this.createFlatSpeciesFromSBMLSBaseEntity(inputQualSpecies);
+							if (primaryNameToFlatSpeciesMap.put(inputFlatSpecies.getSymbol(), inputFlatSpecies) != null) {
+								throw new NetworkMappingError("Duplicate Symbol " + inputFlatSpecies.getSymbol() + " in Mapping.");
+							}
+							nodeTypes.add(inputQualSpecies.getsBaseSboTerm());
 						}
+					}
+					
+					for (SBMLQualSpecies outputQualSpecies : current.getOutputSpecies()) {
+					
 						// output species
 						String outputSpeciesUUID = outputQualSpecies.getEntityUUID();
 						String outputSpeciesSymbol = findSBasePrimaryName(outputQualSpecies);
@@ -730,6 +731,10 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		String primaryName = findSBasePrimaryName(sbmlSBaseEntity);
 		this.graphBaseEntityService.setGraphBaseEntityProperties(newFlatSpecies);
 		newFlatSpecies.setSymbol(primaryName);
+		String sBaseName = sbmlSBaseEntity.getsBaseName();
+		if (sBaseName != null && !newFlatSpecies.getSymbol().equals(sBaseName)) {
+			newFlatSpecies.addSecondaryName(sBaseName);
+		}
 		newFlatSpecies.setSboTerm(sbmlSBaseEntity.getsBaseSboTerm());
 		getBQAnnotations(sbmlSBaseEntity.getEntityUUID(), newFlatSpecies);
 		if (this.configService.isAddMDAnderson()) getMDAndersonAnnotation(primaryName, newFlatSpecies);
@@ -770,7 +775,11 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					String[] splitted = uri.split("/");
 					this.graphBaseEntityService.addAnnotation(target, splitted[splitted.length-2].replace('.', '_'), "string", (annotateWithLinks ? uri : splitted[splitted.length-1]), doAppend);
 					
-					if (bq.getEndNode().getType() != null && endNode.getType().equals(ExternalResourceType.KEGGGENES)) {
+					if (endNode.getType() != null && endNode.getType().equals(ExternalResourceType.KEGGGENES)) {
+						// add the primaryName to list of secondaryNames if it is not the symbol
+						if (target.getSymbol()!= null && !target.getSymbol().equals(endNode.getPrimaryName())) {
+							target.addSecondaryName(endNode.getPrimaryName());
+						}
 						// get all NameNodes connected to the external resource 
 						Iterable<NameNode> allNames = this.nameNodeService.findAllByExternalResource(endNode.getEntityUUID());
 						Iterator<NameNode> it = allNames.iterator();
