@@ -500,7 +500,7 @@ public class SBMLSimpleModelService {
 					inputQualSpeciesList.add(inputQualSpecies);
 				}
 			}
-			
+			newTransitionId += "-";
 			newTransitionId += this.utilityService.translateSBOString(transition.getSBOTermID());
 			newTransitionId += "->"; // TODO: Should this be directional?
 			boolean isFirstOutput = true;
