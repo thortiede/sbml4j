@@ -769,6 +769,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					|| bq.getQualifier().equals(Qualifier.BQB_IS_DESCRIBED_BY)
 				) {
 				ExternalResourceEntity endNode = bq.getEndNode();
+				if (endNode == null) {
+					continue;
+				}
 				String uri = endNode.getUri();
 				if (uri.contains("identifiers.org")) {
 				
@@ -777,7 +780,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					
 					if (endNode.getType() != null && endNode.getType().equals(ExternalResourceType.KEGGGENES)) {
 						// add the primaryName to list of secondaryNames if it is not the symbol
-						if (target.getSymbol()!= null && !target.getSymbol().equals(endNode.getPrimaryName())) {
+						if (endNode.getPrimaryName() != null && target.getSymbol()!= null && !target.getSymbol().equals(endNode.getPrimaryName())) {
 							target.addSecondaryName(endNode.getPrimaryName());
 						}
 						// get all NameNodes connected to the external resource 
