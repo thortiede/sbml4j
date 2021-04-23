@@ -213,7 +213,14 @@ public class PathwaysApiController implements PathwaysApi {
 		
 		String uuid = UUID.toString();
 		log.info("Serving POST /mapping/" + uuid + (user != null ? " for user " + user : ""));
-		// 2. Is the given user or the public user authorized for this pathway?
+		
+		// 2. Determine the name of the network
+		PathwayNode pathwayNode = this.pathwayService.findByEntityUUID(uuid);
+		if (pathwayNode == null) {
+			return ResponseEntity.badRequest().header("reason", "Could not fetch pathway with uuid:" +uuid).build();
+		}
+		
+		// 3. Is the given user or the public user authorized for this pathway?
 		String pathwayUser;
 		try {
 			pathwayUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
@@ -227,11 +234,7 @@ public class PathwaysApiController implements PathwaysApi {
 					.header("reason", "Unable to get user attributed to the pathway.")
 					.build();
 		}
-		// 3. Determine the name of the network
-		PathwayNode pathwayNode = this.pathwayService.findByEntityUUID(uuid);
-		if (pathwayNode == null) {
-			return ResponseEntity.badRequest().header("reason", "Could not fetch pathway with uuid:" +uuid).build();
-		}
+		
 		String mappingName;
 		if (prefixName && networkname != null) {
 			mappingName = (networkname.endsWith("_") ? networkname : networkname + "_") + pathwayNode.getPathwayNameString();
