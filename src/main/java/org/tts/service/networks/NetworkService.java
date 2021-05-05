@@ -442,11 +442,18 @@ public class NetworkService {
 	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 * @throws NetworkDeletionException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName) throws NetworkAlreadyExistsException, NetworkDeletionException {
+	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName, String prefixString) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		log.info("Copying network with uuid: " + networkEntityUUID);
 		
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		if(name == null && !prefixName) {
+			// we should not prefix the given name, but the given name is null (this happens when nothing is passed to an endpoint, as the default for prefixName is now false
+			// thus we use the prefixString that is passed in here (and was generated in code before)
+			// and prefix it on parent.getMappingName
+			prefixName = true;
+			name = prefixString;
+		}
 		String newMappingName = buildMappingName(name, prefixName, parent.getMappingName());
 		
 		// Check the MappingName against existing names for that user
@@ -875,7 +882,7 @@ public class NetworkService {
 			boolean prefixName, boolean derive, String prefixString) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		MappingNode copiedOrNamedMappingNode = null;
 		if (derive) {
-			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname != null ? networkname : prefixString, prefixName);
+			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname, prefixName, prefixString);
 			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
 		} else {
 			copiedOrNamedMappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
