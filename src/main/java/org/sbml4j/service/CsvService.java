@@ -51,7 +51,6 @@ public class CsvService implements RowProcessor {
 		
 		CsvParser parser = new CsvParser(settings);
 
-		List<String[]> rows;
 		parser.parse(getReader(file));
 
 		//Let's see the detected format:
