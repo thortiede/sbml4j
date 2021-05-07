@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.apoc;
+package org.sbml4j.repository.apoc;
 
+import org.sbml4j.model.api.Output.ApocPathReturnType;
+import org.sbml4j.model.common.GraphBaseEntity;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.api.Output.ApocPathReturnType;
-import org.tts.model.common.GraphBaseEntity;
 
 /**
  * Description

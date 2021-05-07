@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
 import java.util.List;
 
 import org.sbml.jsbml.CVTerm;
+import org.sbml4j.model.common.BiomodelsQualifier;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.BiomodelsQualifier;
 
 public interface BiomodelsQualifierRepository extends Neo4jRepository<BiomodelsQualifier, Long> {
 

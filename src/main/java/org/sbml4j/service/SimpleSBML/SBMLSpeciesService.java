@@ -11,23 +11,23 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.SimpleSBML;
+package org.sbml4j.service.SimpleSBML;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.SBMLSpeciesGroup;
+import org.sbml4j.repository.common.SBMLSpeciesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.common.SBMLSpeciesGroup;
-import org.tts.repository.common.SBMLSpeciesRepository;
 
 
 /**

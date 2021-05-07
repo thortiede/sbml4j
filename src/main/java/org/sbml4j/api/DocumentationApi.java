@@ -3,7 +3,7 @@
  * (https://openapi-generator.tech) (5.0.1). https://openapi-generator.tech Do
  * not edit the class manually.
  */
-package org.tts.api;
+package org.sbml4j.api;
 
 import java.util.List;
 import java.util.Optional;

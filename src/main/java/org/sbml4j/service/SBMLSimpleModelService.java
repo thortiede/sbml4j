@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,42 +43,42 @@ import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
 import org.sbml.jsbml.xml.XMLNode;
+import org.sbml4j.Exception.ModelPersistenceException;
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.common.NameNode;
+import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLQualSpeciesGroup;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.SBMLSpeciesGroup;
+import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
+import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.FileNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.repository.common.ExternalResourceEntityRepository;
+import org.sbml4j.repository.common.GraphBaseEntityRepository;
+import org.sbml4j.repository.common.SBMLQualSpeciesRepository;
+import org.sbml4j.repository.common.SBMLSBaseEntityRepository;
+import org.sbml4j.repository.common.SBMLSpeciesRepository;
+import org.sbml4j.repository.simpleModel.SBMLSimpleReactionRepository;
+import org.sbml4j.repository.simpleModel.SBMLSimpleTransitionRepository;
+import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.Exception.ModelPersistenceException;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.common.NameNode;
-import org.tts.model.common.SBMLCompartment;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLQualSpeciesGroup;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.common.SBMLSpeciesGroup;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.simple.SBMLSimpleReaction;
-import org.tts.model.simple.SBMLSimpleTransition;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.FileNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.common.BiomodelsQualifierRepository;
-import org.tts.repository.common.ExternalResourceEntityRepository;
-import org.tts.repository.common.GraphBaseEntityRepository;
-import org.tts.repository.common.SBMLQualSpeciesRepository;
-import org.tts.repository.common.SBMLSBaseEntityRepository;
-import org.tts.repository.common.SBMLSpeciesRepository;
-import org.tts.repository.simpleModel.SBMLSimpleReactionRepository;
-import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
-import org.tts.service.SimpleSBML.SBMLSpeciesService;
 
 @Service
 public class SBMLSimpleModelService {

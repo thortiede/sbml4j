@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.provenance;
+package org.sbml4j.model.provenance;
 
 import java.util.ArrayList;
 import java.util.List;

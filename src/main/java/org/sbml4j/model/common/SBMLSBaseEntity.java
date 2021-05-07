@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +20,8 @@ import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 import org.sbml.jsbml.CVTerm;
-import org.tts.Exception.SBML4jAddExtensionException;
-import org.tts.model.full.ext.SBMLSBaseExtension;
+import org.sbml4j.Exception.SBML4jAddExtensionException;
+import org.sbml4j.model.full.ext.SBMLSBaseExtension;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

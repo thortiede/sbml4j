@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
 import java.util.List;
 
+import org.sbml4j.model.common.SBMLSBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.SBMLSBaseEntity;
 
 public interface SBMLSBaseEntityRepository extends Neo4jRepository<SBMLSBaseEntity, Long> {
 

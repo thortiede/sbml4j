@@ -11,9 +11,9 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
-import org.tts.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceEntity;
 
 
 public class ContentGraphEdge extends ProvenanceEntity {

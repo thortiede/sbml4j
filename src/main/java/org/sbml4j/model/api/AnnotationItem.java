@@ -1,4 +1,4 @@
-package org.tts.model.api;
+package org.sbml4j.model.api;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -11,15 +11,15 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.repository.flat.FlatSpeciesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.repository.flat.FlatSpeciesRepository;
 
 /**
  * Service for persisting and loading flatSpecies from the database

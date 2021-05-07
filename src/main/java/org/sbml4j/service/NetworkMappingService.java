@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
-import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.PathwayNode;
+import org.sbml4j.Exception.NetworkAlreadyExistsException;
+import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.PathwayNode;
 
 public interface NetworkMappingService {
 	

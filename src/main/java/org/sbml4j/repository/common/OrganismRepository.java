@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.Organism;
-import org.tts.model.warehouse.WarehouseGraphNode;
 
 /**
  * Repository for loading and persisting <a href="#{@link}">{@link Organism}</a>s

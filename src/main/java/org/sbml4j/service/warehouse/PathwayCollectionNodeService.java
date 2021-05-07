@@ -11,29 +11,29 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.warehouse;
+package org.sbml4j.service.warehouse;
 
 import java.util.UUID;
 
+import org.sbml4j.model.api.PathwayCollectionCreationItem;
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.PathwayCollectionNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.warehouse.PathwayCollectionNodeRepository;
+import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.PathwayService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.WarehouseGraphService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.PathwayCollectionCreationItem;
-import org.tts.model.common.Organism;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.PathwayCollectionNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.warehouse.PathwayCollectionNodeRepository;
-import org.tts.service.GraphBaseEntityService;
-import org.tts.service.PathwayService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.WarehouseGraphService;
 
 /**
  * Service for handling creation and querying of <a href="#{@link}">{@link PathwayCollectionNode}</a> entities

@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
 import java.util.HashMap;
 import java.util.Map;

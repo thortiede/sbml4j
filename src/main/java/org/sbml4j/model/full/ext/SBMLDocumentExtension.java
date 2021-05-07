@@ -11,9 +11,9 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.full.ext;
+package org.sbml4j.model.full.ext;
 
-import org.tts.model.full.SBMLDocumentEntity;
+import org.sbml4j.model.full.SBMLDocumentEntity;
 
 public interface SBMLDocumentExtension {
 

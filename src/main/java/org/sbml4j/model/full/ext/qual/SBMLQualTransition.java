@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.full.ext.qual;
+package org.sbml4j.model.full.ext.qual;
 
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.full.SBMLFunctionTerm;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.full.SBMLFunctionTerm;
 
 public class SBMLQualTransition extends SBMLSBaseEntity {
 

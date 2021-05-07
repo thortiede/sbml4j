@@ -1,3 +1,4 @@
+package org.sbml4j.api;
 /**
  * --------------------------------------------------------------------------
  *                                 SBML4j
@@ -11,7 +12,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-/*package org.tts.api;
+/*package org.sbml4j.api;
 
 import javax.xml.bind.annotation.XmlTransient;
 

@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.warehouse;
+package org.sbml4j.model.warehouse;
 
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
 
 @RelationshipEntity("Warehouse")
 public class WarehouseGraphEdge extends ProvenanceEntity {

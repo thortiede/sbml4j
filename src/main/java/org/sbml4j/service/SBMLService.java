@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,12 +21,12 @@ import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
+import org.sbml4j.Exception.ModelPersistenceException;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.warehouse.FileNode;
+import org.sbml4j.model.warehouse.PathwayNode;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.Exception.ModelPersistenceException;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.warehouse.FileNode;
-import org.tts.model.warehouse.PathwayNode;
 
 public interface SBMLService {
 

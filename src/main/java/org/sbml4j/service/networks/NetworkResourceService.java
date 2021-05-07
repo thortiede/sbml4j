@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.networks;
+package org.sbml4j.service.networks;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -20,15 +20,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.service.GraphMLService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.service.GraphMLService;
 
 /**
  * This service class handles requests from controllers to get Resources containing networks

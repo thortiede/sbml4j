@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.provenance;
+package org.sbml4j.repository.provenance;
 
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
 
 @Repository
 public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEntity, Long> {

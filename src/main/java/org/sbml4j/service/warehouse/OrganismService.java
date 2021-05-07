@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.warehouse;
+package org.sbml4j.service.warehouse;
 
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.warehouse.WarehouseGraphNode;
+import org.sbml4j.repository.common.OrganismRepository;
+import org.sbml4j.service.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.Organism;
-import org.tts.model.warehouse.WarehouseGraphNode;
-import org.tts.repository.common.OrganismRepository;
-import org.tts.service.GraphBaseEntityService;
 
 /**
  * Service for handling creation and retrieval of OrgansimNode

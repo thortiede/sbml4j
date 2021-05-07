@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.config;
+package org.sbml4j.config;
 
+import org.sbml4j.model.common.GraphEnum.AnnotationName;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.tts.model.common.GraphEnum.AnnotationName;
 
 @ConfigurationProperties(prefix = "sbml4j.annotation")
 public class AnnotationConfigProperties {

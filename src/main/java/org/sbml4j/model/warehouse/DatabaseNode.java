@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.warehouse;
+package org.sbml4j.model.warehouse;
 
 import java.util.List;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.provenance.ProvenanceGraphEntityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphEntityNode;
 
 public class DatabaseNode extends WarehouseGraphNode {
 

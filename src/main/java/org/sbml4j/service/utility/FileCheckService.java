@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.utility;
+package org.sbml4j.service.utility;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

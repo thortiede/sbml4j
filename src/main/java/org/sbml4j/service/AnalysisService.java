@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,27 +19,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.GeneAnalysisItem;
+import org.sbml4j.model.api.PathwayInfoItem;
+import org.sbml4j.model.api.QualifierItem;
+import org.sbml4j.model.api.QualifierItemContent;
+import org.sbml4j.model.api.ReactionInfoItem;
+import org.sbml4j.model.api.ReactionPartnerItem;
+import org.sbml4j.model.api.RelationInfoItem;
+import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.api.RelationInfoItem.DirectionEnum;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
+import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.GeneAnalysisItem;
-import org.tts.model.api.PathwayInfoItem;
-import org.tts.model.api.QualifierItem;
-import org.tts.model.api.QualifierItemContent;
-import org.tts.model.api.ReactionInfoItem;
-import org.tts.model.api.ReactionPartnerItem;
-import org.tts.model.api.RelationInfoItem;
-import org.tts.model.api.RelationInfoItem.DirectionEnum;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.common.BiomodelsQualifierRepository;
-import org.tts.service.SimpleSBML.SBMLSimpleReactionService;
-import org.tts.service.SimpleSBML.SBMLSimpleTransitionService;
-import org.tts.service.SimpleSBML.SBMLSpeciesService;
 
 /**
  * Description

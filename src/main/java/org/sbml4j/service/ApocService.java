@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -19,11 +19,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.sbml4j.model.api.Output.ApocPathReturnType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.repository.apoc.ApocRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.Output.ApocPathReturnType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.repository.apoc.ApocRepository;
 
 /**
  * Service for handling APOC plugin query requests

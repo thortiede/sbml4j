@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.flat;
+package org.sbml4j.model.flat;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.neo4j.ogm.annotation.Transient;
-import org.tts.model.common.ContentGraphNode;
+import org.sbml4j.model.common.ContentGraphNode;
 
 
 public class FlatSpecies extends ContentGraphNode {

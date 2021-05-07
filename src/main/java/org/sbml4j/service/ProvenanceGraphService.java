@@ -11,25 +11,25 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.Map;
 
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.provenance.ProvenanceGraphEdge;
+import org.sbml4j.repository.provenance.ProvenanceEntityRepository;
+import org.sbml4j.repository.provenance.ProvenanceGraphActivityNodeRepository;
+import org.sbml4j.repository.provenance.ProvenanceGraphAgentNodeRepository;
+import org.sbml4j.repository.provenance.ProvenanceGraphEdgeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.provenance.ProvenanceGraphEdge;
-import org.tts.repository.provenance.ProvenanceEntityRepository;
-import org.tts.repository.provenance.ProvenanceGraphActivityNodeRepository;
-import org.tts.repository.provenance.ProvenanceGraphAgentNodeRepository;
-import org.tts.repository.provenance.ProvenanceGraphEdgeRepository;
 
 @Service
 public class ProvenanceGraphService {

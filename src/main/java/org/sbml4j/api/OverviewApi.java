@@ -3,13 +3,15 @@
  * (https://openapi-generator.tech) (5.0.1). https://openapi-generator.tech Do
  * not edit the class manually.
  */
-package org.tts.api;
+package org.sbml4j.api;
 
 import java.util.Optional;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.model.api.NetworkInventoryItem;
+import org.sbml4j.model.api.OverviewNetworkItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.api.OverviewNetworkItem;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

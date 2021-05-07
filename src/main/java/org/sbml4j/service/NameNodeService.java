@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
+import org.sbml4j.model.common.NameNode;
+import org.sbml4j.repository.common.NameNodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.NameNode;
-import org.tts.repository.common.NameNodeRepository;
 
 @Service
 public class NameNodeService {

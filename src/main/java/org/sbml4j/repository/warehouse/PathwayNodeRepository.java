@@ -11,16 +11,16 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.warehouse;
+package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 import java.util.Set;
 
+import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.warehouse.PathwayNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
-import org.tts.model.warehouse.PathwayNode;
 
 public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long> {
 

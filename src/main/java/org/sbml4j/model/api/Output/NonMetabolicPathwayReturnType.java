@@ -11,11 +11,11 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.api.Output;
+package org.sbml4j.model.api.Output;
 
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.simple.SBMLSimpleTransition;
 import org.springframework.data.neo4j.annotation.QueryResult;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.simple.SBMLSimpleTransition;
 
 @QueryResult
 public class NonMetabolicPathwayReturnType {

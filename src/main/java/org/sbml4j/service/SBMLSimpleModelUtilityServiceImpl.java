@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.Map;
 import java.util.UUID;
@@ -26,19 +26,19 @@ import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBase;
 import org.sbml.jsbml.Species;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
+import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.full.SBMLDocumentEntity;
+import org.sbml4j.model.full.SBMLModelEntity;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
+import org.sbml4j.model.warehouse.DatabaseNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.GraphBaseEntity;
-import org.tts.model.common.SBMLCompartment;
-import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.full.SBMLDocumentEntity;
-import org.tts.model.full.SBMLModelEntity;
-import org.tts.model.simple.SBMLSimpleReaction;
-import org.tts.model.warehouse.DatabaseNode;
 
 @Service
 public class SBMLSimpleModelUtilityServiceImpl {

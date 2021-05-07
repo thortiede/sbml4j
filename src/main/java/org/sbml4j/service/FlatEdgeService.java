@@ -11,35 +11,35 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 
 import java.util.List;
 
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.flat.relationship.CatalystFlatEdge;
+import org.sbml4j.model.flat.relationship.ControlFlatEdge;
+import org.sbml4j.model.flat.relationship.DephosphorylationFlatEdge;
+import org.sbml4j.model.flat.relationship.DissociationFlatEdge;
+import org.sbml4j.model.flat.relationship.GlycosylationFlatEdge;
+import org.sbml4j.model.flat.relationship.InhibitionFlatEdge;
+import org.sbml4j.model.flat.relationship.MethylationFlatEdge;
+import org.sbml4j.model.flat.relationship.MolecularInteractionFlatEdge;
+import org.sbml4j.model.flat.relationship.NonCovalentBindingFlatEdge;
+import org.sbml4j.model.flat.relationship.PathwayFlatEdge;
+import org.sbml4j.model.flat.relationship.PhosphorylationFlatEdge;
+import org.sbml4j.model.flat.relationship.ProductFlatEdge;
+import org.sbml4j.model.flat.relationship.ProteinComplexFormationEdge;
+import org.sbml4j.model.flat.relationship.ReactantFlatEdge;
+import org.sbml4j.model.flat.relationship.StimulationFlatEdge;
+import org.sbml4j.model.flat.relationship.TargetsFlatEdge;
+import org.sbml4j.model.flat.relationship.UbiquitinationFlatEdge;
+import org.sbml4j.model.flat.relationship.UncertainProcessFlatEdge;
+import org.sbml4j.model.flat.relationship.UnknownFromSourceFlatEdge;
+import org.sbml4j.repository.flat.FlatEdgeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.flat.relationship.CatalystFlatEdge;
-import org.tts.model.flat.relationship.ControlFlatEdge;
-import org.tts.model.flat.relationship.DephosphorylationFlatEdge;
-import org.tts.model.flat.relationship.DissociationFlatEdge;
-import org.tts.model.flat.relationship.GlycosylationFlatEdge;
-import org.tts.model.flat.relationship.InhibitionFlatEdge;
-import org.tts.model.flat.relationship.MethylationFlatEdge;
-import org.tts.model.flat.relationship.MolecularInteractionFlatEdge;
-import org.tts.model.flat.relationship.NonCovalentBindingFlatEdge;
-import org.tts.model.flat.relationship.PathwayFlatEdge;
-import org.tts.model.flat.relationship.PhosphorylationFlatEdge;
-import org.tts.model.flat.relationship.ProductFlatEdge;
-import org.tts.model.flat.relationship.ProteinComplexFormationEdge;
-import org.tts.model.flat.relationship.ReactantFlatEdge;
-import org.tts.model.flat.relationship.StimulationFlatEdge;
-import org.tts.model.flat.relationship.TargetsFlatEdge;
-import org.tts.model.flat.relationship.UbiquitinationFlatEdge;
-import org.tts.model.flat.relationship.UncertainProcessFlatEdge;
-import org.tts.model.flat.relationship.UnknownFromSourceFlatEdge;
-import org.tts.repository.flat.FlatEdgeRepository;
 
 /**
  * Handles the creation and persistence of FlatEdge entities

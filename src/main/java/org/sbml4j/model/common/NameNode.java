@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,7 +22,7 @@ import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
-import org.tts.model.provenance.ProvenanceGraphEntityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphEntityNode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

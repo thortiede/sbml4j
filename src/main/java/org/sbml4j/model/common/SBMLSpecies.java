@@ -11,11 +11,11 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.full.SBMLParameter;
-import org.tts.model.full.SBMLUnitDefinition;
+import org.sbml4j.model.full.SBMLParameter;
+import org.sbml4j.model.full.SBMLUnitDefinition;
 
 public class SBMLSpecies extends SBMLCompartmentalizedSBaseEntity {
 

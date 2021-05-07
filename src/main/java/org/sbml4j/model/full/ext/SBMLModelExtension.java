@@ -11,11 +11,11 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.full.ext;
+package org.sbml4j.model.full.ext;
 
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.full.SBMLModelEntity;
+import org.sbml4j.model.full.SBMLModelEntity;
 
 
 public class SBMLModelExtension extends SBMLSBaseExtension {

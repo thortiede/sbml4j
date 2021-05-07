@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.Exception;
+package org.sbml4j.Exception;
 
 public class FileStorageException extends RuntimeException {
     public FileStorageException(String message) {

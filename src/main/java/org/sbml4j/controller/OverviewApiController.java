@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +20,25 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import org.sbml4j.Exception.NetworkDeletionException;
+import org.sbml4j.Exception.UserUnauthorizedException;
+import org.sbml4j.api.OverviewApi;
+import org.sbml4j.config.OverviewNetworkConfig;
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.NetworkInventoryItem;
+import org.sbml4j.model.api.OverviewNetworkItem;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.ContextService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.networks.NetworkResourceService;
+import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,25 +46,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.tts.Exception.NetworkDeletionException;
-import org.tts.Exception.UserUnauthorizedException;
-import org.tts.api.OverviewApi;
-import org.tts.config.OverviewNetworkConfig;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.api.OverviewNetworkItem;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.service.ConfigService;
-import org.tts.service.ContextService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.networks.NetworkResourceService;
-import org.tts.service.networks.NetworkService;
-import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Controller for handling of VCF analysis tasks

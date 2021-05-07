@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,6 +22,28 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.Exception.AnnotationException;
+import org.sbml4j.Exception.NetworkAlreadyExistsException;
+import org.sbml4j.Exception.NetworkDeletionException;
+import org.sbml4j.Exception.UserUnauthorizedException;
+import org.sbml4j.api.NetworksApi;
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.AnnotationItem;
+import org.sbml4j.model.api.FilterOptions;
+import org.sbml4j.model.api.NetworkInventoryItem;
+import org.sbml4j.model.api.NetworkOptions;
+import org.sbml4j.model.api.NodeList;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.FlatSpeciesService;
+import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.MyDrugService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.networks.NetworkResourceService;
+import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,28 +52,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.Exception.AnnotationException;
-import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.Exception.NetworkDeletionException;
-import org.tts.Exception.UserUnauthorizedException;
-import org.tts.api.NetworksApi;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.AnnotationItem;
-import org.tts.model.api.FilterOptions;
-import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.api.NetworkOptions;
-import org.tts.model.api.NodeList;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.service.ConfigService;
-import org.tts.service.FlatSpeciesService;
-import org.tts.service.GraphBaseEntityService;
-import org.tts.service.MyDrugService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.WarehouseGraphService;
-import org.tts.service.networks.NetworkResourceService;
-import org.tts.service.networks.NetworkService;
-import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Controller class for all things networks related

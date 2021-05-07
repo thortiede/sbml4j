@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.api;
+package org.sbml4j.api;
 
 import java.io.IOException;
 

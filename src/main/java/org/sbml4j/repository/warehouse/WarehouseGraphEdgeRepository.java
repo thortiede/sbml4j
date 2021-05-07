@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.warehouse;
+package org.sbml4j.repository.warehouse;
 
+import org.sbml4j.model.warehouse.WarehouseGraphEdge;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.warehouse.WarehouseGraphEdge;
 
 public interface WarehouseGraphEdgeRepository extends Neo4jRepository<WarehouseGraphEdge, Long> {
 

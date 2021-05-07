@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -19,6 +19,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import org.sbml4j.api.DocumentationApi;
+import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.GraphBaseEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.servlet.view.RedirectView;
-import org.tts.api.DocumentationApi;
-import org.tts.model.common.GraphBaseEntity;
-import org.tts.service.ConfigService;
-import org.tts.service.GraphBaseEntityService;
 
 /**
  * Controller class for handling Requests to the DocumentationApi

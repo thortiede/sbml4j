@@ -11,16 +11,16 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.UUID;
 
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.common.GraphEnum.AnnotationName;
+import org.sbml4j.repository.common.GraphBaseEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.common.GraphBaseEntity;
-import org.tts.model.common.GraphEnum.AnnotationName;
-import org.tts.repository.common.GraphBaseEntityRepository;
 
 /**
  * Service for handling loading, manipulating and persisting of <a href="#{@link}">{@link GraphBaseEntity}</a>

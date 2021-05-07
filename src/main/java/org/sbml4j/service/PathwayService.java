@@ -11,37 +11,37 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLQualSpeciesGroup;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.SBMLSpeciesGroup;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.full.SBMLReaction;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
+import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.model.warehouse.PathwayCollectionNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.warehouse.PathwayNodeRepository;
+import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
-import org.tts.model.common.Organism;
-import org.tts.model.common.SBMLCompartment;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLQualSpeciesGroup;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.common.SBMLSpeciesGroup;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.full.SBMLReaction;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.simple.SBMLSimpleReaction;
-import org.tts.model.simple.SBMLSimpleTransition;
-import org.tts.model.warehouse.PathwayCollectionNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.warehouse.PathwayNodeRepository;
-import org.tts.service.networks.NetworkService;
-import org.tts.service.warehouse.OrganismService;
 
 /**
  * Description

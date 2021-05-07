@@ -11,7 +11,7 @@
  *
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.time.Duration;
 import java.util.HashSet;

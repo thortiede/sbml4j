@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +24,31 @@ import javax.validation.constraints.NotNull;
 import javax.xml.stream.XMLStreamException;
 
 import org.sbml.jsbml.Model;
+import org.sbml4j.Exception.ModelPersistenceException;
+import org.sbml4j.api.SbmlApi;
+import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.common.GraphEnum.FileNodeType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.FileNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.PathwayService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.SBMLSimpleModelService;
+import org.sbml4j.service.UtilityService;
+import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.utility.FileCheckService;
+import org.sbml4j.service.warehouse.DatabaseNodeService;
+import org.sbml4j.service.warehouse.FileNodeService;
+import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,31 +56,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.Exception.ModelPersistenceException;
-import org.tts.api.SbmlApi;
-import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.common.GraphEnum.FileNodeType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.Organism;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.FileNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.service.ConfigService;
-import org.tts.service.GraphBaseEntityService;
-import org.tts.service.PathwayService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.SBMLSimpleModelService;
-import org.tts.service.UtilityService;
-import org.tts.service.WarehouseGraphService;
-import org.tts.service.utility.FileCheckService;
-import org.tts.service.warehouse.DatabaseNodeService;
-import org.tts.service.warehouse.FileNodeService;
-import org.tts.service.warehouse.OrganismService;
 
 /**
  * Controller for the SbmlApi handling SBML file uploads

@@ -11,11 +11,11 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
+import org.sbml4j.model.common.NameNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.NameNode;
 
 public interface NameNodeRepository extends Neo4jRepository<NameNode, Long> {
 

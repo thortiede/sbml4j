@@ -11,26 +11,26 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.List;
 import java.util.UUID;
 
+import org.sbml4j.model.api.WarehouseInventoryItem;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.provenance.ProvenanceGraphEdge;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.WarehouseGraphEdge;
+import org.sbml4j.model.warehouse.WarehouseGraphNode;
+import org.sbml4j.repository.warehouse.WarehouseGraphEdgeRepository;
+import org.sbml4j.repository.warehouse.WarehouseGraphNodeRepository;
+import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.WarehouseInventoryItem;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.provenance.ProvenanceGraphEdge;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.WarehouseGraphEdge;
-import org.tts.model.warehouse.WarehouseGraphNode;
-import org.tts.repository.warehouse.WarehouseGraphEdgeRepository;
-import org.tts.repository.warehouse.WarehouseGraphNodeRepository;
-import org.tts.service.warehouse.OrganismService;
 
 /**
  * Service for handling Warehouse specific tasks

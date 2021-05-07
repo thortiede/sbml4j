@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.simple;
+package org.sbml4j.model.simple;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
+import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
 
 public class SBMLSimpleReaction extends SBMLCompartmentalizedSBaseEntity {
 	

@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,36 +22,36 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.Exception.NetworkMappingError;
+import org.sbml4j.Exception.UserUnauthorizedException;
+import org.sbml4j.api.PathwaysApi;
+import org.sbml4j.model.api.PathwayCollectionCreationItem;
+import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.WarehouseInventoryItem;
+import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.PathwayCollectionNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.NetworkMappingService;
+import org.sbml4j.service.PathwayService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.warehouse.DatabaseNodeService;
+import org.sbml4j.service.warehouse.MappingNodeService;
+import org.sbml4j.service.warehouse.PathwayCollectionNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.tts.Exception.NetworkMappingError;
-import org.tts.Exception.UserUnauthorizedException;
-import org.tts.api.PathwaysApi;
-import org.tts.model.api.PathwayCollectionCreationItem;
-import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.api.WarehouseInventoryItem;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.PathwayCollectionNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.service.ConfigService;
-import org.tts.service.NetworkMappingService;
-import org.tts.service.PathwayService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.WarehouseGraphService;
-import org.tts.service.warehouse.DatabaseNodeService;
-import org.tts.service.warehouse.MappingNodeService;
-import org.tts.service.warehouse.PathwayCollectionNodeService;
 
 /**
  * Controller for handling Pathway requests

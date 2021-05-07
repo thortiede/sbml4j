@@ -1,4 +1,4 @@
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

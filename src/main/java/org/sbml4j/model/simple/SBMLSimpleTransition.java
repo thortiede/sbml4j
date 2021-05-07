@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.simple;
+package org.sbml4j.model.simple;
 
 import java.util.List;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLSBaseEntity;
 
 @NodeEntity
 public class SBMLSimpleTransition extends SBMLSBaseEntity {

@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.ByteArrayOutputStream;
 
-import org.tts.model.api.Output.ApocPathReturnType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
+import org.sbml4j.model.api.Output.ApocPathReturnType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
 
 public interface GraphMLService {
 

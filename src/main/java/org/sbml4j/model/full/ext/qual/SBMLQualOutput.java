@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.full.ext.qual;
+package org.sbml4j.model.full.ext.qual;
 
 import org.neo4j.ogm.annotation.Relationship;
 import org.sbml.jsbml.ext.qual.OutputTransitionEffect;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLSBaseEntity;
 
 public class SBMLQualOutput extends SBMLSBaseEntity {
 		

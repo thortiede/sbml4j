@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -25,39 +25,39 @@ import java.util.UUID;
 
 import org.neo4j.ogm.session.Session;
 import org.sbml.jsbml.CVTerm.Qualifier;
+import org.sbml4j.Exception.NetworkAlreadyExistsException;
+import org.sbml4j.Exception.NetworkMappingError;
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.common.NameNode;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.GraphEnum.AnnotationName;
+import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
+import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.service.SimpleSBML.SBMLQualSpeciesService;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
+import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
+import org.sbml4j.service.warehouse.MappingNodeService;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.Exception.NetworkMappingError;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.GraphEnum.AnnotationName;
-import org.tts.model.common.GraphEnum.ExternalResourceType;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.common.NameNode;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.simple.SBMLSimpleReaction;
-import org.tts.model.simple.SBMLSimpleTransition;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.common.BiomodelsQualifierRepository;
-import org.tts.service.SimpleSBML.SBMLQualSpeciesService;
-import org.tts.service.SimpleSBML.SBMLSimpleTransitionService;
-import org.tts.service.SimpleSBML.SBMLSpeciesService;
-import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Service for creating <a href="#{@link}">{@link MappingNode}</a>s from <a href="#{@link}">{@link PathwayNodes}</a>

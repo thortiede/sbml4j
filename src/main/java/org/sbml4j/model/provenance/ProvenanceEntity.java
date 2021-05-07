@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.provenance;
+package org.sbml4j.model.provenance;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Properties;
-import org.tts.model.common.GraphBaseEntity;
+import org.sbml4j.model.common.GraphBaseEntity;
 
 
 public class ProvenanceEntity extends GraphBaseEntity {

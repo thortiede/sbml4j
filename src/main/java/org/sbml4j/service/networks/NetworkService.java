@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.networks;
+package org.sbml4j.service.networks;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -28,42 +28,42 @@ import java.util.stream.StreamSupport;
 import javax.validation.Valid;
 
 import org.neo4j.ogm.session.Session;
+import org.sbml4j.Exception.AnnotationException;
+import org.sbml4j.Exception.NetworkAlreadyExistsException;
+import org.sbml4j.Exception.NetworkDeletionException;
+import org.sbml4j.model.api.AnnotationItem;
+import org.sbml4j.model.api.FilterOptions;
+import org.sbml4j.model.api.NetworkInventoryItem;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.ContextService;
+import org.sbml4j.service.CsvService;
+import org.sbml4j.service.FlatEdgeService;
+import org.sbml4j.service.FlatSpeciesService;
+import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.ProvenanceGraphService;
+import org.sbml4j.service.UtilityService;
+import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
+import org.sbml4j.service.warehouse.MappingNodeService;
+import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.Exception.AnnotationException;
-import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.Exception.NetworkDeletionException;
-import org.tts.model.api.AnnotationItem;
-import org.tts.model.api.FilterOptions;
-import org.tts.model.api.NetworkInventoryItem;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.service.ConfigService;
-import org.tts.service.ContextService;
-import org.tts.service.CsvService;
-import org.tts.service.FlatEdgeService;
-import org.tts.service.FlatSpeciesService;
-import org.tts.service.GraphBaseEntityService;
-import org.tts.service.ProvenanceGraphService;
-import org.tts.service.UtilityService;
-import org.tts.service.WarehouseGraphService;
-import org.tts.service.SimpleSBML.SBMLSpeciesService;
-import org.tts.service.warehouse.MappingNodeService;
-import org.tts.service.warehouse.OrganismService;
 
 /**
  * 

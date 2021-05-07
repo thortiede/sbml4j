@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.warehouse;
+package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.warehouse.MappingNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.warehouse.MappingNode;
 
 public interface MappingNodeRepository extends Neo4jRepository<MappingNode, Long> {
 

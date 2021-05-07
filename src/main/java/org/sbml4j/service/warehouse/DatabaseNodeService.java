@@ -11,16 +11,16 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.warehouse;
+package org.sbml4j.service.warehouse;
 
 import java.util.List;
 
+import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.repository.warehouse.DatabaseNodeRepository;
+import org.sbml4j.service.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.Organism;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.repository.warehouse.DatabaseNodeRepository;
-import org.tts.service.GraphBaseEntityService;
 
 /**
  * Service to handle creation and querying of <a href="#{@link}">{@link DatabaseNode}</a> entities

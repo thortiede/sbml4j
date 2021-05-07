@@ -11,15 +11,15 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.SimpleSBML;
+package org.sbml4j.service.SimpleSBML;
 
 import java.util.List;
 
+import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.repository.simpleModel.SBMLSimpleTransitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.Output.NonMetabolicPathwayReturnType;
-import org.tts.model.simple.SBMLSimpleTransition;
-import org.tts.repository.simpleModel.SBMLSimpleTransitionRepository;
 
 /**
  * Description

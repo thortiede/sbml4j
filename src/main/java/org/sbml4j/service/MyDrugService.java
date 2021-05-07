@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -25,19 +25,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sbml4j.Exception.NetworkAlreadyExistsException;
+import org.sbml4j.Exception.NetworkDeletionException;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.Exception.NetworkAlreadyExistsException;
-import org.tts.Exception.NetworkDeletionException;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.service.networks.NetworkService;
-import org.tts.service.warehouse.MappingNodeService;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;

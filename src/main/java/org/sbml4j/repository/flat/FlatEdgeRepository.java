@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.flat;
+package org.sbml4j.repository.flat;
 
 
 import java.util.List;
 
+import org.sbml4j.model.flat.FlatEdge;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.flat.FlatEdge;
 
 public interface FlatEdgeRepository extends Neo4jRepository<FlatEdge, Long> {
 

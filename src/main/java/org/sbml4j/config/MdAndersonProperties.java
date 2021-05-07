@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.config;
+package org.sbml4j.config;
 
 import java.util.List;
 

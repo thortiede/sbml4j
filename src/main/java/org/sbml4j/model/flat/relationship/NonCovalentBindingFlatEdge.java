@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.flat.relationship;
+package org.sbml4j.model.flat.relationship;
 
 import org.neo4j.ogm.annotation.RelationshipEntity;
-import org.tts.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatEdge;
 
 @RelationshipEntity(type="NONCOVALENTBINDING")
 public class NonCovalentBindingFlatEdge extends FlatEdge {

@@ -3,7 +3,7 @@
  * (https://openapi-generator.tech) (5.0.1). https://openapi-generator.tech Do
  * not edit the class manually.
  */
-package org.tts.api;
+package org.sbml4j.api;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +12,9 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.model.api.PathwayCollectionCreationItem;
+import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.WarehouseInventoryItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +26,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.NativeWebRequest;
-import org.tts.model.api.PathwayCollectionCreationItem;
-import org.tts.model.api.PathwayInventoryItem;
-import org.tts.model.api.WarehouseInventoryItem;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

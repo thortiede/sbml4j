@@ -11,20 +11,20 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts;
+package org.sbml4j;
 
+import org.sbml4j.config.DataSourceConfig;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
-import org.tts.config.DataSourceConfig;
 
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 @SpringBootApplication
 @EnableSwagger2
-@ComponentScan(basePackages = { "org.tts", "org.tts.api",
+@ComponentScan(basePackages = { "org.sbml4j", "org.sbml4j.api",
 		 "io.swagger.configuration"})
 public class Sbml4jApplication {
 	@Autowired

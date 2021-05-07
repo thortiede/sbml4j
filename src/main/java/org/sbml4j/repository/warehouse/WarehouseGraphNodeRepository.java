@@ -11,15 +11,15 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.warehouse;
+package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.GraphEnum.WarehouseGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.warehouse.WarehouseGraphNode;
 
 public interface WarehouseGraphNodeRepository extends Neo4jRepository<WarehouseGraphNode, Long> {
 

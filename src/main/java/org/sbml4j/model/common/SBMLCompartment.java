@@ -11,17 +11,17 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.common;
+package org.sbml4j.model.common;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.tts.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.DatabaseNode;
 
 /**
  * Class SBMLCompartment
  * Modeled after the Compartment class from the SBML Standard level-3 version-2
  * and modified to allow storage in a Graph database
  * 
- * This class is derived from {@link org.tts.model.common.SBMLSBaseEntity}
+ * This class is derived from {@link org.sbml4j.model.common.SBMLSBaseEntity}
  * The inherited attribute {@code sbaseId} is required for this class
  * 
  * The boolean attribute {@code constant} is required by the compartment entity in SBML

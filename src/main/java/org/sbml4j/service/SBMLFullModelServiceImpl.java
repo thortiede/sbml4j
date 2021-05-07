@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,40 +39,40 @@ import org.sbml.jsbml.ext.qual.QualModelPlugin;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
 import org.sbml.jsbml.ext.qual.Transition;
 import org.sbml.jsbml.xml.XMLNode;
+import org.sbml4j.model.common.BiomodelsQualifier;
+import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.common.HelperQualSpeciesReturn;
+import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.common.SBMLQualSpeciesGroup;
+import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.full.SBMLDocumentEntity;
+import org.sbml4j.model.full.SBMLModelEntity;
+import org.sbml4j.model.full.ext.SBMLModelExtension;
+import org.sbml4j.model.full.ext.SBMLSBaseExtension;
+import org.sbml4j.model.full.ext.qual.SBMLQualInput;
+import org.sbml4j.model.full.ext.qual.SBMLQualModelExtension;
+import org.sbml4j.model.full.ext.qual.SBMLQualOutput;
+import org.sbml4j.model.full.ext.qual.SBMLQualTransition;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
+import org.sbml4j.model.warehouse.FileNode;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.repository.common.ExternalResourceEntityRepository;
+import org.sbml4j.repository.common.GraphBaseEntityRepository;
+import org.sbml4j.repository.common.SBMLCompartmentalizedSBaseEntityRepository;
+import org.sbml4j.repository.common.SBMLQualSpeciesRepository;
+import org.sbml4j.repository.common.SBMLSBaseEntityRepository;
+import org.sbml4j.repository.common.SBMLSpeciesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.tts.model.common.BiomodelsQualifier;
-import org.tts.model.common.ExternalResourceEntity;
-import org.tts.model.common.HelperQualSpeciesReturn;
-import org.tts.model.common.SBMLCompartment;
-import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
-import org.tts.model.common.SBMLQualSpecies;
-import org.tts.model.common.SBMLQualSpeciesGroup;
-import org.tts.model.common.SBMLSBaseEntity;
-import org.tts.model.common.SBMLSpecies;
-import org.tts.model.full.SBMLDocumentEntity;
-import org.tts.model.full.SBMLModelEntity;
-import org.tts.model.full.ext.SBMLModelExtension;
-import org.tts.model.full.ext.SBMLSBaseExtension;
-import org.tts.model.full.ext.qual.SBMLQualInput;
-import org.tts.model.full.ext.qual.SBMLQualModelExtension;
-import org.tts.model.full.ext.qual.SBMLQualOutput;
-import org.tts.model.full.ext.qual.SBMLQualTransition;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphActivityNode;
-import org.tts.model.warehouse.FileNode;
-import org.tts.model.warehouse.PathwayNode;
-import org.tts.repository.common.BiomodelsQualifierRepository;
-import org.tts.repository.common.ExternalResourceEntityRepository;
-import org.tts.repository.common.GraphBaseEntityRepository;
-import org.tts.repository.common.SBMLCompartmentalizedSBaseEntityRepository;
-import org.tts.repository.common.SBMLQualSpeciesRepository;
-import org.tts.repository.common.SBMLSBaseEntityRepository;
-import org.tts.repository.common.SBMLSpeciesRepository;
 
 @Service
 public class SBMLFullModelServiceImpl implements SBMLService {

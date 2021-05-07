@@ -1,4 +1,4 @@
-package org.tts.config;
+package org.sbml4j.config;
 
 import java.util.List;
 

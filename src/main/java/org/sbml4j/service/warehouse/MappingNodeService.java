@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service.warehouse;
+package org.sbml4j.service.warehouse;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,21 +20,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sbml4j.model.api.AnnotationItem;
+import org.sbml4j.model.api.FilterOptions;
+import org.sbml4j.model.api.NetworkOptions;
+import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
+import org.sbml4j.model.provenance.ProvenanceGraphEdge;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.WarehouseGraphNode;
+import org.sbml4j.repository.warehouse.MappingNodeRepository;
+import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.UtilityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.api.AnnotationItem;
-import org.tts.model.api.FilterOptions;
-import org.tts.model.api.NetworkOptions;
-import org.tts.model.common.GraphEnum.NetworkMappingType;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
-import org.tts.model.provenance.ProvenanceGraphEdge;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.model.warehouse.WarehouseGraphNode;
-import org.tts.repository.warehouse.MappingNodeRepository;
-import org.tts.service.ConfigService;
-import org.tts.service.GraphBaseEntityService;
-import org.tts.service.UtilityService;
 
 /**
  * Service for handling requests to and from the MappingNodeRepository

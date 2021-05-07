@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.warehouse;
+package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
+import org.sbml4j.model.common.GraphEnum.FileNodeType;
+import org.sbml4j.model.warehouse.FileNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.GraphEnum.FileNodeType;
-import org.tts.model.warehouse.FileNode;
 
 public interface FileNodeRepository extends Neo4jRepository<FileNode, Long> {
 

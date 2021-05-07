@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.simpleModel;
+package org.sbml4j.repository.simpleModel;
 
+import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.api.Output.MetabolicPathwayReturnType;
-import org.tts.model.simple.SBMLSimpleReaction;
 
 
 public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimpleReaction, Long> {

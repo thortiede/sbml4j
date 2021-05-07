@@ -11,12 +11,12 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.flat;
+package org.sbml4j.model.flat;
 
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
-import org.tts.model.common.ContentGraphEdge;
+import org.sbml4j.model.common.ContentGraphEdge;
 
 @RelationshipEntity
 public class FlatEdge extends ContentGraphEdge {

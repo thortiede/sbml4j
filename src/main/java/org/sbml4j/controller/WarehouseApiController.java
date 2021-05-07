@@ -11,20 +11,20 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.controller;
+package org.sbml4j.controller;
 
 import java.util.UUID;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.api.WarehouseApi;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.service.warehouse.DatabaseNodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.tts.api.WarehouseApi;
-import org.tts.model.warehouse.DatabaseNode;
-import org.tts.service.warehouse.DatabaseNodeService;
 
 /**
  * Controller class handling requests on warehouse specific items (i.e. DatabaseNode)

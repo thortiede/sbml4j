@@ -11,13 +11,13 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.api.Output;
+package org.sbml4j.model.api.Output;
 
 import java.util.List;
 
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
 import org.springframework.data.neo4j.annotation.QueryResult;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
 
 @QueryResult
 public class ApocPathReturnType {

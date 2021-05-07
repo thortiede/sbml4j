@@ -1,18 +1,18 @@
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.sbml4j.Exception.UserUnauthorizedException;
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.Exception.UserUnauthorizedException;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.tts.model.provenance.ProvenanceEntity;
-import org.tts.model.provenance.ProvenanceGraphAgentNode;
 
 @Service
 public class ConfigService {

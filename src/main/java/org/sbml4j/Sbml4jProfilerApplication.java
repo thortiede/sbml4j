@@ -1,3 +1,4 @@
+package org.sbml4j;
 /**
  * --------------------------------------------------------------------------
  *                                 SBML4j
@@ -11,7 +12,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-//package org.tts;
+//package org.sbml4j;
 //
 //import java.util.List;
 //
@@ -25,14 +26,14 @@
 //import org.springframework.core.io.Resource;
 //import org.springframework.http.HttpStatus;
 //import org.springframework.http.ResponseEntity;
-//import org.tts.config.DataSourceConfig;
-//import org.tts.controller.WarehouseController;
-//import org.tts.model.api.Input.FilterOptions;
-//import org.tts.model.api.Output.NetworkInventoryItem;
-//import org.tts.model.api.Output.NetworkInventoryItemDetail;
-//import org.tts.model.api.Output.PathwayInventoryItem;
-//import org.tts.model.common.GraphEnum.MappingStep;
-//import org.tts.property.FileStorageProperties;
+//import org.sbml4j.config.DataSourceConfig;
+//import org.sbml4j.controller.WarehouseController;
+//import org.sbml4j.model.api.Input.FilterOptions;
+//import org.sbml4j.model.api.Output.NetworkInventoryItem;
+//import org.sbml4j.model.api.Output.NetworkInventoryItemDetail;
+//import org.sbml4j.model.api.Output.PathwayInventoryItem;
+//import org.sbml4j.model.common.GraphEnum.MappingStep;
+//import org.sbml4j.property.FileStorageProperties;
 //
 //@SpringBootApplication
 //@EnableConfigurationProperties({

@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,14 +23,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.Output.ApocPathReturnType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.Output.ApocPathReturnType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
 
 @Service
 public class GraphMLServiceImpl implements GraphMLService {

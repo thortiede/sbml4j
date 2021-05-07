@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
 import java.util.List;
 
+import org.sbml4j.model.common.SBMLSpecies;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
-import org.tts.model.common.SBMLSpecies;
 
 @Repository
 public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long> {

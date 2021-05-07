@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.provenance;
+package org.sbml4j.repository.provenance;
 
+import org.sbml4j.model.provenance.ProvenanceGraphEdge;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.provenance.ProvenanceGraphEdge;
 
 public interface ProvenanceGraphEdgeRepository extends Neo4jRepository<ProvenanceGraphEdge, Long> {
 

@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.List;
 
+import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.repository.common.ExternalResourceEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.model.common.ExternalResourceEntity;
-import org.tts.repository.common.ExternalResourceEntityRepository;
 
 @Service
 public class ExternalResourceEntityService {

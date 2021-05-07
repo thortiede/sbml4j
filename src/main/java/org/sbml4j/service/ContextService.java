@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.service;
+package org.sbml4j.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,18 +21,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.sbml4j.config.SBML4jConfig;
+import org.sbml4j.model.api.FilterOptions;
+import org.sbml4j.model.api.Output.ApocPathReturnType;
+import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.tts.config.SBML4jConfig;
-import org.tts.model.api.FilterOptions;
-import org.tts.model.api.Output.ApocPathReturnType;
-import org.tts.model.flat.FlatEdge;
-import org.tts.model.flat.FlatSpecies;
-import org.tts.model.warehouse.MappingNode;
-import org.tts.service.networks.NetworkService;
-import org.tts.service.warehouse.MappingNodeService;
 
 /**
  * Service for creating context networks for genes and geneSets

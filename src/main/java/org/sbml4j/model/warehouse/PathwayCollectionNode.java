@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.warehouse;
+package org.sbml4j.model.warehouse;
 
 public class PathwayCollectionNode extends WarehouseGraphNode {
 

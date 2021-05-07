@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.repository.common;
+package org.sbml4j.repository.common;
 
+import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
-import org.tts.model.common.SBMLCompartmentalizedSBaseEntity;
 
 public interface SBMLCompartmentalizedSBaseEntityRepository extends Neo4jRepository<SBMLCompartmentalizedSBaseEntity, Long> {
 

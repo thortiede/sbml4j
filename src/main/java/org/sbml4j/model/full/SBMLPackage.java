@@ -11,9 +11,9 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.full;
+package org.sbml4j.model.full;
 
-import org.tts.model.common.GraphBaseEntity;
+import org.sbml4j.model.common.GraphBaseEntity;
 
 public class SBMLPackage extends GraphBaseEntity {
 	

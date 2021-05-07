@@ -1,4 +1,4 @@
-/*package org.tts;
+/*package org.sbml4j;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

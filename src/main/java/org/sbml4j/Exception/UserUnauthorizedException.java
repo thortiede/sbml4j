@@ -1,4 +1,4 @@
-package org.tts.Exception;
+package org.sbml4j.Exception;
 
 public class UserUnauthorizedException extends Exception {
 

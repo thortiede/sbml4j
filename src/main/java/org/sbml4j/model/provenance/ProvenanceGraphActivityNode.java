@@ -11,10 +11,10 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.tts.model.provenance;
+package org.sbml4j.model.provenance;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.tts.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
 
 @NodeEntity("PROV_ACTIVITY")
 public class ProvenanceGraphActivityNode extends ProvenanceEntity{
