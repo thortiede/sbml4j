@@ -185,7 +185,7 @@
 	</Appenders>
 
 	<Loggers>
-		<Logger name="org.tts" level="info" additivity="false">
+		<Logger name="org.sbml4j" level="info" additivity="false">
 			<AppenderRef ref="applicationDebug" />
 			<AppenderRef ref="console" />
 			<AppenderRef ref="applicationInfo" />
