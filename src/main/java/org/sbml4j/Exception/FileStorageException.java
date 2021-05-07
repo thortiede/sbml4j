@@ -14,7 +14,12 @@
 package org.sbml4j.Exception;
 
 public class FileStorageException extends RuntimeException {
-    public FileStorageException(String message) {
+    /**
+	 * Generated serialVersionUID
+	 */
+	private static final long serialVersionUID = 2609579419694217225L;
+
+	public FileStorageException(String message) {
         super(message);
     }
 

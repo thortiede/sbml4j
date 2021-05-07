@@ -19,7 +19,12 @@ import org.springframework.http.HttpStatus;
 
 @ResponseStatus(HttpStatus.NOT_FOUND)
 public class MyFileNotFoundException extends RuntimeException {
-    public MyFileNotFoundException(String message) {
+    /**
+	 * Generated serialVersionUID
+	 */
+	private static final long serialVersionUID = -3166644880153207326L;
+
+	public MyFileNotFoundException(String message) {
         super(message);
     }
 
