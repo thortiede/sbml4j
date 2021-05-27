@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.tts</groupId>
+	<groupId>org.sbml4j</groupId>
 	<artifactId>sbml4j</artifactId>
 	<version>0.2.15</version>
 	<packaging>jar</packaging>
@@ -23,7 +23,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
+		<java.version>15</java.version>
 		<jsbml.version>1.4</jsbml.version>
 		<docker.image.prefix>thortiede</docker.image.prefix>
 		<springfox-version>3.0.0</springfox-version>

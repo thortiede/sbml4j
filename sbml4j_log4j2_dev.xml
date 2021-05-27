@@ -185,7 +185,7 @@
 	</Appenders>
 	
 	<Loggers>
-		<Logger name="org.tts" level="debug" additivity="true">
+		<Logger name="org.sbml4j" level="debug" additivity="true">
 			<AppenderRef ref="console" />
 		</Logger>
 
