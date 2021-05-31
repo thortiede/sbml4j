@@ -772,6 +772,13 @@ public class NetworkService {
 										boolean prefixName) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+		if(networkname == null && !prefixName) {
+			// we should not prefix the given name, but the given name is null (this happens when nothing is passed to an endpoint, as the default for prefixName is now false
+			// thus we use the prefixString that is passed in here (and was generated in code before)
+			// and prefix it on parent.getMappingName
+			prefixName = true;
+			networkname = "FLT_"+filterOptions.hashCode();
+		}
 		String newMappingName = buildMappingName(networkname, prefixName, parent.getMappingName());
 		// check if name already exists for user
 		// if user already exists AND a mapping with that name already exists, then error
