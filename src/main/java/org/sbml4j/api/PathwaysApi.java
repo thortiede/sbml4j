@@ -54,7 +54,7 @@ public interface PathwaysApi {
    */
   @ApiOperation(
       value = "Create a collectionPathway from the submitted pathways",
-      nickname = "createPathwayCollection", notes = "", response = UUID.class,
+      nickname = "createPathwayCollection", notes = "", response = String.class,
       tags =
           {
               "pathways",
@@ -63,13 +63,13 @@ public interface PathwaysApi {
                 {
                   @ApiResponse(code = 201,
                                message = "CollectionPathway created",
-                               response = UUID.class)
+                               response = String.class)
                   ,
                       @ApiResponse(code = 400, message = "Invalid input")
                 })
   @PostMapping(value = "/pathwayCollection", produces = {"application/json"},
                consumes = {"application/json"})
-  default ResponseEntity<UUID>
+  default ResponseEntity<String>
   createPathwayCollection(
       @ApiParam(
           value =
@@ -106,7 +106,7 @@ public interface PathwaysApi {
    */
   @ApiOperation(value = "List UUIDs of available pathways",
                 nickname = "listAllPathwayUUIDs", notes = "",
-                response = UUID.class, responseContainer = "List",
+                response = String.class, responseContainer = "List",
                 tags =
                     {
                         "pathways",
@@ -115,11 +115,11 @@ public interface PathwaysApi {
                 {
                   @ApiResponse(code = 400, message = "Bad Request")
                   , @ApiResponse(code = 200, message = "successful operation",
-                                 response = UUID.class,
+                                 response = String.class,
                                  responseContainer = "List")
                 })
   @GetMapping(value = "/pathwayUUIDs", produces = {"application/json"})
-  default ResponseEntity<List<UUID>>
+  default ResponseEntity<List<String>>
   listAllPathwayUUIDs(
       @ApiParam(
           value =

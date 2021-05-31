@@ -13,8 +13,6 @@
  */
 package org.sbml4j.controller;
 
-import java.util.UUID;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -48,14 +46,14 @@ public class WarehouseApiController implements WarehouseApi {
 	 * @return The UUID of the <a href="#{@link}">{@link DatabaseNode}</a>
 	 */
 	@Override
-	public ResponseEntity<UUID> getDatabaseUUID(@NotNull @Valid String organism, @NotNull @Valid String source,
+	public ResponseEntity<String> getDatabaseUUID(@NotNull @Valid String organism, @NotNull @Valid String source,
 		@NotNull @Valid String version) {
 
 		DatabaseNode database = this.databaseNodeService.getDatabaseNode(source, version, organism);
 		if (database != null) {
-			return new ResponseEntity<UUID>(UUID.fromString(database.getEntityUUID()), HttpStatus.OK);
+			return new ResponseEntity<String>(database.getEntityUUID(), HttpStatus.OK);
 		} else {
-			return new ResponseEntity<UUID>(HttpStatus.NOT_FOUND);
+			return new ResponseEntity<String>(HttpStatus.NOT_FOUND);
 		}
 	}
 }

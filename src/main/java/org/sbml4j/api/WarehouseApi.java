@@ -6,7 +6,6 @@
 package org.sbml4j.api;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -46,7 +45,7 @@ public interface WarehouseApi {
    */
   @ApiOperation(
       value = "Get the uuid of the databasenode for source with version",
-      nickname = "getDatabaseUUID", notes = "", response = UUID.class,
+      nickname = "getDatabaseUUID", notes = "", response = String.class,
       tags =
           {
               "warehouse",
@@ -54,7 +53,7 @@ public interface WarehouseApi {
   @ApiResponses(value =
                 {
                   @ApiResponse(code = 200, message = "successful operation",
-                               response = UUID.class)
+                               response = String.class)
                   ,
                       @ApiResponse(
                           code = 404,
@@ -62,7 +61,7 @@ public interface WarehouseApi {
                               "Database node for source and version found")
                 })
   @GetMapping(value = "/databaseUUID", produces = {"application/json"})
-  default ResponseEntity<UUID>
+  default ResponseEntity<String>
   getDatabaseUUID(
       @NotNull @ApiParam(value = "The three-letter organism code",
                          required = true) @Valid

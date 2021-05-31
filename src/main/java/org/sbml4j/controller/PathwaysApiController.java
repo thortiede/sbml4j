@@ -98,7 +98,7 @@ public class PathwaysApiController implements PathwaysApi {
 	 * @return The UUID of the created Pathway
 	 */
 	@Override
-	public ResponseEntity<UUID> createPathwayCollection(
+	public ResponseEntity<String> createPathwayCollection(
 			@Valid PathwayCollectionCreationItem pathwayCollectionCreationItem, String user) {
 		log.info("Serving POST /pathwayCollection" + (user != null ? " for user " + user : ""));
 		Map<String, Object> agentNodeProperties = new HashMap<>();
@@ -162,7 +162,7 @@ public class PathwaysApiController implements PathwaysApi {
 
 		pathwayNode = this.pathwayCollectionNodeService.buildPathwayFromCollection(
 				pathwayNode, pathwayCollectionNode, createKnowledgeGraphActivityNode, userAgentNode);
-		return new ResponseEntity<UUID>(UUID.fromString(pathwayNode.getEntityUUID()), HttpStatus.CREATED);
+		return new ResponseEntity<String>(pathwayNode.getEntityUUID(), HttpStatus.CREATED);
 	}
    
 	
@@ -189,15 +189,15 @@ public class PathwaysApiController implements PathwaysApi {
     * 
     * @param user The user for which the pathwayUUIDs are to be fetched
     * @param hideCollections Hide collection pathways from the output (true), or include them (false)
-    * @Return A List of UUIDs of <a href="#{@link}">{@link PathwayNode}</a> 
+    * @Return A List of UUID-Strings of <a href="#{@link}">{@link PathwayNode}</a> 
     */
 	@Override
-	public ResponseEntity<List<UUID>> listAllPathwayUUIDs(String user, @Valid Boolean hideCollections) {
+	public ResponseEntity<List<String>> listAllPathwayUUIDs(String user, @Valid Boolean hideCollections) {
 	   log.info("Serving POST /pathwayUUIDs" + (user != null ? " for user " + user : ""));
 	   // 0. Get list of users including the public user
 	   List<String> userList = this.configService.getUserList(user);
 	   
-	   return new ResponseEntity<List<UUID>>(this.pathwayService.getListofPathwayUUIDs(userList, hideCollections), HttpStatus.OK);
+	   return new ResponseEntity<List<String>>(this.pathwayService.getListofPathwayUUIDs(userList, hideCollections), HttpStatus.OK);
 	}
    
 	/**
