@@ -152,8 +152,8 @@ public class PathwayService {
 	 * @param hideCollections Do not include <a href="#{@link}">{@link PathwayCollectionNode}</a> entities (true), or include them (false)
 	 * @return List of UUIDs of Pathways associated with the user
 	 */
-	public List<UUID> getListofPathwayUUIDs(List<String> users, boolean hideCollections) {
-		List<UUID> uuids = new ArrayList<>();
+	public List<String> getListofPathwayUUIDs(List<String> users, boolean hideCollections) {
+		List<String> uuids = new ArrayList<>();
 		Iterable<PathwayNode> pathways;
 		for (String user : users) {
 			if(hideCollections) {
@@ -162,7 +162,7 @@ public class PathwayService {
 				pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
 			}
 			for (PathwayNode pathwayNode : pathways) {
-				uuids.add(UUID.fromString(pathwayNode.getEntityUUID()));
+				uuids.add(pathwayNode.getEntityUUID());
 			}
 		}
 		return uuids;
