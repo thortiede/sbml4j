@@ -70,7 +70,7 @@ public class DocumentationApiController implements DocumentationApi {
 	 * @return String containing the current version of SBML4j
 	 */
 	public ResponseEntity<String> getVersion() {
-		return new ResponseEntity<String>("0.2.15", HttpStatus.OK);
+		return new ResponseEntity<String>("0.2.16", HttpStatus.OK);
 	}
 	
 	/**

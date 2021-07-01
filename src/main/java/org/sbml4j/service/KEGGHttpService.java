@@ -34,11 +34,21 @@ public class KEGGHttpService {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
+	/**
+	 * Extract the KEGG specific identifier from a identifier.org resource uri that has to be known to be from KEGG
+	 * @param resource The uri-string to extract the identifier from
+	 * @return the KEGG identifier as String
+	 */
 	public String getKEGGIdentifier(String resource) {
 		String[] resourceParts =  resource.split("/");
 		return resource.split("/")[resourceParts.length - 1];
 	}
 	
+	/**
+	 * Query the KEGG REST API for the known Gene names for a given resource uri from identifiers.org that has to be known to be from KEGG
+	 * @param resource The uri-string to extract the names from
+	 * @return A {@link Set} of {@link String} containing all found gene names for a KEGG URL
+	 */
 	public Set<String> getGeneNamesFromKeggURL(String resource) {
 		Set<String> geneNames = new LinkedHashSet<>();
 		String[] resourceParts =  resource.split("/");
@@ -102,6 +112,12 @@ public class KEGGHttpService {
 		}
 	}
 
+	/**
+	 * Sets the primary name of a KEGG compound and more available properties found and returns a {@link List} with all found secondaryNames from the KEGG resource
+	 * @param resource The identifiers.org KEGG resource string to fetch the names from
+	 * @param entity The {@link ExternalResourceEntity} to ad the primaryName to
+	 * @return a {@link List} of {@link String} of known secondaryNames of the compound
+	 */
 	public List<String> setCompoundAnnotationFromResource(String resource, ExternalResourceEntity entity) {
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];
@@ -219,6 +235,12 @@ public class KEGGHttpService {
 		
 	}
 
+	/**
+	 * Query the KEGG REST API for information on the KEGG drug that is linked to in the provided resource url (identifiers.org that has to point to KEGG).
+	 * @param resource The identifiers.org resource url string pointing to the KEGG drug
+	 * @param entity The entity to add the information to
+	 * @return A {@link List} of {@link String} containing the known secondary Names of this Drug
+	 */
 	public List<String> getDrugInformationFromKEGGDrugURL(String resource, ExternalResourceEntity entity) {
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];

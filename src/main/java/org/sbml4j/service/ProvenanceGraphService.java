@@ -60,10 +60,12 @@ public class ProvenanceGraphService {
 	}
 	
 	/**
-	 * Creates a ProvenanceGraphAgentNode if it not already exists for that type and the given name
+	 * Creates a {@link ProvenanceGraphAgentNode} if it not already exists for that type and the given name
 	 * If it exists, it returns the existing node
+	 * Method is synchonized, only one thread at a time is allowed to access or create {@link ProvenanceGraphAgentNode}s
 	 * @param name The name of the agent
-	 * @param graphAgentType The ProvenanceGraphAgentType for the node to create
+	 * @param graphAgentType The {@link ProvenanceGraphAgentType} for the node to create
+	 * @return The {@link ProvenanceGraphAgentNode} that has been created or found
 	 */
 	public synchronized ProvenanceGraphAgentNode createProvenanceGraphAgentNode(String name, ProvenanceGraphAgentType graphAgentType) {
 					
@@ -96,9 +98,9 @@ public class ProvenanceGraphService {
 	}
 
 	/**
-	 * Creates a ProvenanceGraphActivityNode if not already present for Key: graphactivitytype and 
+	 * Creates a {@link ProvenanceGraphActivityNode} if not already present for Key: graphactivitytype and graphactivityName
+	 * Method is synchonized, only one thread at a time is allowed to access or create {@link ProvenanceGraphActivityNode}s
 	 * @param activityNodeProperties Properties map to be put in the provenance properties filed of the node
-	 * @param activityType the type of the activity from GraphEnum.ProvenanceGraphActivityType
 	 * @return the persisted node
 	 */
 	public synchronized ProvenanceGraphActivityNode createProvenanceGraphActivityNode(
@@ -152,6 +154,7 @@ public class ProvenanceGraphService {
 			ProvenanceGraphEdgeType edgetype) {
 		this.connect(source, this.getByEntityUUID(targetEntityUUID), edgetype);
 	}
+	
 	/**
 	 * connect two provenance entities. The entity is not returned. 
 	 * Should that be required in the future, it needs to be changed here
@@ -163,6 +166,7 @@ public class ProvenanceGraphService {
 			ProvenanceGraphEdgeType edgetype) {
 		this.connect(getByEntityUUID(sourceEntityUUID), target, edgetype);
 	}
+	
 	/**
 	 * connect two provenance entities. The entity is not returned. 
 	 * Should that be required in the future, it needs to be changed here
@@ -204,49 +208,88 @@ public class ProvenanceGraphService {
 	}
 	
 	/**
-	 * Find a ProvenanceGraphAgentNode for a ProvenanceGraphAgentType and a Name
-	 * @param type The ProvenanceGraphAgentType of the ProvenanceGraphAgentNode to find
-	 * @param name The name string of the ProvenanceGraphAgentNode to find
-	 * @return ProvenanceGraphAgentNode found for the input, or null otherwise
+	 * Find a {@link ProvenanceGraphAgentNode} for a {@link ProvenanceGraphAgentType} and a Name
+	 * @param type The {@link ProvenanceGraphAgentType} of the {@link ProvenanceGraphAgentNode} to find
+	 * @param name The name string of the {@link ProvenanceGraphAgentNode} to find
+	 * @return {@link ProvenanceGraphAgentNode} found for the input, or null otherwise
 	 */
 	public ProvenanceGraphAgentNode findProvenanceGraphAgentNode(ProvenanceGraphAgentType type, String name) {
 		return this.provenanceGraphAgentNodeRepository.findByGraphAgentTypeAndGraphAgentName(type, name);
 	}
 	
+	/**
+	 * Retrieve {@link ProvenanceEntity} with given UUID
+	 * @param entityUUID The {@link String} containing the UUID of the entity to find
+	 * @return The found {@link ProvenanceEntity} or null if not found
+	 */
 	public ProvenanceEntity getByEntityUUID(String entityUUID) {
 		return this.provenanceEntityRepository.findByEntityUUID(entityUUID);
 	}
 	
+	/**
+	 * Check whether two {@link ProvenanceEntity} are connected with a {@link ProvenanceGraphEdge} of type {@link ProvenanceGraphEdgeType}
+	 * @param sourceEntityUUID The {@link String} containing the UUID of the startNode of the {@link ProvenanceGraphEdge}
+	 * @param targetEntityUUID he {@link String} containing the UUID of the endNode of the {@link ProvenanceGraphEdge}
+	 * @param edgetype The {@link ProvenanceGraphEdgeType} of the edge to look for
+	 * @return true if the given Nodes are connected by this type of {@link ProvenanceGraphEdge}, false otherwise
+	 */
 	public boolean areProvenanceEntitiesConnectedWithProvenanceEdgeType(String sourceEntityUUID, String targetEntityUUID, ProvenanceGraphEdgeType edgetype) {
 		return this.provenanceEntityRepository.areProvenanceEntitiesConnectedWithProvenanceEdgeType(sourceEntityUUID, targetEntityUUID, edgetype);
 	}
 	
-
+	/**
+	 * Find a {@link ProvenanceEntity} that is the EndNode of a {@link ProvenanceGraphEdge}
+	 * of type {@link ProvenanceGraphEdgeType} where the StartNode is a {@link ProvenanceEntity} with the UUID provided
+	 * @param edgetype The {@link ProvenanceGraphEdgeType} of the edge to look for
+	 * @param startNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the StartNode of the Edge
+	 * @return The {@link ProvenanceEntity} that is the EndNode of the {@link ProvenanceGraphEdge}, or null if none was found
+	 */
 	public ProvenanceEntity findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID) {
 		return this.provenanceEntityRepository.findByProvenanceGraphEdgeTypeAndStartNode(edgetype, startNodeEntityUUID);
 	}
 	
+	/**
+	 * Find all {@link ProvenanceEntity}ies that are EndNodes of {@link ProvenanceGraphEdge}s
+	 * of type {@link ProvenanceGraphEdgeType} where the StartNode is a {@link ProvenanceEntity} with the UUID provided
+	 * @param edgetype The {@link ProvenanceGraphEdgeType} of the edge to look for
+	 * @param startNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the StartNode of the Edge
+	 * @return An {@link Iterable} of {@link ProvenanceEntity} that are the EndNodes of {@link ProvenanceGraphEdge}s, or null if none was found
+	 */
 	public Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID) {
 		return this.provenanceEntityRepository.findAllByProvenanceGraphEdgeTypeAndStartNode(edgetype, startNodeEntityUUID);
 	}
 	
+	/**
+	 * Find a {@link ProvenanceEntity} that is the StartNode of a {@link ProvenanceGraphEdge}
+	 * of type {@link ProvenanceGraphEdgeType} where the EndNode is a {@link ProvenanceEntity} with the UUID provided
+	 * @param edgetype The {@link ProvenanceGraphEdgeType} of the edge to look for
+	 * @param endNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the EndNode of the Edge
+	 * @return The {@link ProvenanceEntity} that is the StartNode of the {@link ProvenanceGraphEdge}, or null if none was found
+	 */
 	public ProvenanceEntity findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID) {
 		return this.provenanceEntityRepository.findByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);
 	}
 	
+	/**
+	 * Find all {@link ProvenanceEntity}ies that are StartNodes of {@link ProvenanceGraphEdge}s
+	 * of type {@link ProvenanceGraphEdgeType} where the EndNode is a {@link ProvenanceEntity} with the UUID provided
+	 * @param edgetype The {@link ProvenanceGraphEdgeType} of the edge to look for
+	 * @param endNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the EndNode of the Edge
+	 * @return An {@link Iterable} of {@link ProvenanceEntity} that are the StartNodes of {@link ProvenanceGraphEdge}s, or null if none was found
+	 */
 	public Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID) {
 		return this.provenanceEntityRepository.findAllByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);
 	}
 
+	/**
+	 * Delete the {@link ProvenanceEntity} given
+	 * @param entity The {@link ProvenanceEntity} to be deleted
+	 */
 	public void deleteProvenanceEntity(ProvenanceEntity entity) {
 		this.provenanceEntityRepository.delete(entity);	
 	}
-
-	
-	
-	
 }

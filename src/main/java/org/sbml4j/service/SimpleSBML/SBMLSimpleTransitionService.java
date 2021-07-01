@@ -16,6 +16,7 @@ package org.sbml4j.service.SimpleSBML;
 import java.util.List;
 
 import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.common.GraphBaseEntity;
 import org.sbml4j.model.simple.SBMLSimpleTransition;
 import org.sbml4j.repository.simpleModel.SBMLSimpleTransitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,7 @@ public class SBMLSimpleTransitionService {
 	 * @param pathwayEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>
 	 * @return Iterable of <a href="#{@link}">{@link SBMLSimpleTransition}</a> that were found for the given pathway
 	 */
+	@Deprecated
 	public Iterable<SBMLSimpleTransition> findMatchingTransitionsInPathway(
 												String pathwayEntityUUID, 
 												List<String> transitionSBOTerms, 
@@ -76,5 +78,15 @@ public class SBMLSimpleTransitionService {
 												List<String> transitionSBOTerms, 
 												List<String> nodeSBOTerms) {
 		return this.sbmlSimpleTransitionRepository.findMatchingPathsInPathway(pathwayEntityUUID, transitionSBOTerms, nodeSBOTerms);
+	}
+	
+	/**
+	 * Save the provided {@link SBMLSimpleTransition} and all {@link GraphBaseEntity} connected to it to the provided depth
+	 * @param species The {@link Iterable} of {@link SBMLQualSpecies} to be persisted
+	 * @param depth The number of relationships to traverse to collect {@link GraphBaseEntity} to persist alongside
+	 * @return The {@link Iterable} of the persisted {@link SBMLSimpleTransition} from the database
+	 */
+	public SBMLSimpleTransition save(SBMLSimpleTransition transition, int depth) {
+		return this.sbmlSimpleTransitionRepository.save(transition, depth);
 	}
 }

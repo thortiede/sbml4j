@@ -25,8 +25,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
-import javax.validation.Valid;
-
 import org.neo4j.ogm.session.Session;
 import org.sbml4j.Exception.AnnotationException;
 import org.sbml4j.Exception.NetworkAlreadyExistsException;
@@ -936,39 +934,6 @@ public class NetworkService {
 	}
 	
 	/**
-	 * Retrieve the entityUUIDs of a <a href="#{@link}">{@link FlatSpecies}</a> for a symbol.
-	 * Searches the nodeSymbol in the Network given. If not found directly, searches the full model
-	 * for occurrences of this symbol and finds the <a href="#{@link}">{@link FlatSpecies}</a> 
-	 * that is derived from it. The symbol on the <a href="#{@link}">{@link FlatSpecies}</a> might differ,
-	 * but it is guaranteed, that the <a href="#{@link}">{@link FlatSpecies}</a> - entityUUID returned
-	 * is derived from a <a href="#{@link}">{@link SBMLSpecies}</a> that has that symbol connected to it 
-	 * through a <a href="#{@link}">{@link BiomodelsQualifier}</a> relationship.
-	 * 
-	 * @param networkEntityUUID The entityUUID of the network to search in
-	 * @param nodeSymbol The symbol to find
-	 * @return List of entityUUID of <a href="#{@link}">{@link FlatSpecies}</a> for this symbol
-	 */
-	@Deprecated
-	public List<String> getFlatSpeciesEntityUUIDOfSymbolInNetwork(String networkEntityUUID, String nodeSymbol) {
-		List<String> foundEntityUUIDs= new ArrayList<>();
-		// 0. Check whether we have that geneSymbol directly in the network
-		String flatSpeciesEntityUUID = this.findEntityUUIDForSymbolInNetwork(networkEntityUUID, nodeSymbol);
-		if (flatSpeciesEntityUUID == null) {
-			// could not find the symbol, check secondary names
-			List<FlatSpecies> secondaryNameFlatSpecies = this.flatSpeciesService.findAllBySecondaryName(networkEntityUUID, nodeSymbol);
-			if (secondaryNameFlatSpecies != null && !secondaryNameFlatSpecies.isEmpty()) {
-				secondaryNameFlatSpecies.forEach(f -> foundEntityUUIDs.add(f.getEntityUUID()));
-				return foundEntityUUIDs;
-			} else {
-				return null;
-			}
-		} else {
-			foundEntityUUIDs.add(flatSpeciesEntityUUID);
-			return foundEntityUUIDs;
-		}
-	}
-	
-	/**
 	 * Retrieve <a href="#{@link}">{@link FlatSpecies}</a> entities for a symbol.
 	 * Searches the nodeSymbol in the Network given. If not found directly, searches the full model
 	 * for occurrences of this symbol and finds the <a href="#{@link}">{@link FlatSpecies}</a> 
@@ -1000,7 +965,6 @@ public class NetworkService {
 				return null;
 			}
 		}
-		
 	}
 	
 	/**
@@ -1189,6 +1153,11 @@ public class NetworkService {
 		return getNetworkIventoryItem(mapping);
 	}
 
+	
+	/**
+	 * Recalculate the metadata-annotations of a <a href="#{@link}">{@link MappingNode}</a>
+	 * @param mappingNodeForFlatEdges The <a href="#{@link}">{@link MappingNode}</a> to update
+	 */
 	public void updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
 		// updateMappingNode
 		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
@@ -1256,8 +1225,7 @@ public class NetworkService {
 			}
 		}
 	}
-	
-	
+		
 	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> mapping
 	 * 
@@ -1297,23 +1265,6 @@ public class NetworkService {
 					+ ") could not deliver number of nodes or relations due to:" + e.toString());
 		}
 		
-		/*
-		 * // add link to network retrieval String user = ((ProvenanceGraphAgentNode)
-		 * this.provenanceGraphService .findByProvenanceGraphEdgeTypeAndStartNode(
-		 * ProvenanceGraphEdgeType.wasAttributedTo, mapping.getEntityUUID()))
-		 * .getGraphAgentName();
-		 * item.add(linkTo(methodOn(WarehouseController.class).getNetwork(user,
-		 * item.getUUID().toString(), false))
-		 * .withRel("Retrieve Network contents as GraphML"));
-		 * 
-		 * // add link to the item FilterOptions
-		 * item.add(linkTo(methodOn(WarehouseController.class).getNetworkFilterOptions(
-		 * item.getUUID().toString())) .withRel("FilterOptions"));
-		 * 
-		 * // add link to deleting the item (setting isactive = false
-		 * item.add(linkTo(methodOn(WarehouseController.class).deactivateNetwork(item.
-		 * getUUID().toString())) .withRel("Delete Mapping").withType("DELETE"));
-		 */
 		return item;
 	}
 	

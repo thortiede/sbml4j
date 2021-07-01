@@ -13,6 +13,7 @@
  */
 package org.sbml4j.service;
 
+import org.sbml4j.model.common.ExternalResourceEntity;
 import org.sbml4j.model.common.NameNode;
 import org.sbml4j.repository.common.NameNodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +25,20 @@ public class NameNodeService {
 	@Autowired
 	private NameNodeRepository nameNodeRepository;
 
+	/**
+	 * Query the database for {@link NameNode}s with the name 'name'
+	 * @param name The name to find
+	 * @return {@link NameNode} with given name
+	 */
 	public NameNode findByName(String name) { 
 		return this.nameNodeRepository.findByName(name);
 	}
 
+	/**
+	 * Find all {@link NameNode}s that are connected to the {@link ExternalResourceEntity} given by the UUID
+	 * @param externalResourceEntityUUID The UUID as {@link String} of the {@link ExternalResourceEntity}
+	 * @return {@link Iterable} if {@link NameNode} containing all found {@link NameNode}s connected to the {@link ExternalResourceEntity}
+	 */
 	public Iterable<NameNode> findAllByExternalResource(String externalResourceEntityUUID) {
 		return this.nameNodeRepository.findAllByExternalResource(externalResourceEntityUUID);
 	}

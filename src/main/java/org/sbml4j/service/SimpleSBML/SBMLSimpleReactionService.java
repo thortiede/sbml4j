@@ -14,6 +14,8 @@
 package org.sbml4j.service.SimpleSBML;
 
 import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
+import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.simple.SBMLSimpleReaction;
 import org.sbml4j.repository.simpleModel.SBMLSimpleReactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,6 +48,16 @@ public class SBMLSimpleReactionService {
 	 */
 	public Iterable<MetabolicPathwayReturnType> findAllSpeciesForReaction(String reactionEntityUUID) {
 		return this.sbmlSimpleReactionRepository.findAllSpeciesForReaction(reactionEntityUUID);
+	}
+	
+	/**
+	 * Save an {@link SBMLSimpleReaction} and all {@link GraphBaseEntity} connected to it up to the provided depth
+	 * @param reaction The {@link SBMLSimpleReaction} to persist
+	 * @param depth The number of relationships to traverse to find {@link GraphBaseEntity} to persist along this {@link SBMLSimpleReaction}
+	 * @return The {@link SBMLSimpleReaction} as persisted in the database.
+	 */
+	public SBMLSimpleReaction save(SBMLSimpleReaction reaction, int depth) {
+		return this.sbmlSimpleReactionRepository.save(reaction, depth);
 	}
 	
 }

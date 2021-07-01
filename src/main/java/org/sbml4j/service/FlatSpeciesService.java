@@ -100,20 +100,6 @@ public class FlatSpeciesService {
 		return this.flatSpeciesRepository.findEntityUUIDForSymbolInNetwork(networkEntityUUID.toString(), geneSymbol);
 	}
 
-	/*public FlatSpecies findBySimpleModelEntityUUID(String baseNetworkUUID, String simpleModelGeneEntityUUID) {
-		return this.flatSpeciesRepository.findBySimpleModelEntityUUID(simpleModelGeneEntityUUID, baseNetworkUUID);
-	}*/
-	
-	/**
-	 * Persist a List of <a href="#{@link}">{@link FlatSpecies}</a>
-	 * @param flatSpeciesList The List of <a href="#{@link}">{@link FlatSpecies}</a> to persist
-	 * @return An Iterable of the persisted <a href="#{@link}">{@link FlatSpecies}</a> entities
-	 */
-	@Deprecated
-	public Iterable<FlatSpecies> persistListOfFlatSpecies(List<FlatSpecies> flatSpeciesList) {
-		return this.flatSpeciesRepository.save(flatSpeciesList, 1);
-	}
-	
 	/**
 	 * Save a collection of <a href="#{@link}">{@link FlatSpecies}</a>
 	 * @param entities Iterable of <a href="#{@link}">{@link FlatSpecies}</a> to persist

@@ -25,6 +25,7 @@ import org.sbml4j.repository.apoc.ApocRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+
 /**
  * Service for handling APOC plugin query requests
  * @author Thorsten Tiede
@@ -105,6 +106,14 @@ public class ApocService {
 		}
 		return flatEdgeList;
 	}
+	
+	/**
+	 * Build an APOC compliant String for use in APOC methods defining nodes to be traversed containing the given Node Types
+	 * For the String given in terminateAt a '/' will be appended if the network contains this specific nodeType 
+	 * @param nodeTypes The nodeTypes to include in the String
+	 * @param terminateAt The nodeType that should be used as termination nodeType
+	 * @return String to be used as node filter type in APOC methods
+	 */
 	public String getNodeOrString(Iterable<String> nodeTypes, String terminateAt) {
 		StringBuilder sb = new StringBuilder();
 		for (String nodeType : nodeTypes) {
@@ -118,7 +127,13 @@ public class ApocService {
 		return sb.toString();
 	}
 	
-
+	/**
+	 * Build an APOC compliant String for use in APOC methods defining relationships to be traversed
+	 * @param relationshipTypes The types of relationships to be included in the String
+	 * @param exclude A set of relationTypes to be excluded
+	 * @param direction The allowed direction of the relations
+	 * @return String to be used as relationship filter type in APOC methods
+	 */
 	public String getRelationShipOrString(Iterable<String> relationshipTypes, Set<String> exclude, String direction) {
 		StringBuilder sb = new StringBuilder();
 		boolean isFirst = true;
@@ -127,12 +142,12 @@ public class ApocService {
 				sb.append("|");
 			}
 			if (!exclude.contains(relationType)) {
-				if(direction.equals("upstream")) {
+				if(direction.equals("upstream") || direction.equals("both")) {
 					sb.append("<");
 				}
 				isFirst = false;
 				sb.append(relationType);
-				if(direction.equals("downstream")) {
+				if(direction.equals("downstream") || direction.equals("both")) {
 					sb.append(">");
 				}	
 			}

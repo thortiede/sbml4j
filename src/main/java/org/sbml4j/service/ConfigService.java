@@ -43,6 +43,14 @@ public class ConfigService {
 		
 	}
 	
+	/**
+	 * Get the user that is attributed to the Network with the given uuid-String.
+	 * Returns the provided user if it is associated with the network, or the public user otherwise
+	 * @param uuid The UUID of the network to check
+	 * @param user The UUID that needs to be checked as the attributed User
+	 * @return The name of the provided user, if it it is associated to the network, or the public user if the network is associated to the public user
+	 * @throws UserUnauthorizedException If neither the provided user, nor the public user are associated to the network with the provided uuid
+	 */
 	public String getUserNameAttributedToNetwork(String uuid, String user) throws UserUnauthorizedException {
 		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
 		if (publicUser == null || publicUser.isEmpty() || publicUser.isBlank()) {
@@ -73,6 +81,11 @@ public class ConfigService {
 													: "Network with uuid " +uuid + " not accesible for public user");
 	}
 	
+	/**
+	 * Check if the provided user is the configured public user
+	 * @param user The user to check
+	 * @return true if the provided user is the public user, false otherwise
+	 */
 	public boolean isPublicUser(String user) {
 		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
 	
@@ -81,26 +94,12 @@ public class ConfigService {
 		} else {
 			return false;
 		}
-	
 	}
 	
-	public boolean isAllowedToDeletePublicNetwork(String user) {
-		return this.isPublicUser(user) && this.sbml4jConfig.getNetworkConfigProperties().isForceDeleteOfPublicNetwork();
-	}
-	
-	public Integer getContextMinSize() {
-		return this.sbml4jConfig.getContextConfigProperties().getMinSize();
-	}
-	public Integer getContextMaxSize() {
-		return this.sbml4jConfig.getContextConfigProperties().getMaxSize();
-	}
-	public String getContextDirection() {
-		return this.sbml4jConfig.getContextConfigProperties().getDirection();
-	}
-	public String getContextTerminateAt() {
-		return this.sbml4jConfig.getContextConfigProperties().getTerminateAt();
-	}
-	
+	/**
+	 * Check the value of the Network config option publicUser and return it
+	 * @return the configured public user, will return Null if no public user is set.
+	 */
 	public String getPublicUser() {
 		String publicUser = this.sbml4jConfig.getNetworkConfigProperties().getPublicUser();
 		if (publicUser == null) {
@@ -108,29 +107,87 @@ public class ConfigService {
 		}
 		return publicUser;
 	}
-
+	
+	/**
+	 * Check if the provided user is the public user and if the configuration is set to delete public networks
+	 * @param user The user to check
+	 * @return true if the provided user is the public user and if the forceDeleteOfPublicNetworks config property is set to True, false otherwise
+	 */
+	public boolean isAllowedToDeletePublicNetwork(String user) {
+		return this.isPublicUser(user) && this.sbml4jConfig.getNetworkConfigProperties().isForceDeleteOfPublicNetwork();
+	}
+	
+	/**
+	 * Check the value of the configured context-option: minSize and return it
+	 * @return the value of the configured context-option: minSize
+	 */
+	public Integer getContextMinSize() {
+		return this.sbml4jConfig.getContextConfigProperties().getMinSize();
+	}
+	
+	/**
+	 * Check the value of the configured context-option: maxSize and return it
+	 * @return the value of the configured context-option: maxSize
+	 */
+	public Integer getContextMaxSize() {
+		return this.sbml4jConfig.getContextConfigProperties().getMaxSize();
+	}
+	/**
+	 * Check the value of the configured context-option: direction and return it
+	 * @return the value of the configured context-option: direction
+	 */
+	public String getContextDirection() {
+		return this.sbml4jConfig.getContextConfigProperties().getDirection();
+	}
+	/**
+	 * Check the value of the configured context-option: terminateAt and return it
+	 * @return the value of the configured context-option: terminateAt
+	 */
+	public String getContextTerminateAt() {
+		return this.sbml4jConfig.getContextConfigProperties().getTerminateAt();
+	}
+	
+	/**
+	 * Check the value of the configured network-option: allow-inactive-duplicates and return it
+	 * @return the value of the configured network-option: allow-inactive-duplicates
+	 */
 	public boolean isAllowInactiveDuplicates() {
 		return this.sbml4jConfig.getNetworkConfigProperties().isAllowInactiveDuplicates();
 	}
-	
+	/**
+	 * Check the value of the configured network-option: hard-delete and return it
+	 * @return the value of the configured network-option: hard-delete
+	 */
 	public boolean isHardDeleteNetwork() {
 		return this.sbml4jConfig.getNetworkConfigProperties().isHardDelete();
 	}
-	
+	/**
+	 * Check the value of the configured network-option: delete-existing and return it
+	 * @return the value of the configured network-option: delete-existing
+	 */
 	public boolean isDeleteExistingNetwork() {
 		return this.sbml4jConfig.getNetworkConfigProperties().isDeleteExisting();
 	}
-	
+	/**
+	 * Check the value of the configured network-option: delete-derived and return it
+	 * @return the value of the configured network-option: delete-derived
+	 */
 	public boolean isDeleteDerivedNetworks() {
 		return this.sbml4jConfig.getNetworkConfigProperties().isDeleteDerived();
 	}
-	
-	
-	
+	/**
+	 * Check if the provided symbol is contained in the configured externalresources.mdanderson-option: genelist
+	 * @param symbol The symbol to check
+	 * @return true if the symbol is in the geneList, false otherwise
+	 */
 	public boolean isSymbolInMDAnderson(String symbol) {
 		return this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getGenelist().contains(symbol);
 	}
 	
+	/**
+	 * Check if the config option externalresources.mdanderson.add-md-anderson-annotation is set to true or false or not set
+	 * @return true if the option is set to true, false otherwise
+	 */
 	public boolean isAddMDAnderson() {
 		return this.sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().isAddMdAndersonAnnotation();
 	}
@@ -182,6 +239,10 @@ public class ConfigService {
 	 * {@link GeneralConfigProperties}
 	 */
 	
+	/**
+	 * Find the config-option: general.api-documentation-url
+	 * @return the configured url
+	 */
 	public String getApi_documentation_url() {
 		return this.sbml4jConfig.getGeneralConfigProperties().getApi_documentation_url();
 	}

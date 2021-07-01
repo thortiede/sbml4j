@@ -45,4 +45,15 @@ public class ExternalResourceEntityService {
 		return this.externalResourceEntityRepository.findAllByUri(listOfUris);
 	}
 	
+	/**
+	 * Save the provided {@link ExternalResourceEntity} and all connected entities up to the depth provided
+	 * @param externalResourceEntity The {@link ExternalResourceEntity} to save
+	 * @param depth The depth to which connected enities are persisted
+	 * @return The persisted Version of the {@link ExternalResourceEntity}
+	 */
+	public ExternalResourceEntity save(ExternalResourceEntity externalResourceEntity, int depth) {
+		return this.externalResourceEntityRepository.save(externalResourceEntity, depth);
+	}
+	
+	
 }

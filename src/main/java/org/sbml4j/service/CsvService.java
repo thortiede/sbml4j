@@ -34,6 +34,12 @@ public class CsvService implements RowProcessor {
 	
 	private boolean isMatchingRowDetermined = false;
 	
+	/**
+	 * Read the contents of the provided file into a HashMap
+	 * @param file The File to read
+	 * @return The HashMap containing the data mapped to the configured matching column
+	 * @throws IOException When the file is not readable
+	 */
 	public Map<String, List< Map<String, String> > > parseCsv(MultipartFile file) throws IOException {
 		// TODO:Funnel in the column number that holds the matching gene symbol
 		// Then use it in rowProcessed to match the correct column instead of 0
@@ -62,10 +68,7 @@ public class CsvService implements RowProcessor {
 		
 	}
 	
-	private Reader getReader(MultipartFile file) throws IOException {
-		return new InputStreamReader(file.getInputStream());
-	}
-
+	
 	@Override
 	public void processStarted(ParsingContext context) {
 		logger.debug("Reached processStarted");
@@ -118,4 +121,9 @@ public class CsvService implements RowProcessor {
 		logger.debug("Reached processEnded");
 				
 	}
+	
+	private Reader getReader(MultipartFile file) throws IOException {
+		return new InputStreamReader(file.getInputStream());
+	}
+
 }

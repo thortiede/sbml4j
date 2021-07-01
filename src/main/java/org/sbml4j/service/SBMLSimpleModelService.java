@@ -47,6 +47,9 @@ import org.sbml4j.Exception.ModelPersistenceException;
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.common.BiomodelsQualifier;
 import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.common.NameNode;
 import org.sbml4j.model.common.SBMLCompartment;
 import org.sbml4j.model.common.SBMLQualSpecies;
@@ -54,9 +57,6 @@ import org.sbml4j.model.common.SBMLQualSpeciesGroup;
 import org.sbml4j.model.common.SBMLSBaseEntity;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.common.SBMLSpeciesGroup;
-import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
-import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.simple.SBMLSimpleReaction;
@@ -65,13 +65,11 @@ import org.sbml4j.model.warehouse.DatabaseNode;
 import org.sbml4j.model.warehouse.FileNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.common.BiomodelsQualifierRepository;
-import org.sbml4j.repository.common.ExternalResourceEntityRepository;
-import org.sbml4j.repository.common.GraphBaseEntityRepository;
-import org.sbml4j.repository.common.SBMLQualSpeciesRepository;
-import org.sbml4j.repository.common.SBMLSBaseEntityRepository;
-import org.sbml4j.repository.common.SBMLSpeciesRepository;
-import org.sbml4j.repository.simpleModel.SBMLSimpleReactionRepository;
-import org.sbml4j.repository.simpleModel.SBMLSimpleTransitionRepository;
+import org.sbml4j.service.SimpleSBML.SBMLCompartmentService;
+import org.sbml4j.service.SimpleSBML.SBMLQualSpeciesService;
+import org.sbml4j.service.SimpleSBML.SBMLSBaseEntityService;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,12 +82,45 @@ import org.springframework.web.multipart.MultipartFile;
 public class SBMLSimpleModelService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+	@Autowired
+	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	@Autowired
+	ExternalResourceEntityService externalResourceEntityService;
 	
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
 	
 	@Autowired
+	KEGGHttpService keggHttpService;
+	
+	@Autowired
+	ProvenanceGraphService provenanceGraphService;
+	
+	@Autowired
+	NameNodeService nameNodeService;
+	
+	@Autowired
+	SBMLCompartmentService sbmlCompartmentService;
+	
+	@Autowired
 	SBMLSpeciesService sbmlSpeciesService;
+	
+	@Autowired
+	SBMLSBaseEntityService sbmlSBaseEntityService;
+	
+	@Autowired
+	SBMLSimpleReactionService sbmlSimpleReactionService;
+	
+	@Autowired
+	SBMLSimpleTransitionService sbmlSimpleTransitionService;
+	
+	@Autowired
+	SBMLQualSpeciesService sbmlQualSpeciesService;
+
+	@Autowired
+	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
 	
 	@Autowired
 	WarehouseGraphService warehouseGraphService;
@@ -97,53 +128,13 @@ public class SBMLSimpleModelService {
 	@Autowired
 	Session session;
 	
-	SBMLSpeciesRepository sbmlSpeciesRepository;
-	SBMLSimpleReactionRepository sbmlSimpleReactionRepository;
-	SBMLSBaseEntityRepository sbmlSBaseEntityRepository;
-	SBMLQualSpeciesRepository sbmlQualSpeciesRepository;
-	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
-	ExternalResourceEntityRepository externalResourceEntityRepository;
-	BiomodelsQualifierRepository biomodelsQualifierRepository;
-	GraphBaseEntityRepository graphBaseEntityRepository;
-	KEGGHttpService keggHttpService;
-	SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl;
-	ProvenanceGraphService provenanceGraphService;
+	@Autowired
 	UtilityService utilityService;
-	NameNodeService nameNodeService;
+
+	@Autowired
 	SBML4jConfig sbml4jConfig;
 	
 	int SAVE_DEPTH = 1;
-
-	@Autowired
-	public SBMLSimpleModelService(SBMLSpeciesRepository sbmlSpeciesRepository,
-			SBMLSimpleReactionRepository sbmlSimpleReactionRepository,
-			SBMLSBaseEntityRepository sbmlSBaseEntityRepository, SBMLQualSpeciesRepository sbmlQualSpeciesRepository,
-			SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository,
-			ExternalResourceEntityRepository externalResourceEntityRepository,
-			BiomodelsQualifierRepository biomodelsQualifierRepository,
-			GraphBaseEntityRepository graphBaseEntityRepository,
-			KEGGHttpService keggHttpService,
-			SBMLSimpleModelUtilityServiceImpl sbmlSimpleModelUtilityServiceImpl,
-			ProvenanceGraphService provenanceGraphService,
-			UtilityService utilityService,
-			NameNodeService nameNodeService,
-			SBML4jConfig sbml4jConfig) {
-		super();
-		this.sbmlSpeciesRepository = sbmlSpeciesRepository;
-		this.sbmlSimpleReactionRepository = sbmlSimpleReactionRepository;
-		this.sbmlSBaseEntityRepository = sbmlSBaseEntityRepository;
-		this.sbmlQualSpeciesRepository = sbmlQualSpeciesRepository;
-		this.sbmlSimpleTransitionRepository = sbmlSimpleTransitionRepository;
-		this.externalResourceEntityRepository = externalResourceEntityRepository;
-		this.biomodelsQualifierRepository = biomodelsQualifierRepository;
-		this.graphBaseEntityRepository = graphBaseEntityRepository;
-		this.keggHttpService = keggHttpService;
-		this.sbmlSimpleModelUtilityServiceImpl = sbmlSimpleModelUtilityServiceImpl;
-		this.provenanceGraphService = provenanceGraphService;
-		this.utilityService = utilityService;
-		this.nameNodeService = nameNodeService;
-		this.sbml4jConfig = sbml4jConfig;
-	}
 
 	private List<SBMLCompartment> getCompartmentList(Model model, ProvenanceGraphActivityNode persistActivity, DatabaseNode database) {
 		List<SBMLCompartment> sbmlCompartmentList = new ArrayList<>();
@@ -153,12 +144,11 @@ public class SBMLSimpleModelService {
 			//spatialDimensions, size, constant, sBaseName, sBaseId
 			try {
 				boolean foundCompartment = false;
-				for (SBMLSBaseEntity existingSBase : this.sbmlSBaseEntityRepository.findBysBaseId(compartment.getId(), 0)) {
-					SBMLCompartment existingCompartment = (SBMLCompartment) existingSBase;
+				for (SBMLCompartment existingCompartment : this.sbmlCompartmentService.findBysBaseId(compartment.getId(), 0)) {
 					if (existingCompartment != null 
 							&& existingCompartment.getDatabase().equals(database)) {
 						// is the compartment with the same sBaseId from the same database?
-						sbmlCompartmentList.add((SBMLCompartment)existingCompartment);
+						sbmlCompartmentList.add(existingCompartment);
 						this.provenanceGraphService.connect(persistActivity, existingCompartment, ProvenanceGraphEdgeType.used);
 						foundCompartment = true;
 						break;
@@ -178,14 +168,10 @@ public class SBMLSimpleModelService {
 					this.graphBaseEntityService.setGraphBaseEntityProperties(sbmlCompartment);
 					this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(compartment, sbmlCompartment);
 					this.sbmlSimpleModelUtilityServiceImpl.setCompartmentProperties(compartment, sbmlCompartment, database);
-					sbmlCompartment = this.sbmlSBaseEntityRepository.save(sbmlCompartment, SAVE_DEPTH);
+					sbmlCompartment = this.sbmlCompartmentService.save(sbmlCompartment, SAVE_DEPTH);
 					sbmlCompartmentList.add(sbmlCompartment);
 					this.provenanceGraphService.connect(sbmlCompartment, persistActivity, ProvenanceGraphEdgeType.wasGeneratedBy);
 				}
-			} catch (ClassCastException e) {	
-				e.printStackTrace();
-				logger.info("Entity with sBaseId " + compartment.getId() + " is not of type SBMLCompartment! Aborting...");
-				return null; // need to find better error handling way..
 			} catch (IncorrectResultSizeDataAccessException e) {
 				e.printStackTrace();
 				logger.info("Entity with sBaseId " + compartment.getId() + " was found multiple times");
@@ -351,7 +337,7 @@ public class SBMLSimpleModelService {
 
 	
 	private ExternalResourceEntity createExternalResourceEntityFromResource(String resource) {
-		ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
+		ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityService.findByUri(resource);
 		if(existingExternalResourceEntity != null) {
 			return existingExternalResourceEntity;
 		} else {
@@ -466,10 +452,10 @@ public class SBMLSimpleModelService {
 			}
 			
 			// annotations
-			SBMLSimpleReaction persistedSimpleReaction = this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH);
+			SBMLSimpleReaction persistedSimpleReaction = this.sbmlSimpleReactionService.save(newReaction, SAVE_DEPTH);
 			persistedSimpleReaction.setCvTermList(reaction.getCVTerms());
 			newReaction = (SBMLSimpleReaction) buildAndPersistExternalResourcesForSBaseEntity(persistedSimpleReaction, activityNode);
-			sbmlSimpleReactionList.add(this.sbmlSimpleReactionRepository.save(newReaction, SAVE_DEPTH));
+			sbmlSimpleReactionList.add(this.sbmlSimpleReactionService.save(newReaction, SAVE_DEPTH));
 		}
 		
 		
@@ -522,7 +508,7 @@ public class SBMLSimpleModelService {
 			newSimpleTransition.setTransitionId(newTransitionId);
 			newSimpleTransition.setInputSpecies(inputQualSpeciesList); // not sure if this works
 			newSimpleTransition.setOutputSpecies(outputQualSpeciesList); // not sure if this works
-			SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionRepository.save(newSimpleTransition, SAVE_DEPTH);
+			SBMLSimpleTransition persistedNewSimpleTransition = this.sbmlSimpleTransitionService.save(newSimpleTransition, SAVE_DEPTH);
 			transitionList.add(persistedNewSimpleTransition);
 			this.provenanceGraphService.connect(persistedNewSimpleTransition, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			
@@ -557,7 +543,7 @@ public class SBMLSimpleModelService {
 						cvTerm.getQualifierType(), cvTerm.getQualifier());
 				
 				// build the ExternalResource or link to existing one
-				ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityRepository.findByUri(resource);
+				ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityService.findByUri(resource);
 				if(existingExternalResourceEntity != null) {
 					newBiomodelsQualifier.setEndNode(existingExternalResourceEntity);
 					this.provenanceGraphService.connect(activityNode, existingExternalResourceEntity, ProvenanceGraphEdgeType.used);
@@ -598,13 +584,13 @@ public class SBMLSimpleModelService {
 						setKeggCompoundNames(currentNames, resource, newExternalResourceEntity);
 					} 
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
-					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityRepository.save(newExternalResourceEntity, 1); // TODO can I change this depth to one to persist the nameNodes or does that break BiomodelQualifier connections?
+					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityService.save(newExternalResourceEntity, 1); // TODO can I change this depth to one to persist the nameNodes or does that break BiomodelQualifier connections?
 					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
 					this.provenanceGraphService.connect(persistedNewExternalResourceEntity, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				}
 				BiomodelsQualifier persistedNewBiomodelsQualifier = this.biomodelsQualifierRepository.save(newBiomodelsQualifier, 0);
 				updatedSBaseEntity.addBiomodelsQualifier(persistedNewBiomodelsQualifier);
-				updatedSBaseEntity = this.sbmlSBaseEntityRepository.save(updatedSBaseEntity, 0);
+				updatedSBaseEntity = this.sbmlSBaseEntityService.save(updatedSBaseEntity, 0);
 				//updatedSBaseEntity.addBiomodelsQualifier(newBiomodelsQualifier);
 			}
 		}
@@ -617,7 +603,7 @@ public class SBMLSimpleModelService {
 				mdAndersonUriStringBuilder.append("?section=");
 				mdAndersonUriStringBuilder.append(sbml4jConfig.getExternalResourcesProperties().getMdAndersonProperties().getSection());
 				
-				ExternalResourceEntity existingMdAndersonResourceEntity = this.externalResourceEntityRepository.findByUri(mdAndersonUriStringBuilder.toString());
+				ExternalResourceEntity existingMdAndersonResourceEntity = this.externalResourceEntityService.findByUri(mdAndersonUriStringBuilder.toString());
 				if (existingMdAndersonResourceEntity != null) {
 					mdAndersonBiomodelsQualifier.setEndNode(existingMdAndersonResourceEntity);
 					this.provenanceGraphService.connect(activityNode, existingMdAndersonResourceEntity, ProvenanceGraphEdgeType.used);
@@ -627,13 +613,13 @@ public class SBMLSimpleModelService {
 					newMdAndersonResourceEntity.setUri(mdAndersonUriStringBuilder.toString());
 					newMdAndersonResourceEntity.setType(ExternalResourceType.MDANDERSON);
 					newMdAndersonResourceEntity.setDatabaseFromUri("MDAnderson");
-					ExternalResourceEntity persistedNewMdAndersonResourceEntity = this.externalResourceEntityRepository.save(newMdAndersonResourceEntity, 0);
+					ExternalResourceEntity persistedNewMdAndersonResourceEntity = this.externalResourceEntityService.save(newMdAndersonResourceEntity, 0);
 					mdAndersonBiomodelsQualifier.setEndNode(persistedNewMdAndersonResourceEntity);
 					this.provenanceGraphService.connect(persistedNewMdAndersonResourceEntity, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				}
 				BiomodelsQualifier persistedMDAndersonBiomodelsQualifier = biomodelsQualifierRepository.save(mdAndersonBiomodelsQualifier, 0);
 				updatedSBaseEntity.addBiomodelsQualifier(persistedMDAndersonBiomodelsQualifier);
-				updatedSBaseEntity = this.sbmlSBaseEntityRepository.save(updatedSBaseEntity, 0);
+				updatedSBaseEntity = this.sbmlSBaseEntityService.save(updatedSBaseEntity, 0);
 			}			
 		}
 		
@@ -702,7 +688,13 @@ public class SBMLSimpleModelService {
 		}
 	}
 	
-	
+	/**
+	 * Use an {@link SBMLReader} to extract the {@link Model} from the {@link SBMLDocument} in the provided file
+	 * @param file The file to read the {@link Model} from
+	 * @return The extracted {@link Model}
+	 * @throws XMLStreamException
+	 * @throws IOException
+	 */
 	public Model extractSBMLModel(MultipartFile file) throws XMLStreamException, IOException {
 		InputStream fileStream = file.getInputStream();
 		SBMLDocument doc;
@@ -714,7 +706,15 @@ public class SBMLSimpleModelService {
 		return doc.getModel();
 	}
 
-	
+	/**
+	 * Build the SBML4j model components from the provided {@link Model} and persist it in the database
+	 * @param model The {@link Model} to persist
+	 * @param sbmlfile The {@link FileNode} this model is connected to
+	 * @param activityNode The {@link ProvenanceGraphActivityNode} that is associated with the {@link PathwayNode} created
+	 * @param pathwayNode The {@link PathwayNode} to attach the extracted model components to
+	 * @param database The {@link DatabaseNode} that the model is for
+	 * @throws ModelPersistenceException
+	 */
 	public void buildAndPersist(
 			Model model, 
 			FileNode sbmlfile, 
@@ -763,7 +763,7 @@ public class SBMLSimpleModelService {
 			//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 			persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 			if (!speciesWithoutBQ.isEmpty()) {
-				sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.saveAll(speciesWithoutBQ);
+				sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesService.saveAll(speciesWithoutBQ);
 			}
 			//speciesPersisted = Instant.now();
 		} catch (Exception e) {
@@ -775,7 +775,7 @@ public class SBMLSimpleModelService {
 				//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 				persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 				if (!speciesWithoutBQ.isEmpty()) {
-					sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.saveAll(speciesWithoutBQ);
+					sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesService.saveAll(speciesWithoutBQ);
 				}
 			} catch (Exception e2) {
 				e2.printStackTrace();
@@ -785,7 +785,7 @@ public class SBMLSimpleModelService {
 				try {
 					persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
 					if (!speciesWithoutBQ.isEmpty()) {
-						sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesRepository.save(speciesWithoutBQ, 1);
+						sbmlSpeciesWithoutBQPersisted = this.sbmlSpeciesService.save(speciesWithoutBQ, 1);
 					}
 					//persistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(persistBQList);
 				} catch (Exception e3) {
@@ -887,7 +887,7 @@ public class SBMLSimpleModelService {
 					//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 					qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
 					if (!qualSpeciesWithoutBQ.isEmpty()) {
-						qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.saveAll(qualSpeciesWithoutBQ);
+						qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesService.saveAll(qualSpeciesWithoutBQ);
 					}
 					//qualSpeciesPersisted = Instant.now();
 				} catch (Exception e) {
@@ -899,7 +899,7 @@ public class SBMLSimpleModelService {
 						//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 						qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
 						if (!qualSpeciesWithoutBQ.isEmpty()) {
-							qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.saveAll(qualSpeciesWithoutBQ);
+							qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesService.saveAll(qualSpeciesWithoutBQ);
 						}
 					} catch (Exception e2) {
 						e2.printStackTrace();
@@ -909,7 +909,7 @@ public class SBMLSimpleModelService {
 							qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(qualPersistBQList, 1);
 							//qualPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(qualPersistBQList);
 							if (!qualSpeciesWithoutBQ.isEmpty()) {
-								qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesRepository.save(qualSpeciesWithoutBQ, 1);
+								qualSpeciesWithoutBQPersisted = this.sbmlQualSpeciesService.save(qualSpeciesWithoutBQ, 1);
 							}
 						} catch (Exception e3) {
 							e2.printStackTrace();
@@ -971,7 +971,7 @@ public class SBMLSimpleModelService {
 																		+ (persistedTransitionList != null ? "Transitions: " + persistedTransitionList.size() :"")
 																		);	
 		logger.info(sb.toString());
-*/
+		 */
 		for (ProvenanceEntity entity : returnList.values()) {
 			this.warehouseGraphService.connect(pathwayNode, entity, WarehouseGraphEdgeType.CONTAINS, false);
 		}

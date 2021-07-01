@@ -75,20 +75,7 @@ public class MappingNodeService {
 		newMappingNode.addWarehouseAnnotation("creationstarttime", Instant.now().toString());
 		return this.save(newMappingNode, 1);
 	}
-	
-	/**
-	 * Find all <a href="#{@link}">{@link MappingNode}</a> that are associated with the user user
-	 * @param users List of users that are associated with the <a href="#{@link}">{@link MappingNode}</a> to get
-	 * @param activeOnly Only retrieve active <a href="#{@link}">{@link MappingNode}</a> (true), or inactive also (false)
-	 * @return List of <a href="#{@link}">{@link MappingNode}</a> that are associated with users
-	 */
-	@Deprecated
-	public List<MappingNode> findAllFromUser(String user, boolean activeOnly) {
-		List<String> users = new ArrayList<>();
-		users.add(user);
-		return this.findAllFromUsers(users, activeOnly);
-	}
-	
+		
 	/**
 	 * Find all <a href="#{@link}">{@link MappingNode}</a> that are associated with the user user
 	 * @param users List of users that are associated with the <a href="#{@link}">{@link MappingNode}</a> to get
@@ -201,16 +188,7 @@ public class MappingNodeService {
 		return this.mappingNodeRepository.getNumberOfMappingNodesAttributedProvAgent(graphAgentName);
 	}
 	
-	/**
-	 * Check whether a <a href="#{@link}">{@link MappingNode}</a> is Attributed to a <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a> of user
-	 * @param entityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a> to check
-	 * @param user The user to which <a href="#{@link}">{@link MappingNode}</a> should be attributed to
-	 * @return true if the <a href="#{@link}">{@link MappingNode}</a> is attributed to user, false otherwise
-	 */
-	/*public boolean isMappingNodeAttributedToUser(String entityUUID, String user) {
-		return this.mappingNodeRepository.isMappingNodeAttributedToUser(entityUUID, user);
-	}
-	*/
+	
 	/**
 	 * Check whether a <a href="#{@link}">{@link MappingNode}</a> can be accessed by a <a href="#{@link}">{@link ProvenanceGraphAgentNode}</a>,
 	 * including the configured public user

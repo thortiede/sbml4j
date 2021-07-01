@@ -91,10 +91,7 @@ public class PathwayService {
 	 * @param mappingNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link MappingNode}</a>
 	 * @return List of String as Names of pathways
 	 */
-	/*public List<String> findAllForFlatSpeciesEntityUUIDInMapping(String flatSpeciesEntityUUID, String mappingNodeEntityUUID) {
-		return this.pathwayNodeRepository.findAllForFlatSpeciesEntityUUIDInMapping(flatSpeciesEntityUUID, mappingNodeEntityUUID);
-	}*/
-	
+		
 	/**
 	 * Find all distinct Species SBO Terms included in a <a href="#{@link}">{@link PathwayNode}</a>
 	 * @param pathwayNodeEntityUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a>

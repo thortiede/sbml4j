@@ -117,6 +117,12 @@ public class UtilityService {
 		return allChildren;
 	}
 
+	/**
+	 * Append the given {@link Duration} to the {@link StringBuilder} using the given name
+	 * @param sb The {@link StringBuilder} to append the {@link Duration} to
+	 * @param duration The {@link Duration} to add
+	 * @param name The name to use
+	 */
 	public void appendDurationString(StringBuilder sb, Duration duration, String name) {
 		sb.append(name);
 		sb.append(": ");
