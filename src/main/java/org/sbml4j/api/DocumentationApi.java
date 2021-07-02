@@ -45,7 +45,7 @@ public interface DocumentationApi {
                   @ApiResponse(code = 200, message = "successful operation",
                                response = Object.class)
                 })
-  @GetMapping(value = "/help", produces = {"text/html"})
+  @GetMapping(value = "/api", produces = {"text/html"})
   default RedirectView
   getBaseDocumentation() {
     getRequest().ifPresent(request -> {
