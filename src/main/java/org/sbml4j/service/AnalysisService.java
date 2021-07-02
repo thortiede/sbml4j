@@ -33,6 +33,7 @@ import org.sbml4j.model.api.RelationInfoItem.DirectionEnum;
 import org.sbml4j.model.common.BiomodelsQualifier;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.common.NameNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.common.BiomodelsQualifierRepository;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
@@ -52,6 +53,9 @@ public class AnalysisService {
 
 	@Autowired
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
+	
+	@Autowired
+	NameNodeService nameNodeService;
 	
 	@Autowired
 	PathwayService pathwayService;
@@ -81,10 +85,22 @@ public class AnalysisService {
 		if (geneSymbolSpecies.isEmpty()) {
 			geneSymbolSpecies = this.sbmlSpeciesService.findByExternalResourceSecondaryName(geneSymbol);
 		}
+		GeneAnalysisItem item = new GeneAnalysisItem();
+		Map<String, QualifierItem> qualifierMap = new HashMap<>();
+		//Map<String, RelationInfoItem> relationMap = new HashMap<>();
+		Map<String, ReactionInfoItem> reactionMap = new HashMap<>();
 		for (SBMLSpecies species : geneSymbolSpecies.values()) {
-			GeneAnalysisItem item = new GeneAnalysisItem();
-			item.setGene(species.getsBaseName());
-			List<PathwayInfoItem> pathwayInfoItems = new ArrayList<>();
+			if (item.getGene() == null) {
+				item.setGene(species.getsBaseName());
+			} else {
+				item.addSecondaryNamesItem(species.getsBaseName());
+			}
+			List<PathwayInfoItem> pathwayInfoItems;
+			if (item.getPathways() == null) {
+				pathwayInfoItems = new ArrayList<>();
+			} else {
+				pathwayInfoItems = item.getPathways();
+			}
 			List<PathwayNode> pathways = this.pathwayService.getPathwayNodesOfSBase(UUID.fromString(species.getEntityUUID()));
 			for (PathwayNode pathway : pathways) {
 				PathwayInfoItem infoItem = new PathwayInfoItem();
@@ -108,7 +124,7 @@ public class AnalysisService {
 			}
 			item.setPathways(pathwayInfoItems);
 			List<BiomodelsQualifier> biomodelsQualifierOfSpecies = this.biomodelsQualifierRepository.findAllForSBMLSpecies(species.getEntityUUID());
-			Map<String, QualifierItem> qualifierMap = new HashMap<>();
+			
 			
 			for (BiomodelsQualifier qualifier : biomodelsQualifierOfSpecies) {
 				String uri = qualifier.getEndNode().getUri();
@@ -120,10 +136,12 @@ public class AnalysisService {
 					qualifierItemName = splitted[splitted.length-2].replace('.', '_');
 					//currentQualifierMap.computeIfAbsent(splitted[splitted.length-2].replace('.', '_'), k -> new ArrayList<String>()).add(uri);
 					if (qualifier.getEndNode().getType() != null 
-							&& qualifier.getEndNode().getType().equals(ExternalResourceType.KEGGGENES) 
-							&& qualifier.getEndNode().getSecondaryNames() != null) {
-						for (String secondaryName : qualifier.getEndNode().getSecondaryNames()) {
-							item.addSecondaryNamesItem(secondaryName);
+							&& qualifier.getEndNode().getType().equals(ExternalResourceType.KEGGGENES) ) {
+						Iterable<NameNode> secondaryNameNodes = this.nameNodeService.findAllByExternalResource(qualifier.getEndNode().getEntityUUID());
+						if (secondaryNameNodes != null) {
+							for (NameNode secondaryNameNode : secondaryNameNodes) {
+								item.addSecondaryNamesItem(secondaryNameNode.getName());
+							}
 						}
 					}
 				} else if (qualifier.getEndNode().getType().equals(ExternalResourceType.MDANDERSON)) { // uri.contains("mdanderson")) {
@@ -149,12 +167,7 @@ public class AnalysisService {
 					qualifierMap.put(qualifierItemName, new QualifierItem().name(qualifierItemName).addContentItem(new QualifierItemContent().type(qualifierType).addUrlItem(uri)));
 				}
 			}
-			for (QualifierItem qualifierItemToAdd : qualifierMap.values()) {
-				item.addQualifierItem(qualifierItemToAdd);
-			}
-			if (item.getQualifier() == null) {
-				item.setQualifier(new ArrayList<>());
-			}
+			
 			
 			// find all transitions this species is part of
 			for (NonMetabolicPathwayReturnType transition : this.sbmlSimpleTransitionService.getTransitionsForSpecies(species.getEntityUUID())) {
@@ -170,7 +183,7 @@ public class AnalysisService {
 			}
 			
 			// find all reactions this species is part of
-			Map<String, ReactionInfoItem> reactionMap = new HashMap<>();
+			
 			for (MetabolicPathwayReturnType reaction : this.sbmlSimpleReactionService.findAllReactionsForSpecies(species.getEntityUUID())) {
 				for (MetabolicPathwayReturnType speciesOfReaction : this.sbmlSimpleReactionService.findAllSpeciesForReaction(reaction.getReaction().getEntityUUID())) {
 					ReactionInfoItem reactionInfoItem = null;
@@ -212,15 +225,24 @@ public class AnalysisService {
 					reactionMap.put(reactionInfoItem.getName(), reactionInfoItem);
 				}
 			}
-			for (ReactionInfoItem reactionInfoItemToAdd : reactionMap.values()) {
-				item.addReactionsItem(reactionInfoItemToAdd);
-			}
-			if (item.getReactions() == null) {
-				item.setReactions(new ArrayList<>());
-			}
 			
-			geneAnalysisItems.add(item);
 		}
+		// add all collected qualifier to the item
+		for (QualifierItem qualifierItemToAdd : qualifierMap.values()) {
+			item.addQualifierItem(qualifierItemToAdd);
+		}
+		if (item.getQualifier() == null) {
+			item.setQualifier(new ArrayList<>());
+		}
+		// add all collected ReactionInfoItems
+		for (ReactionInfoItem reactionInfoItemToAdd : reactionMap.values()) {
+			item.addReactionsItem(reactionInfoItemToAdd);
+		}
+		if (item.getReactions() == null) {
+			item.setReactions(new ArrayList<>());
+		}
+		
+		geneAnalysisItems.add(item);
 		
 		
 		return geneAnalysisItems;

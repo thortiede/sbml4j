@@ -15,19 +15,14 @@ package org.sbml4j.controller;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-import org.sbml4j.Exception.UserUnauthorizedException;
 import org.sbml4j.api.AnalysisApi;
 import org.sbml4j.model.api.GeneAnalysisItem;
 import org.sbml4j.service.AnalysisService;
 import org.sbml4j.service.ConfigService;
 import org.sbml4j.service.networks.NetworkResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
@@ -40,6 +35,7 @@ import org.springframework.stereotype.Controller;
 
 @Controller
 public class AnalysisApiController implements AnalysisApi {
+	
 	
 	@Autowired
 	ConfigService configService;
@@ -91,12 +87,11 @@ public class AnalysisApiController implements AnalysisApi {
 	 * @param UUID UUID of the network to extract the geneSet from
 	 * @param directed boolean indicating whether the graphML-Graph should be directed
 	 * @return ResponseEntity with GraphML-formatted Resource containing the geneSet
-	 * 	
+	 * 
 	 */
-	public ResponseEntity<Resource> getGeneSet(	  String user
-												, List<String> geneSymbols
-												, UUID UUID
-												, boolean directed) {
+	/*public ResponseEntity<Resource> getGeneSet(@NotNull @Valid List<String> geneSymbols, String user, @Valid UUID UUID,
+			@Valid Boolean directed) {
+		
 		try {
 			this.configService.getUserNameAttributedToNetwork(UUID.toString(), user);
 		} catch (UserUnauthorizedException e) {
@@ -110,5 +105,5 @@ public class AnalysisApiController implements AnalysisApi {
 			return ResponseEntity.ok() .contentType(MediaType.parseMediaType(contentType))
 				 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"geneset.graphml\"").body(resource) ;
 		} 		
-	}
+	}*/
 }

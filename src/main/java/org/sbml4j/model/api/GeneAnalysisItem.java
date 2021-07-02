@@ -65,7 +65,8 @@ public class GeneAnalysisItem {
     if (this.secondaryNames == null) {
       this.secondaryNames = new ArrayList<>();
     }
-    this.secondaryNames.add(secondaryNamesItem);
+    if (!this.secondaryNames.contains(secondaryNamesItem))
+    	this.secondaryNames.add(secondaryNamesItem);
     return this;
   }
 
@@ -121,7 +122,7 @@ public class GeneAnalysisItem {
     if (this.pathways == null) {
       this.pathways = new ArrayList<>();
     }
-    this.pathways.add(pathwaysItem);
+    if (!this.pathways.contains(pathwaysItem)) this.pathways.add(pathwaysItem);
     return this;
   }
 
@@ -150,7 +151,7 @@ public class GeneAnalysisItem {
     if (this.relations == null) {
       this.relations = new ArrayList<>();
     }
-    this.relations.add(relationsItem);
+    if(!this.relations.contains(relationsItem)) this.relations.add(relationsItem);
     return this;
   }
 

@@ -49,7 +49,7 @@ public class QualifierItemContent {
     if (this.url == null) {
       this.url = new ArrayList<>();
     }
-    this.url.add(urlItem);
+    if (!this.url.contains(urlItem)) this.url.add(urlItem);
     return this;
   }
 
