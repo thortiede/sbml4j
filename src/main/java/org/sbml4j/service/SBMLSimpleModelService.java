@@ -350,14 +350,15 @@ public class SBMLSimpleModelService {
 				newExternalResourceEntity.setDatabaseFromUri("KEGG");
 				newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
 				Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
-				
-				Iterator<String> nameIterator = nameList.iterator();
-				if (nameIterator.hasNext()) {
-					newExternalResourceEntity.setPrimaryName(nameIterator.next());
-				}
-				while (nameIterator.hasNext()) {
-					String name = nameIterator.next();
-					this.createNameNode(newExternalResourceEntity, name);
+				if (nameList != null) {
+					Iterator<String> nameIterator = nameList.iterator();
+					if (nameIterator.hasNext()) {
+						newExternalResourceEntity.setPrimaryName(nameIterator.next());
+					}
+					while (nameIterator.hasNext()) {
+						String name = nameIterator.next();
+						this.createNameNode(newExternalResourceEntity, name);
+					}
 				}
 			} else if(resource.contains("kegg.reaction")) {
 				newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);

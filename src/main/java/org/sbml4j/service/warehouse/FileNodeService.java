@@ -46,17 +46,19 @@ public class FileNodeService {
 	 * @param fileNodeType The <a href="#{@link}">{@link FileNodeType}</a>
 	 * @param org The <a href="#{@link}">{@link Organism}</a> associated with this <a href="#{@link}">{@link DatabaseNode}</a>
 	 * @param filename The filename of the <a href="#{@link}">{@link FileNode}</a> to check
+	 * @param md5sum The MD5 Sum of the File of this <a href="#{@link}">{@link FileNode}</a>
 	 * @return the <a href="#{@link}">{@link FileNode}</a> created in the database
 	 */
-	public FileNode createFileNode(FileNodeType fileNodeType, Organism org, String filename) {
-		if (this.fileNodeExists(fileNodeType, org, filename)) {
-			return this.getFileNode(fileNodeType, org, filename);
+	public FileNode createFileNode(FileNodeType fileNodeType, Organism org, String filename, String md5sum) {
+		if (this.fileNodeExists(fileNodeType, org, filename, md5sum)) {
+			return this.getFileNode(fileNodeType, org, filename, md5sum);
 		}
 		FileNode newFileNode = new FileNode();
 		this.graphBaseEntityService.setGraphBaseEntityProperties(newFileNode);
 		newFileNode.setFileNodeType(fileNodeType);
 		newFileNode.setFilename(filename);
 		newFileNode.setOrganism(org);
+		newFileNode.setMd5sum(md5sum);
 		return this.fileNodeRepository.save(newFileNode);
 	}
 	
@@ -66,11 +68,12 @@ public class FileNodeService {
 	 * @param fileNodeType The <a href="#{@link}">{@link FileNodeType}</a>
 	 * @param org The <a href="#{@link}">{@link Organism}</a> associated with this <a href="#{@link}">{@link DatabaseNode}</a>
 	 * @param filename The filename of the <a href="#{@link}">{@link FileNode}</a> to check
+	 * @param md5sum The MD5 Sum of the File of this <a href="#{@link}">{@link FileNode}</a>
 	 * @return true if the <a href="#{@link}">{@link FileNode}</a> exists in the database, false otherwise
 	 */
-	public boolean fileNodeExists(FileNodeType fileNodeType, Organism org, String filename) {
+	public boolean fileNodeExists(FileNodeType fileNodeType, Organism org, String filename, String md5sum) {
 
-		if (this.getFileNode(fileNodeType, org, filename) != null) {
+		if (this.getFileNode(fileNodeType, org, filename, md5sum) != null) {
 			return true;
 		} else {
 			return false;
@@ -83,12 +86,13 @@ public class FileNodeService {
 	 * @param fileNodeType The <a href="#{@link}">{@link FileNodeType}</a>
 	 * @param org The <a href="#{@link}">{@link Organism}</a> associated with this <a href="#{@link}">{@link DatabaseNode}</a>
 	 * @param filename The filename of the <a href="#{@link}">{@link FileNode}</a> to check
+	 * @param md5sum The MD5 Sum of the File of this <a href="#{@link}">{@link FileNode}</a>
 	 * @return the <a href="#{@link}">{@link FileNode}</a> found in the database, null if none found
 	 */
-	public FileNode getFileNode(FileNodeType fileNodeType, Organism org, String filename) {
+	public FileNode getFileNode(FileNodeType fileNodeType, Organism org, String filename, String md5sum) {
 		// TODO: Use all function arguments to check
-		List<FileNode> filenodes = this.fileNodeRepository.findByFileNodeTypeAndFilename(fileNodeType,
-				filename);
+		List<FileNode> filenodes = this.fileNodeRepository.findByFileNodeTypeAndFilenameAndMd5sum(fileNodeType,
+				filename, md5sum);
 		for (FileNode node : filenodes) {
 			if (node.getOrganism().equals(org)) {
 				return node;

@@ -22,6 +22,7 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.Exception.NetworkDeletionException;
 import org.sbml4j.Exception.NetworkMappingError;
 import org.sbml4j.Exception.UserUnauthorizedException;
 import org.sbml4j.api.PathwaysApi;
@@ -43,6 +44,7 @@ import org.sbml4j.service.NetworkMappingService;
 import org.sbml4j.service.PathwayService;
 import org.sbml4j.service.ProvenanceGraphService;
 import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.networks.NetworkService;
 import org.sbml4j.service.warehouse.DatabaseNodeService;
 import org.sbml4j.service.warehouse.MappingNodeService;
 import org.sbml4j.service.warehouse.PathwayCollectionNodeService;
@@ -71,6 +73,9 @@ public class PathwaysApiController implements PathwaysApi {
 
 	@Autowired
 	MappingNodeService mappingNodeService;
+	
+	@Autowired
+	NetworkService networkService;
 	
 	@Autowired
 	NetworkMappingService networkMappingService;
@@ -250,10 +255,46 @@ public class PathwaysApiController implements PathwaysApi {
 		// The name should be unique per user
 		// if user already exists AND a mapping with that name already exists, then error
 		// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
-		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, pathwayUser) != null
-				&& this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser) != null) {
+		boolean isAbleToCreateNetworkWithMappingName = false;
+		if (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, pathwayUser) != null) {
+			MappingNode existingNetworkWithMappingNameForPathwayUser = this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser);
+			if (existingNetworkWithMappingNameForPathwayUser != null) {
+				// the network with that name does exist. attempt to delete or deactivate it
+				if (this.configService.isDeleteExistingNetwork()) {
+					if (!this.configService.isPublicUser(pathwayUser) 
+							|| (this.configService.isPublicUser(pathwayUser) 
+									&& this.configService.isAllowedToDeletePublicNetwork(pathwayUser))) {
+						try {
+							isAbleToCreateNetworkWithMappingName = this.networkService.deleteNetwork(existingNetworkWithMappingNameForPathwayUser.getEntityUUID());
+						} catch (NetworkDeletionException e) {
+							return ResponseEntity.badRequest()
+									.header("reason", "Network with name " + mappingName + " already exists for user " + pathwayUser + " and it couldn't be deleted."
+											+ " The network has UUID: " + existingNetworkWithMappingNameForPathwayUser.getEntityUUID()
+											+ " The Error message is: " + e.getMessage())
+									.build();
+						}
+					}
+					// if pathwayUser is the publicUser and the service may not delete public networks, we cannot delete it and we cannot create the new network
+					// isAbleToCreateNetworkWithMappingName stays false
+				} else if (this.configService.isAllowInactiveDuplicates()) {
+					// we may deactivate the existing network and create the new one
+					isAbleToCreateNetworkWithMappingName = this.networkService.deactivateNetwork(existingNetworkWithMappingNameForPathwayUser.getEntityUUID());
+				}	
+			} else {
+				// a network with that name for that user does not exist, we are good to create it
+				isAbleToCreateNetworkWithMappingName = true;
+			}
+		} else {
+			// user doesn't exist in the first place, it is fine and we do not need to check for the network name
+			// and we can create the network
+			isAbleToCreateNetworkWithMappingName = true;
+		}
+				
+		if (!isAbleToCreateNetworkWithMappingName) {
 			return ResponseEntity.badRequest()
-					.header("reason", "Network with name " + mappingName + " already exists for user " + pathwayUser + ". The network has UUID: " + this.mappingNodeService.findByNetworkNameAndUser(mappingName, pathwayUser).getEntityUUID())
+					.header("reason", "Cannot create network mapping for user " 
+							+ pathwayUser + ". A network with the same name (" + mappingName + ") already exists and it was not possible to clean the database from it."
+							+ " See config options to resolve this (network.delete-existing, network.delete-derived, network.allow-inactive-duplicates).")
 					.build();
 		}
 		

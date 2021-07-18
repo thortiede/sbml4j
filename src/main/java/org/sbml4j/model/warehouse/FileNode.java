@@ -25,6 +25,8 @@ public class FileNode extends WarehouseGraphNode {
 	
 	private byte[] filecontent;
 
+	private String md5sum;
+	
 	public String getFilename() {
 		return filename;
 	}
@@ -47,6 +49,14 @@ public class FileNode extends WarehouseGraphNode {
 
 	public void setFileNodeType(FileNodeType fileNodeType) {
 		this.fileNodeType = fileNodeType;
+	}
+
+	public String getMd5sum() {
+		return md5sum;
+	}
+
+	public void setMd5sum(String md5sum) {
+		this.md5sum = md5sum;
 	}
 	
 }

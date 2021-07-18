@@ -224,7 +224,7 @@ public class PathwayService {
 
 	/**
 	 * Get a <a href="#{@link}">{@link PathwayInventoryItem}</a> for a <a href="#{@link}">{@link PathwayNode}</a>
-	 * @param user The user that the <a href="#{@link}">{@link PathwayNode}</a> is associated with
+	 * @param user The user name as String that the <a href="#{@link}">{@link PathwayNode}</a> is associated with
 	 * @param pathwayNode The <a href="#{@link}">{@link PathwayNode}</a> to get the <a href="#{@link}">{@link PathwayInventoryItem}</a> for
 	 * @return The <a href="#{@link}">{@link PathwayInventoryItem}</a>
 	 */

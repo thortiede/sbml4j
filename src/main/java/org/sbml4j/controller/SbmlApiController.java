@@ -52,6 +52,7 @@ import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -187,7 +188,7 @@ public class SbmlApiController implements SbmlApi {
 			
 			// can we access the files name and ContentType?
 			
-			if(!fileCheckService.isFileReadable(file)) {
+			if(!this.fileCheckService.isFileReadable(file)) {
 				defaultReturnEntity.setEntityUUID("Filename or content-type not accessible");
 				returnList.add(defaultReturnEntity);
 				return ResponseEntity.badRequest().header("reason", "Filename or content-type not accessible").build();
@@ -197,19 +198,58 @@ public class SbmlApiController implements SbmlApi {
 			logger.info("Serving POST /sbml for File " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			
 			// is Content Type xml?
-			if(!fileCheckService.isContentXML(file)) {
+			if(!this.fileCheckService.isContentXML(file)) {
 				return ResponseEntity.badRequest().header("reason", "File ContentType is not application/xml").build();
 			}
+			
+			String fileMD5Sum;
+			try {
+				fileMD5Sum = this.fileCheckService.getMD5Sum(file);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				return ResponseEntity.badRequest().header("reason", "IOException while calculating MD5 Sum of file " + originalFilename).build();
+			}
+			
+			// File Node
+			FileNode sbmlFileNode = null;
 
+			// Does node with this filename already exist?
+			// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
+			if(!this.fileNodeService.fileNodeExists(FileNodeType.SBML, org, originalFilename, fileMD5Sum)) {
+				// does not exist -> create
+				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, originalFilename, fileMD5Sum);
+			} else {
+				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, originalFilename, fileMD5Sum);
+				logger.info("Found existing FileNode for file with filename " + originalFilename);
+				// If we loaded this file already, we can just reuse the pathway
+				PathwayNode existingPathwayToSBMLFile;
+				try {
+					existingPathwayToSBMLFile = (PathwayNode)this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, sbmlFileNode.getEntityUUID());
+					pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, existingPathwayToSBMLFile));
+					continue;
+				} catch (IncorrectResultSizeDataAccessException e) {
+					logger.error("Expected to find at most one Pathway derived from provided SBML file with name " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
+					errorFileNames.append(originalFilename);
+					countError += 1;
+
+					continue;
+				} catch (ClassCastException e1) {
+					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
+					errorFileNames.append(originalFilename);
+					countError += 1;
+					continue;
+				}
+			}
+			
 			// Then we need an Activity Node (uploadSBML)
 			//Instant createDate = Instant.now();
 			Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
 			activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.persistFile);
 			activityNodeProvenanceProperties.put("graphactivityname", originalFilename); 
-			//activityNodeProvenanceProperties.put("createdate", createDate);
-			
 			ProvenanceGraphActivityNode persistGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
-			
+			// connect the activity node to the newly created FileNode
+			this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+
 			// Associate Activity with User Agent
 			this.provenanceGraphService.connect(persistGraphActivityNode, userAgentNode, ProvenanceGraphEdgeType.wasAssociatedWith);
 			// Associate Organism with ActivityNode
@@ -226,20 +266,7 @@ public class SbmlApiController implements SbmlApi {
 				this.provenanceGraphService.connect(database, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				databaseExisted = true;
 			}
-			
-			// File Node
-			FileNode sbmlFileNode = null;
-			// Does node with this filename already exist?
-			// TODO It should be able to have all these for each version of the database, so this needs to be encoded in there somewhere
-			if(!this.fileNodeService.fileNodeExists(FileNodeType.SBML, org, originalFilename)) {
-				// does not exist -> create
-				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, originalFilename);
-				this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-			} else {
-				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, originalFilename);
-				this.provenanceGraphService.connect(persistGraphActivityNode, sbmlFileNode, ProvenanceGraphEdgeType.used);
-			}
-			
+
 			// FileNode needs to connect to DatabaseNode
 			this.provenanceGraphService.connect(sbmlFileNode, database, ProvenanceGraphEdgeType.wasDerivedFrom);
 			//Instant createMetadataFinished = Instant.now();
@@ -298,6 +325,12 @@ public class SbmlApiController implements SbmlApi {
 			} catch (ModelPersistenceException e) {
 				if (e.getMessage().startsWith("SBMLSpecies")) {
 					this.graphBaseEntityService.deleteEntity(pathwayNode);
+					this.graphBaseEntityService.deleteEntity(sbmlFileNode);
+					//if (!databaseExisted) this.graphBaseEntityService.deleteEntity(database);
+					this.graphBaseEntityService.deleteEntity(persistGraphActivityNode);
+					this.graphBaseEntityService.deleteEntity(userAgentNode);
+					//if (!orgExisted) this.graphBaseEntityService.deleteEntity(org);
+					
 					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded.");
 					logger.error("The error message is: " + e.getMessage());
 					e.printStackTrace();

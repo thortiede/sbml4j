@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
+import org.apache.commons.codec.digest.DigestUtils;
+
 /**
  * Service to check uploaded files
  * @author Thorsten Tiede
@@ -55,11 +59,18 @@ public class FileCheckService {
 	public boolean isContentXML(MultipartFile file) {
 		if(file.getContentType() != null && (file.getContentType().equals("application/xml")
 												|| file.getContentType().equals("application/sbml+xml")
-												|| file.getContentType().equals("application/sbml"))) {
+												|| file.getContentType().equals("application/sbml")
+												|| file.getContentType().equals("text/xml"))) {
 			return true;
 		} else {
 			logger.info("file content type is: " + file.getContentType());
 			return false;
 		}
+	}
+	
+	
+	public String getMD5Sum(MultipartFile file) throws IOException {
+		return DigestUtils
+			      .md5Hex(file.getBytes()).toUpperCase();
 	}
 }
