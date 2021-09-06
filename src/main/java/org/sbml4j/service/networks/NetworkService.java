@@ -226,6 +226,22 @@ public class NetworkService {
 	}
 	
 	/**
+	 * Add the provided annotation information to the provided {@link FlatSpecies}
+	 * public wrapper in NetworkService for the method addAnnotation in {@link GraphBaseEntityService}
+	 * @param flatSpecies The {@link FlatSpecies} entity to add the annotation to
+	 * @param annotationName The {@link String} containing the name of the annotation
+	 * @param annotationType The {@link String} containing the type of the annotation
+	 * @param annotationValue The {@link Object} that is the value of the annotation
+	 * @param appendExisting bool-value whether to append the provided annotation to an existing one with the same name
+	 */
+	public void addNodeAnnotationToFlatSpecies(FlatSpecies flatSpecies,
+			String annotationName, String annotationType, Object annotationValue, boolean appendExisting) {
+		log.debug("Adding node annotation with name "+ annotationName + " and value (" +annotationValue.toString() + ") to FlatSpecies with uuid: " + flatSpecies.getEntityUUID());
+		this.graphBaseEntityService.addAnnotation(flatSpecies, annotationName, annotationType, annotationValue, appendExisting);
+		this.flatSpeciesService.save(flatSpecies, 0);
+	}
+	
+	/**
 	 * Takes the FlatEdges and adds the given annotation to them
 	 * @param flatEdges The <a href="#{@link}">{@link FlatEdges}</a> entities to add annotations to
 	 * @param annotationName The name of the annotation
@@ -426,6 +442,21 @@ public class NetworkService {
 		}
 		this.flatEdgeService.save(networkRelations, 1);
 		return this.mappingNodeService.save(mappingToAnnotate, 0);
+	}
+	
+	/**
+	 * Resets the graphBaseEntity properties of the provided {@link FlatSpecies} and connects them to the provided {@link MappingNode}
+	 * @param network The {@link MappingNode} to add the {@link FlatSpecies} to
+	 * @param unconnectedFlatSpecies The {@link List} of {@link FlatSpecies} to reset (copy them as new nodes) and add to the provided {@link MappingNode}
+	 * @return And {@link Iterable} of the new persisted {@link FlatSpecies}
+	 */
+	public Iterable<FlatSpecies> copyFlatSpeciesIntoNetworkWithoutTest(MappingNode network,
+			List<FlatSpecies> unconnectedFlatSpecies) {
+		this.resetFlatSpecies(unconnectedFlatSpecies);
+		Iterable<FlatSpecies> persistedSpecies = this.flatSpeciesService.save(unconnectedFlatSpecies, 0);
+		this.connectContains(network, null, persistedSpecies);
+		return persistedSpecies;
+		
 	}
 
 	/**
@@ -1160,6 +1191,8 @@ public class NetworkService {
 	 */
 	public void updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
 		// updateMappingNode
+		log.info("Updating mappingNode metadata");
+		this.session.clear();
 		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
 		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
 		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
@@ -1169,6 +1202,7 @@ public class NetworkService {
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
 		mappingNodeForFlatEdges.setActive(true);
+		this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
 	/**
@@ -1197,11 +1231,15 @@ public class NetworkService {
 	private void connectContains(MappingNode mappingNode, Iterable<FlatEdge> flatEdges,
 			Iterable<FlatSpecies> flatSpecies) {
 		// now connect the new entities to the MappingNode
-		connectContainsFlatEdgeSpecies(mappingNode, flatEdges);
+		if (flatEdges != null) {
+			connectContainsFlatEdgeSpecies(mappingNode, flatEdges);
+		}
 		// connect the unconnected species
-		Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
-		while (newFlatSpeciesIterator.hasNext()) {
-			this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, false);
+		if (flatSpecies != null) {
+			Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
+			while (newFlatSpeciesIterator.hasNext()) {
+				this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, false);
+			}
 		}
 	}
 
@@ -1296,4 +1334,5 @@ public class NetworkService {
 		}
 		return flatEdges;
 	}
+
 }

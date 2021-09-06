@@ -101,6 +101,16 @@ public class FlatSpeciesService {
 	}
 
 	/**
+	 * Save a {@link FlatSpecies}
+	 * @param entity The {@link FlatSpecies} to save
+	 * @param depth The save depth to use
+	 * @return The persisted {@link FlatSpecies}
+	 */
+	public FlatSpecies save(FlatSpecies entity, int depth) {
+		return this.flatSpeciesRepository.save(entity, depth);
+	}
+	
+	/**
 	 * Save a collection of <a href="#{@link}">{@link FlatSpecies}</a>
 	 * @param entities Iterable of <a href="#{@link}">{@link FlatSpecies}</a> to persist
 	 * @param depth The save depth to use

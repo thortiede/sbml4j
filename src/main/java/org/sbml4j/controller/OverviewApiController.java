@@ -205,6 +205,9 @@ public class OverviewApiController implements OverviewApi {
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getTerminateAt()
 											, this.overviewNetworkConfig.getOverviewNetworkDefaultProperties().getDirection()
 											, overviewNetworkItem.getEdgeweightproperty());
+		// 10b. In case we do not find a network but want to report single genes
+		List<FlatSpecies> unconnectedFlatSpecies = new ArrayList<>();
+		
 		if(contextFlatEdges == null) {
 			try {
 				this.networkService.deleteNetwork(overviewNetwork.getEntityUUID());
@@ -212,6 +215,15 @@ public class OverviewApiController implements OverviewApi {
 				return ResponseEntity.badRequest().header("reason", "Could not get network context. Attempted to delete newly created Network, but failed. The UUID is: " + overviewNetwork.getEntityUUID() + ". Additional info: " + e.getMessage()).build();
 			}
 			return ResponseEntity.badRequest().header("reason", "Could not get network context").build();
+		} else if (contextFlatEdges.isEmpty()) {
+			// we did not find any edges
+			// check again if we actually found any of the genes given and report these at least
+			for (String gene :geneNames) {
+				List<FlatSpecies> unconnectedGeneFlatSpecies = this.networkService.getFlatSpeciesOfSymbolInNetwork(networkEntityUUID, gene);
+				if (unconnectedGeneFlatSpecies != null) {
+					unconnectedGeneFlatSpecies.forEach(unconnectedFlatSpecies::add);
+				}
+			}
 		}
 		log.info("Created overview network species and relationships of network " + overviewNetwork.getMappingName());
 		Map<String, Object> nodeAnnotation = new HashMap<>();
@@ -226,13 +238,30 @@ public class OverviewApiController implements OverviewApi {
 		
 		// 12. Connect the FlatEdges to the mappingNode
 		overviewNetwork = this.networkService.createMappingFromFlatEdges(graphAgent, networkEntityUUID, contextFlatEdges, overviewNetwork);
+		
+		// 13. Add unconnected FlatSpecies to network, should only happen if the contextFlatEdges was empty to begin with, so no real check needs to be performed, whether nodes already exist
+		if (contextFlatEdges.isEmpty()) {
+			Iterable<FlatSpecies> newNetworkSpecies = this.networkService.copyFlatSpeciesIntoNetworkWithoutTest(overviewNetwork, unconnectedFlatSpecies);
+			log.info("Added unconnected Nodes to the network, as context was empty.");
+
+			// 13b. Add the annotation to the unconnected Species
+			for (FlatSpecies species : newNetworkSpecies) {
+				this.networkService.addNodeAnnotationToFlatSpecies(species, overviewNetworkItem.getAnnotationName(), "boolean", Boolean.TRUE, false);
+			}
+			log.info("Annotated unconnected Nodes with the " + overviewNetworkItem.getAnnotationName() + " annotation");
+			// 13c. Update mapping node metadata
+			this.mappingNodeService.save(overviewNetwork, 0);
+			this.networkService.updateMappingNodeMetadata(overviewNetwork);
+			
+		}
+		
 		log.info("Created network " + overviewNetwork.getMappingName() + ". Returning.");
 		// 10. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(overviewNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
 	@Override
-	public ResponseEntity<Resource> getOverviewNetwork(String user, String name) {
+	public ResponseEntity<Resource> getOverviewNetwork(String name, String user) {
 		log.info("Serving GET /overview" + (user != null ? " for user " + user : "") + " with network name: " + name);
 		
 		// 1. Does the network exist?
