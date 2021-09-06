@@ -238,6 +238,7 @@ public class NetworkService {
 			String annotationName, String annotationType, Object annotationValue, boolean appendExisting) {
 		log.debug("Adding node annotation with name "+ annotationName + " and value (" +annotationValue.toString() + ") to FlatSpecies with uuid: " + flatSpecies.getEntityUUID());
 		this.graphBaseEntityService.addAnnotation(flatSpecies, annotationName, annotationType, annotationValue, appendExisting);
+		this.flatSpeciesService.save(flatSpecies, 0);
 	}
 	
 	/**
@@ -1190,6 +1191,8 @@ public class NetworkService {
 	 */
 	public void updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
 		// updateMappingNode
+		log.info("Updating mappingNode metadata");
+		this.session.clear();
 		String networkEntityUUID = mappingNodeForFlatEdges.getEntityUUID();
 		mappingNodeForFlatEdges.setMappingNodeSymbols(this.getNetworkNodeSymbols(networkEntityUUID));
 		mappingNodeForFlatEdges.setMappingNodeTypes(this.getNetworkNodeTypes(networkEntityUUID));
@@ -1199,6 +1202,7 @@ public class NetworkService {
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
 		mappingNodeForFlatEdges.setActive(true);
+		this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
 	/**
