@@ -379,7 +379,7 @@ public class SBMLSimpleModelService {
 				List<String> secondaryNames = this.keggHttpService.setCompoundAnnotationFromResource(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
 				if (secondaryNames != null && !secondaryNames.isEmpty()) {
 					for (String secName : secondaryNames) {
-						createNameNode(newExternalResourceEntity, secName);
+						this.createNameNode(newExternalResourceEntity, secName);
 					}
 				}
 			} 
