@@ -250,6 +250,7 @@ public class OverviewApiController implements OverviewApi {
 			}
 			log.info("Annotated unconnected Nodes with the " + overviewNetworkItem.getAnnotationName() + " annotation");
 			// 13c. Update mapping node metadata
+			this.mappingNodeService.save(overviewNetwork, 0);
 			this.networkService.updateMappingNodeMetadata(overviewNetwork);
 			
 		}
