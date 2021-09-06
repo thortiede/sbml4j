@@ -246,7 +246,7 @@ public class OverviewApiController implements OverviewApi {
 
 			// 13b. Add the annotation to the unconnected Species
 			for (FlatSpecies species : newNetworkSpecies) {
-				this.networkService.addNodeAnnotationToFlatSpecies(species, overviewNetworkItem.getAnnotationName(), "boolean", Boolean.TRUE);
+				this.networkService.addNodeAnnotationToFlatSpecies(species, overviewNetworkItem.getAnnotationName(), "boolean", Boolean.TRUE, false);
 			}
 			log.info("Annotated unconnected Nodes with the " + overviewNetworkItem.getAnnotationName() + " annotation");
 			// 13c. Update mapping node metadata
