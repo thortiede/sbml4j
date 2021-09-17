@@ -207,7 +207,7 @@ public class MyDrugService {
 			mappingNode.addMappingNodeSymbol(newNodeSymbol);
 		}
 		for (String newRelationSymbol : newRelationSymbols) {
-			mappingNode.addMappingRelatonSymbol(newRelationSymbol);
+			mappingNode.addMappingRelationSymbol(newRelationSymbol);
 		}
 		this.flatEdgeService.save(myDrugFlatEdgeList, 1);
 		this.warehouseGraphService.connect((ProvenanceEntity) mappingNode, myDrugFlatSpeciesList, WarehouseGraphEdgeType.CONTAINS);
