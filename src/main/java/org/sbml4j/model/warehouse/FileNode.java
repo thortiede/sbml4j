@@ -22,8 +22,6 @@ public class FileNode extends WarehouseGraphNode {
 	private FileNodeType fileNodeType;
 	
 	private String filename;
-	
-	private byte[] filecontent;
 
 	private String md5sum;
 	
@@ -33,14 +31,6 @@ public class FileNode extends WarehouseGraphNode {
 
 	public void setFilename(String filename) {
 		this.filename = filename;
-	}
-
-	public byte[] getFilecontent() {
-		return filecontent;
-	}
-
-	public void setFilecontent(byte[] filecontent) {
-		this.filecontent = filecontent;
 	}
 
 	public FileNodeType getFileNodeType() {
