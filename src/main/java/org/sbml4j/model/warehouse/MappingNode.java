@@ -32,17 +32,6 @@ public class MappingNode extends WarehouseGraphNode {
 	
 	private Set<String> mappingRelationSymbols;
 	
-	private String baseNetworkEntityUUID;
-	
-	private String geneSymbol;
-	
-	@Deprecated
-	private Set<String> subnetGeneSymbolSet;
-	
-	private int minSize;
-	private int maxSize;
-	
-	
 	public Set<String> getMappingNodeTypes() {
 		return mappingNodeTypes;
 	}
@@ -67,8 +56,6 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingRelationTypes.add(type);
 	}
 
-	
-
 	public NetworkMappingType getMappingType() {
 		return mappingType;
 	}
@@ -83,38 +70,6 @@ public class MappingNode extends WarehouseGraphNode {
 
 	public void setMappingName(String mappingName) {
 		this.mappingName = mappingName;
-	}
-
-	public String getGeneSymbol() {
-		return geneSymbol;
-	}
-
-	public void setGeneSymbol(String geneSymbol) {
-		this.geneSymbol = geneSymbol;
-	}
-
-	public long getMinSize() {
-		return minSize;
-	}
-
-	public void setMinSize(int minSize) {
-		this.minSize = minSize;
-	}
-
-	public int getMaxSize() {
-		return maxSize;
-	}
-
-	public void setMaxSize(int maxSize) {
-		this.maxSize = maxSize;
-	}
-
-	public String getBaseNetworkEntityUUID() {
-		return baseNetworkEntityUUID;
-	}
-
-	public void setBaseNetworkEntityUUID(String baseNetworkEntityUUID) {
-		this.baseNetworkEntityUUID = baseNetworkEntityUUID;
 	}
 
 	public void setMappingNodeSymbols(Set<String> mappingNodeSymbols) {
@@ -133,7 +88,7 @@ public class MappingNode extends WarehouseGraphNode {
 		this.mappingRelationSymbols = mappingRelationSymbols;
 	}
 
-	public void addMappingRelatonSymbol(String relationSymbol) {
+	public void addMappingRelationSymbol(String relationSymbol) {
 		if (this.mappingRelationSymbols == null) {
 			this.mappingRelationSymbols = new HashSet<>();
 		}
@@ -144,21 +99,4 @@ public class MappingNode extends WarehouseGraphNode {
 		return this.mappingNodeSymbols;
 	}
 	
-	@Deprecated
-	public Set<String> getSubnetGeneSymbolSet() {
-		return subnetGeneSymbolSet;
-	}
-	
-	@Deprecated
-	public void setSubnetGeneSymbolSet(Set<String> subnetGeneSymbolSet) {
-		this.subnetGeneSymbolSet = subnetGeneSymbolSet;
-	}
-	
-	@Deprecated
-	public boolean addSubnetGeneSymbol(String subnetGeneSymbol) {
-		if (this.subnetGeneSymbolSet == null) {
-			this.subnetGeneSymbolSet = new HashSet<>();
-		}
-		return this.subnetGeneSymbolSet.add(subnetGeneSymbol);
-	}
 }
