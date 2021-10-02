@@ -215,13 +215,14 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						nodeTypes.add(speciesOfReaction.getsBaseSboTerm());
 						//startFlatSpecies.setSimpleModelEntityUUID(current.getSpecies().getEntityUUID());
 						if (primaryNameToFlatSpeciesMap.put(speciesSymbol, startFlatSpecies) != null) {
-							throw new NetworkMappingError("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping.");
+							//throw new NetworkMappingError("Duplicate Symbol " + startFlatSpecies.getSymbol() + " in Mapping.");\
+							logger.warn("Duplicate Symbol for species with symbol " + startFlatSpecies.getSymbol() + " in reaction " + reaction.getsBaseName() + " (uuid: "+reaction.getEntityUUID() +") in Mapping.");
 						}
 						//allFlatSpecies.add(startFlatSpecies);
 					}
 					
-					if (sbmlSimpleReactionToFlatSpeciesMap.containsKey(reaction.getEntityUUID())) {
-						endFlatSpecies = sbmlSimpleReactionToFlatSpeciesMap.get(reaction.getEntityUUID());
+					if (primaryNameToFlatSpeciesMap.containsKey(reaction.getsBaseName())) {
+						endFlatSpecies = primaryNameToFlatSpeciesMap.get(reaction.getsBaseName());
 						endFlatSpeciesExists = true;
 					} else {
 						endFlatSpecies = new FlatSpecies();
@@ -231,14 +232,16 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 						endFlatSpecies.setSboTerm(reaction.getsBaseSboTerm());
 						nodeTypes.add(reaction.getsBaseSboTerm());
 						//endFlatSpecies.setSimpleModelEntityUUID(current.getReaction().getEntityUUID());
-						sbmlSimpleReactionToFlatSpeciesMap.put(reaction.getEntityUUID(), endFlatSpecies);
-						numberOfReactions++;
-						if (primaryNameToFlatSpeciesMap.put(endFlatSpecies.getSymbol(), endFlatSpecies) != null) {
-							throw new NetworkMappingError("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping.");
+						if(primaryNameToFlatSpeciesMap.put(reaction.getsBaseName(), endFlatSpecies) != null) {
+							logger.warn("Duplicate reaction " + reaction.getsBaseName() + " (uuid: "+reaction.getEntityUUID() +") in Mapping.");
 						}
+						numberOfReactions++;
+						//if (primaryNameToFlatSpeciesMap.put(endFlatSpecies.getSymbol(), endFlatSpecies) != null) {
+						//	throw new NetworkMappingError("Duplicate Symbol " + endFlatSpecies.getSymbol() + " in Mapping.");
+						//}
 						//allFlatSpecies.add(endFlatSpecies);
 					}
-					if (startFlatSpeciesExists && endFlatSpeciesExists) {
+					/*if (startFlatSpeciesExists && endFlatSpeciesExists) {
 						// since both species already exist, they now get an additional relationship
 						// within the metabolic network: well not necessarily.
 						// But it also happens as The MetabolicReturnType has multiple duplicates because of the NameNode-ExtResource relation
@@ -246,21 +249,23 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								+ " and SBMLSimpleReaction with entityUUID: " + current.getReaction().getEntityUUID()
 								+ " have more than one relationship in pathway with entityUUID: "
 								+ pathway.getEntityUUID());
-					}
-					
-					metabolicFlatEdge = this.flatEdgeService.createFlatEdge(typeOfRelation);
-					this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
+					}*/
 					String relationSymbol = startFlatSpecies.getSymbol() + "-" + typeOfRelation + "->"
 							+ endFlatSpecies.getSymbol();
-					metabolicFlatEdge.setSymbol(relationSymbol);
-					metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
-					metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
-					// TODO: The relationType needs to be determined in a better way.
-					relationTypes.add(typeOfRelation.equals("IS_PRODUCT") ? "PRODUCTOF"
-							: (typeOfRelation.equals("IS_REACTANT") ? "REACTANTOF"
-									: (typeOfRelation.equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
-					allFlatEdges.add(metabolicFlatEdge);
-					relationSymbols.add(relationSymbol);
+					if (relationSymbols.add(relationSymbol)) {
+						metabolicFlatEdge = this.flatEdgeService.createFlatEdge(typeOfRelation);
+						this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
+							metabolicFlatEdge.setSymbol(relationSymbol);
+						metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
+						metabolicFlatEdge.setOutputFlatSpecies(endFlatSpecies);
+						// TODO: The relationType needs to be determined in a better way.
+						relationTypes.add(typeOfRelation.equals("IS_PRODUCT") ? "PRODUCTOF"
+								: (typeOfRelation.equals("IS_REACTANT") ? "REACTANTOF"
+										: (typeOfRelation.equals("IS_CATALYST") ? "CATALYSES" : "UNKNOWN")));
+						allFlatEdges.add(metabolicFlatEdge);
+					} else {
+						logger.debug("Relation "+ relationSymbol + " was already added to the mapping");
+					}	
 				}
 			}
 		}
