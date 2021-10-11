@@ -16,10 +16,10 @@ package org.sbml4j.model.flat.relationship;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.sbml4j.model.flat.FlatEdge;
 
-@RelationshipEntity(type="MOLECUARINTERACTION")
+@RelationshipEntity(type="MOLECULARINTERACTION")
 public class MolecularInteractionFlatEdge extends FlatEdge {
 	@Override
 	public String getTypeString() {
-		return "MOLECUARINTERACTION";
+		return "MOLECULARINTERACTION";
 	}
 }

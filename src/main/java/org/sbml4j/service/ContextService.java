@@ -16,8 +16,10 @@ package org.sbml4j.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -93,12 +95,18 @@ public class ContextService {
 		String nodeApocString = this.apocService.getNodeOrString(networkNodeLabels, terminateAt);
 		log.info("Node string for path.expand: " + nodeApocString);
 		Set<String> geneUUIDSet = new HashSet<>();
+		Map<String, String> entityUUIDToDesiredSymbolMap = new HashMap<String, String>(); 
 		for (String gene : uniqueGenes) {
 			List<FlatSpecies> geneFlatSpecies = this.networkService.getFlatSpeciesOfSymbolInNetwork(networkEntityUUID, gene);
 			if (geneFlatSpecies != null && !geneFlatSpecies.isEmpty()) {
 				for (FlatSpecies fs : geneFlatSpecies) {
 					if (geneUUIDSet.add(fs.getEntityUUID())){
 						geneListFlatSpecies.add(fs);
+						if (!fs.getSymbol().equals(gene)) {
+							// we found a gene, but it only has the symbol we gave in gene as a secondary name
+							// we would like to use the symbol we gave as the primary name in the context network
+							entityUUIDToDesiredSymbolMap.put(fs.getEntityUUID(), gene);
+						}
 					}
 				}
 			}
@@ -118,6 +126,35 @@ public class ContextService {
 			allEdges = this.getMultiGeneNetworkContext(networkEntityUUID, geneListFlatSpecies, minSize, maxSize, terminateAt, direction, weightproperty);
 		}
 		log.info("Finished calculating context network.");
+		if (!entityUUIDToDesiredSymbolMap.isEmpty()) {
+			log.info("Replacing symbols of Nodes with found secondaryNames");
+			
+			for (FlatEdge edge : allEdges) {
+				if (entityUUIDToDesiredSymbolMap.isEmpty()) {
+					break;
+				}
+				if (entityUUIDToDesiredSymbolMap.containsKey(edge.getInputFlatSpecies().getEntityUUID())) {
+					FlatSpecies species = edge.getInputFlatSpecies();
+					String symbol = species.getSymbol();
+					String speciesEntityUUID = species.getEntityUUID();
+					String desiredSymbol = entityUUIDToDesiredSymbolMap.get(speciesEntityUUID);
+					log.debug("Replacing symbol " + symbol + " with " + desiredSymbol + " in species with uuid " + speciesEntityUUID);
+					species.addSecondaryName(symbol);
+					species.setSymbol(desiredSymbol);
+					entityUUIDToDesiredSymbolMap.remove(speciesEntityUUID);
+				}
+				if (entityUUIDToDesiredSymbolMap.containsKey(edge.getOutputFlatSpecies().getEntityUUID())) {
+					FlatSpecies species = edge.getOutputFlatSpecies();
+					String symbol = species.getSymbol();
+					String speciesEntityUUID = species.getEntityUUID();
+					String desiredSymbol = entityUUIDToDesiredSymbolMap.get(speciesEntityUUID);
+					log.debug("Replacing symbol " + symbol + " with " + desiredSymbol + " in species with uuid " + speciesEntityUUID);
+					species.addSecondaryName(symbol);
+					species.setSymbol(desiredSymbol);
+					entityUUIDToDesiredSymbolMap.remove(speciesEntityUUID);
+				}
+			}
+		}
 		return allEdges;
 	}
 	
