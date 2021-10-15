@@ -800,6 +800,16 @@ public class NetworkService {
 										String networkEntityUUID,
 										String networkname, 
 										boolean prefixName) throws NetworkAlreadyExistsException, NetworkDeletionException {
+		
+		// always derive the network when we filter
+		boolean derive = true;
+		
+		MappingNode newMapping = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
+				derive, "FLT_"+filterOptions.hashCode() + "_on_", ProvenanceGraphActivityType.filterNetwork);
+		
+		/*
+		 * this is what was done before
+		 * 
 		// Activity
 		MappingNode parent = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
 		if(networkname == null && !prefixName) {
@@ -828,6 +838,8 @@ public class NetworkService {
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
 		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
 				mappingType);
+
+		*/
 
 		// Lists to check for Filtering
 		final List<String> relationTypesToBeIncluded = filterOptions.getRelationTypes();
