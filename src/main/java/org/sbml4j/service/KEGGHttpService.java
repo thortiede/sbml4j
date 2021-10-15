@@ -73,8 +73,8 @@ public class KEGGHttpService {
 			String lastLine = "";
 			while ((inputLine = streamReader.readLine()) != null) {
 				//logger.debug(inputLine);
-				if(inputLine.startsWith("NAME")) {
-					lastLine = "NAME";
+				if(inputLine.startsWith("SYMBOL")) {
+					lastLine = "SYMBOL";
 					splitted = inputLine.split("\\s+");
 					if(splitted.length > 1) {
 						for (int i = 1; i!= splitted.length; i++) {
@@ -85,7 +85,7 @@ public class KEGGHttpService {
 							}
 						}
 					}
-				} else if(lastLine.equals("NAME") && inputLine.startsWith(" ")) {
+				} else if(lastLine.equals("SYMBOL") && inputLine.startsWith(" ")) {
 					splitted = inputLine.split("\\s+");
 					for (int i = 0; i!= splitted.length; i++) {
 						if (splitted[i].endsWith(",")) {
@@ -94,7 +94,7 @@ public class KEGGHttpService {
 							geneNames.add(splitted[i]);
 						}
 					}
-				} else if(lastLine.equals("NAME") && !inputLine.startsWith(" ")) {
+				} else if(lastLine.equals("SYMBOL") && !inputLine.startsWith(" ")) {
 					lastLine = "";
 					break;
 				}
