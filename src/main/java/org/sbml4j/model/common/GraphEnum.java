@@ -117,11 +117,14 @@ public class GraphEnum {
 	public enum ProvenanceGraphActivityType {
 		persistFile,
 		createMapping,
-		mapAnnotations,
 		runAlgorithm,
-		createKnowledgeGraph,
+		createPathwayCollection,
 		addMyDrugNodes,
-		createContext
+		createContext,
+		filterNetwork,
+		copyNetwork,
+		addCsvAnnotation,
+		addJsonAnnotation
 	}
 	
 	/**
