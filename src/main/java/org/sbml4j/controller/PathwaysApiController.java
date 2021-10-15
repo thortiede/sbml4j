@@ -121,7 +121,7 @@ public class PathwaysApiController implements PathwaysApi {
 
 		// Need Activity
 		Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
-		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.createKnowledgeGraph);
+		activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.createPathwayCollection);
 		String activityName = "Create_PathwayCollection_for";
 		List<String> pathwayUUIDStrings = new ArrayList<>();
 		pathwayCollectionCreationItem.getSourcePathwayUUIDs().forEach(e -> pathwayUUIDStrings.add(e.toString()));
