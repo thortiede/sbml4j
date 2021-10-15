@@ -185,45 +185,46 @@
 	</Appenders>
 
 	<Loggers>
-		<Logger name="org.sbml4j" level="info" additivity="false">
+		<Logger name="org.sbml4j" level="info" additivity="true">
 			<AppenderRef ref="applicationDebug" />
-			<AppenderRef ref="console" />
+
 			<AppenderRef ref="applicationInfo" />
 			<AppenderRef ref="applicationWarnError" />
 		</Logger>
 		
 
-<!-- 		<Logger name="org.neo4j" level="info" additivity="false"> -->
-<!-- 			<AppenderRef ref="databaseDebug" /> -->
-<!-- 			<AppenderRef ref="databaseInfo" /> -->
-<!-- 			<AppenderRef ref="databaseWarnError" /> -->
-<!-- 		</Logger> -->
+		<Logger name="org.neo4j" level="info" additivity="false">
+			<AppenderRef ref="databaseDebug" />
+			<AppenderRef ref="databaseInfo" />
+			<AppenderRef ref="databaseWarnError" />
+		</Logger>
 
-<!-- 		<Logger name="org.neo4j.ogm.drivers.bolt.request.BoltRequest" -->
-<!-- 			level="debug" additivity="false"> -->
-<!-- 			<AppenderRef ref="databaseRequests" /> -->
-<!-- 		</Logger> -->
+		<Logger name="org.neo4j.ogm.drivers.bolt.request.BoltRequest"
+			level="debug" additivity="false">
+			<AppenderRef ref="databaseRequests" />
+		</Logger>
 		
-		<!-- org.springframework.data.neo4j.repository.query.PartTreeNeo4jQuery -->
-<!-- 		<Logger name="org.springframework.data.neo4j.repository.query" -->
-<!-- 			level="debug" additivity="false"> -->
-<!-- 			<AppenderRef ref="databaseRequests" /> -->
-<!-- 		</Logger> -->
 		
-<!-- 		<Logger name="org.springframework" level="info" -->
-<!-- 			additivity="false"> -->
-<!-- 			<AppenderRef ref="springDebug" /> -->
-<!-- 			<AppenderRef ref="springInfo" /> -->
-<!-- 			<AppenderRef ref="springWarnError" /> -->
-<!-- 		</Logger> -->
+		<Logger name="org.springframework.data.neo4j.repository.query"
+			level="debug" additivity="false">
+			<AppenderRef ref="databaseRequests" />
+		</Logger>
 		
-<!-- 		<Logger name="org.sbml" level="info" additivity="false"> -->
-<!-- 			<AppenderRef ref="jsbmlDebug" /> -->
-<!-- 			<AppenderRef ref="jsbmlInfo" /> -->
-<!-- 			<AppenderRef ref="jsbmlWarnError" /> -->
-<!-- 		</Logger> -->
+		<Logger name="org.springframework" level="info"
+			additivity="true">
+			<AppenderRef ref="springDebug" />
+			<AppenderRef ref="springInfo" />
+			<AppenderRef ref="springWarnError" />
+		</Logger>
+		
+		<Logger name="org.sbml" level="info" additivity="false">
+			<AppenderRef ref="jsbmlDebug" />
+			<AppenderRef ref="jsbmlInfo" />
+			<AppenderRef ref="jsbmlWarnError" />
+		</Logger>
 
 		<Root level="INFO" additivity = "true">
+			<AppenderRef ref="console" />
 			<AppenderRef ref="rootAll" />
 		</Root>
 	</Loggers>
