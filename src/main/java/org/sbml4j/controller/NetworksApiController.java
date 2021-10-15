@@ -33,6 +33,7 @@ import org.sbml4j.model.api.FilterOptions;
 import org.sbml4j.model.api.NetworkInventoryItem;
 import org.sbml4j.model.api.NetworkOptions;
 import org.sbml4j.model.api.NodeList;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.service.ConfigService;
@@ -277,7 +278,7 @@ public class NetworksApiController implements NetworksApi {
 		MappingNode newNetwork;
 		// 4. copy the network
 		try {
-			newNetwork = this.networkService.getCopiedOrNamedMappingNode(networkUser, uuid, copiedNetworkName, false, true, "CopyOf_");
+			newNetwork = this.networkService.getCopiedOrNamedMappingNode(networkUser, uuid, copiedNetworkName, false, true, "CopyOf_", ProvenanceGraphActivityType.copyNetwork);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())

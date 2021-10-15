@@ -145,7 +145,7 @@ public class NetworkService {
 
 		Map<String, List<Map<String, String>>> annotationMap;
 		MappingNode newNetwork = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
-				derive, type + "_on_");
+				derive, type + "_on_", ProvenanceGraphActivityType.addCsvAnnotation);
 		String annotatedNetworkEntityUUID = newNetwork.getEntityUUID();
 		for (MultipartFile file : data) {
 			log.debug("Processing file " + file.getOriginalFilename());
@@ -297,7 +297,7 @@ public class NetworkService {
 		}
 		String prefixString = prefixSB.toString();
 		MappingNode mappingToAnnotate = getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName,
-				derive, prefixString);
+				derive, prefixString, ProvenanceGraphActivityType.addJsonAnnotation);
 
 		Iterable<FlatEdge> networkRelations = this.getNetworkRelations(mappingToAnnotate.getEntityUUID());
 		if (annotationItem.getNodeAnnotationName() != null) {
@@ -471,7 +471,7 @@ public class NetworkService {
 	 * @throws NetworkAlreadyExistsException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists for the given user
 	 * @throws NetworkDeletionException if a <a href="#{@link}">{@link MappingNode}</a> with the given name ()or prefixed name) already exists but deletion failed
 	 */
-	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName, String prefixString) throws NetworkAlreadyExistsException, NetworkDeletionException {
+	public MappingNode copyNetwork(String networkEntityUUID, String user, String name, boolean prefixName, String prefixString, ProvenanceGraphActivityType activityType) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		log.info("Copying network with uuid: " + networkEntityUUID);
 		
 		// Activity
@@ -500,7 +500,7 @@ public class NetworkService {
 		}
 		
 		String activityName = "Create_" + newMappingName;
-		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		//ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.copyNetwork;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
 		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
@@ -623,6 +623,7 @@ public class NetworkService {
 		MappingNode newMapping = this.mappingNodeService.createMappingNode(parent, mappingType,
 				newMappingName);
 		this.provenanceGraphService.connect(newMapping, parent, ProvenanceGraphEdgeType.wasDerivedFrom);
+		this.provenanceGraphService.connect(createMappingActivityNode, parent, ProvenanceGraphEdgeType.used);
 		this.provenanceGraphService.connect(newMapping, graphAgent, ProvenanceGraphEdgeType.wasAttributedTo);
 		this.provenanceGraphService.connect(newMapping, createMappingActivityNode,
 				ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -822,7 +823,7 @@ public class NetworkService {
 			}
 		}
 		String activityName = "Filter_network_" + networkEntityUUID;
-		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createMapping;
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.filterNetwork;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
 		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
@@ -915,10 +916,10 @@ public class NetworkService {
 	 * @throws NetworkDeletionException 
 	 */
 	public MappingNode getCopiedOrNamedMappingNode(String user, String networkEntityUUID, String networkname,
-			boolean prefixName, boolean derive, String prefixString) throws NetworkAlreadyExistsException, NetworkDeletionException {
+			boolean prefixName, boolean derive, String prefixString, ProvenanceGraphActivityType activityType) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		MappingNode copiedOrNamedMappingNode = null;
 		if (derive) {
-			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname, prefixName, prefixString);
+			copiedOrNamedMappingNode = this.copyNetwork(networkEntityUUID, user, networkname, prefixName, prefixString, activityType);
 			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
 		} else {
 			copiedOrNamedMappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);

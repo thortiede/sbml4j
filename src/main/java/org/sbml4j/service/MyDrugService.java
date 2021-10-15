@@ -27,6 +27,7 @@ import java.util.Set;
 
 import org.sbml4j.Exception.NetworkAlreadyExistsException;
 import org.sbml4j.Exception.NetworkDeletionException;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
@@ -86,7 +87,7 @@ public class MyDrugService {
 	 */
 	public MappingNode addMyDrugToNetwork(String user, String networkEntityUUID, String myDrugURL, String networkname, boolean prefixName, boolean derive) throws NetworkAlreadyExistsException, NetworkDeletionException {
 		
-		MappingNode mappingNode = this.networkService.getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName, derive, "MyDrugNodesOn_");
+		MappingNode mappingNode = this.networkService.getCopiedOrNamedMappingNode(user, networkEntityUUID, networkname, prefixName, derive, "MyDrugNodesOn_", ProvenanceGraphActivityType.addMyDrugNodes);
 		
 		StringBuilder matchStringPre = new StringBuilder();
 		matchStringPre.append("(a)-[t:targets]->(b) where b.symbol in [");
