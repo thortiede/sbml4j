@@ -314,7 +314,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 						}
 						break;
 					case "integer":
-						int nodeAnnotationInt = (int) nodeAnnotationMap.get(annotationKey);
+						long nodeAnnotationInt = (long) nodeAnnotationMap.get(annotationKey);
 						nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_%s\">%d</data>\n", annotationKey, nodeAnnotationInt).getBytes());
 						if (!nodeAnnotations.containsKey(annotationKey)) {
 							nodeAnnotations.put(annotationKey, annotationType);
