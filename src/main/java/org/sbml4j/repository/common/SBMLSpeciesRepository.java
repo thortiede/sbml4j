@@ -69,7 +69,7 @@ public interface SBMLSpeciesRepository extends Neo4jRepository<SBMLSpecies, Long
 	@Query("MATCH "
 			+ "(s:SBMLSpecies)"
 			+ "-[b:BQ]->"
-			+ "(e:ExternalResourceEntity "
+			+ "(e:ExternalResourceEntity) "
 			+ "-[KNOWNAS]->"
 			+ "(n:NameNode) "
 			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
