@@ -116,6 +116,9 @@ public class SBMLSpeciesService {
 				}
 			}
 		}
+		if (allSpecies.isEmpty() && !symbol.equals(symbol.toUpperCase())) {
+			return this.findAllBySymbol(symbol.toUpperCase(), searchBQConnections);
+		}
 		return allSpecies;
 	}
 
@@ -128,6 +131,9 @@ public class SBMLSpeciesService {
 		Map<String, SBMLSpecies> allSpecies = new HashMap<>();
 		for (SBMLSpecies species : this.sbmlSpeciesRepository.findByExternalResourceSecondaryName(name) ) {
 			allSpecies.putIfAbsent(species.getEntityUUID(), species);
+		}
+		if (allSpecies.isEmpty() && !name.equals(name.toUpperCase())) {
+			return this.findByExternalResourceSecondaryName(name.toUpperCase());
 		}
 		return allSpecies;
 	}
