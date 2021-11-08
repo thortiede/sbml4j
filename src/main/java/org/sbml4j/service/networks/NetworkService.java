@@ -364,9 +364,10 @@ public class NetworkService {
 				}
 				
 			}
+			Map<String, Object> nodeAnnotationCopy = new HashMap<>(annotationItem.getNodeAnnotation());
 			
 			addNodeAnnotation(networkRelations,
-					annotationItem.getNodeAnnotationName(), nodeAnnotationType, annotationItem.getNodeAnnotation());
+					annotationItem.getNodeAnnotationName(), nodeAnnotationType, nodeAnnotationCopy);
 			mappingToAnnotate.addAnnotationType("node." + annotationItem.getNodeAnnotationName(),
 					nodeAnnotationType);
 		}
@@ -434,9 +435,9 @@ public class NetworkService {
 					break;
 				}
 			}
-			
+			Map<String,Object> relationAnnotationCopy = new HashMap<>(annotationItem.getRelationAnnotation());
 			addRelationAnnotation(networkRelations, 
-					annotationItem.getRelationAnnotationName(), relationAnnotationType, annotationItem.getRelationAnnotation());
+					annotationItem.getRelationAnnotationName(), relationAnnotationType, relationAnnotationCopy);
 			mappingToAnnotate.addAnnotationType("relation." + annotationItem.getRelationAnnotationName(), 
 					relationAnnotationType);
 		}
@@ -499,7 +500,7 @@ public class NetworkService {
 			}
 		}
 		
-		String activityName = "Create_" + newMappingName;
+		String activityName = parent.getMappingName() + "-" + activityType.toString() + "->" + newMappingName;
 		//ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.copyNetwork;
 		NetworkMappingType mappingType = parent.getMappingType();
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
@@ -935,6 +936,7 @@ public class NetworkService {
 			//return this.annotateNetwork(user, annotationItem, networkEntityUUID);
 		} else {
 			copiedOrNamedMappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
+			String oldMappingName = copiedOrNamedMappingNode.getMappingName();
 			String newMappingName;
 			if (networkname == null && prefixName) {
 				newMappingName = prefixString + "_" + copiedOrNamedMappingNode.getMappingName();
@@ -951,8 +953,9 @@ public class NetworkService {
 			// The name should be unique per user
 			// if user already exists AND a mapping with that name already exists, then error
 			// if user doesn't exist in the first place, it is fine and we do not need to check for the network name
+			ProvenanceGraphAgentNode newMappingGraphAgentNode = this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user);
 			if (!newMappingName.equals(copiedOrNamedMappingNode.getMappingName()) 
-					&& (this.provenanceGraphService.findProvenanceGraphAgentNode(ProvenanceGraphAgentType.User, user) != null
+					&& (newMappingGraphAgentNode != null
 							&& this.mappingNodeService.findByNetworkNameAndUser(newMappingName, user) != null)) {
 				if (this.configService.isDeleteExistingNetwork()) {
 					this.deleteNetwork(copiedOrNamedMappingNode.getEntityUUID());
@@ -961,6 +964,22 @@ public class NetworkService {
 				}
 			}
 			copiedOrNamedMappingNode.setMappingName(newMappingName);
+			this.mappingNodeService.save(copiedOrNamedMappingNode, 0);
+			
+			// TODO: Add activity node for this annotation
+			// Need Activity
+			String activityName = oldMappingName + "-" + activityType.toString() + "|noDerive->" + newMappingName;
+			Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
+			activityNodeProvenanceProperties.put("graphactivitytype", activityType);
+			
+			activityNodeProvenanceProperties.put("graphactivityname", activityName);
+			ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
+					.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
+			this.provenanceGraphService.connect(createMappingActivityNode, newMappingGraphAgentNode,
+					ProvenanceGraphEdgeType.wasAssociatedWith);
+			this.provenanceGraphService.connect(copiedOrNamedMappingNode, createMappingActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			this.provenanceGraphService.connect(createMappingActivityNode, copiedOrNamedMappingNode, ProvenanceGraphEdgeType.used);
+			
 		}
 		return copiedOrNamedMappingNode;
 	}
