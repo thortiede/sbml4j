@@ -19,6 +19,9 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface ProvenanceGraphActivityNodeRepository extends Neo4jRepository<ProvenanceGraphActivityNode, Long> {
 
+	// This method should not be used anymore
+	// It is now possible to have more than one ProvenanceGraphActivityNode for this combination
+	@Deprecated
 	ProvenanceGraphActivityNode findByGraphActivityTypeAndGraphActivityName(ProvenanceGraphActivityType graphActivityType, String graphActivityName);
 
 }
