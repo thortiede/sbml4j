@@ -142,12 +142,12 @@ public class ApocService {
 				sb.append("|");
 			}
 			if (!exclude.contains(relationType)) {
-				if(direction.equals("upstream") || direction.equals("both")) {
+				if(direction.equals("upstream")) {
 					sb.append("<");
 				}
 				isFirst = false;
 				sb.append(relationType);
-				if(direction.equals("downstream") || direction.equals("both")) {
+				if(direction.equals("downstream")) {
 					sb.append(">");
 				}	
 			}
