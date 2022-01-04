@@ -177,6 +177,17 @@ public class SbmlApiController implements SbmlApi {
 		StringBuilder errorFileNames = new StringBuilder();
 		int filenum = 0;
 		int filestotal = files.size();
+		
+		// New data for provenance tracking
+		// get all filenames
+		StringBuilder allFileNamesSB = new StringBuilder();
+		
+		for (MultipartFile file :files) {
+			allFileNamesSB.append(file.getOriginalFilename());
+			allFileNamesSB.append(',');
+		}
+		String allFileNames = allFileNamesSB.substring(0, allFileNamesSB.lastIndexOf(","));
+		
 		for (MultipartFile file : files) {
 			filenum++;
 			countTotal++;
@@ -246,8 +257,22 @@ public class SbmlApiController implements SbmlApi {
 			Map<String, Object> activityNodeProvenanceProperties = new HashMap<>();
 			activityNodeProvenanceProperties.put("graphactivitytype", ProvenanceGraphActivityType.persistFile);
 			activityNodeProvenanceProperties.put("graphactivityname", originalFilename); 
+			
+			
 			ProvenanceGraphActivityNode persistGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
 			// connect the activity node to the newly created FileNode
+			
+			// TODO: NEW: add provenance annotation (potentially do this at the end, 
+			// which means saving the activity node information here for later, 
+			// but allows to collect filenames and potentially md5 sums during execution (one for loop less))
+			Map<String, Object> provenanceAnnotation = new HashMap<>();
+			provenanceAnnotation.put("params.user", user);
+			provenanceAnnotation.put("params.files", allFileNames);
+			provenanceAnnotation.put("params.source", source);
+			provenanceAnnotation.put("params.version", version);
+			provenanceAnnotation.put("params.organism", org.getOrgCode());			
+			this.provenanceGraphService.addProvenanceAnnotation(persistGraphActivityNode, provenanceAnnotation);
+			
 			this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 
 			// Associate Activity with User Agent
