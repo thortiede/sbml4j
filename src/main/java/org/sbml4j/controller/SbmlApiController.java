@@ -356,13 +356,11 @@ public class SbmlApiController implements SbmlApi {
 					this.graphBaseEntityService.deleteEntity(userAgentNode);
 					//if (!orgExisted) this.graphBaseEntityService.deleteEntity(org);
 					
-					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded.");
-					logger.error("The error message is: " + e.getMessage());
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded. The error message is: " + e.getMessage(), e);
 					e.printStackTrace();
 					logger.error("Continuing with the next model..");
 				} else {
-					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
-					logger.error("The error message is: " + e.getMessage());
+					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
 					e.printStackTrace();
 					logger.error("Continuing with the next model..");
 					countError++;
@@ -371,8 +369,7 @@ public class SbmlApiController implements SbmlApi {
 				}
 			} catch (Exception e) {
 				// TODO Roll back transaction..
-				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I promise.");
-				logger.error("The error message is: " + e.getMessage());
+				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
 				e.printStackTrace();
 				logger.error("Continuing with the next model..");
 				countError++;
@@ -387,7 +384,7 @@ public class SbmlApiController implements SbmlApi {
 			if (countTotal > countError) {
 				//ResponseEntity mixed = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not persist Model in file(s)" + errorFileNames.toString()).build();
 				ResponseEntity<List<PathwayInventoryItem>> m = new ResponseEntity<>(pathwayInventoryList, HttpStatus.UNPROCESSABLE_ENTITY);
-				m.getHeaders().add("reason", "Could not persist Model in file(s)" + errorFileNames.toString());
+				m.getHeaders().add("reason", "Could not persist Model in file(s): " + errorFileNames.toString());
 				return m;
 			} else {
 				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not persist Model in file(s): " + errorFileNames.toString()).build();
