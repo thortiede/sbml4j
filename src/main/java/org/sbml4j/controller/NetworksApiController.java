@@ -16,7 +16,9 @@ package org.sbml4j.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.validation.Valid;
@@ -34,7 +36,10 @@ import org.sbml4j.model.api.NetworkInventoryItem;
 import org.sbml4j.model.api.NetworkOptions;
 import org.sbml4j.model.api.NodeList;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.flat.FlatEdge;
+import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.service.ConfigService;
 import org.sbml4j.service.FlatSpeciesService;
@@ -44,6 +49,7 @@ import org.sbml4j.service.ProvenanceGraphService;
 import org.sbml4j.service.WarehouseGraphService;
 import org.sbml4j.service.networks.NetworkResourceService;
 import org.sbml4j.service.networks.NetworkService;
+import org.sbml4j.service.utility.FileCheckService;
 import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +77,9 @@ public class NetworksApiController implements NetworksApi {
 	
 	@Autowired
 	FlatSpeciesService flatSpeciesService;
+	
+	@Autowired
+	FileCheckService fileCheckService;
 	
 	@Autowired
 	GraphBaseEntityService graphBaseEntityService;
@@ -102,11 +111,14 @@ public class NetworksApiController implements NetworksApi {
 		String uuid = UUID.toString();
 		log.info("Serving POST /networks/" + uuid + "/annotation" + (user != null ? " for user " + user : "") + " with AnnotationItem " + annotationItem.toString());
 		
+		
+	
+		MappingNode oldMapping = this.mappingNodeService.findByEntityUUID(uuid);
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(uuid) == null) {
+		if (oldMapping == null) {
 			return ResponseEntity.notFound().build();
 		}
-		
+		String oldMappingName = oldMapping.getMappingName();
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
 		try {
@@ -142,8 +154,48 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 	
-		// 4. Return the InventoryItem of the new Network
-		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(annotatedNetwork.getEntityUUID()), HttpStatus.CREATED);
+		// 5. get the networkInventoryItem
+		NetworkInventoryItem item = this.networkService.getNetworkInventoryItem(annotatedNetwork.getEntityUUID());
+		
+		// 6. Add the provenance annotation
+		// get the activity node
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, annotatedNetwork.getEntityUUID());
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				if(activity.getGraphActivityType().equals(ProvenanceGraphActivityType.addJsonAnnotation) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + ProvenanceGraphActivityType.addJsonAnnotation + (derive ? "->" : "|noDerive->") + annotatedNetwork.getMappingName())) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					
+					//   annotationItem
+					provenanceAnnotation.put("body", annotationItem.toString());
+					//   networkname
+					provenanceAnnotation.put("networkname", annotatedNetwork.getMappingName());
+					//   uuid
+					provenanceAnnotation.put("networkUUID", annotatedNetwork.getEntityUUID());
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.UUID", uuid);
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+					//   derive
+					provenanceAnnotation.put("params.derived", derive);
+				
+					//   inventoryItem
+					//provenanceAnnotation.put("inventoryItem", item);
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		
+		// 7. Return the InventoryItem of the new Network
+		return new ResponseEntity<NetworkInventoryItem>(item, HttpStatus.CREATED);
 	}
 
 	@Override
@@ -159,7 +211,7 @@ public class NetworksApiController implements NetworksApi {
 		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
-		
+		String oldMappingName = mappingForUUID.getMappingName();
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
 		try {
@@ -177,7 +229,17 @@ public class NetworksApiController implements NetworksApi {
 		}
 		// 4. add the data to the network
 		MappingNode newNetwork;
+		String bodyString = "";
+		
 		try {
+			boolean first = true;
+			for (MultipartFile file : data) {
+				if (!first) bodyString.concat(", ");
+				bodyString.concat(file.getOriginalFilename());
+				bodyString.concat("(");
+				bodyString.concat(this.fileCheckService.getMD5Sum(file));
+				bodyString.concat(")");
+			}
 			newNetwork = this.networkService.addCsvDataToNetwork(user != null ? user.strip() : networkUser, data, type, uuid, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
@@ -193,7 +255,51 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 		
-		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()));
+		// 5. Add the provenance annotation
+		// get the activity node
+		String newNetworkEntityUUID = newNetwork.getEntityUUID();
+		String newNetworkMappingName = newNetwork.getMappingName();
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.addCsvAnnotation;
+		
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				
+				if(activity.getGraphActivityType().equals(activityType) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + (derive ? "->" : "|noDerive->") + newNetworkMappingName)) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					
+					//   body
+					provenanceAnnotation.put("body", bodyString);
+					//   networkname
+					provenanceAnnotation.put("networkname", newNetworkMappingName);
+					//   uuid
+					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.UUID", uuid);
+					// annotationType
+					provenanceAnnotation.put("params.type", type);
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+					//   derive
+					provenanceAnnotation.put("params.derived", derive);
+				
+					//   inventoryItem
+					//provenanceAnnotation.put("inventoryItem", item);
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		// 6. Return the InventoryItem of the new Network
+		return ResponseEntity.ok(this.networkService.getNetworkInventoryItem(newNetworkEntityUUID));
 	}
 	
 	@Override
@@ -208,6 +314,7 @@ public class NetworksApiController implements NetworksApi {
 		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
+		String oldMappingName = mappingForUUID.getMappingName();
 		
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
@@ -226,7 +333,7 @@ public class NetworksApiController implements NetworksApi {
 		}
 		// 4. add the data to the network
 		MappingNode newNetwork;
-		// 4. Add MyDrug Nodes/Edges
+		// 5. Add MyDrug Nodes/Edges
 		try {
 			newNetwork = this.myDrugService.addMyDrugToNetwork(user != null ? user.strip() : networkUser, uuid, myDrugURL, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
@@ -238,7 +345,49 @@ public class NetworksApiController implements NetworksApi {
 					.header("reason", e.getMessage())
 					.build();
 		}
-		// 5. Return the InventoryItem of the new Network
+		// 6. Add the provenance annotation
+		// get the activity node
+		String newNetworkEntityUUID = newNetwork.getEntityUUID();
+		String newNetworkMappingName = newNetwork.getMappingName();
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.addMyDrugNodes;
+		
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				
+				if(activity.getGraphActivityType().equals(activityType) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + (derive ? "->" : "|noDerive->") + newNetworkMappingName)) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					
+					//   networkname
+					provenanceAnnotation.put("networkname", newNetworkMappingName);
+					//   uuid
+					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.UUID", uuid);
+					// annotationType
+					provenanceAnnotation.put("params.myDrugURL", myDrugURL);
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+					//   derive
+					provenanceAnnotation.put("params.derived", derive);
+				
+					//   inventoryItem
+					//provenanceAnnotation.put("inventoryItem", item);
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		
+		// 7. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 	
@@ -248,12 +397,16 @@ public class NetworksApiController implements NetworksApi {
 		String uuid = parentUUID.toString();
 		log.info("Serving POST /networks?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
 		
+		
+		// 0. Assemble information to store for the provenance
+		
+		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
 		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
-		
+		String oldMappingName = mappingForUUID.getMappingName();
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
 		try {
@@ -288,7 +441,47 @@ public class NetworksApiController implements NetworksApi {
 					.header("reason", e.getMessage())
 					.build();
 		}
-		// 5. Return the InventoryItem of the new Network
+		
+		// 5. Add the provenance annotation
+		// get the activity node
+		String newNetworkEntityUUID = newNetwork.getEntityUUID();
+		String newNetworkMappingName = newNetwork.getMappingName();
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.copyNetwork;
+		
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				
+				if(activity.getGraphActivityType().equals(activityType) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType +  "->" + newNetworkMappingName)) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					
+					//   networkname
+					provenanceAnnotation.put("networkname", newNetworkMappingName);
+					//   uuid
+					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.parentUUID", uuid);
+					
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+					//suffixName
+					provenanceAnnotation.put("params.suffixName", suffixName);
+					
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		
+		// 6. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(newNetwork.getEntityUUID()), HttpStatus.CREATED);
 		
 	}
@@ -350,10 +543,11 @@ public class NetworksApiController implements NetworksApi {
 		log.info("Serving POST /networks/" + uuid + "/filter" + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
 		
 		// 1. Does the network exist?
-		if (this.mappingNodeService.findByEntityUUID(uuid) == null) {
+		MappingNode oldMapping = this.mappingNodeService.findByEntityUUID(uuid);
+		if (oldMapping == null) {
 			return ResponseEntity.notFound().build();
 		}
-		
+		String oldMappingName = oldMapping.getMappingName();
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
 		try {
@@ -383,6 +577,44 @@ public class NetworksApiController implements NetworksApi {
 		if (filteredNetwork == null) {
 			return ResponseEntity.badRequest().header("reason", "There has been an error filtering the network with entityUUID: " + uuid).build();
 		}
+		// 6. Add the provenance annotation
+		// get the activity node
+		String newNetworkEntityUUID = filteredNetwork.getEntityUUID();
+		String newNetworkMappingName = filteredNetwork.getMappingName();
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.filterNetwork;
+		
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				
+				if(activity.getGraphActivityType().equals(activityType) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + "->" + newNetworkMappingName)) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					//   filterItem
+					provenanceAnnotation.put("body", filterOptions.toString());
+					//   networkname
+					provenanceAnnotation.put("networkname", newNetworkMappingName);
+					//   uuid
+					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.UUID", uuid);
+					
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		
+
 		// 5. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(filteredNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
@@ -565,6 +797,7 @@ public class NetworksApiController implements NetworksApi {
 		if (mappingForUUID == null) {
 			return ResponseEntity.notFound().build();
 		}
+		String oldMappingName = mappingForUUID.getMappingName();
 		// 2. Is the given user or the public user authorized for this network?
 		String networkUser = null;
 		try {
@@ -574,7 +807,7 @@ public class NetworksApiController implements NetworksApi {
 					.header("reason", e.getMessage())
 					.build();
 		}
-		// 4. Check the input parameters
+		// 3. Check the input parameters
 		int minDepth; 
 		if (minSize != null) {
 			minDepth = minSize.intValue();
@@ -614,7 +847,7 @@ public class NetworksApiController implements NetworksApi {
 					.build();
 		}
 
-		// 3. Create the context network
+		// 4. Create the context network
 		MappingNode contextNetwork;
 		try {
 			contextNetwork = this.networkService.createContextNetwork(user != null ? user.strip() : networkUser, geneNames, mappingForUUID, minDepth, maxDepth, terminateAtString,
@@ -628,7 +861,57 @@ public class NetworksApiController implements NetworksApi {
 					.header("reason", e.getMessage())
 					.build();
 		}
-		// 7. Return the InventoryItem of the new Network
+		
+		// 5. Add the provenance annotation
+		// get the activity node
+		String newNetworkEntityUUID = contextNetwork.getEntityUUID();
+		String newNetworkMappingName = contextNetwork.getMappingName();
+		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
+		String bodyString = nodeList.toString();
+		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
+		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
+			try {
+				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
+				
+				if(activity.getGraphActivityType().equals(activityType) 
+						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + "->" + newNetworkMappingName)) {
+					// Assemble information to store for the provenance
+					Map<String, Object> provenanceAnnotation = new HashMap<>();
+					
+					//   body
+					provenanceAnnotation.put("body", bodyString);
+					//   networkname
+					provenanceAnnotation.put("networkname", newNetworkMappingName);
+					//   uuid
+					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+					// call parameters
+					//   base uuid
+					provenanceAnnotation.put("params.UUID", uuid);
+					// minSize
+					provenanceAnnotation.put("params.minSize", minDepth);
+					// maxSize
+					provenanceAnnotation.put("params.maxSize", maxDepth);
+					// terminateAt
+					provenanceAnnotation.put("params.terminateAt", terminateAtString);
+					// direction
+					provenanceAnnotation.put("params.direction", directionString);
+					// weightproperty
+					if (weightproperty != null) {
+						provenanceAnnotation.put("params.weightproperty", weightproperty);
+					}
+					//   prefixName
+					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+									
+					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					
+				}
+			} catch (ClassCastException e) {
+				e.printStackTrace();
+				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			}
+		}
+		
+		// 6. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
 	}
 }
