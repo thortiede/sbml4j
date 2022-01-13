@@ -22,8 +22,11 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface BiomodelsQualifierRepository extends Neo4jRepository<BiomodelsQualifier, Long> {
 
+	// @unsused
 	List<BiomodelsQualifier> findByTypeAndQualifier(CVTerm.Type type, CVTerm.Qualifier qualifier);
 	
+	
+	// potentially switch this over to the findAllForSBaseEntity method
 	@Query("MATCH "
 			+ "(s:SBMLSpecies)"
 			+ "-[bq:BQ]-"

@@ -204,8 +204,7 @@ public class GraphEnum {
 	 */
 	public enum WarehouseGraphEdgeType {
 		CONTAINS,
-		FOR,
-		DERIVEDFROM
+		FOR
 	}
 	
 	/**

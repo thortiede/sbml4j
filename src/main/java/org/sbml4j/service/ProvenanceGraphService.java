@@ -253,6 +253,7 @@ public class ProvenanceGraphService {
 	 * @param startNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the StartNode of the Edge
 	 * @return The {@link ProvenanceEntity} that is the EndNode of the {@link ProvenanceGraphEdge}, or null if none was found
 	 */
+	@Deprecated
 	public ProvenanceEntity findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID) {
 		return this.provenanceEntityRepository.findByProvenanceGraphEdgeTypeAndStartNode(edgetype, startNodeEntityUUID);
@@ -277,6 +278,7 @@ public class ProvenanceGraphService {
 	 * @param endNodeEntityUUID The {@link String} containing the UUID of the {@link ProvenanceEntity} which is the EndNode of the Edge
 	 * @return The {@link ProvenanceEntity} that is the StartNode of the {@link ProvenanceGraphEdge}, or null if none was found
 	 */
+	@Deprecated
 	public ProvenanceEntity findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID) {
 		return this.provenanceEntityRepository.findByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);

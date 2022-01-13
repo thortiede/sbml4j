@@ -23,6 +23,7 @@ public interface ExternalResourceEntityRepository extends Neo4jRepository<Extern
 
 	public ExternalResourceEntity findByUri(String uri);
 	
+	//@unused
 	@Query("MATCH "
 			+ "(e:ExternalResourceEntity) "
 			+ "WHERE e.uri in $listOfUris "

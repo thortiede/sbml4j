@@ -768,6 +768,7 @@ public class NetworkService {
 				throw new NetworkDeletionException(2, "Cannot delete network with uuid: " + mappingNodeEntityUUID + ". Reason: There were remaining Nodes in the network after attempting to delete it");
 			}
 			// get the activity connected to the mappingNode with wasGeneratedBy
+			// TODO: Attention, this could actually be multiple activities.
 			ProvenanceEntity generatorActivity = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, mappingNodeEntityUUID);
 			if(generatorActivity != null) {
 				this.provenanceGraphService.deleteProvenanceEntity(generatorActivity);

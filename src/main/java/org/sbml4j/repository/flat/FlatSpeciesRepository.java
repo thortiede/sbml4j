@@ -24,6 +24,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 	FlatSpecies findByEntityUUID(String entityUUID);
 
 	
+	// @Unusued, probably the query in MappingNodeRepository is used. Is that good? Rather the contents are extracted using the edges in FlatEdgeRepository.
 	@Query(value= "MATCH "
 			+ "(m:MappingNode)"
 			+ "-[w1:Warehouse]->"
@@ -106,6 +107,7 @@ public interface FlatSpeciesRepository extends Neo4jRepository<FlatSpecies, Long
 			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "AND m.entityUUID = $networkEntityUUID "
 			+ "RETURN f")
+	@Deprecated
 	FlatSpecies findBySimpleModelEntityUUIDInNetwork(String simpleModelEntityUUID, String networkEntityUUID);
 	
 	@Query("MATCH "

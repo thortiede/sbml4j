@@ -24,6 +24,15 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
  *
  * @since 0.1
  */
+
+/**
+ * 12.02.2022
+ * These two methods both return ApocPathReturnType, but the second one only collects relationships(apocPath).
+ * Look into, whether a) the first one does need to return the nodes as well, and if it doesn't, b) the return type actually has to be the custom type and cannot only be the pathEdges?
+ * @author ttiede
+ *
+ */
+
 public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 	/**
 	 * Run the path.expand algorithm from the APOC plugin

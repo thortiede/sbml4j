@@ -37,6 +37,7 @@ public class ExternalResourceEntityService {
 	}
 	
 	/**
+	 * @unused
 	 * Find all <a href="#{@link}">{@link ExternalResourceEntity}</a> with a uri in the given List
 	 * @param listOfUris <a href="#{@link}">{@link List}</a> of <a href="#{@link}">{@link String}</a> of uris
 	 * @return A <a href="#{@link}">{@link List}</a> of <a href="#{@link}">{@link ExternalResourceEntity}</a> that each match one of the uris given

@@ -21,6 +21,7 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimpleReaction, Long> {
 
+	// @unused
 	SBMLSimpleReaction findBysBaseName(String sBaseName, int depth);
 	
 	@Query("MATCH "

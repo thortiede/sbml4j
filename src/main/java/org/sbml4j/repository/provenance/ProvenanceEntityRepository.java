@@ -41,6 +41,8 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 			+ "WHERE pr.provenanceGraphEdgeType = $edgetype "
 			+ "AND c.entityUUID = $startNodeEntityUUID "
 			+ "RETURN p")
+	// There could be multiple, use Iterable<ProvenanceEntity> findAll... instead
+	@Deprecated
 	ProvenanceEntity findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID);
 
@@ -51,6 +53,8 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 			+ "WHERE p.entityUUID = $endNodeEntityUUID "
 			+ "AND pr.provenanceGraphEdgeType = $edgetype "
 			+ "RETURN c")
+	// There could be multiple, use Iterable<ProvenanceEntity> findAll... instead
+	@Deprecated
 	ProvenanceEntity findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID);
 	
