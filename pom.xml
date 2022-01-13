@@ -6,7 +6,7 @@
 
 	<groupId>org.sbml4j</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>1.0.4</version>
+	<version>1.0.6</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -24,7 +24,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>15</java.version>
-		<jsbml.version>1.4</jsbml.version>
+		<jsbml.version>1.6.1</jsbml.version>
 		<docker.image.prefix>thortiede</docker.image.prefix>
 		<springfox-version>3.0.0</springfox-version>
 		<!-- <spring.boot.starter.version>2.0.5.RELEASE</spring.boot.starter.version> -->
@@ -169,7 +169,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>1.0.4</tag>
+	                <tag>1.0.6</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->

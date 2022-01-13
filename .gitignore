@@ -46,3 +46,6 @@ external_libs_and_tools/
 
 ### Heap dumps
 *.hprof
+
+### personal scripts
+docker-workflow.sh
