@@ -3,7 +3,7 @@ package org.sbml4j.service.SimpleSBML;
 import java.util.List;
 
 import org.sbml4j.model.common.GraphBaseEntity;
-import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.sbml.SBMLCompartment;
 import org.sbml4j.repository.common.SBMLCompartmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

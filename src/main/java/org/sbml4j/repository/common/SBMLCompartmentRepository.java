@@ -2,7 +2,7 @@ package org.sbml4j.repository.common;
 
 import java.util.List;
 
-import org.sbml4j.model.common.SBMLCompartment;
+import org.sbml4j.model.sbml.SBMLCompartment;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface SBMLCompartmentRepository extends Neo4jRepository<SBMLCompartment, Long>{
