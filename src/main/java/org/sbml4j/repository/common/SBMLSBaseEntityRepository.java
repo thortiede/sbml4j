@@ -15,7 +15,7 @@ package org.sbml4j.repository.common;
 
 import java.util.List;
 
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface SBMLSBaseEntityRepository extends Neo4jRepository<SBMLSBaseEntity, Long> {

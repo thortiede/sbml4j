@@ -18,7 +18,7 @@ import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
 import org.sbml.jsbml.CVTerm;
 import org.sbml4j.model.common.ContentGraphEdge;
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

@@ -13,7 +13,7 @@
  */
 package org.sbml4j.model.full.ext;
 
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public class SBMLSBaseExtension extends SBMLSBaseEntity {
 

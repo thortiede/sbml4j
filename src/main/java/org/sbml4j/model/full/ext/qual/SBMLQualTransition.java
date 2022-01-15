@@ -16,8 +16,8 @@ package org.sbml4j.model.full.ext.qual;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLSBaseEntity;
 import org.sbml4j.model.full.SBMLFunctionTerm;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public class SBMLQualTransition extends SBMLSBaseEntity {
 

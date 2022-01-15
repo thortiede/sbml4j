@@ -16,7 +16,7 @@ package org.sbml4j.model.full;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public class SBMLUnitDefinition extends SBMLSBaseEntity {
 

@@ -14,8 +14,8 @@
 package org.sbml4j.model.full;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLSBaseEntity;
 import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public abstract class SBMLSimpleSpeciesReference extends SBMLSBaseEntity {
 

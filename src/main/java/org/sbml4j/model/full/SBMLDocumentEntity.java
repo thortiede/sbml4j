@@ -14,7 +14,7 @@
 package org.sbml4j.model.full;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 
 @NodeEntity(label = "SBML")

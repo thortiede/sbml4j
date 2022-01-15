@@ -14,7 +14,6 @@
 package org.sbml4j.model.sbml;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLSBaseEntity;
 
 /**
  * SBaseEntity with compartment information

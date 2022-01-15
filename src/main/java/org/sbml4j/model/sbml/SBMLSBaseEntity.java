@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.common;
+package org.sbml4j.model.sbml;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +21,7 @@ import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 import org.sbml.jsbml.CVTerm;
 import org.sbml4j.Exception.SBML4jAddExtensionException;
+import org.sbml4j.model.common.ContentGraphNode;
 import org.sbml4j.model.full.ext.SBMLSBaseExtension;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 

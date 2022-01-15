@@ -14,7 +14,7 @@
 package org.sbml4j.model.full;
 
 import org.sbml.jsbml.Unit;
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public class SBMLUnit extends SBMLSBaseEntity {
 

@@ -17,7 +17,7 @@ import org.neo4j.ogm.annotation.Relationship;
 import org.sbml.jsbml.ext.qual.InputTransitionEffect;
 import org.sbml.jsbml.ext.qual.Sign;
 import org.sbml4j.model.common.SBMLQualSpecies;
-import org.sbml4j.model.common.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSBaseEntity;
 
 public class SBMLQualInput extends SBMLSBaseEntity {
 
