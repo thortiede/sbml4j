@@ -26,7 +26,7 @@ import javax.xml.stream.XMLStreamException;
 import org.sbml.jsbml.Model;
 import org.sbml4j.Exception.ModelPersistenceException;
 import org.sbml4j.api.SbmlApi;
-import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.common.GraphEnum.FileNodeType;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;

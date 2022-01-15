@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.common.SBMLCompartment;
 import org.sbml4j.model.common.SBMLQualSpecies;

@@ -1,4 +1,4 @@
-package org.sbml4j.model.api;
+package org.sbml4j.model.api.pathway;
 
 import java.util.ArrayList;
 import java.util.List;

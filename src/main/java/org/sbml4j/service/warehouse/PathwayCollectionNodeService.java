@@ -15,7 +15,7 @@ package org.sbml4j.service.warehouse;
 
 import java.util.UUID;
 
-import org.sbml4j.model.api.PathwayCollectionCreationItem;
+import org.sbml4j.model.api.pathway.PathwayCollectionCreationItem;
 import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
