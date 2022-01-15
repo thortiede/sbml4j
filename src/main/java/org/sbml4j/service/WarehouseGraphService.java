@@ -14,14 +14,11 @@
 package org.sbml4j.service;
 
 import java.util.List;
-import java.util.UUID;
 
-import org.sbml4j.model.api.WarehouseInventoryItem;
 import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.provenance.ProvenanceGraphEdge;
-import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.model.warehouse.WarehouseGraphEdge;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.repository.warehouse.WarehouseGraphEdgeRepository;
@@ -198,29 +195,6 @@ public class WarehouseGraphService {
 	}
 
 
-
-	
-/************************************************************* WarehouseInventoryItem ***********************************************/	
-	
-	/**
-	 * Get a <a href="#{@link}">{@link WarehouseInventoryItem}</a> for a <a href="#{@link}">{@link WarehouseGraphNode}</a>
-	 * @param warehouseGraphNode The entity to get the <a href="#{@link}">{@link WarehouseInventoryItem}</a> for
-	 * @return The <a href="#{@link}">{@link WarehouseInventoryItem}</a>
-	 */
-	public WarehouseInventoryItem getWarehouseInventoryItem(WarehouseGraphNode warehouseGraphNode) {
-		WarehouseInventoryItem item = new WarehouseInventoryItem();
-		item.setUUID(UUID.fromString(warehouseGraphNode.getEntityUUID()));
-		// item.setSource(findSource(warehouseGraphNode).getSource());
-		// item.setSourceVersion(findSource(warehouseGraphNode).getSourceVersion());
-		item.setOrganismCode((this.organismService
-				.findOrganismForWarehouseGraphNode(warehouseGraphNode.getEntityUUID())).getOrgCode());
-		if (warehouseGraphNode.getClass() == MappingNode.class) {
-			item.setName(((MappingNode) warehouseGraphNode).getMappingName());
-		}
-		return item;
-	}
-	
-	
 	
 /************************************************************* Provenance related tasks ***********************************************/		
 

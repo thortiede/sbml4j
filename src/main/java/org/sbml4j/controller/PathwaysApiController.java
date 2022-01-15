@@ -26,9 +26,9 @@ import org.sbml4j.Exception.NetworkDeletionException;
 import org.sbml4j.Exception.NetworkMappingError;
 import org.sbml4j.Exception.UserUnauthorizedException;
 import org.sbml4j.api.PathwaysApi;
+import org.sbml4j.model.api.NetworkInventoryItem;
 import org.sbml4j.model.api.PathwayCollectionCreationItem;
 import org.sbml4j.model.api.PathwayInventoryItem;
-import org.sbml4j.model.api.WarehouseInventoryItem;
 import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
@@ -210,10 +210,10 @@ public class PathwaysApiController implements PathwaysApi {
 	 * @param user The user which requests this mapping and is associated with it
 	 * @param uuid The UUID of the <a href="#{@link}">{@link PathwayNpde}</a> to derive the mapping from
 	 * @param mappingType The <a href="#{@link}">{@link NetworkMappingType}</a> for thw new NetworkMapping
-	 * @return The <a href="#{@link}">{@link WarehouseInventoryItem}</a> of the created Mapping
+	 * @return The <a href="#{@link}">{@link NetworkInventoryItem}</a> of the created Mapping
 	 */
 	@Override
-	public ResponseEntity<WarehouseInventoryItem> mapPathway(UUID UUID, @NotNull @Valid String mappingType, String user,
+	public ResponseEntity<NetworkInventoryItem> mapPathway(UUID UUID, @NotNull @Valid String mappingType, String user,
 		@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean suffixName) {
 		
 		String uuid = UUID.toString();
@@ -345,10 +345,11 @@ public class PathwaysApiController implements PathwaysApi {
 		}
 		
 		// build the inventoryItem
-		WarehouseInventoryItem mappingInventoryItem = this.warehouseGraphService.getWarehouseInventoryItem(mappingNode);
+		//WarehouseInventoryItem mappingInventoryItem = this.warehouseGraphService.getWarehouseInventoryItem(mappingNode);
+		NetworkInventoryItem mappingInventoryItem = this.networkService.getNetworkInventoryItem(mappingNode.getEntityUUID());
 		
 		// return the inventoryItem
-		return new ResponseEntity<WarehouseInventoryItem>(mappingInventoryItem, HttpStatus.CREATED);
+		return new ResponseEntity<NetworkInventoryItem>(mappingInventoryItem, HttpStatus.CREATED);
 	}
 
 }

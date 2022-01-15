@@ -12,9 +12,9 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.model.api.NetworkInventoryItem;
 import org.sbml4j.model.api.PathwayCollectionCreationItem;
 import org.sbml4j.model.api.PathwayInventoryItem;
-import org.sbml4j.model.api.WarehouseInventoryItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -216,7 +216,7 @@ public interface PathwaysApi {
    */
   @ApiOperation(value = "Map pathwayContents on a new network representation",
                 nickname = "mapPathway", notes = "",
-                response = WarehouseInventoryItem.class,
+                response = NetworkInventoryItem.class,
                 tags =
                     {
                         "pathways",
@@ -226,10 +226,10 @@ public interface PathwaysApi {
                   @ApiResponse(code = 400, message = "Bad Request")
                   , @ApiResponse(code = 201,
                                  message = "Mapping for Pathway created",
-                                 response = WarehouseInventoryItem.class)
+                                 response = NetworkInventoryItem.class)
                 })
   @PostMapping(value = "/mapping/{UUID}", produces = {"application/json"})
-  default ResponseEntity<WarehouseInventoryItem>
+  default ResponseEntity<NetworkInventoryItem>
   mapPathway(
       @ApiParam(value = "The UUID of the pathway to be mapped",
                 required = true) @PathVariable("UUID") UUID UUID,
