@@ -16,7 +16,7 @@ package org.sbml4j.service.SimpleSBML;
 import org.sbml4j.model.common.GraphBaseEntity;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
-import org.sbml4j.repository.simpleModel.SBMLSimpleReactionRepository;
+import org.sbml4j.repository.sbml.simple.SBMLSimpleReactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

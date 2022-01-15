@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.repository.simpleModel;
+package org.sbml4j.repository.sbml.simple;
 
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
