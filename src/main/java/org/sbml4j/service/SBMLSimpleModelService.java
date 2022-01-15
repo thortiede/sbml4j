@@ -64,7 +64,7 @@ import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.sbml4j.model.warehouse.DatabaseNode;
 import org.sbml4j.model.warehouse.FileNode;
 import org.sbml4j.model.warehouse.PathwayNode;
-import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.repository.sbml.ext.sbml4j.BiomodelsQualifierRepository;
 import org.sbml4j.service.SimpleSBML.SBMLCompartmentService;
 import org.sbml4j.service.SimpleSBML.SBMLQualSpeciesService;
 import org.sbml4j.service.SimpleSBML.SBMLSBaseEntityService;

@@ -35,7 +35,7 @@ import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 import org.sbml4j.model.sbml.ext.sbml4j.NameNode;
 import org.sbml4j.model.warehouse.PathwayNode;
-import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.repository.sbml.ext.sbml4j.BiomodelsQualifierRepository;
 import org.sbml4j.service.NameNodeService;
 import org.sbml4j.service.PathwayService;
 import org.sbml4j.service.UtilityService;

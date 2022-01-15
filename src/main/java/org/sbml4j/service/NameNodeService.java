@@ -15,7 +15,7 @@ package org.sbml4j.service;
 
 import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
 import org.sbml4j.model.sbml.ext.sbml4j.NameNode;
-import org.sbml4j.repository.common.NameNodeRepository;
+import org.sbml4j.repository.sbml.ext.sbml4j.NameNodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

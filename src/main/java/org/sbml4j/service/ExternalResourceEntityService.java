@@ -16,7 +16,7 @@ package org.sbml4j.service;
 import java.util.List;
 
 import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
-import org.sbml4j.repository.common.ExternalResourceEntityRepository;
+import org.sbml4j.repository.sbml.ext.sbml4j.ExternalResourceEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
