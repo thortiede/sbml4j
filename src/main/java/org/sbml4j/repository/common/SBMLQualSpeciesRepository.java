@@ -15,7 +15,7 @@ package org.sbml4j.repository.common;
 
 import java.util.List;
 
-import org.sbml4j.model.common.SBMLQualSpecies;
+import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;

@@ -17,8 +17,8 @@ import java.util.List;
 
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLQualSpecies;
 import org.sbml4j.model.sbml.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
 
 @NodeEntity
 public class SBMLSimpleTransition extends SBMLSBaseEntity {
