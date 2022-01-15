@@ -11,14 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.repository.common;
+package org.sbml4j.repository.sbml;
 
-import java.util.List;
-
-import org.sbml4j.model.sbml.SBMLSBaseEntity;
+import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
-public interface SBMLSBaseEntityRepository extends Neo4jRepository<SBMLSBaseEntity, Long> {
+public interface SBMLCompartmentalizedSBaseEntityRepository extends Neo4jRepository<SBMLCompartmentalizedSBaseEntity, Long> {
 
-	List<SBMLSBaseEntity> findBysBaseId(String sBaseId, int depth);
+	// @unused
+	SBMLCompartmentalizedSBaseEntity findBysBaseId(String sBaseId, int depth);
+	
 }

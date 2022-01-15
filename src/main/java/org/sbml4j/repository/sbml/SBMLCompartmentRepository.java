@@ -1,4 +1,4 @@
-package org.sbml4j.repository.common;
+package org.sbml4j.repository.sbml;
 
 import java.util.List;
 
