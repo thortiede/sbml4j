@@ -203,6 +203,7 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "t as transition, "
 			+ "s2 as outputSpecies"
 			)
+	@Deprecated
 	Iterable<NonMetabolicPathwayReturnType> getFlatTransitionsForPathwayUsingSpecies(String pathwayUUID,
 			List<String> transitionSBOTerms, List<String> nodeSBOTerms);
 		

@@ -129,6 +129,7 @@ public class PathwayService {
 	 * @param nodeSBOTerms The SBOTerms of the nodes that should be included
 	 * @return Iterable of <a href="#{@link}">{@link NonMetabolicPathwayReturnType}</a> containing the reactions of the pathway
 	 */
+	@Deprecated
 	public Iterable<NonMetabolicPathwayReturnType> getAllNonMetabolicPathwayReturnTypes(UUID pathwayUUID, List<String> transitionSBOTerms, List<String> nodeSBOTerms) {
 		return this.pathwayNodeRepository.getFlatTransitionsForPathwayUsingSpecies(pathwayUUID.toString(), transitionSBOTerms,nodeSBOTerms);
 	}
