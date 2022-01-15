@@ -16,7 +16,7 @@ package org.sbml4j.model.full;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
 
 public class SBMLReaction extends SBMLCompartmentalizedSBaseEntity {
 

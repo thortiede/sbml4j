@@ -13,7 +13,7 @@
  */
 package org.sbml4j.repository.common;
 
-import org.sbml4j.model.common.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 public interface SBMLCompartmentalizedSBaseEntityRepository extends Neo4jRepository<SBMLCompartmentalizedSBaseEntity, Long> {
