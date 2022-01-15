@@ -12,11 +12,11 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.sbml4j.model.api.AnnotationItem;
-import org.sbml4j.model.api.FilterOptions;
-import org.sbml4j.model.api.NetworkInventoryItem;
-import org.sbml4j.model.api.NetworkOptions;
-import org.sbml4j.model.api.NodeList;
+import org.sbml4j.model.api.network.AnnotationItem;
+import org.sbml4j.model.api.network.FilterOptions;
+import org.sbml4j.model.api.network.NetworkInventoryItem;
+import org.sbml4j.model.api.network.NetworkOptions;
+import org.sbml4j.model.api.network.NodeList;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

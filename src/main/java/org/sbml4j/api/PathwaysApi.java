@@ -12,9 +12,9 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.sbml4j.model.api.NetworkInventoryItem;
 import org.sbml4j.model.api.PathwayCollectionCreationItem;
 import org.sbml4j.model.api.PathwayInventoryItem;
+import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;

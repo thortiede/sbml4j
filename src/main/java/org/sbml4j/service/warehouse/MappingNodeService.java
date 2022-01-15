@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.sbml4j.model.api.AnnotationItem;
-import org.sbml4j.model.api.FilterOptions;
-import org.sbml4j.model.api.NetworkOptions;
+import org.sbml4j.model.api.network.AnnotationItem;
+import org.sbml4j.model.api.network.FilterOptions;
+import org.sbml4j.model.api.network.NetworkOptions;
 import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;

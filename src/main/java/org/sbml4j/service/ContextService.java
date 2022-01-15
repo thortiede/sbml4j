@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.api.FilterOptions;
+import org.sbml4j.model.api.network.FilterOptions;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.warehouse.MappingNode;

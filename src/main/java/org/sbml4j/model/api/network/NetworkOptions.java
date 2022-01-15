@@ -1,4 +1,4 @@
-package org.sbml4j.model.api;
+package org.sbml4j.model.api.network;
 
 import java.util.Objects;
 
