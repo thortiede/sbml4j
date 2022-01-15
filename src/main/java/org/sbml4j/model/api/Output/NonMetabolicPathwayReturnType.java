@@ -24,6 +24,11 @@ public class NonMetabolicPathwayReturnType {
 	 * 
 	 */
 	
+	/**
+	 * Maybe this should use QualSpecies instead, since they are always around if a transition is queried.
+	 * And then those QualSpecies should be in the transition anyways, and this is not needed..
+	 */
+	
 	private SBMLSpecies inputSpecies;
 	private SBMLSpecies outputSpecies;
 	private SBMLSimpleTransition transition;
