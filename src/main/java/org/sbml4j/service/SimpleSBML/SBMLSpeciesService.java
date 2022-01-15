@@ -20,8 +20,8 @@ import java.util.Map;
 
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.common.GraphBaseEntity;
-import org.sbml4j.model.common.SBMLSpecies;
-import org.sbml4j.model.common.SBMLSpeciesGroup;
+import org.sbml4j.model.sbml.SBMLSpecies;
+import org.sbml4j.model.sbml.SBMLSpeciesGroup;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
 import org.sbml4j.repository.common.SBMLSpeciesRepository;

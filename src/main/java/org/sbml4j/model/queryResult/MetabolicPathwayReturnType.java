@@ -13,7 +13,7 @@
  */
 package org.sbml4j.model.queryResult;
 
-import org.sbml4j.model.common.SBMLSpecies;
+import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.springframework.data.neo4j.annotation.QueryResult;
 

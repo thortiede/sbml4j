@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSpecies;
 
 public class SBMLSimpleReaction extends SBMLCompartmentalizedSBaseEntity {
 	

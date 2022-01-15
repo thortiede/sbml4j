@@ -15,6 +15,7 @@ package org.sbml4j.model.common;
 
 import org.neo4j.ogm.annotation.Relationship;
 import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
+import org.sbml4j.model.sbml.SBMLSpecies;
 
 public class SBMLQualSpecies extends SBMLCompartmentalizedSBaseEntity {
 

@@ -11,12 +11,11 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.common;
+package org.sbml4j.model.sbml;
 
 import org.neo4j.ogm.annotation.Relationship;
 import org.sbml4j.model.full.SBMLParameter;
 import org.sbml4j.model.full.SBMLUnitDefinition;
-import org.sbml4j.model.sbml.SBMLCompartmentalizedSBaseEntity;
 
 public class SBMLSpecies extends SBMLCompartmentalizedSBaseEntity {
 
