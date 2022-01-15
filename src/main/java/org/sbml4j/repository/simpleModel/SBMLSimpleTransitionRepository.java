@@ -16,7 +16,7 @@ package org.sbml4j.repository.simpleModel;
 import java.util.List;
 
 import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
-import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 

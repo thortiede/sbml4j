@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.simple;
+package org.sbml4j.model.sbml.simple;
 
 import java.util.ArrayList;
 import java.util.List;

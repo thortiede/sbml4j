@@ -14,7 +14,7 @@
 package org.sbml4j.model.queryResult;
 
 import org.sbml4j.model.common.SBMLSpecies;
-import org.sbml4j.model.simple.SBMLSimpleTransition;
+import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.springframework.data.neo4j.annotation.QueryResult;
 
 @QueryResult

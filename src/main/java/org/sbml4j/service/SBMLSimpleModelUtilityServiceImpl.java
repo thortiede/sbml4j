@@ -34,7 +34,7 @@ import org.sbml4j.model.common.SBMLSBaseEntity;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.full.SBMLDocumentEntity;
 import org.sbml4j.model.full.SBMLModelEntity;
-import org.sbml4j.model.simple.SBMLSimpleReaction;
+import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.model.warehouse.DatabaseNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
