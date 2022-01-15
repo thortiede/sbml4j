@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.sbml4j.model.api.Output.ApocPathReturnType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.repository.apoc.ApocRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,76 +37,51 @@ public class ApocService {
 	@Autowired
 	ApocRepository apocRepository;
 	
+	
 	/**
+	 * TODO:Update this, when refactor is done. i.e. This was a ApocPathReturnType, is now only FlatEdge, so, these can be added to allEdges more easily..
 	 * Extract FlatEdge entities from an Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
 	 * Adds new <a href="#{@link}">{@link FlatEdge}</a> entities to allEdges and their symbol to seenEdges.
 	 * @param allEdges existing List of <a href="#{@link}">{@link FlatEdge}</a> entities to add the extracted <a href="#{@link}">{@link FlatEdge}</a> entities to
 	 * @param seenEdges A Set of edge symbols that should not be added to keep the allEdges List unique
 	 * @param multiNodeApocPath The Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a> to extract the <a href="#{@link}">{@link FlatEdge}</a> entities from
 	 */
-	public void extractFlatEdgesFromApocPathReturnType(List<FlatEdge> allEdges, Set<String> seenEdges,
-			Iterable<ApocPathReturnType> multiNodeApocPath) {
-		Iterator<ApocPathReturnType> iter = multiNodeApocPath.iterator();
+	public void extractFlatEdgesFromApoc(List<FlatEdge> allEdges, Set<String> seenEdges,
+			Iterable<FlatEdge> flatEdges) {
+		Iterator<FlatEdge> iter = flatEdges.iterator();
 		while (iter.hasNext()) {
-			ApocPathReturnType current = iter.next();
-			for(FlatEdge edge : current.getPathEdges()) {
-				if(!seenEdges.contains(edge.getSymbol())) {
-					allEdges.add(edge);
-					seenEdges.add(edge.getSymbol());
-				}
+			FlatEdge edge = iter.next();
+			if(!seenEdges.contains(edge.getSymbol())) {
+				allEdges.add(edge);
+				seenEdges.add(edge.getSymbol());
 			}
 		}
 	}
 
 	/**
+	 * TODO:Update this, when refactor is done. i.e. This was a ApocPathReturnType, is now only FlatEdge, so, these can be added to allEdges more easily..
 	 * Extract FlatEdge entities from an Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
 	 * Keeps the param seenEdges unmodified and only adds new <a href="#{@link}">{@link FlatEdge}</a> entities to allEdges .
 	 * 
 	 * @param allEdges existing List of <a href="#{@link}">{@link FlatEdge}</a> entities to add the extracted <a href="#{@link}">{@link FlatEdge}</a> entities to
 	 * @param seenEdges A Set of edge symbols that should not be added to keep the allEdges List unique
-	 * @param multiNodeApocPath The Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a> to extract the <a href="#{@link}">{@link FlatEdge}</a> entities from
+	 * @param multiNodeApocPath The Iterable of <a href="#{@link}">{@link FlatEdge}</a> entities
 	 */
 	public void extractFlatEdgesFromApocPathReturnTypeWithoutSideeffect(List<FlatEdge> allEdges, Set<String> seenEdges,
-			Iterable<ApocPathReturnType> multiNodeApocPath) {
+			Iterable<FlatEdge> multiNodeApocPath) {
 		Set<String> modifiedSeenEdges = new HashSet<>(seenEdges);
-		Iterator<ApocPathReturnType> iter = multiNodeApocPath.iterator();
+		Iterator<FlatEdge> iter = multiNodeApocPath.iterator();
 		while (iter.hasNext()) {
-			ApocPathReturnType current = iter.next();
-			for(FlatEdge edge : current.getPathEdges()) {
-				if(!modifiedSeenEdges.contains(edge.getSymbol())) {
-					allEdges.add(edge);
-					modifiedSeenEdges.add(edge.getSymbol());
-				}
+			FlatEdge edge = iter.next();
+			if(!modifiedSeenEdges.contains(edge.getSymbol())) {
+				allEdges.add(edge);
+				modifiedSeenEdges.add(edge.getSymbol());
 			}
 		}
 	}
 		
 	
-	/**
-	 * Extract FlatEdge entities from an Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
-	 * Keeps the param skipEdgeSymbols unmodified and only adds new <a href="#{@link}">{@link FlatEdge}</a> entities to allEdges .
-	 * 
-	 * @param skipEdgeSymbols A Set of edge symbols that should not be returned (have been seen already)
-	 * @param multiNodeApocPath The Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a> to extract the <a href="#{@link}">{@link FlatEdge}</a> entities from
-	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> entities forming the path described in the mutliNodeApicPath
-	 */
-	public List<FlatEdge> getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(Set<String> skipEdgeSymbols,
-			Iterable<ApocPathReturnType> multiNodeApocPath) {
-		List<FlatEdge> flatEdgeList = new ArrayList<>();
-		Set<String> modifiedSeenEdges = new HashSet<>(skipEdgeSymbols);
-		Iterator<ApocPathReturnType> iter = multiNodeApocPath.iterator();
-		while (iter.hasNext()) {
-			ApocPathReturnType current = iter.next();
-			for(FlatEdge edge : current.getPathEdges()) {
-				if(modifiedSeenEdges.add(edge.getSymbol())) {
-					flatEdgeList.add(edge);
-				}
-			}
-		}
-		return flatEdgeList;
-	}
-	
-	/**
+		/**
 	 * Build an APOC compliant String for use in APOC methods defining nodes to be traversed containing the given Node Types
 	 * For the String given in terminateAt a '/' will be appended if the network contains this specific nodeType 
 	 * @param nodeTypes The nodeTypes to include in the String
@@ -162,9 +136,9 @@ public class ApocService {
 	 * @param relationTypesApocString apocRelationshipString the relationshipString of the algorithm
 	 * @param propertyName The propertyName on the relationships to use as weight
 	 * @param defaultWeight The default weight to use of the property is not present
-	 * @return Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
+	 * @return List of <a href="#{@link}">{@link FlatEdge} that make up the Dijkstra path</a>
 	 */
-	Iterable<ApocPathReturnType> dijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, 
+	List<FlatEdge> dijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, 
 			String relationTypesApocString, String propertyName, float defaultWeight) {
 		return this.apocRepository.apocDijkstraWithDefaultWeight(startNodeEntityUUID, endNodeEntityUUID, relationTypesApocString, propertyName, defaultWeight);
 	}
@@ -176,11 +150,10 @@ public class ApocService {
 	 * @param apocNodeString the nodeString for path.expand 
 	 * @param minDepth the minDepth for path.expand
 	 * @param maxDepth the maxDepth for path.expand
-	 * @return Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
+	 * @return List of <a href="#{@link}">{@link FlatEdge} that make up the expanded path</a>
 	 */
-	Iterable<ApocPathReturnType> pathExpand(String startNodeEntityUUID, String apocRelationshipString, String apocNodeString, int minDepth, int maxDepth) {
+	List<FlatEdge> pathExpand(String startNodeEntityUUID, String apocRelationshipString, String apocNodeString, int minDepth, int maxDepth) {
 		return this.apocRepository.runApocPathExpandFor(startNodeEntityUUID, apocRelationshipString, apocNodeString, minDepth, maxDepth);
 	}
-	
 	
 }

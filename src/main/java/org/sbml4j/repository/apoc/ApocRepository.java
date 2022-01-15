@@ -13,8 +13,10 @@
  */
 package org.sbml4j.repository.apoc;
 
-import org.sbml4j.model.api.Output.ApocPathReturnType;
+import java.util.List;
+
 import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.flat.FlatEdge;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
@@ -41,7 +43,7 @@ public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 	 * @param apocNodeString the nodeString for path.expand 
 	 * @param minDepth the minDepth for path.expand
 	 * @param maxDepth the maxDepth for path.expand
-	 * @return Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
+	 * @return List of <a href="#{@link}">{@link FlatEdge} That make up the expanded path</a>
 	 */
 	@Query("MATCH "
 			+ "(start:FlatSpecies) "
@@ -56,9 +58,9 @@ public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 			+ ") "
 			+ "YIELD "
 			+ "path as apocPath "
-			+ "RETURN nodes(apocPath) as pathNodes, relationships(apocPath) as pathEdges;"
+			+ "RETURN relationships(apocPath) as pathEdges;"
 			)
-	Iterable<ApocPathReturnType> runApocPathExpandFor(String startNodeEntityUUID, String apocRelationshipString, String apocNodeString, int minDepth, int maxDepth);
+	List<FlatEdge> runApocPathExpandFor(String startNodeEntityUUID, String apocRelationshipString, String apocNodeString, int minDepth, int maxDepth);
 	
 	/**
 	 * Run the DijkstraWithDefaultWeight algorithm from the APOC plugin
@@ -67,7 +69,7 @@ public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 	 * @param relationTypesApocString apocRelationshipString the relationshipString of the algorithm
 	 * @param propertyName The propertyName on the relationships to use as weight
 	 * @param defaultWeight The default weight to use of the property is not present
-	 * @return Iterable of <a href="#{@link}">{@link ApocPathReturnType}</a>
+	 * @return List of <a href="#{@link}">{@link FlatEdge} that make up the DijkstraPath</a>
 	 */
 	@Query(value="MATCH (fs1:FlatSpecies) "
 			+ "WHERE fs1.entityUUID = $startNodeEntityUUID "
@@ -81,11 +83,11 @@ public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 			+ "$propertyName, "
 			+ "$defaultWeight) "
 			+ "YIELD "
-			+ "path as pp, "
+			+ "path as apocPath, "
 			+ "weight as w "
-			+ "RETURN nodes(pp) as pathNodes, "
-			+ "relationships(pp) as pathEdges;")
-	Iterable<ApocPathReturnType> apocDijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, 
+			+ "RETURN relationships(apocPath) as pathEdges;"
+			)
+	List<FlatEdge> apocDijkstraWithDefaultWeight(String startNodeEntityUUID, String endNodeEntityUUID, 
 			String relationTypesApocString, String propertyName, float defaultWeight);
 	
 }

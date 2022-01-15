@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.api.FilterOptions;
-import org.sbml4j.model.api.Output.ApocPathReturnType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.warehouse.MappingNode;
@@ -116,9 +115,11 @@ public class ContextService {
 			return null;
 		} else if (geneUUIDSet.size() == 1) {
 			// 3. getContext
-			Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(geneUUIDSet.iterator().next(), relationShipApocString, nodeApocString, minSize, maxSize);
+			//Iterable<ApocPathReturnType> contextNet = this.apocService.pathExpand(geneUUIDSet.iterator().next(), relationShipApocString, nodeApocString, minSize, maxSize);
+			Iterable<FlatEdge> contextNet = this.apocService.pathExpand(geneUUIDSet.iterator().next(), relationShipApocString, nodeApocString, minSize, maxSize);
 
-			this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
+			//this.apocService.extractFlatEdgesFromApocPathReturnType(allEdges, seenEdges, contextNet);
+			this.apocService.extractFlatEdgesFromApoc(allEdges, seenEdges, contextNet);
 		} else {
 			// multi gene context
 			// do not use old shared pathway search
@@ -162,8 +163,11 @@ public class ContextService {
 			int minSize, int maxSize, String terminateAt, String direction, String weightproperty) {
 		
 		MappingNode mappingNode = this.mappingNodeService.findByEntityUUID(networkEntityUUID);
-		Set<String> networkNodeLabels = this.networkService.getNetworkNodeLabels(networkEntityUUID);
-		
+
+		Set<String> networkNodeLabels = mappingNode.getMappingNodeSymbols();
+		if (networkNodeLabels == null || networkNodeLabels.isEmpty()) {
+			networkNodeLabels = this.networkService.getNetworkNodeLabels(networkEntityUUID);
+		}
 		Set<String> networkRelationTypes = mappingNode.getMappingRelationTypes();
 		List<FlatEdge> allEdges = new ArrayList<>();
 		List<FlatSpecies> targetSpecies = new ArrayList<>();
@@ -184,7 +188,7 @@ public class ContextService {
 					for (int j = i+1; j != geneListFlatSpecies.size(); j++) {
 						second = geneListFlatSpecies.get(j);
 						log.info("Attempting to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ") with shortest path.");
-						List<FlatEdge> newEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty, seenEdges, first, second);
+						List<FlatEdge> newEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty, first, second);
 						if (newEdges.isEmpty()) {
 							log.info("Failed to connect initial genes ("+first.getSymbol() + " and " + second.getSymbol() + ").");
 						} else {
@@ -217,13 +221,12 @@ public class ContextService {
 			
 			// add the context around the first gene to the context net
 			String nodeOrString = this.apocService.getNodeOrString(networkNodeLabels, terminateAt);
-			Iterable<ApocPathReturnType> firstGeneContextNet = this.apocService.pathExpand(
+			Iterable<FlatEdge> firstGeneContextFlatEdges = this.apocService.pathExpand(
 					first.getEntityUUID(), 
 					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
 					nodeOrString,
 					minSize, 
 					maxSize);
-			List<FlatEdge> firstGeneContextFlatEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, firstGeneContextNet);
 			if (firstGeneContextFlatEdges == null) {
 				log.warn("Could not generate direct context of gene with symbol: " + first.getSymbol());
 			}
@@ -242,13 +245,12 @@ public class ContextService {
 			log.info("Calculated context around gene with symbol: " +first.getSymbol());
 			
 			// add the context around the second gene to the context net
-			Iterable<ApocPathReturnType> secondGeneContextNet = this.apocService.pathExpand(
+			Iterable<FlatEdge> secondGeneContextFlatEdges = this.apocService.pathExpand(
 					second.getEntityUUID(), 
 					this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
 					nodeOrString,
 					minSize, 
 					maxSize);
-			List<FlatEdge> secondGeneContextFlatEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, secondGeneContextNet);
 			if (secondGeneContextFlatEdges == null) {
 				log.warn("Could not generate direct context of gene with symbol: " + first.getSymbol());
 			}
@@ -284,8 +286,7 @@ public class ContextService {
 					if (smallestNumberOfEdges < 2) {
 						break;
 					}
-					List<FlatEdge> targetSpeciesEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty,
-								seenEdges, fs, ts);
+					List<FlatEdge> targetSpeciesEdges = getShortestPathEdges(direction, networkRelationTypes, weightproperty, fs, ts);
 					
 					if(targetSpeciesEdges.isEmpty()) continue;
 					if (targetSpeciesEdges.size() < smallestNumberOfEdges) {
@@ -314,13 +315,12 @@ public class ContextService {
 				log.info("Connected gene "+ fs.getSymbol() + " to the context with a shortest path.");
 				
 				// add the context around this gene also to the context net
-				Iterable<ApocPathReturnType> geneContextNet = this.apocService.pathExpand(
+				Iterable<FlatEdge> geneContextFlatEdges = this.apocService.pathExpand(
 						fs.getEntityUUID(), 
 						this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
 						this.apocService.getNodeOrString(this.networkService.getNetworkNodeLabels(networkEntityUUID), terminateAt),
 						minSize, 
 						maxSize);
-				List<FlatEdge> geneContextFlatEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, geneContextNet);
 				if (geneContextFlatEdges == null) {
 					log.warn("Could not generate direct context of gene with symbol: " + fs.getSymbol());
 				}
@@ -342,21 +342,30 @@ public class ContextService {
 		return allEdges;
 	}
 
+	/**
+	 * Calculate the shortest path between the two input <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param direction The direction to expand the context to (one of upstream, downstream, both)
+	 * @param networkRelationTypes Set of allowed relationship types
+	 * @param weightproperty The name of the annotation element on the relationships that holds weight
+	 * @param first The starting <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @param second The ending <a href="#{@link}">{@link FlatSpecies}</a>
+	 * @return List of <a href="#{@link}">{@link FlatEdge}</a> that are making up the shortest path
+	 */
 	private List<FlatEdge> getShortestPathEdges(String direction, Set<String> networkRelationTypes, String weightproperty,
-			Set<String> seenEdges, FlatSpecies first, FlatSpecies second) {
+			FlatSpecies first, FlatSpecies second) {
 		String weight;
-		if (weightproperty != null)
+		if (weightproperty != null) {
 			weight = "annotation." + weightproperty;
-		else
+		} else {
 			weight = "none";
-		Iterable<ApocPathReturnType> contextNet = this.apocService.dijkstraWithDefaultWeight(
+		}
+		List<FlatEdge> contextNet = this.apocService.dijkstraWithDefaultWeight(
 				first.getEntityUUID(), 
 				second.getEntityUUID(), 
 				this.apocService.getRelationShipOrString(networkRelationTypes, new HashSet<>(), direction), 
 				weight, 
 				1.0f);
-		List<FlatEdge> newEdges = this.apocService.getFlatEdgesFromApocPathReturnTypeWithoutSideeffect(seenEdges, contextNet);
-		return newEdges;
+		return contextNet;
 	}
 
 	/**

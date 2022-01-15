@@ -15,13 +15,10 @@ package org.sbml4j.service;
 
 import java.io.ByteArrayOutputStream;
 
-import org.sbml4j.model.api.Output.ApocPathReturnType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 
 public interface GraphMLService {
-
-	ByteArrayOutputStream getGraphMLForApocPathReturn(Iterable<ApocPathReturnType> apocPathReturn, boolean directed);
 
 	ByteArrayOutputStream getGraphMLForFlatEdges(Iterable<FlatEdge> flatEdges, boolean directed);
 

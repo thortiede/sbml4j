@@ -18,13 +18,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.api.Output.ApocPathReturnType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.slf4j.Logger;
@@ -146,36 +144,6 @@ public class GraphMLServiceImpl implements GraphMLService {
 			logger.error("Failed to write GraphML ByteArrayOutputStream with" + e.getMessage());
 			return new ByteArrayOutputStream(); // TODO Evaluate whether returning an empty stream here is correct or desired
 		}
-	}
-	/**
-	 * Create a new ByteArrayOutpuStream into which the contents of Apoc.Path calls is being written in GraphML format
-	 * Reduces the ApocPathReturnTypes given to a list of unique edges, which then get forwarded to getGraphMLForFlatEdges
-	 * @param apocPathReturn Iterable\<ApocPathReturnType\> containing the results of an Apoc.Path reported into ApocPathReturnType.
-	 * 						 Both relationships(path) and nodes(path) need to be reported, so that 
-	 * 						 the start- and endNode of the edge, inputFlatSpecies and outputFlatSpecies respectively, 
-	 * 						 are being populated in the edges.
-	 * @param directed boolean parameter to denote whether the edges of the reported network are directed
-	 * @return ByteArrayOutputStream with the complete contents of the graphML file.
-	 */
-	@Override
-	public ByteArrayOutputStream getGraphMLForApocPathReturn(Iterable<ApocPathReturnType> apocPathReturn, boolean directed) {
-		
-		// Turn apoc pathReturn in List of edges.
-		List<FlatEdge> flatEdges = new ArrayList<>();
-		Set<String> edgeSymbols = new HashSet<>();
-		Iterator<ApocPathReturnType> apocIter = apocPathReturn.iterator();
-		while (apocIter.hasNext()) {
-			ApocPathReturnType current = apocIter.next();
-			
-			List<FlatEdge> pathEdges = current.getPathEdges();
-			for(FlatEdge currentEdge : pathEdges) {
-				if(!edgeSymbols.contains(currentEdge.getSymbol())) {
-					edgeSymbols.add(currentEdge.getSymbol());
-					flatEdges.add(currentEdge);
-				}
-			}
-		}
-		return this.getGraphMLForFlatEdges(flatEdges, directed);	
 	}
 	
 	/**

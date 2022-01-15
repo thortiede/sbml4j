@@ -15,8 +15,8 @@ package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.api.Output.ApocPathReturnType;
 import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.flat.FlatEdge;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
@@ -100,10 +100,9 @@ public interface GDSRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 			+ "$graphName, "
 			+ "{startNode:startNode, targetNodes:targetNodes}"
 			+ ") "
-			+ "YIELD path "
-			+ "RETURN nodes(path) as pathNodes, "
-			+ "relationships(path) as pathEdges")
-	public Iterable<ApocPathReturnType> runBFSonGdsGraph(String graphName, String startNodeUUID, List<String> targetNodeUUIDs);
+			+ "YIELD path as gdsPath"
+			+ "relationships(gdsPath) as pathEdges")
+	public Iterable<FlatEdge> runBFSonGdsGraph(String graphName, String startNodeUUID, List<String> targetNodeUUIDs);
 	
 	
 	
