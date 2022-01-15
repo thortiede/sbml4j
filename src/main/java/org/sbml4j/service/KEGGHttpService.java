@@ -24,7 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

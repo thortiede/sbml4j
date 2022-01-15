@@ -11,9 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.common;
-
-import org.sbml4j.model.warehouse.WarehouseGraphNode;
+package org.sbml4j.model.warehouse;
 
 public class Organism extends WarehouseGraphNode { 
 	// not sure this should be derived from WarehouseGraphNode or rather ProvenanceEntity

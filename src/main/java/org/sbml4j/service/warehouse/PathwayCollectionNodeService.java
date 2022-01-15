@@ -16,13 +16,13 @@ package org.sbml4j.service.warehouse;
 import java.util.UUID;
 
 import org.sbml4j.model.api.pathway.PathwayCollectionCreationItem;
-import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.model.warehouse.PathwayCollectionNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.warehouse.PathwayCollectionNodeRepository;

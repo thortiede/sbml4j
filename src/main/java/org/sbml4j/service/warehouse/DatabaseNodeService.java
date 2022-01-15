@@ -15,8 +15,8 @@ package org.sbml4j.service.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.repository.warehouse.DatabaseNodeRepository;
 import org.sbml4j.service.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;

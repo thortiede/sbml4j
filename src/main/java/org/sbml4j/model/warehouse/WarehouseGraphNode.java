@@ -18,7 +18,6 @@ import java.util.Map;
 
 import org.neo4j.ogm.annotation.Properties;
 import org.neo4j.ogm.annotation.Relationship;
-import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.provenance.ProvenanceGraphEntityNode;
 
 public class WarehouseGraphNode extends ProvenanceGraphEntityNode {

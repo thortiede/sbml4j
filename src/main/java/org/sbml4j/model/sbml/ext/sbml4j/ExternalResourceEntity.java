@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.common;
+package org.sbml4j.model.sbml.ext.sbml4j;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,6 +22,7 @@ import java.util.Set;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
+import org.sbml4j.model.common.GraphEnum;
 import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 

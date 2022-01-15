@@ -11,12 +11,14 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.common;
+package org.sbml4j.model.sbml.ext.sbml4j;
 
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
 import org.sbml.jsbml.CVTerm;
+import org.sbml4j.model.common.ContentGraphEdge;
+import org.sbml4j.model.common.SBMLSBaseEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

@@ -19,11 +19,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.common.BiomodelsQualifier;
-import org.sbml4j.model.common.ExternalResourceEntity;
 import org.sbml4j.model.common.GraphBaseEntity;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.common.SBMLSpeciesGroup;
+import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
+import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
 import org.sbml4j.repository.common.SBMLSpeciesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

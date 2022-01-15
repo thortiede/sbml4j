@@ -15,7 +15,7 @@ package org.sbml4j.repository.common;
 
 import java.util.List;
 
-import org.sbml4j.model.common.ExternalResourceEntity;
+import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 

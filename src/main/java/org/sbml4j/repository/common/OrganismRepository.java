@@ -13,7 +13,7 @@
  */
 package org.sbml4j.repository.common;
 
-import org.sbml4j.model.common.Organism;
+import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

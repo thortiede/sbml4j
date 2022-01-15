@@ -22,6 +22,7 @@ import org.neo4j.ogm.annotation.Transient;
 import org.sbml.jsbml.CVTerm;
 import org.sbml4j.Exception.SBML4jAddExtensionException;
 import org.sbml4j.model.full.ext.SBMLSBaseExtension;
+import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
