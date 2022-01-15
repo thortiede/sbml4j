@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.sbml4j.model.api.PathwayInventoryItem;
-import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
-import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.common.Organism;
 import org.sbml4j.model.common.SBMLCompartment;
 import org.sbml4j.model.common.SBMLQualSpecies;
@@ -31,6 +29,8 @@ import org.sbml4j.model.common.SBMLSpeciesGroup;
 import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.full.SBMLReaction;
 import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
+import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.simple.SBMLSimpleReaction;
 import org.sbml4j.model.simple.SBMLSimpleTransition;
 import org.sbml4j.model.warehouse.PathwayCollectionNode;

@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
-import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.api.entityInfo.EntityInfoItem;
 import org.sbml4j.model.api.entityInfo.PathwayInfoItem;
 import org.sbml4j.model.api.entityInfo.QualifierItem;
@@ -33,6 +31,8 @@ import org.sbml4j.model.api.entityInfo.RelationInfoItem.DirectionEnum;
 import org.sbml4j.model.common.BiomodelsQualifier;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
+import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.common.NameNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.common.BiomodelsQualifierRepository;

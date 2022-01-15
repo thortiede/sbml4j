@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.model.api.Output;
+package org.sbml4j.model.queryResult;
 
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.simple.SBMLSimpleReaction;

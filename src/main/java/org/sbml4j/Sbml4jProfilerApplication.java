@@ -29,9 +29,9 @@ package org.sbml4j;
 //import org.sbml4j.config.DataSourceConfig;
 //import org.sbml4j.controller.WarehouseController;
 //import org.sbml4j.model.api.Input.FilterOptions;
-//import org.sbml4j.model.api.Output.NetworkInventoryItem;
-//import org.sbml4j.model.api.Output.NetworkInventoryItemDetail;
-//import org.sbml4j.model.api.Output.PathwayInventoryItem;
+//import org.sbml4j.model.queryResult.NetworkInventoryItem;
+//import org.sbml4j.model.queryResult.NetworkInventoryItemDetail;
+//import org.sbml4j.model.queryResult.PathwayInventoryItem;
 //import org.sbml4j.model.common.GraphEnum.MappingStep;
 //import org.sbml4j.property.FileStorageProperties;
 //
