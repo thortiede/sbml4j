@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.repository.common;
+package org.sbml4j.repository.sbml.ext.qual;
 
 import java.util.List;
 

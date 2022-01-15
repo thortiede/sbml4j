@@ -19,7 +19,7 @@ import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
 import org.sbml4j.model.sbml.ext.qual.SBMLQualSpeciesGroup;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 import org.sbml4j.model.sbml.ext.sbml4j.ExternalResourceEntity;
-import org.sbml4j.repository.common.SBMLQualSpeciesRepository;
+import org.sbml4j.repository.sbml.ext.qual.SBMLQualSpeciesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
