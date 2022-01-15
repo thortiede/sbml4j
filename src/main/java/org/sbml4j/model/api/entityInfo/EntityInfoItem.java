@@ -1,4 +1,4 @@
-package org.sbml4j.model.api;
+package org.sbml4j.model.api.entityInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +11,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
- * GeneAnalysisItem
+ * EntityInfoItem
  */
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
-public class GeneAnalysisItem {
+public class EntityInfoItem {
   @JsonProperty("gene") private String gene;
 
   @JsonProperty("secondary names")
@@ -39,7 +39,7 @@ public class GeneAnalysisItem {
   @Valid
   private List<ReactionInfoItem> reactions = null;
 
-  public GeneAnalysisItem gene(String gene) {
+  public EntityInfoItem gene(String gene) {
     this.gene = gene;
     return this;
   }
@@ -56,12 +56,12 @@ public class GeneAnalysisItem {
 
   public void setGene(String gene) { this.gene = gene; }
 
-  public GeneAnalysisItem secondaryNames(List<String> secondaryNames) {
+  public EntityInfoItem secondaryNames(List<String> secondaryNames) {
     this.secondaryNames = secondaryNames;
     return this;
   }
 
-  public GeneAnalysisItem addSecondaryNamesItem(String secondaryNamesItem) {
+  public EntityInfoItem addSecondaryNamesItem(String secondaryNamesItem) {
     if (this.secondaryNames == null) {
       this.secondaryNames = new ArrayList<>();
     }
@@ -84,12 +84,12 @@ public class GeneAnalysisItem {
     this.secondaryNames = secondaryNames;
   }
 
-  public GeneAnalysisItem qualifier(List<QualifierItem> qualifier) {
+  public EntityInfoItem qualifier(List<QualifierItem> qualifier) {
     this.qualifier = qualifier;
     return this;
   }
 
-  public GeneAnalysisItem addQualifierItem(QualifierItem qualifierItem) {
+  public EntityInfoItem addQualifierItem(QualifierItem qualifierItem) {
     if (this.qualifier == null) {
       this.qualifier = new ArrayList<>();
     }
@@ -113,12 +113,12 @@ public class GeneAnalysisItem {
     this.qualifier = qualifier;
   }
 
-  public GeneAnalysisItem pathways(List<PathwayInfoItem> pathways) {
+  public EntityInfoItem pathways(List<PathwayInfoItem> pathways) {
     this.pathways = pathways;
     return this;
   }
 
-  public GeneAnalysisItem addPathwaysItem(PathwayInfoItem pathwaysItem) {
+  public EntityInfoItem addPathwaysItem(PathwayInfoItem pathwaysItem) {
     if (this.pathways == null) {
       this.pathways = new ArrayList<>();
     }
@@ -142,12 +142,12 @@ public class GeneAnalysisItem {
     this.pathways = pathways;
   }
 
-  public GeneAnalysisItem relations(List<RelationInfoItem> relations) {
+  public EntityInfoItem relations(List<RelationInfoItem> relations) {
     this.relations = relations;
     return this;
   }
 
-  public GeneAnalysisItem addRelationsItem(RelationInfoItem relationsItem) {
+  public EntityInfoItem addRelationsItem(RelationInfoItem relationsItem) {
     if (this.relations == null) {
       this.relations = new ArrayList<>();
     }
@@ -171,12 +171,12 @@ public class GeneAnalysisItem {
     this.relations = relations;
   }
 
-  public GeneAnalysisItem reactions(List<ReactionInfoItem> reactions) {
+  public EntityInfoItem reactions(List<ReactionInfoItem> reactions) {
     this.reactions = reactions;
     return this;
   }
 
-  public GeneAnalysisItem addReactionsItem(ReactionInfoItem reactionsItem) {
+  public EntityInfoItem addReactionsItem(ReactionInfoItem reactionsItem) {
     if (this.reactions == null) {
       this.reactions = new ArrayList<>();
     }
@@ -208,7 +208,7 @@ public class GeneAnalysisItem {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GeneAnalysisItem geneAnalysisItem = (GeneAnalysisItem)o;
+    EntityInfoItem geneAnalysisItem = (EntityInfoItem)o;
     return Objects.equals(this.gene, geneAnalysisItem.gene) &&
         Objects.equals(this.secondaryNames, geneAnalysisItem.secondaryNames) &&
         Objects.equals(this.qualifier, geneAnalysisItem.qualifier) &&
@@ -226,7 +226,7 @@ public class GeneAnalysisItem {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GeneAnalysisItem {\n");
+    sb.append("class EntityInfoItem {\n");
 
     sb.append("    gene: ").append(toIndentedString(gene)).append("\n");
     sb.append("    secondaryNames: ")

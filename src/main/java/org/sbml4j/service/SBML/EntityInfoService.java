@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.service;
+package org.sbml4j.service.SBML;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,22 +20,25 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.api.GeneAnalysisItem;
-import org.sbml4j.model.api.PathwayInfoItem;
-import org.sbml4j.model.api.QualifierItem;
-import org.sbml4j.model.api.QualifierItemContent;
-import org.sbml4j.model.api.ReactionInfoItem;
-import org.sbml4j.model.api.ReactionPartnerItem;
-import org.sbml4j.model.api.RelationInfoItem;
 import org.sbml4j.model.api.Output.MetabolicPathwayReturnType;
 import org.sbml4j.model.api.Output.NonMetabolicPathwayReturnType;
-import org.sbml4j.model.api.RelationInfoItem.DirectionEnum;
+import org.sbml4j.model.api.entityInfo.EntityInfoItem;
+import org.sbml4j.model.api.entityInfo.PathwayInfoItem;
+import org.sbml4j.model.api.entityInfo.QualifierItem;
+import org.sbml4j.model.api.entityInfo.QualifierItemContent;
+import org.sbml4j.model.api.entityInfo.ReactionInfoItem;
+import org.sbml4j.model.api.entityInfo.ReactionPartnerItem;
+import org.sbml4j.model.api.entityInfo.RelationInfoItem;
+import org.sbml4j.model.api.entityInfo.RelationInfoItem.DirectionEnum;
 import org.sbml4j.model.common.BiomodelsQualifier;
 import org.sbml4j.model.common.SBMLSpecies;
 import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
 import org.sbml4j.model.common.NameNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.common.BiomodelsQualifierRepository;
+import org.sbml4j.service.NameNodeService;
+import org.sbml4j.service.PathwayService;
+import org.sbml4j.service.UtilityService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
@@ -49,7 +52,7 @@ import org.springframework.stereotype.Service;
  * @since 0.1
  */
 @Service
-public class AnalysisService {
+public class EntityInfoService {
 
 	@Autowired
 	BiomodelsQualifierRepository biomodelsQualifierRepository;
@@ -75,9 +78,9 @@ public class AnalysisService {
 	@Autowired
 	UtilityService utilityService;
 	
-	public List<GeneAnalysisItem> getGeneAnalysis(String geneSymbol) {
+	public List<EntityInfoItem> getGeneAnalysis(String geneSymbol) {
 		
-		List<GeneAnalysisItem> geneAnalysisItems = new ArrayList<>();
+		List<EntityInfoItem> geneAnalysisItems = new ArrayList<>();
 		Map<String, SBMLSpecies> geneSymbolSpecies = this.sbmlSpeciesService.findAllBySymbol(geneSymbol);
 		if(geneSymbolSpecies.isEmpty()) {
 			geneSymbolSpecies = this.sbmlSpeciesService.findAllBySymbol(geneSymbol, true);
@@ -85,7 +88,7 @@ public class AnalysisService {
 		if (geneSymbolSpecies.isEmpty()) {
 			geneSymbolSpecies = this.sbmlSpeciesService.findByExternalResourceSecondaryName(geneSymbol);
 		}
-		GeneAnalysisItem item = new GeneAnalysisItem();
+		EntityInfoItem item = new EntityInfoItem();
 		Map<String, QualifierItem> qualifierMap = new HashMap<>();
 		//Map<String, RelationInfoItem> relationMap = new HashMap<>();
 		Map<String, ReactionInfoItem> reactionMap = new HashMap<>();

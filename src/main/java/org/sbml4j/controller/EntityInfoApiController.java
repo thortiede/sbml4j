@@ -16,10 +16,10 @@ package org.sbml4j.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.sbml4j.api.AnalysisApi;
-import org.sbml4j.model.api.GeneAnalysisItem;
-import org.sbml4j.service.AnalysisService;
+import org.sbml4j.api.EntityInfoApi;
+import org.sbml4j.model.api.entityInfo.EntityInfoItem;
 import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.SBML.EntityInfoService;
 import org.sbml4j.service.networks.NetworkResourceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -34,49 +34,49 @@ import org.springframework.stereotype.Controller;
  */
 
 @Controller
-public class AnalysisApiController implements AnalysisApi {
+public class EntityInfoApiController implements EntityInfoApi {
 	
 	
 	@Autowired
 	ConfigService configService;
 	
 	@Autowired
-	AnalysisService analysisService;
+	EntityInfoService entityInfoService;
 	
 	@Autowired
 	NetworkResourceService networkResourceService;
 	
 	
 	/**
-	 * Get a <a href="#{@link}">{@link GeneAnalysisItem}</a> for a single geneSymbol
+	 * Get a <a href="#{@link}">{@link EntityInfoItem}</a> for a single geneSymbol
 	 * 
 	 * @param geneSymbol The symbol for which to get the item
 	 * @return ResponseEntity holding the generated geneAnalysisItem
 	 */
-	public ResponseEntity<List<GeneAnalysisItem>> getGeneAnalysis(String geneSymbol) {
-		List<GeneAnalysisItem> geneAnalysisItems;
+	public ResponseEntity<List<EntityInfoItem>> getEntityInfo(String geneSymbol) {
+		List<EntityInfoItem> entityInfoItems;
 		try {
-			geneAnalysisItems = this.analysisService.getGeneAnalysis(geneSymbol);
+			entityInfoItems = this.entityInfoService.getGeneAnalysis(geneSymbol);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return ResponseEntity.badRequest().build();
 		}
-		return new ResponseEntity<List<GeneAnalysisItem>>(geneAnalysisItems, HttpStatus.OK);
+		return new ResponseEntity<List<EntityInfoItem>>(entityInfoItems, HttpStatus.OK);
 	}
 	
 	/**
-	 * Get a list of <a href="#{@link}">{@link GeneAnalysisItem}</a> for symbols in geneSymbols
+	 * Get a list of <a href="#{@link}">{@link EntityInfoItem}</a> for symbols in geneSymbols
 	 * 
-	 * @param geneSymbols List of symbols to get <a href="#{@link}">{@link GeneAnalysisItem}</a>  for
-	 * @return ResponseEntity with a List of <a href="#{@link}">{@link GeneAnalysisItem}</a> 
+	 * @param geneSymbols List of symbols to get <a href="#{@link}">{@link EntityInfoItem}</a>  for
+	 * @return ResponseEntity with a List of <a href="#{@link}">{@link EntityInfoItem}</a> 
 	 */
-	public ResponseEntity<List<GeneAnalysisItem>> getGeneSetAnalysis(List<String> geneSymbols) {
-		List<GeneAnalysisItem> geneAnalysisItems = new ArrayList<>();
+	public ResponseEntity<List<EntityInfoItem>> getGeneSetAnalysis(List<String> geneSymbols) {
+		List<EntityInfoItem> entityInfoItems = new ArrayList<>();
 		for (String geneSymbol : geneSymbols) {
-			geneAnalysisItems.addAll(this.analysisService.getGeneAnalysis(geneSymbol));
+			entityInfoItems.addAll(this.entityInfoService.getGeneAnalysis(geneSymbol));
 		}
-		return new ResponseEntity<List<GeneAnalysisItem>>(geneAnalysisItems, HttpStatus.OK);
+		return new ResponseEntity<List<EntityInfoItem>>(entityInfoItems, HttpStatus.OK);
 	}
 	
 	/**

@@ -12,7 +12,7 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-import org.sbml4j.model.api.GeneAnalysisItem;
+import org.sbml4j.model.api.entityInfo.EntityInfoItem;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-03-26T12:09:15.257519+01:00[Europe/Berlin]")
 @Validated
 @Api(value = "Analysis", description = "the Analysis API")
-public interface AnalysisApi {
+public interface EntityInfoApi {
 
   default Optional<NativeWebRequest> getRequest() { return Optional.empty(); }
 
@@ -48,7 +48,7 @@ public interface AnalysisApi {
    */
   @ApiOperation(value = "Relation- and Pathway Analysis for a gene",
                 nickname = "getGeneAnalysis", notes = "",
-                response = GeneAnalysisItem.class, responseContainer = "List",
+                response = EntityInfoItem.class, responseContainer = "List",
                 tags =
                     {
                         "analysis",
@@ -57,12 +57,12 @@ public interface AnalysisApi {
                 {
                   @ApiResponse(code = 400, message = "Bad Request")
                   , @ApiResponse(code = 200, message = "successful operation",
-                                 response = GeneAnalysisItem.class,
+                                 response = EntityInfoItem.class,
                                  responseContainer = "List")
                 })
-  @GetMapping(value = "/geneAnalysis", produces = {"application/json"})
-  default ResponseEntity<List<GeneAnalysisItem>>
-  getGeneAnalysis(@NotNull @ApiParam(
+  @GetMapping(value = "sbml/entityInfo", produces = {"application/json"})
+  default ResponseEntity<List<EntityInfoItem>>
+  getEntityInfo(@NotNull @ApiParam(
       value = "The geneSymbol for which the analysis should be fetched",
       required = true) @Valid @RequestParam(value = "geneSymbol",
                                             required = true)
@@ -155,7 +155,7 @@ public interface AnalysisApi {
    */
   @ApiOperation(value = "Relation- and Pathway Analysis for a set of genes",
                 nickname = "getGeneSetAnalysis", notes = "",
-                response = GeneAnalysisItem.class, responseContainer = "List",
+                response = EntityInfoItem.class, responseContainer = "List",
                 tags =
                     {
                         "analysis",
@@ -164,12 +164,12 @@ public interface AnalysisApi {
                 {
                   @ApiResponse(code = 400, message = "Bad Request")
                   , @ApiResponse(code = 200, message = "successful operation",
-                                 response = GeneAnalysisItem.class,
+                                 response = EntityInfoItem.class,
                                  responseContainer = "List")
                 })
   @PostMapping(value = "/geneSetAnalysis", produces = {"application/json"},
                consumes = {"application/json"})
-  default ResponseEntity<List<GeneAnalysisItem>>
+  default ResponseEntity<List<EntityInfoItem>>
   getGeneSetAnalysis(@ApiParam(
       value =
           "A json formatted and comma separated list of genes in the set to be analysed",
