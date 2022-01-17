@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.sbml4j.Exception.UserUnauthorizedException;
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.slf4j.Logger;

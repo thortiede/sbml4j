@@ -15,7 +15,7 @@ package org.sbml4j.service.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.common.GraphEnum.FileNodeType;
+import org.sbml4j.model.base.GraphEnum.FileNodeType;
 import org.sbml4j.model.warehouse.DatabaseNode;
 import org.sbml4j.model.warehouse.FileNode;
 import org.sbml4j.model.warehouse.Organism;

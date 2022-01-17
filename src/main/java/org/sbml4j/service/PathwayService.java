@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.sbml4j.model.api.pathway.PathwayInventoryItem;
-import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.full.SBMLReaction;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;

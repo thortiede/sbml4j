@@ -15,7 +15,7 @@ package org.sbml4j.service;
 
 import org.sbml4j.Exception.NetworkAlreadyExistsException;
 import org.sbml4j.Exception.NetworkMappingError;
-import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.base.GraphEnum.NetworkMappingType;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.warehouse.MappingNode;

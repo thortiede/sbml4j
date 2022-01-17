@@ -16,7 +16,7 @@ package org.sbml4j.model.warehouse;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.sbml4j.model.common.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.base.GraphEnum.NetworkMappingType;
 
 public class MappingNode extends WarehouseGraphNode {
 

@@ -13,7 +13,7 @@
  */
 package org.sbml4j.service.SimpleSBML;
 
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.repository.sbml.simple.SBMLSimpleReactionRepository;

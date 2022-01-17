@@ -13,7 +13,7 @@
  */
 package org.sbml4j.config;
 
-import org.sbml4j.model.common.GraphEnum.AnnotationName;
+import org.sbml4j.model.base.GraphEnum.AnnotationName;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "sbml4j.annotation")

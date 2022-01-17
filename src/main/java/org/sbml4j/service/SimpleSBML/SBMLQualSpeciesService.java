@@ -14,7 +14,7 @@
 package org.sbml4j.service.SimpleSBML;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
 import org.sbml4j.model.sbml.ext.qual.SBMLQualSpeciesGroup;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;

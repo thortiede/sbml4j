@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.sbml4j.api.DocumentationApi;
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.service.ConfigService;
 import org.sbml4j.service.GraphBaseEntityService;
 import org.slf4j.Logger;

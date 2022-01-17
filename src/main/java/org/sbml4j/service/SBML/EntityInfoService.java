@@ -28,7 +28,7 @@ import org.sbml4j.model.api.entityInfo.ReactionInfoItem;
 import org.sbml4j.model.api.entityInfo.ReactionPartnerItem;
 import org.sbml4j.model.api.entityInfo.RelationInfoItem;
 import org.sbml4j.model.api.entityInfo.RelationInfoItem.DirectionEnum;
-import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.base.GraphEnum.ExternalResourceType;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLSpecies;

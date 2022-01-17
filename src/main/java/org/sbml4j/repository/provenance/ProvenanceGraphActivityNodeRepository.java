@@ -13,7 +13,7 @@
  */
 package org.sbml4j.repository.provenance;
 
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 

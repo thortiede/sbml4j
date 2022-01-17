@@ -13,7 +13,7 @@
  */
 package org.sbml4j.repository.provenance;
 
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

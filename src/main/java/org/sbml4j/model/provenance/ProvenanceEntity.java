@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Properties;
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 
 
 public class ProvenanceEntity extends GraphBaseEntity {

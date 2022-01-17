@@ -14,7 +14,7 @@
 package org.sbml4j.model.provenance;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 
 @NodeEntity("PROV_AGENT")
 public class ProvenanceGraphAgentNode extends ProvenanceEntity{

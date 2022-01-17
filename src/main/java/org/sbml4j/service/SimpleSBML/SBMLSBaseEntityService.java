@@ -1,6 +1,6 @@
 package org.sbml4j.service.SimpleSBML;
 
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.sbml.SBMLSBaseEntity;
 import org.sbml4j.repository.sbml.SBMLSBaseEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;

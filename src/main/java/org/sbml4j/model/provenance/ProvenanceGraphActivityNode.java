@@ -14,7 +14,7 @@
 package org.sbml4j.model.provenance;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 
 @NodeEntity("PROV_ACTIVITY")
 public class ProvenanceGraphActivityNode extends ProvenanceEntity{

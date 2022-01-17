@@ -13,7 +13,7 @@
  */
 package org.sbml4j.model.full;
 
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 
 public class SBMLPackage extends GraphBaseEntity {
 	

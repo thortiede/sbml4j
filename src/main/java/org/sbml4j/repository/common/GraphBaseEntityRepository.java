@@ -13,7 +13,7 @@
  */
 package org.sbml4j.repository.common;
 
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 
 /**

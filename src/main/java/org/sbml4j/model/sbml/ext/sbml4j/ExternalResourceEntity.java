@@ -22,8 +22,8 @@ import java.util.Set;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
-import org.sbml4j.model.common.GraphEnum;
-import org.sbml4j.model.common.GraphEnum.ExternalResourceType;
+import org.sbml4j.model.base.GraphEnum;
+import org.sbml4j.model.base.GraphEnum.ExternalResourceType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

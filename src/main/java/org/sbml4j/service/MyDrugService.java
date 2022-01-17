@@ -27,8 +27,8 @@ import java.util.Set;
 
 import org.sbml4j.Exception.NetworkAlreadyExistsException;
 import org.sbml4j.Exception.NetworkDeletionException;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.provenance.ProvenanceEntity;

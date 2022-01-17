@@ -15,7 +15,7 @@ package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.common.GraphEnum.FileNodeType;
+import org.sbml4j.model.base.GraphEnum.FileNodeType;
 import org.sbml4j.model.warehouse.FileNode;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 

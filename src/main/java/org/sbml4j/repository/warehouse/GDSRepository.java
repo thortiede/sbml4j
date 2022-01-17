@@ -15,7 +15,7 @@ package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.flat.FlatEdge;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

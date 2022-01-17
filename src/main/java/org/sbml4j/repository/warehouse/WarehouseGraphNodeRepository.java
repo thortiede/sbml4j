@@ -15,7 +15,7 @@ package org.sbml4j.repository.warehouse;
 
 import java.util.List;
 
-import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.springframework.data.neo4j.annotation.Query;

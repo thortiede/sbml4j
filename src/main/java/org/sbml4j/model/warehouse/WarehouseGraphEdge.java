@@ -16,7 +16,7 @@ package org.sbml4j.model.warehouse;
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
-import org.sbml4j.model.common.GraphEnum.WarehouseGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 
 @RelationshipEntity("Warehouse")

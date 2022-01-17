@@ -14,7 +14,7 @@
 package org.sbml4j.model.warehouse;
 
 import org.neo4j.ogm.annotation.NodeEntity;
-import org.sbml4j.model.common.GraphEnum.FileNodeType;
+import org.sbml4j.model.base.GraphEnum.FileNodeType;
 
 @NodeEntity(label="FileNode")
 public class FileNode extends WarehouseGraphNode {

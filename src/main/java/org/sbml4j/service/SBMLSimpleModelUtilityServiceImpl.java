@@ -26,7 +26,7 @@ import org.sbml.jsbml.SBMLDocument;
 import org.sbml.jsbml.SBase;
 import org.sbml.jsbml.Species;
 import org.sbml.jsbml.ext.qual.QualitativeSpecies;
-import org.sbml4j.model.common.GraphBaseEntity;
+import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.full.SBMLDocumentEntity;
 import org.sbml4j.model.full.SBMLModelEntity;
 import org.sbml4j.model.sbml.SBMLCompartment;

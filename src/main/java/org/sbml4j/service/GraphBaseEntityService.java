@@ -16,8 +16,8 @@ package org.sbml4j.service;
 import java.util.UUID;
 
 import org.sbml4j.config.SBML4jConfig;
-import org.sbml4j.model.common.GraphBaseEntity;
-import org.sbml4j.model.common.GraphEnum.AnnotationName;
+import org.sbml4j.model.base.GraphBaseEntity;
+import org.sbml4j.model.base.GraphEnum.AnnotationName;
 import org.sbml4j.repository.common.GraphBaseEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

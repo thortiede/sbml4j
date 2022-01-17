@@ -15,9 +15,9 @@ package org.sbml4j.service;
 
 import java.util.Map;
 
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphActivityType;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphAgentType;
-import org.sbml4j.model.common.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
+import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;

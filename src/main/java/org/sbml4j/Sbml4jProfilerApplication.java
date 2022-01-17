@@ -32,7 +32,7 @@ package org.sbml4j;
 //import org.sbml4j.model.queryResult.NetworkInventoryItem;
 //import org.sbml4j.model.queryResult.NetworkInventoryItemDetail;
 //import org.sbml4j.model.queryResult.PathwayInventoryItem;
-//import org.sbml4j.model.common.GraphEnum.MappingStep;
+//import org.sbml4j.model.base.GraphEnum.MappingStep;
 //import org.sbml4j.property.FileStorageProperties;
 //
 //@SpringBootApplication
