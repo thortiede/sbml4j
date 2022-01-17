@@ -16,7 +16,7 @@ package org.sbml4j.model.flat;
 import org.neo4j.ogm.annotation.EndNode;
 import org.neo4j.ogm.annotation.RelationshipEntity;
 import org.neo4j.ogm.annotation.StartNode;
-import org.sbml4j.model.common.ContentGraphEdge;
+import org.sbml4j.model.contentgraph.ContentGraphEdge;
 
 @RelationshipEntity
 public class FlatEdge extends ContentGraphEdge {

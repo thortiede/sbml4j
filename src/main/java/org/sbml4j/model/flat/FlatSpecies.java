@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.neo4j.ogm.annotation.Transient;
-import org.sbml4j.model.common.ContentGraphNode;
+import org.sbml4j.model.contentgraph.ContentGraphNode;
 
 
 public class FlatSpecies extends ContentGraphNode {

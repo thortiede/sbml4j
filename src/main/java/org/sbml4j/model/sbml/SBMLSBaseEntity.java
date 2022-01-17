@@ -21,7 +21,7 @@ import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
 import org.sbml.jsbml.CVTerm;
 import org.sbml4j.Exception.SBML4jAddExtensionException;
-import org.sbml4j.model.common.ContentGraphNode;
+import org.sbml4j.model.contentgraph.ContentGraphNode;
 import org.sbml4j.model.full.ext.SBMLSBaseExtension;
 import org.sbml4j.model.sbml.ext.sbml4j.BiomodelsQualifier;
 
