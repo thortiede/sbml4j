@@ -22,12 +22,12 @@ import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.Transient;
-import org.sbml4j.model.provenance.ProvenanceGraphEntityNode;
+import org.sbml4j.model.contentgraph.ContentGraphNode;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @NodeEntity
-public class NameNode extends ProvenanceGraphEntityNode {
+public class NameNode extends ContentGraphNode {
 
 	@Index(unique=true)
 	private String name;
