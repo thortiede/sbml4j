@@ -303,6 +303,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					.getAllSBOChildren(molecularInteractionSBO)) {
 				transitionSBOTerms.add(molecularInteractionChildSBO);
 			}
+			// add uncertain process here
+			transitionSBOTerms.add(SBO.getTerm(396).getId());
 			processTransitionsNeeded = true;
 			
 		} else if (type.equals(NetworkMappingType.REGULATORY)) {
