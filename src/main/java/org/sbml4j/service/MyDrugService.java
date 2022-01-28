@@ -33,6 +33,7 @@ import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.sbml4j.service.networks.NetworkService;
 import org.sbml4j.service.warehouse.MappingNodeService;
 import org.slf4j.Logger;

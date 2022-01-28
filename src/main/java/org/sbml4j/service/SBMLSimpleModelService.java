@@ -71,6 +71,7 @@ import org.sbml4j.service.SimpleSBML.SBMLSBaseEntityService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

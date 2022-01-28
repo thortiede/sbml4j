@@ -36,6 +36,7 @@ import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.model.warehouse.PathwayCollectionNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.warehouse.PathwayNodeRepository;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.sbml4j.service.networks.NetworkService;
 import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;

@@ -31,8 +31,8 @@ import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.repository.warehouse.MappingNodeRepository;
 import org.sbml4j.service.ConfigService;
-import org.sbml4j.service.GraphBaseEntityService;
 import org.sbml4j.service.UtilityService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

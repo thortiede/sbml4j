@@ -20,7 +20,7 @@ import org.sbml4j.model.warehouse.DatabaseNode;
 import org.sbml4j.model.warehouse.FileNode;
 import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.repository.warehouse.FileNodeRepository;
-import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

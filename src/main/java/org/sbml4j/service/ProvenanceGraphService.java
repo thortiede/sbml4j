@@ -26,6 +26,7 @@ import org.sbml4j.repository.provenance.ProvenanceEntityRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphActivityNodeRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphAgentNodeRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphEdgeRepository;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

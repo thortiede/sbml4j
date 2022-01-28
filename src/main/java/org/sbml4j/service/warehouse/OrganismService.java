@@ -16,7 +16,7 @@ package org.sbml4j.service.warehouse;
 import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.repository.warehouse.OrganismRepository;
-import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

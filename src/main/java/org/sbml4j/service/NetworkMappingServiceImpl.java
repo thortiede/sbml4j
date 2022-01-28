@@ -52,6 +52,7 @@ import org.sbml4j.repository.sbml.ext.sbml4j.BiomodelsQualifierRepository;
 import org.sbml4j.service.SimpleSBML.SBMLQualSpeciesService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.sbml4j.service.warehouse.MappingNodeService;
 import org.sbml.jsbml.SBO;
 import org.slf4j.Logger;

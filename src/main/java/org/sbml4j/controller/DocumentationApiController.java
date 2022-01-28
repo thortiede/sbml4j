@@ -22,7 +22,7 @@ import java.util.UUID;
 import org.sbml4j.api.DocumentationApi;
 import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.service.ConfigService;
-import org.sbml4j.service.GraphBaseEntityService;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

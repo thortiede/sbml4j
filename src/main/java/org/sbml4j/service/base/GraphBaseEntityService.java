@@ -11,7 +11,7 @@
  * 
  * For a full list of authors, please refer to the file AUTHORS.
  */
-package org.sbml4j.service;
+package org.sbml4j.service.base;
 
 import java.util.UUID;
 

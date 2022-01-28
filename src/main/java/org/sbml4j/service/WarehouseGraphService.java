@@ -23,6 +23,7 @@ import org.sbml4j.model.warehouse.WarehouseGraphEdge;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.repository.warehouse.WarehouseGraphEdgeRepository;
 import org.sbml4j.repository.warehouse.WarehouseGraphNodeRepository;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
