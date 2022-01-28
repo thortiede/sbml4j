@@ -24,9 +24,6 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 
 	SBMLSimpleTransition getByTransitionId(String transitionId, int depth);
 	
-	@Query(value = "MATCH (t:SBMLSimpleTransition) RETURN DISTINCT t.sBaseSboTerm;")
-	Iterable<String> getTransitionTypes();
-	
 	@Query(value="MATCH "
 			+ "(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
 			+ "(t)"
@@ -97,6 +94,7 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "-[w:Warehouse]->"
 			+ "(t:SBMLSimpleTransition) "
 			+ "where pw.entityUUID = $pathwayEntityUUID "
+			+ "AND w.warehouseGraphEdgeType = \"CONTAINS\" "
 			+ "and t.sBaseSboTerm in $transitionSBOTerms "
 			+ "with t "
 			+ "MATCH p="
