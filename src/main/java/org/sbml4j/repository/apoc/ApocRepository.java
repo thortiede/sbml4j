@@ -76,6 +76,7 @@ public interface ApocRepository extends Neo4jRepository<GraphBaseEntity, Long> {
 			+ "WITH fs1 "
 			+ "MATCH (fs2:FlatSpecies) "
 			+ "WHERE fs2.entityUUID = $endNodeEntityUUID "
+			+ "WITH fs1, fs2 "
 			+ "CALL apoc.algo.dijkstraWithDefaultWeight("
 			+ "fs1, "
 			+ "fs2, "
