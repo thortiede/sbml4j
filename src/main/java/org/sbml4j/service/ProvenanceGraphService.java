@@ -152,7 +152,6 @@ public class ProvenanceGraphService {
 	 */
 	public void connect(ProvenanceEntity source, ProvenanceEntity target,
 			ProvenanceGraphEdgeType edgetype) {
-		// TODO: Make sure Edge does not exist yet...
 		if (!this.provenanceEntityRepository.areProvenanceEntitiesConnectedWithProvenanceEdgeType(source.getEntityUUID(), target.getEntityUUID(), edgetype)) {
 			ProvenanceGraphEdge newEdge = new ProvenanceGraphEdge();
 			this.graphBaseEntityService.setGraphBaseEntityProperties(newEdge);
