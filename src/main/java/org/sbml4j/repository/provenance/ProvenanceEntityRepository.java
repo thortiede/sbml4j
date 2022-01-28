@@ -59,22 +59,22 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 			String endNodeEntityUUID);
 	
 	@Query(value = "MATCH "
-			+ "(p:ProvenanceEntity)"
-			+ "<-[pr:PROV]-"
-			+ "(c:ProvenanceEntity) "
-			+ "WHERE pr.provenanceGraphEdgeType = $edgetype "
-			+ "AND c.entityUUID = $startNodeEntityUUID "
-			+ "RETURN p")
+			+ "(start:ProvenanceEntity)"
+			+ "-[edge:PROV]->"
+			+ "(end:ProvenanceEntity) "
+			+ "WHERE edge.provenanceGraphEdgeType = $edgetype "
+			+ "AND start.entityUUID = $startNodeEntityUUID "
+			+ "RETURN end")
 	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType edgetype,
 			String startNodeEntityUUID);
 	
 	@Query(value = "MATCH "
-			+ "(p:ProvenanceEntity)"
-			+ "<-[pr:PROV]-"
-			+ "(c:ProvenanceEntity) "
-			+ "WHERE p.entityUUID = $endNodeEntityUUID "
-			+ "AND pr.provenanceGraphEdgeType = $edgetype "
-			+ "RETURN c")
+			+ "(start:ProvenanceEntity)"
+			+ "-[edge:PROV]->"
+			+ "(end:ProvenanceEntity) "
+			+ "WHERE edge.provenanceGraphEdgeType = $edgetype "
+			+ "AND end.entityUUID = $endNodeEntityUUID "
+			+ "RETURN start")
 	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID);
 }
