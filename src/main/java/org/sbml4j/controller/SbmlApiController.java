@@ -235,6 +235,7 @@ public class SbmlApiController implements SbmlApi {
 				// If we loaded this file already, we can just reuse the pathway
 				PathwayNode existingPathwayToSBMLFile;
 				try {
+					// switch to findAll
 					existingPathwayToSBMLFile = (PathwayNode)this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, sbmlFileNode.getEntityUUID());
 					pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, existingPathwayToSBMLFile));
 					continue;
