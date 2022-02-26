@@ -250,6 +250,11 @@ public class SbmlApiController implements SbmlApi {
 					errorFileNames.append(originalFilename);
 					countError += 1;
 					continue;
+				} catch (Exception e) {
+					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + " due to an exception: " + e.getMessage());
+					errorFileNames.append(originalFilename);
+					countError += 1;
+					
 				}
 			}
 			
