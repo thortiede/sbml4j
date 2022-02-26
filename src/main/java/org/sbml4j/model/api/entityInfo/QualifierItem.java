@@ -9,13 +9,12 @@ import javax.validation.Valid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
-
 /**
  * QualifierItem
  */
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+          date = "2022-02-08T21:39:37.829466+01:00[Europe/Berlin]")
 public class QualifierItem {
   @JsonProperty("name") private String name;
 

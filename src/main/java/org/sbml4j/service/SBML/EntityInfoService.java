@@ -24,6 +24,7 @@ import org.sbml4j.model.api.entityInfo.EntityInfoItem;
 import org.sbml4j.model.api.entityInfo.PathwayInfoItem;
 import org.sbml4j.model.api.entityInfo.QualifierItem;
 import org.sbml4j.model.api.entityInfo.QualifierItemContent;
+import org.sbml4j.model.api.entityInfo.QualifierItemValue;
 import org.sbml4j.model.api.entityInfo.ReactionInfoItem;
 import org.sbml4j.model.api.entityInfo.ReactionPartnerItem;
 import org.sbml4j.model.api.entityInfo.RelationInfoItem;
@@ -78,7 +79,7 @@ public class EntityInfoService {
 	@Autowired
 	UtilityService utilityService;
 	
-	public List<EntityInfoItem> getGeneAnalysis(String geneSymbol) {
+	public List<EntityInfoItem> getEntityInfo(String geneSymbol) {
 		
 		List<EntityInfoItem> geneAnalysisItems = new ArrayList<>();
 		Map<String, SBMLSpecies> geneSymbolSpecies = this.sbmlSpeciesService.findAllBySymbol(geneSymbol);
@@ -98,6 +99,7 @@ public class EntityInfoService {
 			} else {
 				item.addSecondaryNamesItem(species.getsBaseName());
 			}
+			
 			List<PathwayInfoItem> pathwayInfoItems;
 			if (item.getPathways() == null) {
 				pathwayInfoItems = new ArrayList<>();
@@ -151,23 +153,28 @@ public class EntityInfoService {
 					qualifierItemName = "mdanderson";
 					//currentQualifierMap.computeIfAbsent("mdanderson", k -> new ArrayList<>()).add(uri);
 				}
-				// Top Level for the Qualifier Info (i.e. entrez-gene)
+				// get the value item for the current uri (which then includes a potential extracted id)
+				QualifierItemValue value = new QualifierItemValue();
+				value.setUrl(uri);
+				value.setIdentifier(qualifier.getEndNode().getShortIdentifierFromUri());
 				
 				if (qualifierMap.containsKey(qualifierItemName)) {
 					List<QualifierItemContent> qualifierItemContentList = qualifierMap.get(qualifierItemName).getContent();
 					// iterate through all known qualifier for e.g. entrez gene, so BQB_HAS_VERSION, BQB_IS_DESCRIBED_BY
 					boolean hasQualifierType = false;
+					
 					for (QualifierItemContent qualifierItemContent : qualifierItemContentList) {
 						if (qualifierItemContent.getType().equals(qualifierType)) {
 							hasQualifierType = true;
-							qualifierItemContent.addUrlItem(uri);
+							
+							qualifierItemContent.addValuesItem(value); //addUrlItem(uri);
 						}
 					}
 					if (!hasQualifierType) {
-						qualifierItemContentList.add(new QualifierItemContent().type(qualifierType).addUrlItem(uri));
+						qualifierItemContentList.add(new QualifierItemContent().type(qualifierType).addValuesItem(value));
 					}
 				} else {
-					qualifierMap.put(qualifierItemName, new QualifierItem().name(qualifierItemName).addContentItem(new QualifierItemContent().type(qualifierType).addUrlItem(uri)));
+					qualifierMap.put(qualifierItemName, new QualifierItem().name(qualifierItemName).addContentItem(new QualifierItemContent().type(qualifierType).addValuesItem(value)));
 				}
 			}
 			

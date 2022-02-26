@@ -15,9 +15,9 @@ Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
 public class PathwayInfoItem {
   @JsonProperty("name") private String name;
 
-  @JsonProperty("KEGGId") private String keGGId;
+  @JsonProperty("SourceId") private String sourceId;
 
-  @JsonProperty("KEGGUrl") private String keGGUrl;
+  @JsonProperty("SourceUrl") private String sourceUrl;
 
   public PathwayInfoItem name(String name) {
     this.name = name;
@@ -39,32 +39,32 @@ public class PathwayInfoItem {
   public void setName(String name) { this.name = name; }
 
   public PathwayInfoItem keGGId(String keGGId) {
-    this.keGGId = keGGId;
+    this.sourceId = keGGId;
     return this;
   }
 
   /**
    * The Kegg pathways identifier
-   * @return keGGId
+   * @return sourceId
    */
   @ApiModelProperty(example = "path_hsa04066",
                     value = "The Kegg pathways identifier")
 
   public String
   getKeGGId() {
-    return keGGId;
+    return sourceId;
   }
 
-  public void setKeGGId(String keGGId) { this.keGGId = keGGId; }
+  public void setKeGGId(String keGGId) { this.sourceId = keGGId; }
 
   public PathwayInfoItem keGGUrl(String keGGUrl) {
-    this.keGGUrl = keGGUrl;
+    this.sourceUrl = keGGUrl;
     return this;
   }
 
   /**
    * The Url to retrieve the map from KEGG
-   * @return keGGUrl
+   * @return sourceUrl
    */
   @ApiModelProperty(
       example =
@@ -73,10 +73,10 @@ public class PathwayInfoItem {
 
   public String
   getKeGGUrl() {
-    return keGGUrl;
+    return sourceUrl;
   }
 
-  public void setKeGGUrl(String keGGUrl) { this.keGGUrl = keGGUrl; }
+  public void setKeGGUrl(String keGGUrl) { this.sourceUrl = keGGUrl; }
 
   @Override
   public boolean equals(Object o) {
@@ -88,13 +88,13 @@ public class PathwayInfoItem {
     }
     PathwayInfoItem pathwayInfoItem = (PathwayInfoItem)o;
     return Objects.equals(this.name, pathwayInfoItem.name) &&
-        Objects.equals(this.keGGId, pathwayInfoItem.keGGId) &&
-        Objects.equals(this.keGGUrl, pathwayInfoItem.keGGUrl);
+        Objects.equals(this.sourceId, pathwayInfoItem.sourceId) &&
+        Objects.equals(this.sourceUrl, pathwayInfoItem.sourceUrl);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, keGGId, keGGUrl);
+    return Objects.hash(name, sourceId, sourceUrl);
   }
 
   @Override
@@ -103,8 +103,8 @@ public class PathwayInfoItem {
     sb.append("class PathwayInfoItem {\n");
 
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    keGGId: ").append(toIndentedString(keGGId)).append("\n");
-    sb.append("    keGGUrl: ").append(toIndentedString(keGGUrl)).append("\n");
+    sb.append("    sourceId: ").append(toIndentedString(sourceId)).append("\n");
+    sb.append("    sourceUrl: ").append(toIndentedString(sourceUrl)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -56,7 +56,7 @@ public class EntityInfoApiController implements EntityInfoApi {
 	public ResponseEntity<List<EntityInfoItem>> getEntityInfo(String geneSymbol) {
 		List<EntityInfoItem> entityInfoItems;
 		try {
-			entityInfoItems = this.entityInfoService.getGeneAnalysis(geneSymbol);
+			entityInfoItems = this.entityInfoService.getEntityInfo(geneSymbol);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -74,7 +74,7 @@ public class EntityInfoApiController implements EntityInfoApi {
 	public ResponseEntity<List<EntityInfoItem>> getGeneSetAnalysis(List<String> geneSymbols) {
 		List<EntityInfoItem> entityInfoItems = new ArrayList<>();
 		for (String geneSymbol : geneSymbols) {
-			entityInfoItems.addAll(this.entityInfoService.getGeneAnalysis(geneSymbol));
+			entityInfoItems.addAll(this.entityInfoService.getEntityInfo(geneSymbol));
 		}
 		return new ResponseEntity<List<EntityInfoItem>>(entityInfoItems, HttpStatus.OK);
 	}

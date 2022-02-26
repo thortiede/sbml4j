@@ -10,16 +10,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
 
+
 /**
  * QualifierItemContent
  */
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
-          date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+          date = "2022-02-08T21:39:37.829466+01:00[Europe/Berlin]")
 public class QualifierItemContent {
   @JsonProperty("type") private String type;
 
-  @JsonProperty("url") @Valid private List<String> url = null;
+  @JsonProperty("values") @Valid private List<QualifierItemValue> values = null;
 
   public QualifierItemContent type(String type) {
     this.type = type;
@@ -40,30 +41,34 @@ public class QualifierItemContent {
 
   public void setType(String type) { this.type = type; }
 
-  public QualifierItemContent url(List<String> url) {
-    this.url = url;
+  public QualifierItemContent values(List<QualifierItemValue> values) {
+    this.values = values;
     return this;
   }
 
-  public QualifierItemContent addUrlItem(String urlItem) {
-    if (this.url == null) {
-      this.url = new ArrayList<>();
+  public QualifierItemContent addValuesItem(QualifierItemValue valuesItem) {
+    if (this.values == null) {
+      this.values = new ArrayList<>();
     }
-    if (!this.url.contains(urlItem)) this.url.add(urlItem);
+    this.values.add(valuesItem);
     return this;
   }
 
   /**
-   * Get url
-   * @return url
+   * Get values
+   * @return values
    */
   @ApiModelProperty(value = "")
 
-  public List<String> getUrl() {
-    return url;
+  @Valid
+
+  public List<QualifierItemValue> getValues() {
+    return values;
   }
 
-  public void setUrl(List<String> url) { this.url = url; }
+  public void setValues(List<QualifierItemValue> values) {
+    this.values = values;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -75,12 +80,12 @@ public class QualifierItemContent {
     }
     QualifierItemContent qualifierItemContent = (QualifierItemContent)o;
     return Objects.equals(this.type, qualifierItemContent.type) &&
-        Objects.equals(this.url, qualifierItemContent.url);
+        Objects.equals(this.values, qualifierItemContent.values);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, url);
+    return Objects.hash(type, values);
   }
 
   @Override
@@ -89,7 +94,7 @@ public class QualifierItemContent {
     sb.append("class QualifierItemContent {\n");
 
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
-    sb.append("    url: ").append(toIndentedString(url)).append("\n");
+    sb.append("    values: ").append(toIndentedString(values)).append("\n");
     sb.append("}");
     return sb.toString();
   }
