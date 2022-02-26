@@ -13,8 +13,11 @@
  */
 package org.sbml4j.service.SimpleSBML;
 
+import java.util.List;
+
 import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
+import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.repository.sbml.simple.SBMLSimpleReactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +61,27 @@ public class SBMLSimpleReactionService {
 	 */
 	public SBMLSimpleReaction save(SBMLSimpleReaction reaction, int depth) {
 		return this.sbmlSimpleReactionRepository.save(reaction, depth);
+	}
+
+	
+	/**
+	 * Save a collection of {@link SBMLSimpleReaction} entities and all {@link GraphBaseEntity} connected to it up to the provided depth
+	 * @param reactions The collection of {@link SBMLSimpleReaction} to persist
+	 * @param depth The number of relationships to traverse to find {@link GraphBaseEntity} to persist along this {@link SBMLSimpleReaction}
+	 * @return The Iterable of {@link SBMLSimpleReaction} entities as persisted in the database.
+	 */
+	public Iterable<SBMLSimpleReaction> save(List<SBMLSimpleReaction> reactions, int depth) {
+		return this.sbmlSimpleReactionRepository.save(reactions, depth);
+	}
+
+	
+	/**
+	 * Save a collection of {@link SBMLSimpleReaction} entities
+	 * @param reactions The List of {@link SBMLSimpleReaction} to persist
+	 * @return Iterable of the persisted {@link SBMLSimpleReaction} entities
+	 */
+	public Iterable<SBMLSimpleReaction> saveAll(List<SBMLSimpleReaction> reactions) {
+		return this.sbmlSimpleReactionRepository.saveAll(reactions);
 	}
 	
 }
