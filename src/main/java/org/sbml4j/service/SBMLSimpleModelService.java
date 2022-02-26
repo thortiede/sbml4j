@@ -346,10 +346,14 @@ public class SBMLSimpleModelService {
 			this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
 			
 			newExternalResourceEntity.setUri(resource);
+			if (resource.contains("identifiers.org")) {
+				// we can set the id and database
+				newExternalResourceEntity.setDatabaseFromUri(this.extractDatabaseFromIdentifiersorgUri(resource));
+				newExternalResourceEntity.setShortIdentifierFromUri(this.extractIdentifierFromIdentifiersorgUri(resource));
+			}
 			if (resource.contains("kegg.genes")) {
 				newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
 				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-				newExternalResourceEntity.setShortIdentifierFromUri(this.keggHttpService.getKEGGIdentifier(resource));
 				Set<String> nameList = this.keggHttpService.getGeneNamesFromKeggURL(resource);
 				if (nameList != null) {
 					Iterator<String> nameIterator = nameList.iterator();
@@ -367,7 +371,6 @@ public class SBMLSimpleModelService {
 			} else if(resource.contains("kegg.drug")) {
 				newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
 				newExternalResourceEntity.setDatabaseFromUri("KEGG");
-				//newExternalResourceEntity.setName(sBaseEntity.getsBaseName());
 				List<String> secondaryNames = this.keggHttpService.getDrugInformationFromKEGGDrugURL(resource, newExternalResourceEntity); // changes newExternalResource entity as side effect.. bad
 				if (secondaryNames != null && !secondaryNames.isEmpty()) {
 					for (String name : secondaryNames) {
@@ -402,6 +405,58 @@ public class SBMLSimpleModelService {
 		return resourceUriToBiomodelsQualifierMap;
 	}
 
+	
+	
+	private void processReactions(	ListOf<Reaction> reactionListOf,
+									Map<String, SBMLCompartment> compartmentLookupMap,
+									Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap,
+									Map<String, SBMLSimpleReaction> reactionUUIDToSBMLSimpleReactionMap,
+									Map<String, List<CVTerm>> cvTermsToProcess) {
+		for (Reaction reaction : reactionListOf) {
+			SBMLSimpleReaction newReaction = new SBMLSimpleReaction();
+			this.graphBaseEntityService.setGraphBaseEntityProperties(newReaction);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(reaction, newReaction);
+
+			this.sbmlSimpleModelUtilityServiceImpl.setCompartmentalizedSbaseProperties(reaction, newReaction, compartmentLookupMap);
+			this.sbmlSimpleModelUtilityServiceImpl.setSimpleReactionProperties(reaction, newReaction);
+			// reactants
+			for (int i=0; i != reaction.getReactantCount(); i++) {
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getReactant(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Reactant " + reaction.getReactant(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else {
+					newReaction.addReactant(referencedSpecies);
+				}
+			}
+			// products
+			for (int i=0; i != reaction.getProductCount(); i++) {
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getProduct(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Product " + reaction.getProduct(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else {
+					newReaction.addProduct(referencedSpecies);
+				}
+			}
+			// catalysts
+			for (int i=0; i != reaction.getModifierCount(); i++) {
+				SBMLSpecies referencedSpecies = sBaseIdToSBMLSpeciesMap.get(reaction.getModifier(i).getSpecies());
+				if(referencedSpecies == null) {
+					logger.error("Modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " missing in database!");
+				} else if (reaction.getModifier(i).getSBOTermID().equals("SBO:0000460")){
+					newReaction.addCatalysts(referencedSpecies);
+				} else {
+					logger.warn("Skipping modifier " + reaction.getModifier(i).getSpecies() + " of Reaction " + reaction.getId() + " with sboTerm " + reaction.getModifier(i).getSBOTermID());
+				}
+			}
+			// cvTerm annotations
+			cvTermsToProcess.put(newReaction.getEntityUUID(), reaction.getCVTerms());
+			
+			
+			// add reaction to map
+			reactionUUIDToSBMLSimpleReactionMap.put(newReaction.getEntityUUID(), newReaction);
+		}
+	}
+	
 	private List<SBMLSimpleReaction> buildAndPersistSBMLSimpleReactions(ListOf<Reaction> listOfReactions,
 			Map<String, SBMLCompartment> compartmentLookupMap,
 			Map<String, SBMLSpecies> sBaseIdToSBMLSpeciesMap,
@@ -539,11 +594,15 @@ public class SBMLSimpleModelService {
 		for (CVTerm cvTerm : sBaseEntity.getCvTermList()) {
 			//createExternalResources(cvTerm, qualSpecies);
 			for (String resource : cvTerm.getResources()) {
+				
 				Map<String,NameNode> currentNames = new HashMap<>();
 				// build a BiomodelsQualifier RelationshopEntity
 				BiomodelsQualifier newBiomodelsQualifier = createBiomodelsQualifier(updatedSBaseEntity,
 						cvTerm.getQualifierType(), cvTerm.getQualifier());
 				
+				// create external resource
+				
+				//ExternalResourceEntity existingExternalResourceEntity eER = this.create
 				// build the ExternalResource or link to existing one
 				ExternalResourceEntity existingExternalResourceEntity = this.externalResourceEntityService.findByUri(resource);
 				if(existingExternalResourceEntity != null) {
@@ -553,6 +612,7 @@ public class SBMLSimpleModelService {
 					ExternalResourceEntity newExternalResourceEntity = new ExternalResourceEntity();
 					this.graphBaseEntityService.setGraphBaseEntityProperties(newExternalResourceEntity);
 					//newExternalResourceEntity.setEntityUUID(UUID.randomUUID().toString());
+					
 					newExternalResourceEntity.setUri(resource);
 					if (resource.contains("kegg.genes")) {
 						newExternalResourceEntity.setType(ExternalResourceType.KEGGGENES);
@@ -585,6 +645,7 @@ public class SBMLSimpleModelService {
 						newExternalResourceEntity.setDatabaseFromUri("KEGG");
 						setKeggCompoundNames(currentNames, resource, newExternalResourceEntity);
 					} 
+					
 					//newBiomodelsQualifier.setEndNode(newExternalResourceEntity);
 					ExternalResourceEntity persistedNewExternalResourceEntity = this.externalResourceEntityService.save(newExternalResourceEntity, 1); // TODO can I change this depth to one to persist the nameNodes or does that break BiomodelQualifier connections?
 					newBiomodelsQualifier.setEndNode(persistedNewExternalResourceEntity);
@@ -594,6 +655,8 @@ public class SBMLSimpleModelService {
 				updatedSBaseEntity.addBiomodelsQualifier(persistedNewBiomodelsQualifier);
 				updatedSBaseEntity = this.sbmlSBaseEntityService.save(updatedSBaseEntity, 0);
 				//updatedSBaseEntity.addBiomodelsQualifier(newBiomodelsQualifier);
+				
+				
 			}
 		}
 		if (addMdAnderson && foundMdAndersonGene) {
@@ -691,6 +754,27 @@ public class SBMLSimpleModelService {
 	}
 	
 	/**
+	 * Extract the identifier from a identifier.org resource uri
+	 * @param resource The identifiers.org uri-string to extract the identifier from
+	 * @return the identifier as String
+	 */
+	private String extractIdentifierFromIdentifiersorgUri(String uri) {
+		String[] resourceParts =  uri.split("/");
+		return resourceParts[resourceParts.length - 1];
+	}
+	
+	/**
+	 * Extract the database name from a identifier.org resource uri
+	 * @param resource The identifiers.org uri-string to extract the database name from
+	 * @return the database name as String
+	 */
+	private String extractDatabaseFromIdentifiersorgUri(String uri) {
+		String[] resourceParts =  uri.split("/");
+		return resourceParts[resourceParts.length - 2];
+	}
+	
+	
+	/**
 	 * Use an {@link SBMLReader} to extract the {@link Model} from the {@link SBMLDocument} in the provided file
 	 * @param file The file to read the {@link Model} from
 	 * @return The extracted {@link Model}
@@ -702,6 +786,10 @@ public class SBMLSimpleModelService {
 		SBMLDocument doc;
 		try {
 			doc = SBMLReader.read(fileStream); 
+			logger.info("Read document");
+		} catch (Exception e) {
+			logger.error("Exception while extracting model: ", e);
+			return null;
 		} finally {
 			fileStream.close();
 		}
@@ -827,13 +915,87 @@ public class SBMLSimpleModelService {
 		}*/
 		//Instant speciesInst = Instant.now();
 		// reactions
-		List<SBMLSimpleReaction> persistedSBMLSimpleReactions = null;
+		/*
+		 * This was the old way for reactions
+		 * List<SBMLSimpleReaction> persistedSBMLSimpleReactions = null;
 		if(model.getListOfReactions() != null && model.getListOfReactions().size() > 0) {
 			persistedSBMLSimpleReactions = buildAndPersistSBMLSimpleReactions(model.getListOfReactions(), compartmentLookupMap, sBaseIdToSBMLSpeciesMap, activityNode);
 			persistedSBMLSimpleReactions.forEach(reaction->{
 				returnList.putIfAbsent(reaction.getEntityUUID(), reaction);
 			});
 		}
+		*/
+		// here starts the new way for reactions
+		Map<String, List<CVTerm>> reactionUUIDToCVTermMap = new TreeMap<>();
+		Map<String, SBMLSimpleReaction> reactionUUIDToSBMLSimpleReactionMap = new TreeMap<>();
+		this.processReactions(model.getListOfReactions(), compartmentLookupMap, sBaseIdToSBMLSpeciesMap, reactionUUIDToSBMLSimpleReactionMap, reactionUUIDToCVTermMap);
+		Map<String, Collection<BiomodelsQualifier>> reactionUUIDToBiomodelsQualfierMap = this.processCVTerms(reactionUUIDToCVTermMap);
+		List<BiomodelsQualifier> reactionPersistBQList = new ArrayList<>();
+		List<SBMLSimpleReaction> reactionsWithoutBQ = new ArrayList<>();
+		for (String reactionUUID : reactionUUIDToBiomodelsQualfierMap.keySet()) {
+			Collection<BiomodelsQualifier> bqList = reactionUUIDToBiomodelsQualfierMap.get(reactionUUID);
+			if (bqList == null || bqList.isEmpty()) {
+				reactionsWithoutBQ.add(reactionUUIDToSBMLSimpleReactionMap.get(reactionUUID));
+			} else {
+				for (BiomodelsQualifier bq : bqList) {
+					bq.setStartNode(reactionUUIDToSBMLSimpleReactionMap.get(reactionUUID));
+					reactionPersistBQList.add(bq);
+				}
+			}
+		
+		}
+		
+		// persist the reactions
+		Iterable<BiomodelsQualifier> reactionPersistedBiomodelQualifier = null;
+		Iterable<SBMLSimpleReaction> reactionsWithoutBQPersisted = null;
+		try {
+			this.session.clear();
+			//speciesSessionClear = Instant.now();
+			//persistedBiomodelQualifier = this.biomodelsQualifierRepository.save(persistBQList, 1);
+			reactionPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(reactionPersistBQList);
+			if (!reactionsWithoutBQ.isEmpty()) {
+				reactionsWithoutBQPersisted = this.sbmlSimpleReactionService.saveAll(reactionsWithoutBQ);
+			}
+			//speciesPersisted = Instant.now();
+		} catch (Exception e) {
+			// retry once
+			e.printStackTrace();
+			this.session.clear();
+			System.gc();
+			try {
+				reactionPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(reactionPersistBQList);
+				if (!reactionsWithoutBQ.isEmpty()) {
+					reactionsWithoutBQPersisted = this.sbmlSimpleReactionService.saveAll(reactionsWithoutBQ);
+				}
+			} catch (Exception e2) {
+				e2.printStackTrace();
+				// try again with other save method
+				this.session.clear();
+				System.gc();
+				try {
+					reactionPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(reactionPersistBQList, 2);
+					if (!reactionsWithoutBQ.isEmpty()) {
+						reactionsWithoutBQPersisted = this.sbmlSimpleReactionService.save(reactionsWithoutBQ, 1);
+					}
+				} catch (Exception e3) {
+					throw new ModelPersistenceException("SBMLSpecies: Failed to persist. " + e3.getMessage());
+				}
+			
+			}
+		}
+		
+		// add reactions to return list
+		for (BiomodelsQualifier persistedBQ : reactionPersistedBiomodelQualifier) {
+			SBMLSBaseEntity startNode = persistedBQ.getStartNode();
+			returnList.putIfAbsent(startNode.getEntityUUID(), startNode);
+		}
+		if (sbmlSpeciesWithoutBQPersisted != null) {
+			for (SBMLSimpleReaction persistedSBMLReactionWithoutBQ : reactionsWithoutBQPersisted) {
+				returnList.putIfAbsent(persistedSBMLReactionWithoutBQ.getEntityUUID(), persistedSBMLReactionWithoutBQ);
+			}
+		}
+		
+		// end reactions
 		
 		Map<String, SBMLQualSpecies> persistedSBMLQualSpeciesMap = null;
 		List<SBMLSimpleTransition> persistedTransitionList = null;
