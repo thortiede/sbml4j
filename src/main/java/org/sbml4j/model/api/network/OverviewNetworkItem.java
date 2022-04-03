@@ -1,7 +1,5 @@
 package org.sbml4j.model.api.network;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -30,12 +28,10 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-03-26T13:08:34.054518+01:00[Europe/Berlin]")
-public class OverviewNetworkItem {
+public class OverviewNetworkItem extends NodeList {
   @JsonProperty("baseNetworkUUID") private UUID baseNetworkUUID;
 
-  @JsonProperty("genes") @Valid private List<String> genes = null;
-
-  @JsonProperty("edgeweightproperty") private String edgeweightproperty;
+ @JsonProperty("edgeweightproperty") private String edgeweightproperty;
 
   @JsonProperty("annotationName") private String annotationName;
 
@@ -60,36 +56,6 @@ public class OverviewNetworkItem {
 
   public void setBaseNetworkUUID(UUID baseNetworkUUID) {
     this.baseNetworkUUID = baseNetworkUUID;
-  }
-
-  public OverviewNetworkItem genes(List<String> genes) {
-    this.genes = genes;
-    return this;
-  }
-
-  public OverviewNetworkItem addGenesItem(String genesItem) {
-    if (this.genes == null) {
-      this.genes = new ArrayList<>();
-    }
-    this.genes.add(genesItem);
-    return this;
-  }
-
-  /**
-   * Get genes
-   * @return genes
-   */
-  @ApiModelProperty(value = "")
-
-  public List<String> getGenes() {
-    return genes;
-  }
-
-  public void setGenes(List<String> genes) { this.genes = genes; }
-
-  public OverviewNetworkItem edgeweightproperty(String edgeweightproperty) {
-    this.edgeweightproperty = edgeweightproperty;
-    return this;
   }
 
   /**

@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import javax.validation.Valid;
 
+import org.sbml4j.model.api.ApiResponseItem;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
@@ -17,7 +19,7 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
-public class NetworkInventoryItem {
+public class NetworkInventoryItem extends ApiResponseItem {
   @JsonProperty("UUID") private UUID UUID;
 
   @JsonProperty("name") private String name;

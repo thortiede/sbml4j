@@ -6,6 +6,8 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
+import org.sbml4j.model.api.ApiRequestItem;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModel;
@@ -38,7 +40,7 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-03-26T13:08:34.054518+01:00[Europe/Berlin]")
-public class AnnotationItem {
+public class AnnotationItem extends ApiRequestItem {
   @JsonProperty("nodeAnnotationName") private String nodeAnnotationName;
 
   @JsonProperty("nodeAnnotation")
