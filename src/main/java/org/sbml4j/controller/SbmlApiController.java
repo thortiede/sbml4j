@@ -233,18 +233,30 @@ public class SbmlApiController implements SbmlApi {
 				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, originalFilename, fileMD5Sum);
 				logger.info("Found existing FileNode for file with filename " + originalFilename);
 				// If we loaded this file already, we can just reuse the pathway
-				PathwayNode existingPathwayToSBMLFile;
+				PathwayNode existingPathwayToSBMLFile = null;
 				try {
-					// switch to findAll
-					existingPathwayToSBMLFile = (PathwayNode)this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, sbmlFileNode.getEntityUUID());
-					pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, existingPathwayToSBMLFile));
-					continue;
-				} catch (IncorrectResultSizeDataAccessException e) {
-					logger.error("Expected to find at most one Pathway derived from provided SBML file with name " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
-					errorFileNames.append(originalFilename);
-					countError += 1;
-
-					continue;
+					boolean foundExistingPathway = false;
+					boolean errorInPathwaySearch = false;
+					// Search all connected provenance Entities that are derived from this SBML file (Should only be one)
+					for (ProvenanceEntity provPathwayEntity : this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType.wasDerivedFrom, sbmlFileNode.getEntityUUID())) {
+						if (PathwayNode.class.isInstance(provPathwayEntity)) {
+							if (!foundExistingPathway) {
+								existingPathwayToSBMLFile = (PathwayNode) provPathwayEntity;
+								foundExistingPathway = true;
+							} else {
+								logger.error("Expected to find at most one Pathway derived from provided SBML file with name " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
+								errorFileNames.append(originalFilename);
+								countError += 1;
+								errorInPathwaySearch = true;
+								break;
+							}
+						}
+					}
+					if(errorInPathwaySearch) continue;
+					if(foundExistingPathway) {
+						pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, existingPathwayToSBMLFile));
+						continue;
+					}
 				} catch (ClassCastException e1) {
 					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
 					errorFileNames.append(originalFilename);
@@ -254,7 +266,6 @@ public class SbmlApiController implements SbmlApi {
 					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + " due to an exception: " + e.getMessage());
 					errorFileNames.append(originalFilename);
 					countError += 1;
-					
 				}
 			}
 			
