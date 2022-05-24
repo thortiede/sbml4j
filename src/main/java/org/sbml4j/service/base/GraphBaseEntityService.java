@@ -144,7 +144,10 @@ public class GraphBaseEntityService {
 	public void resetGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(this.getNewUUID());
 		target.setId(null);
-		target.setVersion(null);
+		/**
+		 * TODO: Uncomment this line when the version field is reintroduced
+		 */
+		//target.setVersion(null);
 	}
 	
 	/**

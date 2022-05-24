@@ -30,8 +30,8 @@ public class GraphBaseEntity {
 	@Id @GeneratedValue
 	private Long id = null;
 
-	@Version
-	private Long version;
+	//@Version
+	//private Long version;
 	
 	/**
 	 * The unique identifier of every entity in this application
@@ -65,7 +65,10 @@ public class GraphBaseEntity {
 	public void setId(Long id) {
 		this.id = id;
 	}
-
+/**
+ * Do not use the version field
+ * Too many unresolved Optimistic locking exceptions that do not really serve a purpose in our case.
+ * 
 	@JsonIgnore
 	public Long getVersion() {
 		return version;
@@ -74,7 +77,7 @@ public class GraphBaseEntity {
 	public void setVersion(Long version) {
 		this.version = version;
 	}
-
+*/
 	public String getEntityUUID() {
 		return entityUUID;
 	}
