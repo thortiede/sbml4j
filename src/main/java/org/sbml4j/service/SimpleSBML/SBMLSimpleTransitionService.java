@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.sbml4j.repository.sbml.simple.ext.qual.SBMLSimpleTransitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,4 +90,26 @@ public class SBMLSimpleTransitionService {
 	public SBMLSimpleTransition save(SBMLSimpleTransition transition, int depth) {
 		return this.sbmlSimpleTransitionRepository.save(transition, depth);
 	}
+
+	
+	/**
+	 * Save a collection of {@link SBMLSimpleTransition} entities and all {@link GraphBaseEntity} connected to it up to the provided depth
+	 * @param transitions The collection of {@link SBMLSimpleTransition} to persist
+	 * @param depth The number of relationships to traverse to find {@link GraphBaseEntity} to persist along this {@link SBMLSimpleTransition}
+	 * @return The Iterable of {@link SBMLSimpleTransition} entities as persisted in the database.
+	 */
+	public Iterable<SBMLSimpleTransition> save(List<SBMLSimpleTransition> transitions, int depth) {
+		return this.sbmlSimpleTransitionRepository.save(transitions, depth);
+	}
+
+	
+	/**
+	 * Save a collection of {@link SBMLSimpleTransition} entities
+	 * @param transitions The List of {@link SBMLSimpleTransition} to persist
+	 * @return Iterable of the persisted {@link SBMLSimpleTransition} entities
+	 */
+	public Iterable<SBMLSimpleTransition> saveAll(List<SBMLSimpleTransition> transitions) {
+		return this.sbmlSimpleTransitionRepository.saveAll(transitions);
+	}
+	
 }

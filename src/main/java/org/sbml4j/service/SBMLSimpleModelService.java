@@ -519,6 +519,54 @@ public class SBMLSimpleModelService {
 		return sbmlSimpleReactionList;
 	}
 	
+	private void processTransitions(ListOf<Transition> transitionListOf,
+			Map<String, SBMLQualSpecies> qualSBaseLookupMap,
+			Map<String, SBMLSimpleTransition> transitionUUIDToSBMLSimpleTransitionMap,
+			Map<String, List<CVTerm>> cvTermsToProcess
+			) {
+		for (Transition transition : transitionListOf) {
+			SBMLSimpleTransition newSimpleTransition = new SBMLSimpleTransition();
+			this.graphBaseEntityService.setGraphBaseEntityProperties(newSimpleTransition);
+			this.sbmlSimpleModelUtilityServiceImpl.setSbaseProperties(transition, newSimpleTransition);
+			
+			String newTransitionId = "";
+			if(transition.getListOfInputs().size() > 1) {
+				logger.warn("More than one Input in transition: " + transition.getName());
+			}
+			boolean isFirstInput = true;
+			List<SBMLQualSpecies> inputQualSpeciesList = new ArrayList<>();
+			for (Input input : transition.getListOfInputs()) {
+				if (qualSBaseLookupMap.containsKey(input.getQualitativeSpecies())) {
+					if (!isFirstInput) newTransitionId += "_";
+					SBMLQualSpecies inputQualSpecies = qualSBaseLookupMap.get(input.getQualitativeSpecies());
+					newTransitionId += inputQualSpecies.getsBaseName();
+					isFirstInput = false;
+					inputQualSpeciesList.add(inputQualSpecies);
+				}
+			}
+			newTransitionId += "-";
+			newTransitionId += this.utilityService.translateSBOString(transition.getSBOTermID());
+			newTransitionId += "->"; // TODO: Should this be directional?
+			boolean isFirstOutput = true;
+			List<SBMLQualSpecies> outputQualSpeciesList = new ArrayList<>();
+			for (Output output : transition.getListOfOutputs()) {
+				if (qualSBaseLookupMap.containsKey(output.getQualitativeSpecies())) {
+					if (!isFirstOutput) newTransitionId += "_";
+					SBMLQualSpecies outputQualSpecies = qualSBaseLookupMap.get(output.getQualitativeSpecies());
+					newTransitionId += outputQualSpecies.getsBaseName();
+					isFirstOutput = false;
+					outputQualSpeciesList.add(outputQualSpecies);
+				}
+			}
+			
+			newSimpleTransition.setTransitionId(newTransitionId);
+			newSimpleTransition.setInputSpecies(inputQualSpeciesList); 
+			newSimpleTransition.setOutputSpecies(outputQualSpeciesList);
+			cvTermsToProcess.put(newSimpleTransition.getEntityUUID(), transition.getCVTerms());
+			transitionUUIDToSBMLSimpleTransitionMap.put(newSimpleTransition.getEntityUUID(), newSimpleTransition);
+			
+		}
+	}
 
 	
 	private List<SBMLSimpleTransition> buildAndPersistTransitions(
@@ -914,6 +962,9 @@ public class SBMLSimpleModelService {
 			});
 		}*/
 		//Instant speciesInst = Instant.now();
+		
+		logger.info("Read and persisted SBMLSpecies");
+		
 		// reactions
 		/*
 		 * This was the old way for reactions
@@ -978,7 +1029,7 @@ public class SBMLSimpleModelService {
 						reactionsWithoutBQPersisted = this.sbmlSimpleReactionService.save(reactionsWithoutBQ, 1);
 					}
 				} catch (Exception e3) {
-					throw new ModelPersistenceException("SBMLSpecies: Failed to persist. " + e3.getMessage());
+					throw new ModelPersistenceException("SBMLSimpleReactions: Failed to persist. " + e3.getMessage());
 				}
 			
 			}
@@ -994,7 +1045,7 @@ public class SBMLSimpleModelService {
 				returnList.putIfAbsent(persistedSBMLReactionWithoutBQ.getEntityUUID(), persistedSBMLReactionWithoutBQ);
 			}
 		}
-		
+		logger.info("Read and persisted SBMLSimpleReactions");
 		// end reactions
 		
 		Map<String, SBMLQualSpecies> persistedSBMLQualSpeciesMap = null;
@@ -1102,15 +1153,91 @@ public class SBMLSimpleModelService {
 				}
 				
 				//qualSpeciesInst = Instant.now();
-				
+				logger.info("Read and persisted SBMLQualSpecies");
 				// transitions (qual model plugin)
 				if(qualModelPlugin.getListOfTransitions() != null && qualModelPlugin.getListOfTransitions().size() > 0) {
 					persistedTransitionList	= buildAndPersistTransitions(sBaseIdToSBMLQualSpeciesMap, qualModelPlugin.getListOfTransitions(), activityNode);
 					persistedTransitionList.forEach(transition-> {
 						returnList.putIfAbsent(transition.getEntityUUID(), transition);
 					});
+					Map<String, List<CVTerm>> transitionUUIDToCVTermMap = new TreeMap<>();
+					Map<String, SBMLSimpleTransition> transitionUUIDToSBMLSimpleTransitionMap = new TreeMap<>();
+					this.processTransitions(qualModelPlugin.getListOfTransitions(), 
+											sBaseIdToSBMLQualSpeciesMap, 
+											transitionUUIDToSBMLSimpleTransitionMap, 
+											transitionUUIDToCVTermMap);
+					Map<String, Collection<BiomodelsQualifier>> transitionUUIDToBiomodelsQualfierMap = this.processCVTerms(transitionUUIDToCVTermMap);
+					
+					List<BiomodelsQualifier> transitionPersistBQList = new ArrayList<>();
+					List<SBMLSimpleTransition> transitionWithoutBQ = new ArrayList<>();
+					for (String transitionUUID : transitionUUIDToBiomodelsQualfierMap.keySet()) {
+						Collection<BiomodelsQualifier> bqList = transitionUUIDToBiomodelsQualfierMap.get(transitionUUID);
+						if (bqList == null || bqList.isEmpty()) {
+							transitionWithoutBQ.add(transitionUUIDToSBMLSimpleTransitionMap.get(transitionUUID));
+						} else {
+							for (BiomodelsQualifier bq : bqList) {
+								bq.setStartNode(transitionUUIDToSBMLSimpleTransitionMap.get(transitionUUID));
+								transitionPersistBQList.add(bq);
+							}
+						}
+					
+					}
+					
+					// then persist transitions
+					Iterable<BiomodelsQualifier> simpleTransitionsPersistedBiomodelQualifier = null;
+					Iterable<SBMLSimpleTransition> simpleTransitionsWithoutBQPersisted = null;
+					try {
+						this.session.clear();
+
+						simpleTransitionsPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(transitionPersistBQList);
+						if (!transitionWithoutBQ.isEmpty()) {
+							simpleTransitionsWithoutBQPersisted = this.sbmlSimpleTransitionService.saveAll(transitionWithoutBQ);
+						}
+					} catch (Exception e) {
+						// retry once
+						e.printStackTrace();
+						this.session.clear();
+						System.gc();
+						try {
+							simpleTransitionsPersistedBiomodelQualifier = this.biomodelsQualifierRepository.saveAll(transitionPersistBQList);
+							if (!transitionWithoutBQ.isEmpty()) {
+								simpleTransitionsWithoutBQPersisted = this.sbmlSimpleTransitionService.saveAll(transitionWithoutBQ);
+							}
+						} catch (Exception e2) {
+							e2.printStackTrace();
+							// try again with other save method
+							this.session.clear();
+							System.gc();
+							try {
+								simpleTransitionsPersistedBiomodelQualifier = this.biomodelsQualifierRepository.save(transitionPersistBQList, 2);
+								if (!transitionWithoutBQ.isEmpty()) {
+									simpleTransitionsWithoutBQPersisted = this.sbmlSimpleTransitionService.save(transitionWithoutBQ, 1);
+								}
+							} catch (Exception e3) {
+								throw new ModelPersistenceException("SBMLimpleTransitions: Failed to persist. " + e3.getMessage());
+							}
+						
+						}
+					}
+					try {
+						for (BiomodelsQualifier persistedBQ : simpleTransitionsPersistedBiomodelQualifier) {
+							SBMLSBaseEntity startNode = persistedBQ.getStartNode();
+							returnList.putIfAbsent(startNode.getEntityUUID(), startNode);
+						}
+						if (simpleTransitionsWithoutBQPersisted != null) {
+							for (SBMLSimpleTransition persistedTransitionWithoutBQ :simpleTransitionsWithoutBQPersisted) {
+								returnList.putIfAbsent(persistedTransitionWithoutBQ.getEntityUUID(), persistedTransitionWithoutBQ);
+							}
+						}
+					} catch (ClassCastException e) {
+						e.printStackTrace();
+						// TODO:Rollback?
+						return;// null;
+					}
+					
 				}
 				//transInst = Instant.now();
+				logger.info("Read and persisted SBMLSimpleTransitions");
 			}
 		}
 		/*StringBuilder sb = new StringBuilder();
@@ -1139,6 +1266,7 @@ public class SBMLSimpleModelService {
 		for (ProvenanceEntity entity : returnList.values()) {
 			this.warehouseGraphService.connect(pathwayNode, entity.getEntityUUID(), WarehouseGraphEdgeType.CONTAINS);
 		}
+		logger.info("Connected Entitites to pathway Node");
 		//return returnList; // This is the list<sources> of the Knowledge Graph "WarehouseGraphNode" Node, which then serves as Source for the network mappings, derived from full KEGG
 	}
 }
