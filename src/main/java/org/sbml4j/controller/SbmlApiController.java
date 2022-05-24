@@ -26,6 +26,9 @@ import javax.xml.stream.XMLStreamException;
 import org.sbml.jsbml.Model;
 import org.sbml4j.Exception.ModelPersistenceException;
 import org.sbml4j.api.SbmlApi;
+import org.sbml4j.model.api.entityInfo.EntityInfoItem;
+import org.sbml4j.model.api.entityInfo.IdItem;
+import org.sbml4j.model.api.network.NodeList;
 import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.base.GraphEnum.FileNodeType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
@@ -52,7 +55,6 @@ import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -103,6 +105,35 @@ public class SbmlApiController implements SbmlApi {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	
+	@Override
+	public ResponseEntity<List<EntityInfoItem>> getEntityInfo(@NotNull @Valid String geneSymbol) {
+		// TODO Auto-generated method stub
+		return SbmlApi.super.getEntityInfo(geneSymbol);
+	}
+
+
+	@Override
+	public ResponseEntity<List<EntityInfoItem>> getEntityInfoBatch(@Valid List<String> requestBody) {
+		// TODO Auto-generated method stub
+		return SbmlApi.super.getEntityInfoBatch(requestBody);
+	}
+
+
+	@Override
+	public ResponseEntity<List<IdItem>> getIdMap(@NotNull @Valid String symbol, @Valid String separator,
+			@Valid String idSystem) {
+		// TODO Auto-generated method stub
+		return SbmlApi.super.getIdMap(symbol, separator, idSystem);
+	}
+
+
+	@Override
+	public ResponseEntity<List<IdItem>> getIdMapBatch(@Valid NodeList nodeList, @Valid String idSystem) {
+		// TODO Auto-generated method stub
+		return SbmlApi.super.getIdMapBatch(nodeList, idSystem);
+	}
+
+
 	/**
 	 * POST /sbml
 	 * Endpoint to upload a sbml file, extract the model and persist the contents in the simple model representation
@@ -317,11 +348,9 @@ public class SbmlApiController implements SbmlApi {
 			try {
 				sbmlModel =  sbmlsimpleModelService.extractSBMLModel(file);
 			} catch (XMLStreamException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return ResponseEntity.badRequest().header("reason", "XMLStreamException while extracting SBMLModel from file").build();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return ResponseEntity.badRequest().header("reason", "IOException while extracting SBMLModel from file").build();
 			}
