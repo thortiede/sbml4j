@@ -273,15 +273,11 @@ public class KEGGHttpService {
 		
 				if(inputLine.startsWith("NAME")) {
 					lastLine = "NAME";
-					splitted = inputLine.split("\\s+");
-					if(splitted.length > 1) {
-						for (int i = 1; i!= splitted.length; i++) {
-							if (splitted[i].endsWith(",") || splitted[i].endsWith(";")) {
-								names.add(splitted[i].substring(0, splitted[i].length() - 1));
-							} else {
-								names.add(splitted[i]);
-							}
-						}
+					String primaryNameLine = inputLine.substring(4, inputLine.length()).trim();
+					if (primaryNameLine.endsWith(",") || primaryNameLine.endsWith(";")) {
+						names.add(primaryNameLine.substring(0, primaryNameLine.length() - 1));
+					} else {
+						names.add(primaryNameLine);
 					}
 				} else if(lastLine.equals("NAME") && inputLine.startsWith(" ")) {
 					//splitted = inputLine.split("\\s+");
