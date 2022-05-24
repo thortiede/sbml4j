@@ -231,6 +231,7 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "s as species, "
 			+ "type(rel) as typeOfRelation, "
 			+ "r as reaction")
+	@Deprecated
 	Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(String pathwayUUID,
 			List<String> nodeSBOTerms);
 }

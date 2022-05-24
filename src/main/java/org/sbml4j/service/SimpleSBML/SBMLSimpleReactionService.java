@@ -40,6 +40,7 @@ public class SBMLSimpleReactionService {
 	 * @param speciesEntityUUID The entityUUID of the <a href="#{@link}">{@link SBMLSpecies}</a> 
 	 * @return <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> Collection with the found <a href="#{@link}">{@link SBMLSimpleReactions}</a>
 	 */
+	@Deprecated
 	public Iterable<MetabolicPathwayReturnType> findAllReactionsForSpecies(String speciesEntityUUID) {
 		return this.sbmlSimpleReactionRepository.findAllReactionsForSpecies(speciesEntityUUID);
 	}
@@ -49,6 +50,7 @@ public class SBMLSimpleReactionService {
 	 * @param reactionEntityUUID The entityUUID of the <a href="#{@link}">{@link SBMLSimpleReaction}</a>
 	 * @return <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> Collection with the found <a href="#{@link}">{@link SBMLSpecies}</a>
 	 */
+	@Deprecated
 	public Iterable<MetabolicPathwayReturnType> findAllSpeciesForReaction(String reactionEntityUUID) {
 		return this.sbmlSimpleReactionRepository.findAllSpeciesForReaction(reactionEntityUUID);
 	}

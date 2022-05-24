@@ -40,6 +40,7 @@ public class SBMLSimpleTransitionService {
 	 * @param speciesEntityUUID The entityUUID of a the <a href="#{@link}">{@link SBMLSpecies}</a> to find the transitions for
 	 * @return<a href="#{@link}">{@link NonMetabolicPathwayReturnType}</a> containing the Transitions
 	 */
+	@Deprecated
 	public Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID) {
 		return this.sbmlSimpleTransitionRepository.getTransitionsForSpecies(speciesEntityUUID);
 	}

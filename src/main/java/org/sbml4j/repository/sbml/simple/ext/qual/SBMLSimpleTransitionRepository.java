@@ -35,6 +35,7 @@ public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimp
 			+ "t as transition, "
 			+ "s2 as outputSpecies"
 			)
+	@Deprecated
 	Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID);
 
 	

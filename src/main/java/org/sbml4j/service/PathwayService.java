@@ -118,6 +118,7 @@ public class PathwayService {
 	 * @param nodeSBOTerms The SBOTerms of the nodes that should be included
 	 * @return Iterable of <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> containing the reactions of the pathway
 	 */
+	@Deprecated
 	public Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(UUID pathwayUUID, List<String> nodeSBOTerms) {
 		return this.pathwayNodeRepository.getAllMetabolicPathwayReturnTypes(pathwayUUID.toString(), nodeSBOTerms);
 	}
