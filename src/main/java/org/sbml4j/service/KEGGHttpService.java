@@ -113,6 +113,16 @@ public class KEGGHttpService {
 	}
 
 	/**
+	 * Helper Method to extract the reaction name from the identifiers.org URL for a kegg.reaction
+	 * @param resource The url that contains the reaction name
+	 * @return String containing the reaction name
+	 */
+	public String getReactionName (String resource) {
+		String[] resourceParts =  resource.split("/");
+		return resourceParts[resourceParts.length - 1];
+	}
+	
+	/**
 	 * Sets the primary name of a KEGG compound and more available properties found and returns a {@link List} with all found secondaryNames from the KEGG resource
 	 * @param resource The identifiers.org KEGG resource string to fetch the names from
 	 * @param entity The {@link ExternalResourceEntity} to ad the primaryName to
