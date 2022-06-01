@@ -768,16 +768,21 @@ public class NetworkService {
 				throw new NetworkDeletionException(2, "Cannot delete network with uuid: " + mappingNodeEntityUUID + ". Reason: There were remaining Nodes in the network after attempting to delete it");
 			}
 			// get the activity connected to the mappingNode with wasGeneratedBy
-			// TODO: Attention, this could actually be multiple activities.
-			ProvenanceEntity generatorActivity = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, mappingNodeEntityUUID);
-			if(generatorActivity != null) {
-				this.provenanceGraphService.deleteProvenanceEntity(generatorActivity);
+			for (ProvenanceEntity generatorActivity : 
+				this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, mappingNodeEntityUUID)) {
+				if(generatorActivity != null) {
+					this.provenanceGraphService.deleteProvenanceEntity(generatorActivity);
+				}
 			}
+			
 			// get the user connected with wasAttributedTo
-			ProvenanceEntity attributedToAgent = this.provenanceGraphService.findByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mappingNodeEntityUUID);
-			if (attributedToAgent != null && this.warehouseGraphService.getNumberOfWarehouseGraphNodesAttributedProvAgent(((ProvenanceGraphAgentNode) attributedToAgent).getGraphAgentName()) == 1) {
-				this.provenanceGraphService.deleteProvenanceEntity(attributedToAgent);
+			for (ProvenanceEntity attributedToAgent :
+				this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, mappingNodeEntityUUID)) {
+				if (attributedToAgent != null && this.warehouseGraphService.getNumberOfWarehouseGraphNodesAttributedProvAgent(((ProvenanceGraphAgentNode) attributedToAgent).getGraphAgentName()) == 1) {
+					this.provenanceGraphService.deleteProvenanceEntity(attributedToAgent);
+				}
 			}
+			
 			// then delete the mapping node
 			this.provenanceGraphService.deleteProvenanceEntity(this.mappingNodeService.findByEntityUUID(mappingNodeEntityUUID));
 		} catch (Exception e) {
@@ -1328,6 +1333,8 @@ public class NetworkService {
 			Map<String, Object> warehouseMap = mapping.getWarehouse();
 			item.setNumberOfNodes(Integer.valueOf((String) warehouseMap.get("numberofnodes")));
 			item.setNumberOfRelations(Integer.valueOf((String) warehouseMap.get("numberofrelations")));
+			item.setNumberOfReactions(Integer.valueOf((String) warehouseMap.get("numberofreactions")));
+			
 		} catch (NullPointerException e) {
 			log.info("Mapping " + mapping.getMappingName() + " (" + mapping.getEntityUUID()
 					+ ") does not have the warehouse-Properties set");

@@ -29,6 +29,8 @@ public class NetworkInventoryItem extends ApiResponseItem {
   @JsonProperty("numberOfNodes") private Integer numberOfNodes;
 
   @JsonProperty("numberOfRelations") private Integer numberOfRelations;
+  
+  @JsonProperty("numberOfReactions") private Integer numberOfReactions;
 
   @JsonProperty("nodeTypes") @Valid private List<String> nodeTypes = null;
 
@@ -132,6 +134,25 @@ public class NetworkInventoryItem extends ApiResponseItem {
 
   public void setNumberOfRelations(Integer numberOfRelations) {
     this.numberOfRelations = numberOfRelations;
+  }
+
+  public NetworkInventoryItem numberOfReactions(Integer numberOfReactions) {
+    this.numberOfReactions = numberOfReactions;
+    return this;
+  }
+
+  /**
+   * Get numberOfReactions
+   * @return numberOfReactions
+   */
+  @ApiModelProperty(value = "")
+
+  public Integer getNumberOfReactions() {
+    return numberOfReactions;
+  }
+
+  public void setNumberOfReactions(Integer numberOfReactions) {
+    this.numberOfReactions = numberOfReactions;
   }
 
   public NetworkInventoryItem nodeTypes(List<String> nodeTypes) {
