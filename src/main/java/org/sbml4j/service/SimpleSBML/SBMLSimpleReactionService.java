@@ -56,6 +56,17 @@ public class SBMLSimpleReactionService {
 	}
 	
 	/**
+	 * Find all <a href="#{@link}">{@link SBMLSimpleReaction}</a> entities in Pathway with UUID provided in pathwayUUID and reaction partners or catalyst that match 
+	 * the provided SBO terms
+	 * @param pathwayUUID The entityUUID of the <a href="#{@link}">{@link PathwayNode}</a> to which the reaction must belong
+	 * @param partnerSBOTerm The SBOTerms of the allowed reaction partners (e.g., SBO:000247)
+	 * @return
+	 */
+	public Iterable<SBMLSimpleReaction> findAllForPathwayWithPartnerSBOTerm(String pathwayUUID, List<String> partnerSBOTerm) {
+		return this.sbmlSimpleReactionRepository.findAllInPathwayWithPartnerSBOTerm(pathwayUUID, partnerSBOTerm);
+	}
+	
+	/**
 	 * Save an {@link SBMLSimpleReaction} and all {@link GraphBaseEntity} connected to it up to the provided depth
 	 * @param reaction The {@link SBMLSimpleReaction} to persist
 	 * @param depth The number of relationships to traverse to find {@link GraphBaseEntity} to persist along this {@link SBMLSimpleReaction}
