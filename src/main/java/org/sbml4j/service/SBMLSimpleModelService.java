@@ -368,6 +368,7 @@ public class SBMLSimpleModelService {
 			} else if(resource.contains("kegg.reaction")) {
 				newExternalResourceEntity.setType(ExternalResourceType.KEGGREACTION);
 				newExternalResourceEntity.setDatabaseFromUri("KEGG");
+				newExternalResourceEntity.setPrimaryName(this.keggHttpService.getReactionName(resource));
 			} else if(resource.contains("kegg.drug")) {
 				newExternalResourceEntity.setType(ExternalResourceType.KEGGDRUG);
 				newExternalResourceEntity.setDatabaseFromUri("KEGG");
