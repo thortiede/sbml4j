@@ -123,18 +123,6 @@ public class PathwayService {
 		return this.pathwayNodeRepository.getAllMetabolicPathwayReturnTypes(pathwayUUID.toString(), nodeSBOTerms);
 	}
 	
-	/**
-	 * Get all <a href="#{@link}">{@link NonMetabolicPathwayReturnType}</a> for transitions in a pathway
-	 * 
-	 * @param pathwayUUID The UUID of the pathway to search for Reactions
-	 * @param transitionSBOTerms The SBOTErms of the transitions that should be included
-	 * @param nodeSBOTerms The SBOTerms of the nodes that should be included
-	 * @return Iterable of <a href="#{@link}">{@link NonMetabolicPathwayReturnType}</a> containing the reactions of the pathway
-	 */
-	@Deprecated
-	public Iterable<NonMetabolicPathwayReturnType> getAllNonMetabolicPathwayReturnTypes(UUID pathwayUUID, List<String> transitionSBOTerms, List<String> nodeSBOTerms) {
-		return this.pathwayNodeRepository.getFlatTransitionsForPathwayUsingSpecies(pathwayUUID.toString(), transitionSBOTerms,nodeSBOTerms);
-	}
 	
 	/**
 	 * Get a List of <a href="#{@link}">{@link PathwayNode}</a> that are connected to an <a href="#{@link}">{@link SBMLSBaseEntity}</a>
