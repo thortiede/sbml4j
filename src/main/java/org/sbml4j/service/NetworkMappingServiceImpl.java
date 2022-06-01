@@ -37,7 +37,6 @@ import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
-import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLSBaseEntity;
 import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
@@ -50,6 +49,7 @@ import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.sbml.ext.sbml4j.BiomodelsQualifierRepository;
 import org.sbml4j.service.SimpleSBML.SBMLQualSpeciesService;
+import org.sbml4j.service.SimpleSBML.SBMLSimpleReactionService;
 import org.sbml4j.service.SimpleSBML.SBMLSimpleTransitionService;
 import org.sbml4j.service.SimpleSBML.SBMLSpeciesService;
 import org.sbml4j.service.base.GraphBaseEntityService;
@@ -96,6 +96,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 	
 	@Autowired
 	SBMLQualSpeciesService sbmlQualSpeciesService;
+	
+	@Autowired
+	SBMLSimpleReactionService sbmlSimpleReactionService;
 	
 	@Autowired
 	SBMLSimpleTransitionService sbmlSimpleTransitionService;
@@ -160,7 +163,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		this.provenanceGraphService.connect(mappingFromPathway, agentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 
 		//Map<String, FlatSpecies> sbmlSBaseEntityUUIDToFlatSpeciesMap = new HashMap<>();
-		Map<String, FlatSpecies> sbmlSimpleReactionToFlatSpeciesMap = new HashMap<>();
+		//Map<String, FlatSpecies> sbmlSimpleReactionToFlatSpeciesMap = new HashMap<>();
 
 		Map<String, FlatSpecies> primaryNameToFlatSpeciesMap = new HashMap<>();
 		
@@ -177,6 +180,41 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			this.pathwayService.getAllDistinctSpeciesSboTermsOfPathway(pathway.getEntityUUID())
 					.forEach(sboTerm -> nodeSBOTerms.add(sboTerm));
 			
+			
+			/**
+			 * New
+			 */
+			Iterable<SBMLSimpleReaction> allReactions = this.sbmlSimpleReactionService.findAllForPathwayWithPartnerSBOTerm(pathway.getEntityUUID(), nodeSBOTerms);
+			
+			Iterator<SBMLSimpleReaction> reactionIt = allReactions.iterator();
+			String flatReactionLabel = "FlatReaction";
+			while (reactionIt.hasNext()) {
+				SBMLSimpleReaction current = reactionIt.next();
+				// create one target node of the reaction
+				FlatSpecies reactionFlatSpecies = new FlatSpecies();
+				this.graphBaseEntityService.setGraphBaseEntityProperties(reactionFlatSpecies);
+				reactionFlatSpecies.addLabel(flatReactionLabel);
+				reactionFlatSpecies.setSymbol(current.getsBaseName());
+				reactionFlatSpecies.setSboTerm(current.getsBaseSboTerm());
+				numberOfReactions++;
+				// Reaction Node created
+				
+				// reactants
+				buildMetabolicFlatEdges(primaryNameToFlatSpeciesMap, allFlatEdges, nodeTypes, relationTypes, current.getReactants(), reactionFlatSpecies, "IS_REACTANT", "REACTANTOF");
+				
+				// products
+				buildMetabolicFlatEdges(primaryNameToFlatSpeciesMap, allFlatEdges, nodeTypes, relationTypes, current.getProducts(), reactionFlatSpecies, "IS_PRODUCT", "PRODUCTOF");
+				
+				// catalysts
+				buildMetabolicFlatEdges(primaryNameToFlatSpeciesMap, allFlatEdges, nodeTypes, relationTypes, current.getCatalysts(), reactionFlatSpecies, "IS_CATALYST", "CATALYSES");
+				
+			}
+			
+			
+			
+			/**
+			 * Old
+			 *
 			Iterable<MetabolicPathwayReturnType> metPathwayResult = this.pathwayService
 					.getAllMetabolicPathwayReturnTypes(UUID.fromString(pathway.getEntityUUID()), nodeSBOTerms);
 
@@ -186,7 +224,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			Iterator<MetabolicPathwayReturnType> metIt = metPathwayResult.iterator();
 			MetabolicPathwayReturnType current;
 
-			String flatReactionLabel = "FlatReaction";
+			//String flatReactionLabel = "FlatReaction";
 			
 			Set<String> elementSet = new HashSet<>();
 			
@@ -251,6 +289,7 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 								+ " have more than one relationship in pathway with entityUUID: "
 								+ pathway.getEntityUUID());
 					}*/
+			/*
 					String relationSymbol = startFlatSpecies.getSymbol() + "-" + typeOfRelation + "->"
 							+ endFlatSpecies.getSymbol();
 					if (relationSymbols.add(relationSymbol)) {
@@ -269,9 +308,9 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 					}	
 				}
 			}
+		
+			 */
 		}
-		
-		
 		List<String> transitionSBOTerms = new ArrayList<>();
 		boolean processTransitionsNeeded = false;
 		if (type.equals(NetworkMappingType.PATHWAYMAPPING)) {
@@ -640,10 +679,53 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 			// do not build the wasDerivedFrom and DERIVEDFROM connections. They take very long and are never traversed/used later on
 			//this.provenanceGraphService.connect(fs,	fs.getSimpleModelEntityUUID(), ProvenanceGraphEdgeType.wasDerivedFrom);
 			//this.warehouseGraphService.connect(fs, fs.getSimpleModelEntityUUID(), WarehouseGraphEdgeType.DERIVEDFROM);
-			this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
+			//this.provenanceGraphService.connect(fs, activityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 			this.warehouseGraphService.connect(persistedMappingOfPathway, fs, WarehouseGraphEdgeType.CONTAINS, false);
 		}
 		return persistedMappingOfPathway;
+	}
+
+	/**
+	 * @param primaryNameToFlatSpeciesMap
+	 * @param allFlatEdges
+	 * @param current
+	 * @param reactionFlatSpecies
+	 * @throws NetworkMappingError
+	 */
+	private void buildMetabolicFlatEdges(	Map<String, FlatSpecies> primaryNameToFlatSpeciesMap,
+											List<FlatEdge> allFlatEdges,
+											Set<String> nodeTypes,
+											Set<String> relationTypes,
+											List<SBMLSpecies> partners, 
+											FlatSpecies reactionFlatSpecies, 
+											String sbaseRelationType, 
+											String flatMappingRelationType)
+			throws NetworkMappingError {
+		// for each reactant, product, catalyst do:
+		for (SBMLSpecies partner : partners) {
+			
+			// find primary name of partner
+			String partnerName = findSBasePrimaryName(partner);
+			// create FlatSpecies for it, if it does not exist already (!)
+			FlatSpecies startFlatSpecies;
+			if (primaryNameToFlatSpeciesMap.containsKey(partnerName)) {
+				startFlatSpecies = primaryNameToFlatSpeciesMap.get(partnerName);
+			} else {
+				startFlatSpecies = createFlatSpeciesFromSBMLSBaseEntity(partner);
+				primaryNameToFlatSpeciesMap.put(partnerName, startFlatSpecies);
+				nodeTypes.add(partner.getsBaseSboTerm());
+			}
+			String relationSymbol = startFlatSpecies.getSymbol() + "-" + flatMappingRelationType + "->"
+					+ reactionFlatSpecies.getSymbol();
+			FlatEdge metabolicFlatEdge = this.flatEdgeService.createFlatEdge(sbaseRelationType);
+			this.graphBaseEntityService.setGraphBaseEntityProperties(metabolicFlatEdge);
+			metabolicFlatEdge.setInputFlatSpecies(startFlatSpecies);
+			metabolicFlatEdge.setOutputFlatSpecies(reactionFlatSpecies);
+			metabolicFlatEdge.setSymbol(relationSymbol);
+			allFlatEdges.add(metabolicFlatEdge);
+			relationTypes.add(flatMappingRelationType);
+			
+		}
 	}
 
 	private void updateFlatSpeciesWithSBase(FlatSpecies flatSpecies, SBMLSBaseEntity sbmlSBaseEntity) {
@@ -660,17 +742,19 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 		if (matchingDatabase == null) {
 			throw new NetworkMappingError("Could not find config parameter 'sbml4j.externalresources.biologicalqualifer.default-database'. It is needed to match identical entities from different pathways. Please set it to a biological qualifier database your models use, e.g. KEGG. This is fatal, Aborting");
 		}
-		Iterator<BiomodelsQualifier> bqIt = sBaseEntity.getBiomodelsQualifier().iterator();
-		while (bqIt.hasNext()) {
-			BiomodelsQualifier bq = bqIt.next();
-			ExternalResourceEntity er = bq.getEndNode();
-			if (matchingDatabase.equals(er.getDatabaseFromUri())) {
-				String primaryName = er.getPrimaryName();
-				if (primaryName != null 
-						&& !primaryName.isBlank()) {
-					inputSpeciesSymbol = primaryName;
-				} else {
-					logger.warn("Found default-database external resource but primary name was not present. The entityUUID of the externalResourceEntity is: " + er.getEntityUUID());
+		if (sBaseEntity.getBiomodelsQualifier() != null) {
+			Iterator<BiomodelsQualifier> bqIt = sBaseEntity.getBiomodelsQualifier().iterator();
+			while (bqIt.hasNext()) {
+				BiomodelsQualifier bq = bqIt.next();
+				ExternalResourceEntity er = bq.getEndNode();
+				if (matchingDatabase.equals(er.getDatabaseFromUri())) {
+					String primaryName = er.getPrimaryName();
+					if (primaryName != null 
+							&& !primaryName.isBlank()) {
+						inputSpeciesSymbol = primaryName;
+					} else {
+						logger.warn("Found default-database external resource but primary name was not present. The entityUUID of the externalResourceEntity is: " + er.getEntityUUID());
+					}
 				}
 			}
 		}
