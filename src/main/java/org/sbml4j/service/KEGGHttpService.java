@@ -54,7 +54,7 @@ public class KEGGHttpService {
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];
 		try {
-			URL url = new URL("http://rest.kegg.jp/get/" + identifier);
+			URL url = new URL("https://rest.kegg.jp/get/" + identifier);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 			int status = con.getResponseCode();
@@ -122,7 +122,7 @@ public class KEGGHttpService {
 		String[] resourceParts =  resource.split("/");
 		String identifier = resourceParts[resourceParts.length - 1];
 		try {
-			URL url = new URL("http://rest.kegg.jp/get/" + identifier);
+			URL url = new URL("https://rest.kegg.jp/get/" + identifier);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 			int status = con.getResponseCode();
@@ -246,7 +246,7 @@ public class KEGGHttpService {
 		String identifier = resourceParts[resourceParts.length - 1];
 		HttpURLConnection con;
 		try {
-			URL url = new URL("http://rest.kegg.jp/get/" + identifier);
+			URL url = new URL("https://rest.kegg.jp/get/" + identifier);
 			con = (HttpURLConnection) url.openConnection();
 			con.setRequestMethod("GET");
 			int status = con.getResponseCode();
