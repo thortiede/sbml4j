@@ -135,6 +135,17 @@ public class PathwaysApiController implements PathwaysApi {
 				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
 		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, userAgentNode,
 				ProvenanceGraphEdgeType.wasAssociatedWith);
+		
+
+		// add prov information
+		Map<String, Object> provenanceAnnotation = new HashMap<>();
+		// call parameters
+		//   body
+		provenanceAnnotation.put("body", pathwayCollectionCreationItem);
+		
+		this.provenanceGraphService.addProvenanceAnnotation(createKnowledgeGraphActivityNode, provenanceAnnotation);
+		
+		
 		List<DatabaseNode> databaseList = this.databaseNodeService.findByPathwayList(pathwayUUIDStrings);
 		DatabaseNode database;
 		if (databaseList.size() < 1) {
@@ -313,12 +324,31 @@ public class PathwaysApiController implements PathwaysApi {
 		activityNodeProvenanceProperties.put("graphactivityname", "Create_" + mappingName);
 		// activityNodeProvenanceProperties.put("createdate", createDate);
 		
+		
+		
 		ProvenanceGraphActivityNode createMappingActivityNode = this.provenanceGraphService
 				.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
 		this.provenanceGraphService.connect(createMappingActivityNode, userAgentNode,
 				ProvenanceGraphEdgeType.wasAssociatedWith);
 		
 		this.provenanceGraphService.connect(createMappingActivityNode, pathwayNode, ProvenanceGraphEdgeType.used);
+		
+		// add prov information
+		Map<String, Object> provenanceAnnotation = new HashMap<>();
+		// call parameters
+		//   base uuid
+		provenanceAnnotation.put("params.UUID", uuid);
+		//   networkname
+		provenanceAnnotation.put("params.networkname", networkname);
+		//   mappingType
+		provenanceAnnotation.put("params.mappingType", mappingType);
+		// prefixName
+		if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+		// suffixName
+		if (suffixName != null) provenanceAnnotation.put("params.suffixName", suffixName);
+		
+		this.provenanceGraphService.addProvenanceAnnotation(createMappingActivityNode, provenanceAnnotation);
+				
 		// create the mappingNode
 		MappingNode mappingNode;
 		try {
