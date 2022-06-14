@@ -31,6 +31,7 @@ import org.sbml4j.model.api.entityInfo.IdItem;
 import org.sbml4j.model.api.network.NodeList;
 import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.base.GraphEnum.FileNodeType;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
@@ -102,7 +103,7 @@ public class SbmlApiController implements SbmlApi {
 	@Autowired
 	UtilityService utilityService;
 	
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 	
 	
 	@Override
@@ -146,7 +147,10 @@ public class SbmlApiController implements SbmlApi {
 			@NotNull @Valid String source, @NotNull @Valid String version, String user,
 			@Valid List<MultipartFile> files) {
 		
-		logger.debug("Serving POST /sbml " + (user != null ? " for user " + user : ""));
+		Operation op = Operation.POST;
+		String endpoint = "/sbml";
+
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		if (user == null || user.isBlank() ||user.isEmpty()) {
 			user = configService.getPublicUser();
@@ -193,7 +197,7 @@ public class SbmlApiController implements SbmlApi {
 		
 		if(database == null) {
 			// should be only the first time
-			logger.info("Creating DatabaseNode for source: " + source + " with version " + version + " and organism " + org.getOrgCode());
+			log.info("Creating DatabaseNode for source: " + source + " with version " + version + " and organism " + org.getOrgCode());
 			database = this.databaseNodeService.createDatabaseNode(source, version, org);
 			databaseExisted = false;
 		} else {
@@ -223,7 +227,7 @@ public class SbmlApiController implements SbmlApi {
 			filenum++;
 			countTotal++;
 			String originalFilename = file.getOriginalFilename();
-			logger.debug("Processing file " + originalFilename + " (" + filenum + "/" + filestotal + ")");
+			log.debug("Processing file " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			//Instant beginOfFile = Instant.now();
 			List<ProvenanceEntity> returnList = new ArrayList<>();
 			ProvenanceEntity defaultReturnEntity = new ProvenanceEntity();
@@ -237,7 +241,7 @@ public class SbmlApiController implements SbmlApi {
 				//return new ResponseEntity<List<ProvenanceEntity>>(returnList, HttpStatus.BAD_REQUEST);
 			}
 			
-			logger.info("Serving POST /sbml for File " + originalFilename + " (" + filenum + "/" + filestotal + ")");
+			log.info("Serving POST /sbml for File " + originalFilename + " (" + filenum + "/" + filestotal + ")");
 			
 			// is Content Type xml?
 			if(!this.fileCheckService.isContentXML(file)) {
@@ -262,7 +266,7 @@ public class SbmlApiController implements SbmlApi {
 				sbmlFileNode = this.fileNodeService.createFileNode(FileNodeType.SBML, org, originalFilename, fileMD5Sum);
 			} else {
 				sbmlFileNode = this.fileNodeService.getFileNode(FileNodeType.SBML, org, originalFilename, fileMD5Sum);
-				logger.info("Found existing FileNode for file with filename " + originalFilename);
+				log.info("Found existing FileNode for file with filename " + originalFilename);
 				// If we loaded this file already, we can just reuse the pathway
 				PathwayNode existingPathwayToSBMLFile = null;
 				try {
@@ -275,7 +279,7 @@ public class SbmlApiController implements SbmlApi {
 								existingPathwayToSBMLFile = (PathwayNode) provPathwayEntity;
 								foundExistingPathway = true;
 							} else {
-								logger.error("Expected to find at most one Pathway derived from provided SBML file with name " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
+								log.error("Expected to find at most one Pathway derived from provided SBML file with name " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
 								errorFileNames.append(originalFilename);
 								countError += 1;
 								errorInPathwaySearch = true;
@@ -289,12 +293,12 @@ public class SbmlApiController implements SbmlApi {
 						continue;
 					}
 				} catch (ClassCastException e1) {
-					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
+					log.error("Could not find pathway derived from existing SBMLFile " + originalFilename + ". FileNode has UUID: " + sbmlFileNode.getEntityUUID());
 					errorFileNames.append(originalFilename);
 					countError += 1;
 					continue;
 				} catch (Exception e) {
-					logger.error("Could not find pathway derived from existing SBMLFile " + originalFilename + " due to an exception: " + e.getMessage());
+					log.error("Could not find pathway derived from existing SBMLFile " + originalFilename + " due to an exception: " + e.getMessage());
 					errorFileNames.append(originalFilename);
 					countError += 1;
 				}
@@ -319,6 +323,9 @@ public class SbmlApiController implements SbmlApi {
 			provenanceAnnotation.put("params.source", source);
 			provenanceAnnotation.put("params.version", version);
 			provenanceAnnotation.put("params.organism", org.getOrgCode());			
+			provenanceAnnotation.put("endpoint.operation", op);
+			provenanceAnnotation.put("endpoint.endpoint", endpoint);
+			
 			this.provenanceGraphService.addProvenanceAnnotation(persistGraphActivityNode, provenanceAnnotation);
 			
 			this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
@@ -391,7 +398,7 @@ public class SbmlApiController implements SbmlApi {
 				this.utilityService.appendDurationString(sb, Duration.between(createPathwayNodeFinished, modelPersistingFinished), "modelPersist");
 				this.utilityService.appendDurationString(sb, Duration.between(modelPersistingFinished, postMetadataFinished), "postMetadata");
 						
-				logger.info(sb.toString());*/
+				log.info(sb.toString());*/
 				
 			} catch (ModelPersistenceException e) {
 				if (e.getMessage().startsWith("SBMLSpecies")) {
@@ -402,28 +409,28 @@ public class SbmlApiController implements SbmlApi {
 					this.graphBaseEntityService.deleteEntity(userAgentNode);
 					//if (!orgExisted) this.graphBaseEntityService.deleteEntity(org);
 					
-					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded. The error message is: " + e.getMessage(), e);
+					log.error("Error during model persistence. Model " + originalFilename + " has not been loaded. The error message is: " + e.getMessage(), e);
 					e.printStackTrace();
-					logger.error("Continuing with the next model..");
+					log.error("Continuing with the next model..");
 				} else {
-					logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
+					log.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
 					e.printStackTrace();
-					logger.error("Continuing with the next model..");
+					log.error("Continuing with the next model..");
 					countError++;
 					errorFileNames.append(originalFilename);
 					errorFileNames.append(", ");
 				}
 			} catch (Exception e) {
 				// TODO Roll back transaction..
-				logger.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
+				log.error("Error during model persistence. Model " + originalFilename + " has not been loaded correctly. Unfortunately at this moment we cannot clean up after you. There might be dangling entities in the database. This feature will be implemented in a future release, I hope. The error message is: " + e.getMessage(), e);
 				e.printStackTrace();
-				logger.error("Continuing with the next model..");
+				log.error("Continuing with the next model..");
 				countError++;
 				errorFileNames.append(originalFilename);
 				errorFileNames.append(", ");
 				//return ResponseEntity.badRequest().header("reason", "Error persisting the contents of the model. Database in inconsistent state!").build();
 			} finally {
-				logger.info("Finished processing file " + originalFilename);
+				log.info("Finished processing file " + originalFilename);
 			}
 		}
 		if (countError > 0) {

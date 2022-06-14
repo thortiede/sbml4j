@@ -30,6 +30,7 @@ import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.sbml4j.model.api.pathway.PathwayCollectionCreationItem;
 import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.base.GraphEnum.NetworkMappingType;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
@@ -105,7 +106,12 @@ public class PathwaysApiController implements PathwaysApi {
 	@Override
 	public ResponseEntity<String> createPathwayCollection(
 			@Valid PathwayCollectionCreationItem pathwayCollectionCreationItem, String user) {
-		log.info("Serving POST /pathwayCollection" + (user != null ? " for user " + user : ""));
+		
+		
+		Operation op = Operation.POST;
+		String endpoint = "/pathwayCollection";
+
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
 		Map<String, Object> agentNodeProperties = new HashMap<>();
 		
 		if (user == null) {
@@ -142,6 +148,8 @@ public class PathwaysApiController implements PathwaysApi {
 		// call parameters
 		//   body
 		provenanceAnnotation.put("body", pathwayCollectionCreationItem);
+		provenanceAnnotation.put("endpoint.operation", op);
+		provenanceAnnotation.put("endpoint.endpoint", endpoint);
 		
 		this.provenanceGraphService.addProvenanceAnnotation(createKnowledgeGraphActivityNode, provenanceAnnotation);
 		
@@ -228,7 +236,10 @@ public class PathwaysApiController implements PathwaysApi {
 		@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean suffixName) {
 		
 		String uuid = UUID.toString();
-		log.info("Serving POST /mapping/" + uuid + (user != null ? " for user " + user : ""));
+		Operation op = Operation.POST;
+		String endpoint = "/mapping/" + uuid;
+
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		// 2. Determine the name of the network
 		PathwayNode pathwayNode = this.pathwayService.findByEntityUUID(uuid);
@@ -346,6 +357,8 @@ public class PathwaysApiController implements PathwaysApi {
 		if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 		// suffixName
 		if (suffixName != null) provenanceAnnotation.put("params.suffixName", suffixName);
+		provenanceAnnotation.put("endpoint.operation", op);
+		provenanceAnnotation.put("endpoint.endpoint", endpoint);
 		
 		this.provenanceGraphService.addProvenanceAnnotation(createMappingActivityNode, provenanceAnnotation);
 				

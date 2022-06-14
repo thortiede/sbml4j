@@ -35,8 +35,10 @@ import org.sbml4j.model.api.network.FilterOptions;
 import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.sbml4j.model.api.network.NetworkOptions;
 import org.sbml4j.model.api.network.NodeList;
+import org.sbml4j.model.api.provenance.ProvenanceInfoItem;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
@@ -181,6 +183,10 @@ public class NetworksApiController implements NetworksApi {
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 					//   derive
 					provenanceAnnotation.put("params.derived", derive);
+					
+					// endpoint info
+					provenanceAnnotation.put("endpoint.operation", Operation.POST);
+					provenanceAnnotation.put("endpoint.endpoint", "/networks/" + uuid + "/annotation");
 				
 					//   inventoryItem
 					//provenanceAnnotation.put("inventoryItem", item);
@@ -202,9 +208,12 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(UUID UUID, @NotNull @Valid String type, String user,
 			@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive,
 			@Valid List<MultipartFile> data) {
-		
 		String uuid = UUID.toString();
-		log.info("Serving POST /networks/" + uuid + "/csv " + (user != null ? " for user " + user : ""));
+		Operation op = Operation.POST;
+		String endpoint = "/networks/" + uuid + "/csv";
+		
+		
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -289,7 +298,10 @@ public class NetworksApiController implements NetworksApi {
 				
 					//   inventoryItem
 					//provenanceAnnotation.put("inventoryItem", item);
-									
+					// endpoint info
+					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
 					
 				}
@@ -307,7 +319,10 @@ public class NetworksApiController implements NetworksApi {
 			String user, @Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive) {
 		
 		String uuid = UUID.toString();
-		log.info("Serving POST /networks/" + uuid + "/mydrug " + (user != null ? " for user " + user : "")+ " with myDrugURL " + myDrugURL);
+		Operation op = Operation.POST;
+		String endpoint = "/networks/" + uuid + "/mydrug";
+		
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "")+ " with myDrugURL " + myDrugURL);
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -377,7 +392,9 @@ public class NetworksApiController implements NetworksApi {
 				
 					//   inventoryItem
 					//provenanceAnnotation.put("inventoryItem", item);
-									
+					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
 					
 				}
@@ -395,7 +412,10 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<NetworkInventoryItem> copyNetwork(@NotNull @Valid UUID parentUUID, String user,
 			@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean suffixName) {
 		String uuid = parentUUID.toString();
-		log.info("Serving POST /networks?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
+		Operation op = Operation.POST;
+		String endpoint = "/networks";
+		
+		log.info("Serving " + op + " " + endpoint + "?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
 		
 		
 		// 0. Assemble information to store for the provenance
@@ -471,6 +491,8 @@ public class NetworksApiController implements NetworksApi {
 					//suffixName
 					provenanceAnnotation.put("params.suffixName", suffixName);
 					
+					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 									
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
 					
@@ -490,7 +512,10 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<Void> deleteNetwork(String user, UUID UUID) {
 		
 		String uuid = UUID.toString();
-		log.info("Serving DELETE /networks/" + uuid + (user != null ? " for user " + user : ""));
+		Operation op = Operation.DELETE;
+		String endpoint = "/networks/" + uuid;
+		
+		log.info("Serving " + op + " " + endpoint +  (user != null ? " for user " + user : ""));
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -540,7 +565,11 @@ public class NetworksApiController implements NetworksApi {
 			String user, @Valid String networkname, @Valid Boolean prefixName) {
 		
 		String uuid = UUID.toString();
-		log.info("Serving POST /networks/" + uuid + "/filter" + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
+		
+		Operation op = Operation.POST;
+		String endpoint = "/networks/" + uuid+ "/filter";
+		
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
 		
 		// 1. Does the network exist?
 		MappingNode oldMapping = this.mappingNodeService.findByEntityUUID(uuid);
@@ -604,7 +633,10 @@ public class NetworksApiController implements NetworksApi {
 					
 					//   prefixName
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-									
+
+					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
 					
 				}
@@ -763,6 +795,33 @@ public class NetworksApiController implements NetworksApi {
 	}
 	
 	@Override
+	public ResponseEntity<ProvenanceInfoItem> getProvenanceInformation(UUID UUID, String user) {
+		String uuid = UUID.toString();
+		log.info("Serving GET /networks/" + uuid + "/prov" + (user != null ? " for user " + user : ""));
+		// 1. Does the network exist?
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
+			return ResponseEntity.notFound().build();
+		}
+		
+		// 2. Is the given user or the public user authorized for this network?
+		try {
+			this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+		// 3. Create the ProvenanceInfoItem
+		//ProvenanceInfoItem item = new ProvenanceInfoItem();
+		// and Fill the ProvenanceInfoItem with provenance content
+		ProvenanceInfoItem item = this.provenanceGraphService.getProvenanceInfoItem(uuid);
+		
+		
+		return ResponseEntity.ok(item);
+	}
+
+	@Override
 	public ResponseEntity<List<NetworkInventoryItem>> listAllNetworks(String user) {
 		log.info("Serving GET /networks" + (user != null ? " for user " + user : ""));
 		// 0. Get list of users including the public user
@@ -786,7 +845,11 @@ public class NetworksApiController implements NetworksApi {
 			@Valid Integer minSize, @Valid Integer maxSize, @Valid String terminateAt, @Valid String direction,
 			@Valid String networkname, @Valid Boolean prefixName, @Valid String weightproperty) {
 		String uuid = UUID.toString();
-		log.info("Serving POST /networks/" + uuid + "/context" + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
+		
+		Operation op = Operation.POST;
+		String endpoint = "/networks/" + uuid + "/context";
+		
+		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
 		// 0. Extract the genes
 		List<String> geneNames = nodeList.getGenes();
 		if(geneNames.size() < 1) {
@@ -901,7 +964,11 @@ public class NetworksApiController implements NetworksApi {
 					}
 					//   prefixName
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-									
+					
+
+					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
 					
 				}
