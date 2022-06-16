@@ -150,7 +150,7 @@ public class SbmlApiController implements SbmlApi {
 		Operation op = Operation.POST;
 		String endpoint = "/sbml";
 
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		if (user == null || user.isBlank() ||user.isEmpty()) {
 			user = configService.getPublicUser();
@@ -317,16 +317,23 @@ public class SbmlApiController implements SbmlApi {
 			// TODO: NEW: add provenance annotation (potentially do this at the end, 
 			// which means saving the activity node information here for later, 
 			// but allows to collect filenames and potentially md5 sums during execution (one for loop less))
-			Map<String, Object> provenanceAnnotation = new HashMap<>();
-			provenanceAnnotation.put("params.user", user);
-			provenanceAnnotation.put("params.files", allFileNames);
-			provenanceAnnotation.put("params.source", source);
-			provenanceAnnotation.put("params.version", version);
-			provenanceAnnotation.put("params.organism", org.getOrgCode());			
-			provenanceAnnotation.put("endpoint.operation", op);
-			provenanceAnnotation.put("endpoint.endpoint", endpoint);
+			Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+			Map<String, Object> paramsMap = new HashMap<>();
+			paramsMap.put("user", user);
+			paramsMap.put("files", allFileNames);
+			paramsMap.put("source", source);
+			paramsMap.put("version", version);
+			paramsMap.put("organism", org.getOrgCode());
+			provenanceAnnotation.put("params",  paramsMap);	
 			
-			this.provenanceGraphService.addProvenanceAnnotation(persistGraphActivityNode, provenanceAnnotation);
+			Map<String, Object> endpointMap = new HashMap<>();
+			endpointMap.put("operation", op.getOperation());
+			endpointMap.put("endpoint", endpoint);
+			
+			provenanceAnnotation.put("endpoint",  endpointMap);
+			
+			this.provenanceGraphService.addProvenanceAnnotationMap(persistGraphActivityNode, provenanceAnnotation);
 			
 			this.provenanceGraphService.connect(sbmlFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 
