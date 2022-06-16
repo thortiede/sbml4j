@@ -285,4 +285,22 @@ public class GraphEnum {
 		
 		
 	}
+	
+	public enum Operation {
+		GET("GET"),
+		POST("POST"),
+		PUT("PUT"),
+		DELETE("DELETE");
+		
+		private final String operation;
+		
+		Operation(String op) {
+			this.operation = op;
+		}
+		
+		public String getOperation() {
+			return this.operation;
+		}
+	}
+	
 }
