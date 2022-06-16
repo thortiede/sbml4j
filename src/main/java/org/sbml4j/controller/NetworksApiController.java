@@ -111,10 +111,12 @@ public class NetworksApiController implements NetworksApi {
 	public ResponseEntity<NetworkInventoryItem> addAnnotationToNetwork(UUID UUID, @Valid AnnotationItem annotationItem,
 			String user, @Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive) {
 		String uuid = UUID.toString();
-		log.info("Serving POST /networks/" + uuid + "/annotation" + (user != null ? " for user " + user : "") + " with AnnotationItem " + annotationItem.toString());
 		
+		Operation op = Operation.POST;
+		String endpoint = "/networks/" + uuid + "/annotation";
 		
-	
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : "") + " with AnnotationItem " + annotationItem.toString());
+		
 		MappingNode oldMapping = this.mappingNodeService.findByEntityUUID(uuid);
 		// 1. Does the network exist?
 		if (oldMapping == null) {
@@ -172,10 +174,7 @@ public class NetworksApiController implements NetworksApi {
 					
 					//   annotationItem
 					provenanceAnnotation.put("body", annotationItem.toString());
-					//   networkname
-					provenanceAnnotation.put("networkname", annotatedNetwork.getMappingName());
-					//   uuid
-					provenanceAnnotation.put("networkUUID", annotatedNetwork.getEntityUUID());
+
 					// call parameters
 					//   base uuid
 					provenanceAnnotation.put("params.UUID", uuid);
@@ -183,6 +182,8 @@ public class NetworksApiController implements NetworksApi {
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 					//   derive
 					provenanceAnnotation.put("params.derived", derive);
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
 					
 					// endpoint info
 					provenanceAnnotation.put("endpoint.operation", Operation.POST);
@@ -213,7 +214,7 @@ public class NetworksApiController implements NetworksApi {
 		String endpoint = "/networks/" + uuid + "/csv";
 		
 		
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -282,10 +283,6 @@ public class NetworksApiController implements NetworksApi {
 					
 					//   body
 					provenanceAnnotation.put("body", bodyString);
-					//   networkname
-					provenanceAnnotation.put("networkname", newNetworkMappingName);
-					//   uuid
-					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
 					// call parameters
 					//   base uuid
 					provenanceAnnotation.put("params.UUID", uuid);
@@ -295,11 +292,13 @@ public class NetworksApiController implements NetworksApi {
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 					//   derive
 					provenanceAnnotation.put("params.derived", derive);
-				
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
+					
 					//   inventoryItem
 					//provenanceAnnotation.put("inventoryItem", item);
 					// endpoint info
-					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.operation", op.getOperation());
 					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
@@ -322,7 +321,7 @@ public class NetworksApiController implements NetworksApi {
 		Operation op = Operation.POST;
 		String endpoint = "/networks/" + uuid + "/mydrug";
 		
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "")+ " with myDrugURL " + myDrugURL);
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : "")+ " with myDrugURL " + myDrugURL);
 		
 		// 1. Does the network exist?
 		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
@@ -376,10 +375,6 @@ public class NetworksApiController implements NetworksApi {
 					// Assemble information to store for the provenance
 					Map<String, Object> provenanceAnnotation = new HashMap<>();
 					
-					//   networkname
-					provenanceAnnotation.put("networkname", newNetworkMappingName);
-					//   uuid
-					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
 					// call parameters
 					//   base uuid
 					provenanceAnnotation.put("params.UUID", uuid);
@@ -387,12 +382,15 @@ public class NetworksApiController implements NetworksApi {
 					provenanceAnnotation.put("params.myDrugURL", myDrugURL);
 					//   prefixName
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
+					
 					//   derive
 					provenanceAnnotation.put("params.derived", derive);
 				
 					//   inventoryItem
 					//provenanceAnnotation.put("inventoryItem", item);
-					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.operation", op.getOperation());
 					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
@@ -415,7 +413,7 @@ public class NetworksApiController implements NetworksApi {
 		Operation op = Operation.POST;
 		String endpoint = "/networks";
 		
-		log.info("Serving " + op + " " + endpoint + "?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
+		log.info("Serving " + op.getOperation() + " " + endpoint + "?parentUUID=" + uuid + (user != null ? " for user " + user : ""));
 		
 		
 		// 0. Assemble information to store for the provenance
@@ -477,11 +475,7 @@ public class NetworksApiController implements NetworksApi {
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType +  "->" + newNetworkMappingName)) {
 					// Assemble information to store for the provenance
 					Map<String, Object> provenanceAnnotation = new HashMap<>();
-					
-					//   networkname
-					provenanceAnnotation.put("networkname", newNetworkMappingName);
-					//   uuid
-					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
+
 					// call parameters
 					//   base uuid
 					provenanceAnnotation.put("params.parentUUID", uuid);
@@ -490,8 +484,10 @@ public class NetworksApiController implements NetworksApi {
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 					//suffixName
 					provenanceAnnotation.put("params.suffixName", suffixName);
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
 					
-					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.operation", op.getOperation());
 					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 									
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
@@ -569,7 +565,7 @@ public class NetworksApiController implements NetworksApi {
 		Operation op = Operation.POST;
 		String endpoint = "/networks/" + uuid+ "/filter";
 		
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : "") + " with filterOptions " + filterOptions.toString());
 		
 		// 1. Does the network exist?
 		MappingNode oldMapping = this.mappingNodeService.findByEntityUUID(uuid);
@@ -623,18 +619,17 @@ public class NetworksApiController implements NetworksApi {
 					Map<String, Object> provenanceAnnotation = new HashMap<>();
 					//   filterItem
 					provenanceAnnotation.put("body", filterOptions.toString());
-					//   networkname
-					provenanceAnnotation.put("networkname", newNetworkMappingName);
 					//   uuid
 					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
 					// call parameters
 					//   base uuid
 					provenanceAnnotation.put("params.UUID", uuid);
-					
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
 					//   prefixName
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 
-					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.operation", op.getOperation());
 					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
@@ -849,7 +844,7 @@ public class NetworksApiController implements NetworksApi {
 		Operation op = Operation.POST;
 		String endpoint = "/networks/" + uuid + "/context";
 		
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : "")+ " with NodeList " + nodeList.toString());
 		// 0. Extract the genes
 		List<String> geneNames = nodeList.getGenes();
 		if(geneNames.size() < 1) {
@@ -943,8 +938,6 @@ public class NetworksApiController implements NetworksApi {
 					
 					//   body
 					provenanceAnnotation.put("body", bodyString);
-					//   networkname
-					provenanceAnnotation.put("networkname", newNetworkMappingName);
 					//   uuid
 					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
 					// call parameters
@@ -958,6 +951,10 @@ public class NetworksApiController implements NetworksApi {
 					provenanceAnnotation.put("params.terminateAt", terminateAtString);
 					// direction
 					provenanceAnnotation.put("params.direction", directionString);
+					// networkname
+					provenanceAnnotation.put("params.networkname", networkname);
+					
+					
 					// weightproperty
 					if (weightproperty != null) {
 						provenanceAnnotation.put("params.weightproperty", weightproperty);
@@ -966,7 +963,7 @@ public class NetworksApiController implements NetworksApi {
 					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 					
 
-					provenanceAnnotation.put("endpoint.operation", op);
+					provenanceAnnotation.put("endpoint.operation", op.getOperation());
 					provenanceAnnotation.put("endpoint.endpoint", endpoint);
 					
 					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);

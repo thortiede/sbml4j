@@ -111,7 +111,7 @@ public class PathwaysApiController implements PathwaysApi {
 		Operation op = Operation.POST;
 		String endpoint = "/pathwayCollection";
 
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : ""));
 		Map<String, Object> agentNodeProperties = new HashMap<>();
 		
 		if (user == null) {
@@ -148,7 +148,7 @@ public class PathwaysApiController implements PathwaysApi {
 		// call parameters
 		//   body
 		provenanceAnnotation.put("body", pathwayCollectionCreationItem);
-		provenanceAnnotation.put("endpoint.operation", op);
+		provenanceAnnotation.put("endpoint.operation", op.getOperation());
 		provenanceAnnotation.put("endpoint.endpoint", endpoint);
 		
 		this.provenanceGraphService.addProvenanceAnnotation(createKnowledgeGraphActivityNode, provenanceAnnotation);
@@ -239,7 +239,7 @@ public class PathwaysApiController implements PathwaysApi {
 		Operation op = Operation.POST;
 		String endpoint = "/mapping/" + uuid;
 
-		log.info("Serving " + op + " " + endpoint + (user != null ? " for user " + user : ""));
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : ""));
 		
 		// 2. Determine the name of the network
 		PathwayNode pathwayNode = this.pathwayService.findByEntityUUID(uuid);
@@ -357,7 +357,7 @@ public class PathwaysApiController implements PathwaysApi {
 		if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 		// suffixName
 		if (suffixName != null) provenanceAnnotation.put("params.suffixName", suffixName);
-		provenanceAnnotation.put("endpoint.operation", op);
+		provenanceAnnotation.put("endpoint.operation", op.getOperation());
 		provenanceAnnotation.put("endpoint.endpoint", endpoint);
 		
 		this.provenanceGraphService.addProvenanceAnnotation(createMappingActivityNode, provenanceAnnotation);
