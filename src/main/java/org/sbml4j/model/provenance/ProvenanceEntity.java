@@ -13,10 +13,13 @@
  */
 package org.sbml4j.model.provenance;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.neo4j.ogm.annotation.Properties;
+import org.neo4j.ogm.annotation.Relationship;
 import org.sbml4j.model.base.GraphBaseEntity;
 
 
@@ -50,5 +53,32 @@ public class ProvenanceEntity extends GraphBaseEntity {
 			addProvenance(key, provenanceMap.get(key));
 		}
 	}
+	
+	
+	@Relationship(type="PROV_SUBELEMENT", direction = Relationship.OUTGOING)
+	private List<ProvenanceMetaDataNode> provenanceAnnotationSubelements;
+
+	/**
+	 * @return the provenanceAnnotationSubelements
+	 */
+	public List<ProvenanceMetaDataNode> getProvenanceAnnotationSubelements() {
+		return provenanceAnnotationSubelements;
+	}
+
+	/**
+	 * @param provenanceAnnotationSubelements the provenanceAnnotationSubelements to set
+	 */
+	public void setProvenanceAnnotationSubelements(List<ProvenanceMetaDataNode> provenanceAnnotationSubelements) {
+		this.provenanceAnnotationSubelements = provenanceAnnotationSubelements;
+	}
+	
+	public ProvenanceEntity addProvenanceAnnotationSubelement(ProvenanceMetaDataNode subelement) {
+		if (this.provenanceAnnotationSubelements == null) {
+			this.provenanceAnnotationSubelements = new ArrayList<>();
+		}
+		this.provenanceAnnotationSubelements.add(subelement);
+		return this;
+	}
+	
 	
 }
