@@ -12,6 +12,7 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.sbml4j.model.api.provenance.ProvenanceInfoItem;
 import org.sbml4j.model.api.network.AnnotationItem;
 import org.sbml4j.model.api.network.FilterOptions;
 import org.sbml4j.model.api.network.NetworkInventoryItem;
@@ -680,6 +681,77 @@ public interface NetworksApi {
     });
     return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
   }
+  
+  /**
+   * GET /networks/{UUID}/prov : retrieve provenance information to this network
+   * Follows the provenance trail and gathers all avaialable prov-annotation.
+   * Assembles a response containing all provenance information that can be used
+   * to retrace the creation of this network all the way from the models loaded
+   * from the sbml files.
+   *
+   * @param UUID The UUID of the network that serves as a basis for this context
+   *     (required)
+   * @param user The user which requests the creation, the configured public
+   *     user will be used if omitted (optional)
+   * @return Bad Request (status code 400)
+   *         or The current user is forbidden from accessing this data (status
+   * code 403) or successful operation (status code 200)
+   */
+
+  @ApiOperation(
+      value = "retrieve provenance information to this network",
+      nickname = "getProvenanceInformation",
+      notes =
+          "Follows the provenance trail and gathers all avaialable prov-annotation. Assembles a response containing all provenance information that can be used to retrace the creation of this network all the way from the models loaded from the sbml files. ",
+      response = ProvenanceInfoItem.class,
+      tags =
+          {
+              "networks",
+          })
+  @ApiResponses(
+      value =
+      {
+        @ApiResponse(code = 400, message = "Bad Request")
+        ,
+
+            @ApiResponse(
+                code = 403,
+                message =
+                    "The current user is forbidden from accessing this data"),
+
+            @ApiResponse(code = 200, message = "successful operation",
+                         response = ProvenanceInfoItem.class)
+      })
+  @GetMapping(value = "/networks/{UUID}/prov",
+                  produces = {"application/json"})
+  default ResponseEntity<ProvenanceInfoItem>
+  getProvenanceInformation(
+      @ApiParam(
+          value =
+              "The UUID of the network that serves as a basis for this context",
+          required = true) @PathVariable("UUID") UUID UUID
+
+      ,
+      @ApiParam(
+          value =
+              "The user which requests the creation, the configured public user will be used if omitted")
+      @RequestHeader(value = "user", required = false) String user) {
+    getRequest().ifPresent(request -> {
+      for (MediaType mediaType :
+           MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+          String exampleString =
+              "{ \"wasGeneratedBy\" : [ { \"endpoint\" : \"network/d25f4b9-8dd5-4bc3-9d04-9af418302244/context\", \"endpoint-specific\" : [ { \"key\" : \"endpoint-specific\" }, { \"key\" : \"endpoint-specific\" } ], \"name\" : \"Create_Neighborhood_Network\", \"type\" : \"createContext\", \"params\" : [ { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" }, { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" } ], \"body\" : \"\", \"operation\" : \"POST\" }, { \"endpoint\" : \"network/d25f4b9-8dd5-4bc3-9d04-9af418302244/context\", \"endpoint-specific\" : [ { \"key\" : \"endpoint-specific\" }, { \"key\" : \"endpoint-specific\" } ], \"name\" : \"Create_Neighborhood_Network\", \"type\" : \"createContext\", \"params\" : [ { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" }, { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" } ], \"body\" : \"\", \"operation\" : \"POST\" } ], \"contents\" : \"\", \"wasDerivedFrom\" : [ null, null ], \"wasAttributedTo\" : { \"name\" : \"sbml4j\", \"type\" : \"User\" }, \"type\" : \"MappingNode\" }";
+          ApiUtil.setExampleResponse(request, "application/json",
+                                     exampleString);
+          break;
+        }
+      }
+    });
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+
+  
 
   /**
    * GET /networks : List available networks
