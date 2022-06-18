@@ -344,23 +344,25 @@ public class PathwaysApiController implements PathwaysApi {
 		
 		this.provenanceGraphService.connect(createMappingActivityNode, pathwayNode, ProvenanceGraphEdgeType.used);
 		
-		// add prov information
-		Map<String, Object> provenanceAnnotation = new HashMap<>();
-		// call parameters
-		//   base uuid
-		provenanceAnnotation.put("params.UUID", uuid);
-		//   networkname
-		provenanceAnnotation.put("params.networkname", networkname);
-		//   mappingType
-		provenanceAnnotation.put("params.mappingType", mappingType);
-		// prefixName
-		if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-		// suffixName
-		if (suffixName != null) provenanceAnnotation.put("params.suffixName", suffixName);
-		provenanceAnnotation.put("endpoint.operation", op.getOperation());
-		provenanceAnnotation.put("endpoint.endpoint", endpoint);
+		// Add provenance annotation
+		Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+		Map<String, Object> paramsMap = new HashMap<>();
+		paramsMap.put("user", user);
+		paramsMap.put("UUID", uuid);
+		paramsMap.put("networkname", networkname);
+		paramsMap.put("mappingType", mappingType);
+		paramsMap.put("prefixName", prefixName);
+		paramsMap.put("suffixName", suffixName);
+		provenanceAnnotation.put("params",  paramsMap);	
 		
-		this.provenanceGraphService.addProvenanceAnnotation(createMappingActivityNode, provenanceAnnotation);
+		Map<String, Object> endpointMap = new HashMap<>();
+		endpointMap.put("operation", op.getOperation());
+		endpointMap.put("endpoint", endpoint);
+		
+		provenanceAnnotation.put("endpoint",  endpointMap);
+		
+		this.provenanceGraphService.addProvenanceAnnotationMap(createMappingActivityNode, provenanceAnnotation);
 				
 		// create the mappingNode
 		MappingNode mappingNode;
