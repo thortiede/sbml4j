@@ -13,8 +13,11 @@
  */
 package org.sbml4j.repository.provenance;
 
+import java.util.List;
+
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
 import org.sbml4j.model.provenance.ProvenanceEntity;
+import org.sbml4j.model.provenance.ProvenanceMetaDataNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
@@ -77,4 +80,12 @@ public interface ProvenanceEntityRepository extends Neo4jRepository<ProvenanceEn
 			+ "RETURN start")
 	Iterable<ProvenanceEntity> findAllByProvenanceGraphEdgeTypeAndEndNode(ProvenanceGraphEdgeType edgetype,
 			String endNodeEntityUUID);
+
+	@Query(value = "MATCH "
+			+ "(start:ProvenanceEntity)"
+			+ "-[edge:PROV_SUBELEMENT]->"
+			+ "(end:ProvenanceMetaDataNode) "
+			+ "WHERE start.entityUUID = $entityUUID "
+			+ "RETURN end")
+	List<ProvenanceMetaDataNode> findAllProvenanceMetaDataNodes(String entityUUID);
 }
