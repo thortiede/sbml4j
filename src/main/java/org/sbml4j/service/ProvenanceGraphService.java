@@ -14,6 +14,7 @@
 package org.sbml4j.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -377,39 +378,51 @@ public class ProvenanceGraphService {
 		return this.provenanceEntityRepository.findByEntityUUID(entityUUID);
 	}
 
+	public List<ProvenanceMetaDataNode> findAllProvenanceSubelements(String entityUUID) {
+		return this.provenanceEntityRepository.findAllProvenanceMetaDataNodes(entityUUID);
+	}
+	
 	public ActivityItem getActivityItem(ProvenanceGraphActivityNode activity) {
 		ProvenanceGraphActivityType type = activity.getGraphActivityType();
 		ActivityItem activityItem = new ActivityItem().name(activity.getGraphActivityName()).type(type.toString());
 		Map<String, Object> activityProvenance = activity.getProvenance();
 		
-		// ProvenanceObject must have 'endpoint' key!
-		if (!activityProvenance.containsKey("endpoint")) {
-			log.error("Activity with uuid " + activity.getEntityUUID() + " has no provenance annotation of type 'endpoint'");
-			// Create an exception for this case
-			return activityItem;
-		}
-		@SuppressWarnings("unchecked")
-		Map<String, Object> endpointData = (Map<String, Object>) activityProvenance.get("endpoint");
-		String activityOperationString = (String) endpointData.get("operation");
-		String activityEndpointString = (String) endpointData.get("endpoint");
-		activityItem.endpoint(activityEndpointString).operation(activityOperationString);
-		activityProvenance.remove("endpoint"); // TODO: Make sure that the object is not persisted after this, otherwise we loose information!
-		
-		
-		for (String key : activityProvenance.keySet()) {
-			
-			if (key.equals("params")) {
-				@SuppressWarnings("unchecked")
-				Map<String, Object> paramsData = (Map<String, Object>) activityProvenance.get("params");
-				List<ActivityItemParams> paramsList = new ArrayList<>();
-				for (String parameter : paramsData.keySet()) {
-					paramsList.add(new ActivityItemParams().parameter(parameter).value((String) paramsData.get(parameter)));
+		List<Map<String, Object> > activityProvenanceList = null;
+		String bodyString = null;
+		boolean isBodyPresent = false;
+		// follow the PROV_SUBELEMENT connections
+		Iterable<ProvenanceMetaDataNode> metaDataNodes = this.findAllProvenanceSubelements(activity.getEntityUUID());
+		for (ProvenanceMetaDataNode metaDataNode : metaDataNodes) {
+			String annotationName = metaDataNode.getProvenanceName();
+			Map<String, Object> provenanceAnnotation = metaDataNode.getProvenance();
+			// process the annotation
+			switch (annotationName) {
+			case "endpoint":
+				activityItem.endpoint((String) provenanceAnnotation.get("endpoint")).operation((String) provenanceAnnotation.get("operation"));
+				break;
+			case "params":
+				for (String key : provenanceAnnotation.keySet()) {
+					activityItem.addParamsItem(new ActivityItemParams().parameter(key).value(String.valueOf(provenanceAnnotation.get(key))));
 				}
+				break;
+			case "body":
+				// There is a body element.
+				// Save it and process at the end (since I need the endpoint and operation data for the creation of the correct element
+				bodyString = (String)activityProvenance.get(annotationName);
+				isBodyPresent = true;
+				
+				break;
+			default:
+				if (activityProvenanceList == null) {
+					activityProvenanceList = new ArrayList<>();
+				}
+				activityProvenanceList.add(provenanceAnnotation);
+				break;
 			}
-			else if (key.equals("body")){
+			// process body
+			if (isBodyPresent && bodyString != null) {
 				ApiRequestItem bodyItem = null;
 				try {	
-					String bodyString = (String)activityProvenance.get(key);
 					switch(type) {
 					case addCsvAnnotation:
 						// csv file
@@ -424,14 +437,13 @@ public class ProvenanceGraphService {
 						break;
 					case createContext:
 						// OverviewNetworkItem, if name contains overview
-						if (activityEndpointString.contains("/overview")) {
+						if (activityItem.getEndpoint().contains("/overview")) {
 							bodyItem = new ObjectMapper().readValue(bodyString, OverviewNetworkItem.class);
 						}
 						// NodeList, if op=POST
-						else if (activityOperationString.equals(Operation.POST.getOperation())) {
+						else if (activityItem.getOperation().equals(Operation.POST.getOperation())) {
 							bodyItem = new ObjectMapper().readValue(bodyString, NodeList.class);
 						}
-						
 						break;
 					case createMapping:
 						break;
@@ -462,20 +474,11 @@ public class ProvenanceGraphService {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			} else if (key.equals("prov")){
-				// this is manually added provenance information (through PUT /network/uuid/prov endpoint)
-				@SuppressWarnings("unchecked")
-				Map<String, Object> provenanceItemMap = (Map<String, Object>) activityProvenance.get(key);
-				// each of these Objects should itself be a Map
-				//activityItem.addProvenanceItem(provenanceItemMap);
 			}
 			
+			// process subelements along the PROV_SUBELEMENT edges
+			
 		}
-		
-		if (!activityProvenance.containsKey("params")) {
-			log.debug("Activity with uuid " + activity.getEntityUUID() + " has no provenance annotation of type 'params'");
-		}
-		
 		
 		return activityItem;
 	}
@@ -487,7 +490,7 @@ public class ProvenanceGraphService {
 		Iterator<ProvenanceEntity> iter = generators.iterator();
 		while (iter.hasNext()) {
 			ProvenanceEntity generator = iter.next();
-			Map<String, Object> provenance = generator.getProvenance();
+			//Map<String, Object> provenance = generator.getProvenance();
 			//generator.getProvenance()
 			if (ProvenanceGraphActivityNode.class.isInstance(generator)) {
 				item.addWasGeneratedByItem(this.getActivityItem((ProvenanceGraphActivityNode) generator));
@@ -497,6 +500,6 @@ public class ProvenanceGraphService {
 			
 		}
 		
-		return null;
+		return item;
 	}
 }
