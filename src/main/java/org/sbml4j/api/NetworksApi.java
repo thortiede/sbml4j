@@ -6,6 +6,7 @@
 package org.sbml4j.api;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -894,6 +896,87 @@ public interface NetworksApi {
         if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
           String exampleString =
               "{ \"relationTypes\" : [ \"stimulation\", \"stimulation\" ], \"name\" : \"Example Network\", \"organismCode\" : \"hsa\", \"numberOfNodes\" : 0, \"numberOfRelations\" : 6, \"UUID\" : \"046b6c7f-0b8a-43b9-b35d-6489e6daee91\", \"nodeTypes\" : [ \"polypeptide chain\", \"polypeptide chain\" ], \"networkMappingType\" : \"REGULATORY\" }";
+          ApiUtil.setExampleResponse(request, "application/json",
+                                     exampleString);
+          break;
+        }
+      }
+    });
+    return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+  }
+  
+  /**
+   * PUT /networks/{UUID}/prov : Add provenance information to a network
+   * Adds the provided request body elements to the provenance-annotation  of
+   * the activity that created the network with entityUUID of {UUID}
+   *
+   * @param UUID The UUID of the network that serves as a basis for this context
+   *     (required)
+   * @param name A name for this provenance item (required)
+   * @param requestBody A freeform json-object with key-value pairs of names and
+   *     values to act as provenance-annotation (required)
+   * @param user The user which requests the addition of provenance information,
+   *     the configured public user will be used if omitted (optional)
+   * @return Bad Request (status code 400)
+   *         or The current user is forbidden from accessing this data (status
+   * code 403) or successful operation (status code 200)
+   */
+
+  @ApiOperation(
+      value = "Add provenance information to a network",
+      nickname = "putProvenanceInformation",
+      notes =
+          "Adds the provided request body elements to the provenance-annotation  of the activity that created the network with entityUUID of {UUID} ",
+      response = ProvenanceInfoItem.class,
+      tags =
+          {
+              "networks",
+          })
+  @ApiResponses(
+      value =
+      {
+        @ApiResponse(code = 400, message = "Bad Request")
+        ,
+
+            @ApiResponse(
+                code = 403,
+                message =
+                    "The current user is forbidden from accessing this data"),
+
+            @ApiResponse(code = 200, message = "successful operation",
+                         response = ProvenanceInfoItem.class)
+      })
+  @PutMapping(value = "/networks/{UUID}/prov",
+                  produces = {"application/json"},
+                  consumes = {"application/json"})
+  default ResponseEntity<ProvenanceInfoItem>
+  putProvenanceInformation(
+      @ApiParam(
+          value =
+              "The UUID of the network that serves as a basis for this context",
+          required = true) @PathVariable("UUID") UUID UUID
+
+      ,
+      @NotNull @ApiParam(value = "A name for this provenance item",
+                         required = true) @Valid
+      @RequestParam(value = "name", required = true) String name
+
+      ,
+
+      @ApiParam(
+          value =
+              "A freeform json-object with key-value pairs of names and values to act as provenance-annotation",
+          required = true) @Valid @RequestBody Map<String, Object> requestBody,
+      @ApiParam(
+          value =
+              "The user which requests the addition of provenance information, the configured public user will be used if omitted")
+      @RequestHeader(value = "user", required = false) String user) {
+    getRequest().ifPresent(request -> {
+      for (MediaType mediaType :
+           MediaType.parseMediaTypes(request.getHeader("Accept"))) {
+        if (mediaType.isCompatibleWith(MediaType.valueOf("application/json"))) {
+          String exampleString =
+              "{ \"wasGeneratedBy\" : [ { \"endpoint\" : \"network/d25f4b9-8dd5-4bc3-9d04-9af418302244/context\", \"endpoint-specific\" : [ { \"key\" : \"endpoint-specific\" }, { \"key\" : \"endpoint-specific\" } ], \"name\" : \"Create_Neighborhood_Network\", \"type\" : \"createContext\", \"params\" : [ { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" }, { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" } ], \"body\" : \"\", \"operation\" : \"POST\" }, { \"endpoint\" : \"network/d25f4b9-8dd5-4bc3-9d04-9af418302244/context\", \"endpoint-specific\" : [ { \"key\" : \"endpoint-specific\" }, { \"key\" : \"endpoint-specific\" } ], \"name\" : \"Create_Neighborhood_Network\", \"type\" : \"createContext\", \"params\" : [ { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" }, { \"parameter\" : \"parentUUID\", \"value\" : \"d25f4b9-8dd5-4bc3-9d04-9af418302244\" } ], \"body\" : \"\", \"operation\" : \"POST\" } ], \"contents\" : \"\", \"wasDerivedFrom\" : [ null, null ], \"wasAttributedTo\" : { \"name\" : \"sbml4j\", \"type\" : \"User\" }, \"type\" : \"MappingNode\" }";
           ApiUtil.setExampleResponse(request, "application/json",
                                      exampleString);
           break;
