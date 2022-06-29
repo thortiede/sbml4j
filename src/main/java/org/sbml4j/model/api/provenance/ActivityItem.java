@@ -9,7 +9,9 @@ import javax.validation.Valid;
 
 import org.sbml4j.model.api.ApiRequestItem;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -19,6 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2022-04-02T23:09:46.842042+02:00[Europe/Berlin]")
+@JsonInclude(Include.NON_NULL)
 public class ActivityItem {
   @JsonProperty("name") private String name;
 
@@ -35,7 +38,7 @@ public class ActivityItem {
 
   @JsonProperty("provenance")
   @Valid
-  private List<Map<String, String>> provenance = null;
+  private List<Map<String, Object>> provenance = null;
 
   public ActivityItem name(String name) {
     this.name = name;
@@ -168,13 +171,13 @@ public class ActivityItem {
   }
 
   public ActivityItem
-  provenance(List<Map<String, String>> provenance) {
+  provenance(List<Map<String, Object>> provenance) {
     this.provenance = provenance;
     return this;
   }
 
   public ActivityItem
-  addProvenanceItem(Map<String, String> provenanceItem) {
+  addProvenanceItem(Map<String, Object> provenanceItem) {
     if (this.provenance == null) {
       this.provenance = new ArrayList<>();
     }
@@ -190,11 +193,11 @@ public class ActivityItem {
 
   @Valid
 
-  public List<Map<String, String>> getProvenance() {
+  public List<Map<String, Object>> getProvenance() {
     return provenance;
   }
 
-  public void setProvenance(List<Map<String, String>> provenance) {
+  public void setProvenance(List<Map<String, Object>> provenance) {
     this.provenance = provenance;
   }
 
