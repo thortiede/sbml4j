@@ -3,7 +3,6 @@ package org.sbml4j.model.api.pathway;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import javax.validation.Valid;
 
@@ -24,7 +23,7 @@ public class PathwayCollectionItem  extends ApiResponseItem{
 
   @JsonProperty("description") private String description;
 
-  @JsonProperty("hadMember") @Valid private List<UUID> hadMember = null;
+  @JsonProperty("hadMember") @Valid private List<String> hadMember = null;
 
   public PathwayCollectionItem name(String name) {
     this.name = name;
@@ -66,12 +65,12 @@ public class PathwayCollectionItem  extends ApiResponseItem{
     this.description = description;
   }
 
-  public PathwayCollectionItem hadMember(List<UUID> hadMember) {
+  public PathwayCollectionItem hadMember(List<String> hadMember) {
     this.hadMember = hadMember;
     return this;
   }
 
-  public PathwayCollectionItem addHadMemberItem(UUID hadMemberItem) {
+  public PathwayCollectionItem addHadMemberItem(String hadMemberItem) {
     if (this.hadMember == null) {
       this.hadMember = new ArrayList<>();
     }
@@ -87,11 +86,11 @@ public class PathwayCollectionItem  extends ApiResponseItem{
 
   @Valid
 
-  public List<UUID> getHadMember() {
+  public List<String> getHadMember() {
     return hadMember;
   }
 
-  public void setHadMember(List<UUID> hadMember) { this.hadMember = hadMember; }
+  public void setHadMember(List<String> hadMember) { this.hadMember = hadMember; }
 
   @Override
   public boolean equals(Object o) {
