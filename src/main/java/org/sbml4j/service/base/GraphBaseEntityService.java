@@ -13,6 +13,8 @@
  */
 package org.sbml4j.service.base;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.UUID;
 
 import org.sbml4j.config.SBML4jConfig;
@@ -144,6 +146,7 @@ public class GraphBaseEntityService {
 	public void resetGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(this.getNewUUID());
 		target.setId(null);
+		target.setCreateDate(Date.from(Instant.now()));
 		/**
 		 * TODO: Uncomment this line when the version field is reintroduced
 		 */
@@ -159,6 +162,7 @@ public class GraphBaseEntityService {
 	public void setGraphBaseEntityProperties(GraphBaseEntity target) {
 		target.setEntityUUID(this.getNewUUID());
 		target.setActive(true);
+		target.setCreateDate(Date.from(Instant.now()));
 	}
 	
 	/**

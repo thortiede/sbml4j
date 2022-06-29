@@ -13,6 +13,7 @@
  */
 package org.sbml4j.model.base;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +21,6 @@ import org.neo4j.ogm.annotation.GeneratedValue;
 import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.Index;
 import org.neo4j.ogm.annotation.Properties;
-import org.neo4j.ogm.annotation.Version;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -47,6 +47,8 @@ public class GraphBaseEntity {
 	private boolean isActive;
 	
 
+	private Date createDate;
+	
 	/*@Relationship(type="IN", direction=Relationship.OUTGOING)
 	private List<Organism> organisms;
 	*/
@@ -133,6 +135,14 @@ public class GraphBaseEntity {
 
 	public void setActive(boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public Date getCreateDate() {
+		return createDate;
+	}
+
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
 	}
 	
 	
