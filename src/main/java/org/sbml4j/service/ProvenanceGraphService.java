@@ -20,28 +20,39 @@ import java.util.List;
 import java.util.Map;
 
 import org.sbml4j.model.api.ApiRequestItem;
+import org.sbml4j.model.api.ApiResponseItem;
 import org.sbml4j.model.api.network.AnnotationItem;
 import org.sbml4j.model.api.network.FilterOptions;
 import org.sbml4j.model.api.network.NodeList;
 import org.sbml4j.model.api.network.OverviewNetworkItem;
 import org.sbml4j.model.api.pathway.PathwayCollectionCreationItem;
+import org.sbml4j.model.api.pathway.PathwayCollectionItem;
 import org.sbml4j.model.api.provenance.ActivityItem;
 import org.sbml4j.model.api.provenance.ActivityItemParams;
+import org.sbml4j.model.api.provenance.AgentItem;
 import org.sbml4j.model.api.provenance.ProvenanceInfoItem;
+import org.sbml4j.model.api.warehouse.DatabaseInventoryItem;
+import org.sbml4j.model.api.warehouse.FileInventoryItem;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
-import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.provenance.ProvenanceGraphEdge;
 import org.sbml4j.model.provenance.ProvenanceMetaDataNode;
+import org.sbml4j.model.warehouse.DatabaseNode;
+import org.sbml4j.model.warehouse.FileNode;
+import org.sbml4j.model.warehouse.MappingNode;
+import org.sbml4j.model.warehouse.PathwayCollectionNode;
+import org.sbml4j.model.warehouse.PathwayNode;
 import org.sbml4j.repository.provenance.ProvenanceEntityRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphActivityNodeRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphAgentNodeRepository;
 import org.sbml4j.repository.provenance.ProvenanceGraphEdgeRepository;
 import org.sbml4j.service.base.GraphBaseEntityService;
+import org.sbml4j.service.networks.NetworkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,6 +78,10 @@ public class ProvenanceGraphService {
 	private ProvenanceGraphActivityNodeRepository provenanceGraphActivityNodeRepository;
 	@Autowired
 	private ProvenanceGraphEdgeRepository provenanceGraphEdgeRepository;
+	@Autowired
+	private PathwayService pathwayService;
+	@Autowired
+	private NetworkService networkService;
 	
 	
 	public boolean addProvenanceAnnotationMap(ProvenanceEntity entity, Map<String,Map<String,Object> > provenanceAnnotation) {
@@ -83,7 +98,7 @@ public class ProvenanceGraphService {
 			entity.addProvenanceAnnotationSubelement(subelement);
 		}
 		this.provenanceEntityRepository.save(entity, depth + maxSubDepth);
-		return false;
+		return true;
 	}
 	
 	/**
@@ -100,9 +115,7 @@ public class ProvenanceGraphService {
 					depth = 1;
 					ProvenanceMetaDataNode subelement = this.createProvenanceMetaDataNode(key);
 					int subdepth = this.addProvenanceAnnotation(subelement, (Map<String,Object>) val);
-					if (subdepth > depth) {
-						depth = subdepth;
-					}
+					depth += subdepth;
 					entity.addProvenanceAnnotationSubelement(subelement);
 				} else if (val instanceof Integer) {
 					entity.addProvenance(key, ((Integer) val).longValue());
@@ -385,7 +398,6 @@ public class ProvenanceGraphService {
 	public ActivityItem getActivityItem(ProvenanceGraphActivityNode activity) {
 		ProvenanceGraphActivityType type = activity.getGraphActivityType();
 		ActivityItem activityItem = new ActivityItem().name(activity.getGraphActivityName()).type(type.toString());
-		Map<String, Object> activityProvenance = activity.getProvenance();
 		
 		List<Map<String, Object> > activityProvenanceList = null;
 		String bodyString = null;
@@ -408,7 +420,7 @@ public class ProvenanceGraphService {
 			case "body":
 				// There is a body element.
 				// Save it and process at the end (since I need the endpoint and operation data for the creation of the correct element
-				bodyString = (String)activityProvenance.get(annotationName);
+				bodyString = (String) provenanceAnnotation.get("body");
 				isBodyPresent = true;
 				
 				break;
@@ -416,73 +428,85 @@ public class ProvenanceGraphService {
 				if (activityProvenanceList == null) {
 					activityProvenanceList = new ArrayList<>();
 				}
-				activityProvenanceList.add(provenanceAnnotation);
+				// process subelements along the PROV_SUBELEMENT edges
+				// here the list consists of Map<String, Object> elements
+				// where each entry is composed of the annotationName as the key and the contents of the Subelement as the Object, which is again a Map<String,Object>
+				// this has to be built recursively.
+				// the singular elements are found in the provenanceAnnotation Map
+				// the submaps need to be parsed through the subelements
+				activityProvenanceList.add(this.createProvenanceListEntry(metaDataNode));
+	
 				break;
 			}
-			// process body
-			if (isBodyPresent && bodyString != null) {
-				ApiRequestItem bodyItem = null;
-				try {	
-					switch(type) {
-					case addCsvAnnotation:
-						// csv file
-						break;
-					case addJsonAnnotation:
-						// AnnotationItem
-						bodyItem = new ObjectMapper().readValue(bodyString, AnnotationItem.class);
-						break;
-					case addMyDrugNodes:
-						break;
-					case copyNetwork:
-						break;
-					case createContext:
-						// OverviewNetworkItem, if name contains overview
-						if (activityItem.getEndpoint().contains("/overview")) {
-							bodyItem = new ObjectMapper().readValue(bodyString, OverviewNetworkItem.class);
-						}
-						// NodeList, if op=POST
-						else if (activityItem.getOperation().equals(Operation.POST.getOperation())) {
-							bodyItem = new ObjectMapper().readValue(bodyString, NodeList.class);
-						}
-						break;
-					case createMapping:
-						break;
-					case createPathwayCollection:
-						// PathwayCollectionCreationItem
-						bodyItem = new ObjectMapper().readValue(bodyString, PathwayCollectionCreationItem.class);
-						break;
-					case filterNetwork:
-						// FilterOptions
-						bodyItem = new ObjectMapper().readValue(bodyString, FilterOptions.class);
-						break;
-					case persistFile:
-						// SBML file, if FileType = SBML
-						// GraphML file, if FileType = GraphML
-						break;
-					case runAlgorithm:
-						break;
-					default:
-						break;
-						
-					}
-					// Set the body element, if the bodyItem was created.
-					if (bodyItem != null) activityItem.body(bodyItem); 
-				} catch (JsonMappingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-			
-			// process subelements along the PROV_SUBELEMENT edges
-			
 		}
+		// process body
+		if (isBodyPresent && bodyString != null) {
+			ApiRequestItem bodyItem = null;
+			try {	
+				switch(type) {
+				case addCsvAnnotation:
+					// csv file
+					break;
+				case addJsonAnnotation:
+					// AnnotationItem
+					bodyItem = new ObjectMapper().readValue(bodyString, AnnotationItem.class);
+					break;
+				case addMyDrugNodes:
+					break;
+				case copyNetwork:
+					break;
+				case createContext:
+					// OverviewNetworkItem, if name contains overview
+					if (activityItem.getEndpoint().contains("/overview")) {
+						bodyItem = new ObjectMapper().readValue(bodyString, OverviewNetworkItem.class);
+					}
+					// NodeList, if op=POST
+					else if (activityItem.getOperation().equals(Operation.POST.getOperation())) {
+						bodyItem = new ObjectMapper().readValue(bodyString, NodeList.class);
+					}
+					break;
+				case createMapping:
+					break;
+				case createPathwayCollection:
+					// PathwayCollectionCreationItem
+					bodyItem = new ObjectMapper().readValue(bodyString, PathwayCollectionCreationItem.class);
+					break;
+				case filterNetwork:
+					// FilterOptions
+					bodyItem = new ObjectMapper().readValue(bodyString, FilterOptions.class);
+					break;
+				case persistFile:
+					// SBML file, if FileType = SBML
+					// GraphML file, if FileType = GraphML
+					break;
+				case runAlgorithm:
+					break;
+				default:
+					break;
+					
+				}
+				// Set the body element, if the bodyItem was created.
+				if (bodyItem != null) activityItem.body(bodyItem); 
+			} catch (JsonMappingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		// add the provenanceList to the activityItem
+		if (activityProvenanceList != null) {
+			activityItem.setProvenance(activityProvenanceList);
+		}
+		
 		
 		return activityItem;
 	}
 	
+	
+
 	public ProvenanceInfoItem getProvenanceInfoItem(String uuid) {
 		ProvenanceInfoItem item = new ProvenanceInfoItem();
 		// 1. Find activity
@@ -493,13 +517,124 @@ public class ProvenanceGraphService {
 			//Map<String, Object> provenance = generator.getProvenance();
 			//generator.getProvenance()
 			if (ProvenanceGraphActivityNode.class.isInstance(generator)) {
-				item.addWasGeneratedByItem(this.getActivityItem((ProvenanceGraphActivityNode) generator));
-				
-						
+				item.addWasGeneratedByItem(this.getActivityItem((ProvenanceGraphActivityNode) generator));		
 			}
 			
 		}
 		
+		// 2a. Find members if they exist
+		boolean hadMember = false;
+		Iterable<ProvenanceEntity> members = this.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.hadMember, uuid);
+		for (ProvenanceEntity member : members) {
+			ProvenanceInfoItem memberItem = this.getProvenanceInfoItem(member.getEntityUUID());
+			item.addWasDerivedFromItem(memberItem);
+			hadMember = true;
+		}
+				
+				
+		// 2b. Recurse through all wasDerivedFrom Elements
+		if (!hadMember) {
+			Iterable<ProvenanceEntity> derivers = this.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasDerivedFrom, uuid);
+			Iterator<ProvenanceEntity> deriveIter = derivers.iterator();
+			while (deriveIter.hasNext() ) {
+				ProvenanceEntity deriver = deriveIter.next();
+				ProvenanceInfoItem deriverItem = getProvenanceInfoItem(deriver.getEntityUUID());
+				item.addWasDerivedFromItem(deriverItem);
+			}
+		}
+		
+		// 3. Get the content
+		ApiResponseItem content = this.getApiResponseItem(uuid);
+		item.setContents(content);
+		
+		// 4. Get the type
+		item.setType(this.getProvenanceInfoItemType(uuid));
+		
+		// 5. get attributedTo
+		Iterable<ProvenanceEntity> agents = this.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasAttributedTo, uuid);
+		Iterator<ProvenanceEntity> agentIter = agents.iterator();
+		boolean hasAgent = false;
+		while (agentIter.hasNext()) {
+			ProvenanceEntity agent = agentIter.next();
+			if (!hasAgent)
+				if (ProvenanceGraphAgentNode.class.isInstance(agent)) {
+				item.setWasAttributedTo(this.getAgentItem((ProvenanceGraphAgentNode) agent));
+				hasAgent = true;
+				} else {
+					log.warn("Endnode of ProvenanceEdge with type wasAttributedTo is not of type ProvenanceGraphAgentNode (uuid: " + agent.getEntityUUID() + ")");
+			} else {
+				log.warn("Multiple ProvenanceEdges with type wasAttributedTo from entity with uuid: " + uuid);
+			}
+		}
+		
 		return item;
 	}
+	
+	private AgentItem getAgentItem(ProvenanceGraphAgentNode agent) {
+		return new AgentItem().name(agent.getGraphAgentName()).type(agent.getGraphAgentType().name());
+	}
+
+	private ApiResponseItem getApiResponseItem(String uuid) {
+		ProvenanceEntity entity = this.getByEntityUUID(uuid);
+		ApiResponseItem item = null;
+		if (DatabaseNode.class.isInstance(entity)) {
+			DatabaseNode db = (DatabaseNode) entity;
+			item = new DatabaseInventoryItem().source(db.getSource()).version(db.getSourceVersion());
+		} else if (FileNode.class.isInstance(entity)) {
+			FileNode f = (FileNode) entity;
+			item = new FileInventoryItem().filename(f.getFilename()).fileNodeType(f.getFileNodeType().name()).md5sum(f.getMd5sum());
+		} else if (MappingNode.class.isInstance(entity)) {
+			item = this.networkService.getNetworkInventoryItem(uuid);
+		} else if (PathwayNode.class.isInstance(entity)) {
+			item = this.pathwayService.getPathwayInventoryItem(uuid);
+		} else if (PathwayCollectionNode.class.isInstance(entity)) {
+			PathwayCollectionNode pwc = (PathwayCollectionNode) entity;
+			PathwayCollectionItem pwcItem = new PathwayCollectionItem().name(pwc.getPathwayCollectionName()).description(pwc.getPathwayCollectionDescription());
+			Iterable<ProvenanceEntity> members = this.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.hadMember, entity.getEntityUUID());
+			for (ProvenanceEntity member : members) {
+				pwcItem.addHadMemberItem(member.getEntityUUID());
+			}
+			item = pwcItem;
+		}
+		if (item == null) {
+			item = new ApiResponseItem();
+		}
+		return item;
+	}
+	
+	private String getProvenanceInfoItemType(String uuid) {
+		ProvenanceEntity entity = this.getByEntityUUID(uuid);
+		String type = null;
+		if (DatabaseNode.class.isInstance(entity)) {
+			type = "Database";
+		} else if (FileNode.class.isInstance(entity)) {
+			type = "File";
+		} else if (MappingNode.class.isInstance(entity)) {
+			type = "Network";
+		} else if (PathwayNode.class.isInstance(entity)) {
+			type="Pathway";
+		} else if (PathwayCollectionNode.class.isInstance(entity)) {
+			type = "PathwayCollection";
+		}
+
+		return type;
+	}
+	
+	private Map<String, Object> createProvenanceListEntry(ProvenanceMetaDataNode metaDataNode) {
+		
+		Map<String, Object> provenanceListEntry = new HashMap<>();
+				
+		Map<String, Object> nodeProvenance = metaDataNode.getProvenance();
+		if (nodeProvenance == null) {
+			nodeProvenance = new HashMap<>();
+		}
+		
+		for (ProvenanceMetaDataNode subNode : this.findAllProvenanceSubelements(metaDataNode.getEntityUUID())) {
+			nodeProvenance.putAll(this.createProvenanceListEntry(subNode));
+			//nodeProvenance.put(subNode.getProvenanceName(), this.createProvenanceListEntry(subNode));
+		}
+		provenanceListEntry.put(metaDataNode.getProvenanceName(), nodeProvenance);
+		return provenanceListEntry;
+	}
 }
+
