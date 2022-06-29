@@ -23,7 +23,6 @@ import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.full.SBMLReaction;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
-import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLCompartment;
 import org.sbml4j.model.sbml.SBMLSBaseEntity;
 import org.sbml4j.model.sbml.SBMLSpecies;
@@ -205,7 +204,7 @@ public class PathwayService {
 				pathways = this.pathwayNodeRepository.findAllPathwaysAttributedToUser(user);
 			}
 			for (PathwayNode pathwayNode : pathways) {
-				PathwayInventoryItem item = getPathwayInventoryItem(user, pathwayNode);
+				PathwayInventoryItem item = getPathwayInventoryItem(pathwayNode);
 				pathwayInventoryItemList.add(item);
 			}
 		}
@@ -214,12 +213,22 @@ public class PathwayService {
 	}
 
 	/**
+	 * Get a <a href="#{@link}">{@link PathwayInventoryItem}</a> for a <a href="#{@link}">{@link PathwayNode} for which the entityUUID is provided</a>
+	 * @param PathwayNodeEntityUUID The entityUUID of the PathwayNode
+	 * @return The <a href="#{@link}">{@link PathwayInventoryItem}</a>
+	 */
+	public PathwayInventoryItem getPathwayInventoryItem(String PathwayNodeEntityUUID) {
+		PathwayNode pathway = this.findByEntityUUID(PathwayNodeEntityUUID);
+		return this.getPathwayInventoryItem(pathway);
+	}
+	
+	/**
 	 * Get a <a href="#{@link}">{@link PathwayInventoryItem}</a> for a <a href="#{@link}">{@link PathwayNode}</a>
 	 * @param user The user name as String that the <a href="#{@link}">{@link PathwayNode}</a> is associated with
 	 * @param pathwayNode The <a href="#{@link}">{@link PathwayNode}</a> to get the <a href="#{@link}">{@link PathwayInventoryItem}</a> for
 	 * @return The <a href="#{@link}">{@link PathwayInventoryItem}</a>
 	 */
-	public PathwayInventoryItem getPathwayInventoryItem(String user, PathwayNode pathwayNode) {
+	public PathwayInventoryItem getPathwayInventoryItem(PathwayNode pathwayNode) {
 		PathwayInventoryItem item = new PathwayInventoryItem();
 		item.setUUID(UUID.fromString(pathwayNode.getEntityUUID()));
 		item.setPathwayId(pathwayNode.getPathwayIdString());
