@@ -56,6 +56,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Controller for handling Pathway requests
  * 
@@ -142,16 +145,25 @@ public class PathwaysApiController implements PathwaysApi {
 		this.provenanceGraphService.connect(createKnowledgeGraphActivityNode, userAgentNode,
 				ProvenanceGraphEdgeType.wasAssociatedWith);
 		
-
-		// add prov information
-		Map<String, Object> provenanceAnnotation = new HashMap<>();
-		// call parameters
-		//   body
-		provenanceAnnotation.put("body", pathwayCollectionCreationItem);
-		provenanceAnnotation.put("endpoint.operation", op.getOperation());
-		provenanceAnnotation.put("endpoint.endpoint", endpoint);
 		
-		this.provenanceGraphService.addProvenanceAnnotation(createKnowledgeGraphActivityNode, provenanceAnnotation);
+		Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+		
+		Map<String, Object> endpointMap = new HashMap<>();
+		endpointMap.put("operation", op.getOperation());
+		endpointMap.put("endpoint", endpoint);
+		provenanceAnnotation.put("endpoint",  endpointMap);
+
+		try {
+		//   body
+			Map<String, Object> bodyMap = new HashMap<>();
+			String bodyString = new ObjectMapper().writeValueAsString(pathwayCollectionCreationItem);
+			bodyMap.put("body", bodyString);
+			provenanceAnnotation.put("body", bodyMap);
+		} catch (JsonProcessingException e1) {
+			log.warn("Could not create body-json-string from PathwayCollectionCreationItem: " + pathwayCollectionCreationItem.toString());
+		}
+		
+		this.provenanceGraphService.addProvenanceAnnotationMap(createKnowledgeGraphActivityNode, provenanceAnnotation);
 		
 		
 		List<DatabaseNode> databaseList = this.databaseNodeService.findByPathwayList(pathwayUUIDStrings);

@@ -64,6 +64,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Controller class for all things networks related
  * 
@@ -171,35 +174,35 @@ public class NetworksApiController implements NetworksApi {
 				ProvenanceGraphActivityNode activity = (ProvenanceGraphActivityNode) provEntity;
 				if(activity.getGraphActivityType().equals(ProvenanceGraphActivityType.addJsonAnnotation) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + ProvenanceGraphActivityType.addJsonAnnotation + (derive ? "->" : "|noDerive->") + annotatedNetwork.getMappingName())) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
-					
-					//   annotationItem
-					provenanceAnnotation.put("body", annotationItem.toString());
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
 
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.UUID", uuid);
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-					//   derive
-					provenanceAnnotation.put("params.derived", derive);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("UUID", uuid);
+					paramsMap.put("networkname", networkname);
+					paramsMap.put("derive", derive);
+					paramsMap.put("prefixName", prefixName);
+					provenanceAnnotation.put("params",  paramsMap);	
 					
-					// endpoint info
-					provenanceAnnotation.put("endpoint.operation", Operation.POST);
-					provenanceAnnotation.put("endpoint.endpoint", "/networks/" + uuid + "/annotation");
-				
-					//   inventoryItem
-					//provenanceAnnotation.put("inventoryItem", item);
-									
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
 					
+					provenanceAnnotation.put("endpoint",  endpointMap);
+					
+					Map<String, Object> bodyMap = new HashMap<>();
+					String bodyString = new ObjectMapper().writeValueAsString(annotationItem);
+					bodyMap.put("body", bodyString);
+					provenanceAnnotation.put("body", bodyMap);
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
+										
 				}
 			} catch (ClassCastException e) {
 				e.printStackTrace();
 				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			} catch (JsonProcessingException e1) {
+				log.warn("Could not create body-json-string from AnnotationItem: " + annotationItem.toString());
 			}
 		}
 		
@@ -241,17 +244,20 @@ public class NetworksApiController implements NetworksApi {
 		}
 		// 4. add the data to the network
 		MappingNode newNetwork;
-		String bodyString = "";
+		String bodyString = "{\nFiles:[";
 		
 		try {
 			boolean first = true;
 			for (MultipartFile file : data) {
 				if (!first) bodyString.concat(", ");
+				bodyString.concat("\n{\nFilename:");
 				bodyString.concat(file.getOriginalFilename());
-				bodyString.concat("(");
+				bodyString.concat(",\n");
+				bodyString.concat("MD5Sum:");
 				bodyString.concat(this.fileCheckService.getMD5Sum(file));
-				bodyString.concat(")");
+				bodyString.concat("\n}");
 			}
+			bodyString.concat("\n]");
 			newNetwork = this.networkService.addCsvDataToNetwork(user != null ? user.strip() : networkUser, data, type, uuid, networkname, prefixName, derive);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
@@ -280,30 +286,33 @@ public class NetworksApiController implements NetworksApi {
 				
 				if(activity.getGraphActivityType().equals(activityType) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + (derive ? "->" : "|noDerive->") + newNetworkMappingName)) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
 					
-					//   body
-					provenanceAnnotation.put("body", bodyString);
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.UUID", uuid);
-					// annotationType
-					provenanceAnnotation.put("params.type", type);
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-					//   derive
-					provenanceAnnotation.put("params.derived", derive);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
 					
-					//   inventoryItem
-					//provenanceAnnotation.put("inventoryItem", item);
-					// endpoint info
-					provenanceAnnotation.put("endpoint.operation", op.getOperation());
-					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("UUID", uuid);
+					paramsMap.put("networkname", networkname);
+					paramsMap.put("derive", derive);
+					paramsMap.put("prefixName", prefixName);
+					paramsMap.put("type", type);
+					provenanceAnnotation.put("params",  paramsMap);	
 					
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
+					
+					provenanceAnnotation.put("endpoint",  endpointMap);
+					
+					Map<String, Object> bodyMap = new HashMap<>();
+					
+					bodyMap.put("body", bodyString);
+					provenanceAnnotation.put("body", bodyMap);
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
+					
+					
 					
 				}
 			} catch (ClassCastException e) {
@@ -374,28 +383,26 @@ public class NetworksApiController implements NetworksApi {
 				
 				if(activity.getGraphActivityType().equals(activityType) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + (derive ? "->" : "|noDerive->") + newNetworkMappingName)) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
+
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("UUID", uuid);
+					paramsMap.put("networkname", networkname);
+					paramsMap.put("derive", derive);
+					if (prefixName != null) paramsMap.put("prefixName", prefixName);
+					paramsMap.put("myDrugURL", myDrugURL);
+					provenanceAnnotation.put("params",  paramsMap);	
 					
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.UUID", uuid);
-					// annotationType
-					provenanceAnnotation.put("params.myDrugURL", myDrugURL);
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
 					
-					//   derive
-					provenanceAnnotation.put("params.derived", derive);
-				
-					//   inventoryItem
-					//provenanceAnnotation.put("inventoryItem", item);
-					provenanceAnnotation.put("endpoint.operation", op.getOperation());
-					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					provenanceAnnotation.put("endpoint",  endpointMap);
 					
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
 					
 				}
 			} catch (ClassCastException e) {
@@ -475,24 +482,26 @@ public class NetworksApiController implements NetworksApi {
 				
 				if(activity.getGraphActivityType().equals(activityType) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType +  "->" + newNetworkMappingName)) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
 
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.parentUUID", uuid);
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("parentUUID", uuid);
+					paramsMap.put("networkname", networkname);
+					if (prefixName != null) paramsMap.put("prefixName", prefixName);
+					if (prefixName != null) paramsMap.put("suffixName", suffixName);
+
+					provenanceAnnotation.put("params",  paramsMap);	
 					
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-					//suffixName
-					provenanceAnnotation.put("params.suffixName", suffixName);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
 					
-					provenanceAnnotation.put("endpoint.operation", op.getOperation());
-					provenanceAnnotation.put("endpoint.endpoint", endpoint);
-									
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					provenanceAnnotation.put("endpoint",  endpointMap);
+
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
 					
 				}
 			} catch (ClassCastException e) {
@@ -617,29 +626,36 @@ public class NetworksApiController implements NetworksApi {
 				
 				if(activity.getGraphActivityType().equals(activityType) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + "->" + newNetworkMappingName)) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
-					//   filterItem
-					provenanceAnnotation.put("body", filterOptions.toString());
-					//   uuid
-					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.UUID", uuid);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
 
-					provenanceAnnotation.put("endpoint.operation", op.getOperation());
-					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("UUID", uuid);
+					paramsMap.put("networkname", networkname);
+					if (prefixName != null) paramsMap.put("prefixName", prefixName);
+
+					provenanceAnnotation.put("params",  paramsMap);	
 					
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
+					
+					provenanceAnnotation.put("endpoint",  endpointMap);
+					
+					Map<String, Object> bodyMap = new HashMap<>();
+					String bodyString = new ObjectMapper().writeValueAsString(filterOptions);
+					bodyMap.put("body", bodyString);
+					provenanceAnnotation.put("body", bodyMap);
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
 					
 				}
 			} catch (ClassCastException e) {
 				e.printStackTrace();
 				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			} catch (JsonProcessingException e) {
+				log.warn("Could not create body-json-string from FilterOptions: " + filterOptions.toString());
 			}
 		}
 		
@@ -927,7 +943,7 @@ public class NetworksApiController implements NetworksApi {
 		String newNetworkEntityUUID = contextNetwork.getEntityUUID();
 		String newNetworkMappingName = contextNetwork.getMappingName();
 		ProvenanceGraphActivityType activityType = ProvenanceGraphActivityType.createContext;
-		String bodyString = nodeList.toString();
+		
 		Iterable<ProvenanceEntity> allWasGeneratedByProvenanceEntityNodes = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, newNetworkEntityUUID);
 		for (ProvenanceEntity provEntity : allWasGeneratedByProvenanceEntityNodes) {
 			try {
@@ -935,45 +951,42 @@ public class NetworksApiController implements NetworksApi {
 				
 				if(activity.getGraphActivityType().equals(activityType) 
 						&& activity.getGraphActivityName().equals(oldMappingName + "-" + activityType + "->" + newNetworkMappingName)) {
-					// Assemble information to store for the provenance
-					Map<String, Object> provenanceAnnotation = new HashMap<>();
 					
-					//   body
-					provenanceAnnotation.put("body", bodyString);
-					//   uuid
-					provenanceAnnotation.put("networkUUID", newNetworkEntityUUID);
-					// call parameters
-					//   base uuid
-					provenanceAnnotation.put("params.UUID", uuid);
-					// minSize
-					provenanceAnnotation.put("params.minSize", minDepth);
-					// maxSize
-					provenanceAnnotation.put("params.maxSize", maxDepth);
-					// terminateAt
-					provenanceAnnotation.put("params.terminateAt", terminateAtString);
-					// direction
-					provenanceAnnotation.put("params.direction", directionString);
-					// networkname
-					provenanceAnnotation.put("params.networkname", networkname);
-					
-					
-					// weightproperty
-					if (weightproperty != null) {
-						provenanceAnnotation.put("params.weightproperty", weightproperty);
-					}
-					//   prefixName
-					if (prefixName != null) provenanceAnnotation.put("params.prefixName", prefixName);
-					
+					// Add provenance annotation
+					Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
 
-					provenanceAnnotation.put("endpoint.operation", op.getOperation());
-					provenanceAnnotation.put("endpoint.endpoint", endpoint);
+					Map<String, Object> paramsMap = new HashMap<>();
+					paramsMap.put("user", user);
+					paramsMap.put("UUID", uuid);
+					if (minSize != null) paramsMap.put("minSize", minSize);
+					if (maxSize != null) paramsMap.put("maxSize", maxSize);
+					if (terminateAt != null) paramsMap.put("terminateAt", terminateAt);
+					if (direction != null) paramsMap.put("direction", direction);
+					if (weightproperty != null) paramsMap.put("weightproperty", weightproperty);
 					
-					this.provenanceGraphService.addProvenanceAnnotation(activity, provenanceAnnotation);
+					paramsMap.put("networkname", networkname);
+					if (prefixName != null) paramsMap.put("prefixName", prefixName);
+
+					provenanceAnnotation.put("params",  paramsMap);	
+					
+					Map<String, Object> endpointMap = new HashMap<>();
+					endpointMap.put("operation", op.getOperation());
+					endpointMap.put("endpoint", endpoint);
+					
+					provenanceAnnotation.put("endpoint",  endpointMap);
+					
+					Map<String, Object> bodyMap = new HashMap<>();
+					String bodyString = new ObjectMapper().writeValueAsString(nodeList);
+					bodyMap.put("body", bodyString);
+					provenanceAnnotation.put("body", bodyMap);
+					this.provenanceGraphService.addProvenanceAnnotationMap(activity, provenanceAnnotation);
 					
 				}
 			} catch (ClassCastException e) {
 				e.printStackTrace();
 				log.warn("Found ProvenanceEntity connected by wasGeneratedBy which is not a ProvenanceGraphActivityNode. The entityUUID is: " + provEntity.getEntityUUID());
+			} catch (JsonProcessingException e) {
+				log.warn("Could not create body-json-string from NodeList: " + nodeList.toString());
 			}
 		}
 		

@@ -289,7 +289,7 @@ public class SbmlApiController implements SbmlApi {
 					}
 					if(errorInPathwaySearch) continue;
 					if(foundExistingPathway) {
-						pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, existingPathwayToSBMLFile));
+						pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(existingPathwayToSBMLFile));
 						continue;
 					}
 				} catch (ClassCastException e1) {
@@ -391,7 +391,7 @@ public class SbmlApiController implements SbmlApi {
 				this.provenanceGraphService.connect(database, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
 				
 				this.provenanceGraphService.connect(pathwayNode, sbmlFileNode, ProvenanceGraphEdgeType.wasDerivedFrom);
-				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(user, pathwayNode));
+				pathwayInventoryList.add(this.pathwayService.getPathwayInventoryItem(pathwayNode));
 				//Instant postMetadataFinished = Instant.now();
 				
 				//StringBuilder sb = new StringBuilder();
