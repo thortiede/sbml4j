@@ -16,10 +16,12 @@ package org.sbml4j.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.StreamSupport;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -36,9 +38,9 @@ import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.sbml4j.model.api.network.NetworkOptions;
 import org.sbml4j.model.api.network.NodeList;
 import org.sbml4j.model.api.provenance.ProvenanceInfoItem;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
-import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
@@ -977,5 +979,46 @@ public class NetworksApiController implements NetworksApi {
 		
 		// 6. Return the InventoryItem of the new Network
 		return new ResponseEntity<NetworkInventoryItem>(this.networkService.getNetworkInventoryItem(contextNetwork.getEntityUUID()), HttpStatus.CREATED);
+	}
+
+	@Override
+	public ResponseEntity<ProvenanceInfoItem> putProvenanceInformation(UUID UUID, @NotNull @Valid String name,
+			@Valid Map<String, Object> requestBody, String user) {
+
+		String uuid = UUID.toString();
+		Operation op = Operation.PUT;
+		String endpoint = "/networks/" + uuid + "/prov";
+		
+		log.info("Serving " + op.getOperation() + " " + endpoint + (user != null ? " for user " + user : ""));
+		
+		// 1. Does the network exist?
+		MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(uuid);
+		if (mappingForUUID == null) {
+			return ResponseEntity.notFound().build();
+		}
+		
+		// 2. Is the given user or the public user authorized for this network?
+		String networkUser = null;
+		try {
+			networkUser = this.configService.getUserNameAttributedToNetwork(uuid, user);
+		} catch (UserUnauthorizedException e) {
+			return ResponseEntity.badRequest()
+					.header("reason", e.getMessage())
+					.build();
+		}
+		
+		Map<String, Map<String, Object>> provenanceAnnotationMap = new HashMap<>();
+		provenanceAnnotationMap.put(name, requestBody);
+		
+		// find latest activity for network and add the annotation to it
+		Iterable<ProvenanceEntity> activities = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, uuid);
+		ProvenanceEntity lastActivity = StreamSupport.stream(activities.spliterator(), false).max(Comparator.comparing(ProvenanceEntity::getCreateDate)).get();
+		
+		
+		if (!this.provenanceGraphService.addProvenanceAnnotationMap(lastActivity, provenanceAnnotationMap)) {
+			return ResponseEntity.badRequest().header("reason", "Unable to add provenance annotation to mapping").build(); // TODO: Give better reason
+		} else {
+			return this.getProvenanceInformation(UUID, networkUser);
+		}
 	}
 }
