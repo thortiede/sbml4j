@@ -13,10 +13,14 @@
  */
 package org.sbml4j.model.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 /**
  * @author Thorsten Tiede
  *
  */
+@JsonInclude(Include.NON_NULL)
 public class ApiResponseItem {
 
 }

@@ -2,7 +2,9 @@ package org.sbml4j.model.api.provenance;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -12,6 +14,7 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2022-04-02T23:09:46.842042+02:00[Europe/Berlin]")
+@JsonInclude(Include.NON_NULL)
 public class AgentItem {
   @JsonProperty("name") private String name;
 
