@@ -195,8 +195,7 @@ public class NetworkService {
 			log.info("Added annotation to " + annotatedSpecies.size() + " nodes in network with uuid: " + annotatedNetworkEntityUUID + " from file " + file.getOriginalFilename());
 			this.flatSpeciesService.save(annotatedSpecies.values(), 0);
 		}
-		this.updateMappingNodeMetadata(newNetwork);
-		return newNetwork;
+		return this.updateMappingNodeMetadata(newNetwork);
 	}
 	
 	
@@ -526,16 +525,7 @@ public class NetworkService {
 		connectContains(newMapping, newFlatEdges, newUnonnectedFlatSpecies);
 		
 		// update MappingNode
-		newMapping.setMappingNodeSymbols(parent.getMappingNodeSymbols());
-		newMapping.setMappingNodeTypes(parent.getMappingNodeTypes());
-		newMapping.setMappingRelationSymbols(parent.getMappingRelationSymbols());
-		newMapping.setMappingRelationTypes(parent.getMappingRelationTypes());
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
-		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
-		newMapping.setActive(true);
-		return this.mappingNodeService.save(newMapping, 0);
+		return this.updateMappingNodeMetadata(newMapping);
 	}
 	
 	/**
@@ -559,9 +549,7 @@ public class NetworkService {
 		log.info("Writing Provenance Information of new mapping..");
 		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
 		log.info("Writing metadata..");
-		updateMappingNodeMetadata(mappingNodeForFlatEdges);
-		log.info("Activating newly created mapping");
-		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
+		return updateMappingNodeMetadata(mappingNodeForFlatEdges);
 	}
 	
 	
@@ -590,9 +578,7 @@ public class NetworkService {
 		log.info("Writing Provenance Information of new mapping..");
 		connectContainsFlatEdgeSpecies(mappingNodeForFlatEdges, newFlatEdges);
 		log.info("Writing metadata..");
-		updateMappingNodeMetadata(mappingNodeForFlatEdges);
-		log.info("Activating newly created mapping");
-		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
+		return updateMappingNodeMetadata(mappingNodeForFlatEdges);
 	}
 
 	
@@ -884,18 +870,12 @@ public class NetworkService {
 		
 		
 		// update MappingNode
-		newMapping.addWarehouseAnnotation("creationendtime", Instant.now().toString());
-		String newMappingEntityUUID = newMapping.getEntityUUID();
-		newMapping.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(newMappingEntityUUID)));
-		newMapping.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(newMappingEntityUUID)));
-		newMapping.setMappingNodeSymbols(this.getNetworkNodeSymbols(newMappingEntityUUID));
-		newMapping.setMappingNodeTypes(this.getNetworkNodeTypes(newMappingEntityUUID));
-		newMapping.setMappingRelationSymbols(this.getNetworkRelationSymbols(newMappingEntityUUID));
-		newMapping.setMappingRelationTypes(this.getNetworkRelationTypes(newMappingEntityUUID));
-		newMapping.setActive(true);
-		return this.mappingNodeService.save(newMapping, 0);
+		return this.updateMappingNodeMetadata(newMapping);
 	}
 	
+	
+
+
 	/**
 	 * Finds the entityUUID of the <a href="#{@link}">{@link FlatSpecies}</a> with geneSymbol in network.
 	 * Only returns a entityUUID when there is a <a href="#{@link}">{@link FlatSpecies}</a> in network that 
@@ -1210,7 +1190,22 @@ public class NetworkService {
 		return (int) StreamSupport.stream(this.getNetworkRelations(networkEntityUUID).spliterator(), false).count(); 
 	}
 		
-	
+	/**
+	 * Get the number of reaction nodes in the Network with provided networkEntityUUID
+	 * @param networkEntityUUID The entityUUID of the network to count the reactions in.
+	 * @return Interger containing the number of reactions
+	 */
+	public int getNumberOfNetworkReactions(String networkEntityUUID) {
+		int n = 0;
+		Iterable<FlatSpecies> networkNodes = getNetworkNodes(networkEntityUUID);
+		for (FlatSpecies node : networkNodes) {
+			if (node.getLabels() != null && node.getLabels().contains("FlatReaction")) {
+				n++;
+			}
+		}
+		return n;
+	}
+
 	/**
 	 * Create a NetworkInventoryItem for the network represented by the <a href="#{@link}">{@link MappingNode}</a> with entityUUID
 	 * 
@@ -1227,7 +1222,7 @@ public class NetworkService {
 	 * Recalculate the metadata-annotations of a <a href="#{@link}">{@link MappingNode}</a>
 	 * @param mappingNodeForFlatEdges The <a href="#{@link}">{@link MappingNode}</a> to update
 	 */
-	public void updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
+	public MappingNode updateMappingNodeMetadata(MappingNode mappingNodeForFlatEdges) {
 		// updateMappingNode
 		log.info("Updating mappingNode metadata");
 		this.session.clear();
@@ -1239,8 +1234,10 @@ public class NetworkService {
 		mappingNodeForFlatEdges.addWarehouseAnnotation("creationendtime", Instant.now().toString());
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofnodes", String.valueOf(this.getNumberOfNetworkNodes(networkEntityUUID)));
 		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofrelations", String.valueOf(this.getNumberOfNetworkRelations(networkEntityUUID)));
+		mappingNodeForFlatEdges.addWarehouseAnnotation("numberofreactions", String.valueOf(this.getNumberOfNetworkReactions(networkEntityUUID)));
+		log.info("Activating new Network");
 		mappingNodeForFlatEdges.setActive(true);
-		this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
+		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
 	/**
