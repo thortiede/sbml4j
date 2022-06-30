@@ -13,14 +13,24 @@
  */
 package org.sbml4j.service;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.flat.FlatEdge;
@@ -29,6 +39,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 @Service
 public class GraphMLServiceImpl implements GraphMLService {
@@ -379,5 +394,43 @@ public class GraphMLServiceImpl implements GraphMLService {
 		}
 
 		edgesWithAnnotation.add(("\t\t</edge>\n").getBytes());
+	}
+
+	@Override
+	public List<FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
+		List<FlatSpecies> graphMLSpecies = new ArrayList<>();
+		/**FileReader reader = new FileReader(graphMLFile.getResource().getFile());
+		BufferedReader bf = new BufferedReader(reader);
+		String line;
+		while ((line = bf.readLine()) != null) {
+			line = line.trim();
+			// Header Lines (key)
+			
+			// annotations
+			
+			// Nodes -> Species
+			if (line.startsWith("<graph")) {
+				// beginning of the graph
+			}
+		}
+		*/
+		DocumentBuilderFactory factory =
+				DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		ByteArrayInputStream input = new ByteArrayInputStream(
+				graphMLFile.getBytes());
+		Document document = builder.parse(input);
+		
+		Element root = document.getDocumentElement();
+		NodeList nl = root.getChildNodes();
+		int nchild = nl.getLength();
+		
+		return graphMLSpecies;
+	}
+
+	@Override
+	public List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFile, List<FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
