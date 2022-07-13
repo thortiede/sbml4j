@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @EnableConfigurationProperties({OutputConfigProperties.class, NetworkConfigProperties.class, AnnotationConfigProperties.class, 
 	ExternalResourcesProperties.class, MdAndersonProperties.class, BiologicalQualifierProperties.class, KEGGDatabaseProperties.class,
-	ContextConfigProperties.class, CsvConfigProperties.class, GeneralConfigProperties.class})
+	ContextConfigProperties.class, CsvConfigProperties.class, GeneralConfigProperties.class, GraphMLProperties.class})
 public class SBML4jConfig {
 	@Autowired
 	private OutputConfigProperties outputConfigProperties;
@@ -52,6 +52,9 @@ public class SBML4jConfig {
 	
 	@Autowired
 	private GeneralConfigProperties generalConfigProperties;
+	
+	@Autowired
+	private GraphMLProperties graphMLProperties;
 	
 	public OutputConfigProperties getOutputConfigProperties() {
 		return outputConfigProperties;
@@ -107,5 +110,13 @@ public class SBML4jConfig {
 
 	public void setGeneralConfigProperties(GeneralConfigProperties generalConfigProperties) {
 		this.generalConfigProperties = generalConfigProperties;
+	}
+
+	public GraphMLProperties getGraphMLProperties() {
+		return graphMLProperties;
+	}
+
+	public void setGraphMLProperties(GraphMLProperties graphMLProperties) {
+		this.graphMLProperties = graphMLProperties;
 	}
 }

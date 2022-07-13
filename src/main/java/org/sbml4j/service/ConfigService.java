@@ -248,4 +248,43 @@ public class ConfigService {
 	}
 	
 	
+	/*********** GraphML ***************************************************************************/
+	
+	
+	public boolean isSetGraphMLSpeciesSymbolKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getSpeciesSymbolKey() != null;
+	}
+	
+	/**
+	 * Get the configured name for the symbol key
+	 * @return the name of the key that denotes the symbol of nodes in the graphml as String
+	 */
+	public String getGraphMLSpeciesSymbolKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getSpeciesSymbolKey();
+	}
+	
+	
+	public boolean isSetGraphMLRelationShipSymbolKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getRelationshipSymbolKey() != null;
+	}
+	/**
+	 * Get the configured name for the relationship symbol key
+	 * @return the name of the key that denotes the symbol of edges in the graphml as String
+	 */
+	public String getGraphMLRelationshipSymbolKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getRelationshipSymbolKey();
+	}
+	
+	public boolean isSetGraphMLSboTermKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getSboStringKey() != null;
+	}
+	
+	/**
+	 * Get the configured name for the sbo term key
+	 * @return the name of the key that denotes the sbo term in the graphml as String
+	 */
+	public String getGraphMLSboTermKey() {
+		return this.sbml4jConfig.getGraphMLProperties().getSboStringKey();
+	}
+	
 }
