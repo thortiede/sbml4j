@@ -32,9 +32,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.sbml4j.Exception.ConfigException;
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.service.base.GraphBaseEntityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,13 +45,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 @Service
 public class GraphMLServiceImpl implements GraphMLService {
+	@Autowired
+	FlatEdgeService flatEdgeService;
 
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	@Autowired
+	GraphBaseEntityService graphBaseEntityService;
+	
+	@Autowired
+	ConfigService configService;
+
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
 	SBML4jConfig sbml4jConfig;
@@ -156,7 +169,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 			
 			return stream;
 		}catch (IOException e) {
-			logger.error("Failed to write GraphML ByteArrayOutputStream with" + e.getMessage());
+			log.error("Failed to write GraphML ByteArrayOutputStream with" + e.getMessage());
 			return new ByteArrayOutputStream(); // TODO Evaluate whether returning an empty stream here is correct or desired
 		}
 	}
@@ -396,9 +409,78 @@ public class GraphMLServiceImpl implements GraphMLService {
 		edgesWithAnnotation.add(("\t\t</edge>\n").getBytes());
 	}
 
+	public boolean getIsNetworkDirectedFromGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
+		DocumentBuilderFactory factory =
+				DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		ByteArrayInputStream input = new ByteArrayInputStream(
+				graphMLFile.getBytes());
+		Document document = builder.parse(input);
+		
+		Element root = document.getDocumentElement();
+		NodeList nl = root.getChildNodes();
+		int nchild = nl.getLength();
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. graph
+			if (nodeName.equals("graph")) {
+				if (n.hasAttributes()) {			
+					NamedNodeMap nnm = n.getAttributes();
+					NodeList edgedefaultNodeList = nnm.getNamedItem("edgedefault").getChildNodes();
+					if (edgedefaultNodeList.getLength() < 1) {
+						log.error("Graph in graphML file " + graphMLFile.getOriginalFilename() + " does not have expected child node at graph attribute 'edgedefault'");
+					} else {
+						String directedValue = edgedefaultNodeList.item(0).getNodeValue();
+						if (directedValue != null && 
+								directedValue.equals("directed")) {
+							return true;
+						} else {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		// if we did not return in the loop, we did not find a edgedefault attribute of the graph
+		// TODO: Raise special error.
+		return false;
+	}
+	
+	public String getGraphIdFromGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
+		DocumentBuilderFactory factory =
+				DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		ByteArrayInputStream input = new ByteArrayInputStream(
+				graphMLFile.getBytes());
+		Document document = builder.parse(input);
+		
+		Element root = document.getDocumentElement();
+		NodeList nl = root.getChildNodes();
+		int nchild = nl.getLength();
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. graph
+			if (nodeName.equals("graph")) {
+				if (n.hasAttributes()) {			
+					NamedNodeMap nnm = n.getAttributes();
+					NodeList edgedefaultNodeList = nnm.getNamedItem("id").getChildNodes();
+					if (edgedefaultNodeList.getLength() < 1) {
+						log.error("Graph in graphML file " + graphMLFile.getOriginalFilename() + " does not have expected child node at graph attribute 'id'");
+					} else {
+						return edgedefaultNodeList.item(0).getNodeValue();
+					}
+				}
+			}
+		}
+		// if we did not return in the loop, we did not find an id attribute of the graph
+		// TODO: Raise special error.
+		return "G";
+	}
+	
+	
 	@Override
-	public List<FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
-		List<FlatSpecies> graphMLSpecies = new ArrayList<>();
+	public Map<String, FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException {
+		Map<String, FlatSpecies> graphMLSpecies = new HashMap<>();
 		/**FileReader reader = new FileReader(graphMLFile.getResource().getFile());
 		BufferedReader bf = new BufferedReader(reader);
 		String line;
@@ -414,6 +496,13 @@ public class GraphMLServiceImpl implements GraphMLService {
 			}
 		}
 		*/
+		if (!this.configService.isSetGraphMLSpeciesSymbolKey()) {
+			log.error("Key for matching Species symbol from GraphML keys has not been set. Please set the 'sbml4j.graphml.speciesSymbolKey' config option to a key in the graphml, or provide a symbol via the API parameter 'symbolKey'!");
+			throw new ConfigException("Key for matching Species symbol from GraphML keys has not been set. Please set the 'sbml4j.graphml.speciesSymbolKey' config option to a key in the graphml, or provide a symbol via the API parameter 'symbolKey'!");
+		}
+		String symbolKey = this.configService.getGraphMLSpeciesSymbolKey();
+		boolean isSetGraphMLSboTermKey = this.configService.isSetGraphMLSboTermKey();
+		
 		DocumentBuilderFactory factory =
 				DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -421,16 +510,203 @@ public class GraphMLServiceImpl implements GraphMLService {
 				graphMLFile.getBytes());
 		Document document = builder.parse(input);
 		
+		Map<String, ImmutablePair<String, String>> nodeAnnotationMap = new HashMap<>();
+		
 		Element root = document.getDocumentElement();
 		NodeList nl = root.getChildNodes();
 		int nchild = nl.getLength();
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. key
+			if (nodeName.equals("key")) {
+				Map<String,String> annotationKeyMap = new HashMap<>();
+
+				if (n.hasAttributes()) {
+					
+					NamedNodeMap nnm = n.getAttributes();
+					for (int j = 0; j!= nnm.getLength(); j++) {
+						Node annotationItem = nnm.item(j);
+						String annotationName = annotationItem.getNodeName();
+						String annotationValue = annotationItem.hasChildNodes() ? annotationItem.getFirstChild().getNodeValue() : null;
+						if (annotationValue == null) {
+							log.warn("Annotation key '" + annotationName + "' has no value associated with it! Ignoring annotation for that key");
+						}
+						annotationKeyMap.put(annotationName, annotationValue);
+					}
+					// attr.name needs to be the name of the annotation on the FlatSpecies element
+					// attr.type denotes the type of the element on the FlatSpecies element
+					// id denotes the data-Node-child-node-value_of_key_node to match the value of the data entry to the correct FlatSpecies annotation element
+					// the for-value can be used to distinguish between node and edges should they have the same annotation name -> hence, keep two separate lists
+					if (annotationKeyMap.containsKey("for")) {
+						if (annotationKeyMap.get("for").equals("node")) {
+							// this is a node annotation element
+							ImmutablePair<String, String> pair = new ImmutablePair<>(annotationKeyMap.get("attr.name"), annotationKeyMap.get("attr.type"));
+							nodeAnnotationMap.put(annotationKeyMap.get("id"), pair);
+						}
+					}
+				}
+			}
+		}
+		// now I have all keys for the annotation and can start to create the FlatSpecies
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. key
+			if (nodeName.equals("graph")) {
+				// the children of graph are either nodes or edges
+				// process the nodes here
+				if (!n.hasChildNodes()) {
+					log.error("Graph element in the GraphML file does not have children to process. Is the network empty? Not creating network.");
+				}
+				NodeList graphChildren = n.getChildNodes();
+				for (int j = 0; j != graphChildren.getLength(); j ++) {
+					Node currentChild = graphChildren.item(j);
+					if (currentChild.getNodeName().equals("node")) {
+						log.debug("Creating FlatSpecies");
+						FlatSpecies nodeFlatSpecies = new FlatSpecies();
+						this.graphBaseEntityService.setGraphBaseEntityProperties(nodeFlatSpecies);
+						String graphML_ID = currentChild.getAttributes().getNamedItem("id").getNodeValue();
+						this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, "graphML_ID", "string", 
+								graphML_ID, false);
+						NodeList nodeChildren = currentChild.getChildNodes();
+						for (int k = 0; k != nodeChildren.getLength(); k++) {
+							Node dataNode = nodeChildren.item(k);
+							if (dataNode.getNodeName().equals("data")) {
+								// this is an annotation
+								String speciesAnnotationName = nodeAnnotationMap.get(dataNode.getAttributes().getNamedItem("key").getNodeValue()).getLeft(); // name
+								
+								String speciesAnnotationType = nodeAnnotationMap.get(dataNode.getAttributes().getNamedItem("key").getNodeValue()).getRight();
+								String speciesAnnotationValue = dataNode.getFirstChild().getNodeValue(); // 8644
+								if (speciesAnnotationName.equals(symbolKey)) {
+									nodeFlatSpecies.setSymbol(speciesAnnotationValue);
+								} else if(isSetGraphMLSboTermKey && speciesAnnotationName.equals(this.configService.getGraphMLSboTermKey())) {
+									nodeFlatSpecies.setSboTerm(speciesAnnotationValue);
+								} else {
+									this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, speciesAnnotationName, speciesAnnotationType, speciesAnnotationValue, false);
+								}
+							}
+						}
+						graphMLSpecies.put(graphML_ID, nodeFlatSpecies);
+						log.debug("Done");
+					}
+				}
+			}
+		}
 		
 		return graphMLSpecies;
 	}
 
 	@Override
-	public List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFile, List<FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException {
-		// TODO Auto-generated method stub
-		return null;
+	public List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFile, Map<String, FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException {
+		
+		List<FlatEdge> graphMLEdges = new ArrayList<>();
+		boolean isSetGraphMLSboTermKey = this.configService.isSetGraphMLSboTermKey();
+		DocumentBuilderFactory factory =
+				DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		ByteArrayInputStream input = new ByteArrayInputStream(
+				graphMLFile.getBytes());
+		Document document = builder.parse(input);
+		
+		Map<String, ImmutablePair<String, String>> edgeAnnotationMap = new HashMap<>();
+		
+		boolean isSetSymbolKey = this.configService.isSetGraphMLRelationShipSymbolKey();
+		String symbolKey = this.configService.getGraphMLRelationshipSymbolKey();
+		
+		Element root = document.getDocumentElement();
+		NodeList nl = root.getChildNodes();
+		int nchild = nl.getLength();
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. key
+			if (nodeName.equals("key")) {
+				Map<String,String> annotationKeyMap = new HashMap<>();
+
+				if (n.hasAttributes()) {
+					
+					NamedNodeMap nnm = n.getAttributes();
+					for (int j = 0; j!= nnm.getLength(); j++) {
+						Node annotationItem = nnm.item(j);
+						String annotationName = annotationItem.getNodeName();
+						String annotationValue = annotationItem.hasChildNodes() ? annotationItem.getFirstChild().getNodeValue() : null;
+						if (annotationValue == null) {
+							log.warn("Annotation key '" + annotationName + "' has no value associated with it! Ignoring annotation for that key");
+						}
+						annotationKeyMap.put(annotationName, annotationValue);
+					}
+					// attr.name needs to be the name of the annotation on the FlatSpecies element
+					// attr.type denotes the type of the element on the FlatSpecies element
+					// id denotes the data-Node-child-node-value_of_key_node to match the value of the data entry to the correct FlatSpecies annotation element
+					// the for-value can be used to distinguish between node and edges should they have the same annotation name -> hence, keep two separate lists
+					if (annotationKeyMap.containsKey("for")) {
+						if (annotationKeyMap.get("for").equals("edge")) {
+							ImmutablePair<String, String> pair = new ImmutablePair<>(annotationKeyMap.get("attr.name"), annotationKeyMap.get("attr.type"));
+							edgeAnnotationMap.put(annotationKeyMap.get("id"), pair);
+						}
+					}
+				}
+			}
+		}
+		// now I have all keys for the annotation and can start to create the FlatEdges
+		for (int i = 0; i != nchild; i++) {
+			Node n = nl.item(i);
+			String nodeName = n.getNodeName(); // i.e. key
+			if (nodeName.equals("graph")) {
+				// the children of graph are either nodes or edges
+				// process the edges here
+				if (!n.hasChildNodes()) {
+					log.error("Graph element in the GraphML file does not have children to process. Is the network empty? Not creating network.");
+				}
+				NodeList graphChildren = n.getChildNodes();
+				for (int j = 0; j != graphChildren.getLength(); j ++) {
+				
+					Node currentChild = graphChildren.item(j);
+					if (currentChild.getNodeName().equals("edge")) {
+						log.debug("Creating FlatEdge");
+						FlatEdge edge;
+						String sourceNodeId = currentChild.getAttributes().getNamedItem("source").getNodeValue();
+						String targetNodeId = currentChild.getAttributes().getNamedItem("target").getNodeValue();
+						boolean hasSBOTerm = false;
+						String sboTerm = null;
+						boolean hasSymbol = false;
+						String symbol = null;
+						Map<String, ImmutablePair<String,String>> annotationValuesMap = new HashMap<>();
+						NodeList nodeChildren = currentChild.getChildNodes();
+						for (int k = 0; k != nodeChildren.getLength(); k++) {
+							Node dataNode = nodeChildren.item(k);
+							if (dataNode.getNodeName().equals("data")) {
+								// this is an annotation
+								String edgeAnnotationName = edgeAnnotationMap.get(dataNode.getAttributes().getNamedItem("key").getNodeValue()).getLeft(); // name
+								
+								String edgeAnnotationType = edgeAnnotationMap.get(dataNode.getAttributes().getNamedItem("key").getNodeValue()).getRight();
+								String edgeAnnotationValue = dataNode.getFirstChild().getNodeValue(); // 8644
+								
+								if(isSetGraphMLSboTermKey && edgeAnnotationName.equals(this.configService.getGraphMLSboTermKey())) {
+									hasSBOTerm = true;
+									sboTerm = edgeAnnotationValue;
+								} else if (isSetSymbolKey && edgeAnnotationName.equals(symbolKey)){
+									hasSymbol = true;
+									symbol = edgeAnnotationValue;
+								} else {
+									annotationValuesMap.put(edgeAnnotationName, new ImmutablePair<>(edgeAnnotationType, edgeAnnotationValue));
+								}
+							}
+						}
+						// now create the FlatEdge
+						edge = this.flatEdgeService.createFlatEdge(hasSBOTerm ? sboTerm : "unknown");
+						this.graphBaseEntityService.setGraphBaseEntityProperties(edge);
+						for (String annotationName : annotationValuesMap.keySet()) {
+							this.graphBaseEntityService.addAnnotation(edge, annotationName, 
+									annotationValuesMap.get(annotationName).getLeft(), annotationValuesMap.get(annotationName).getRight(), true);
+						}
+						if (hasSymbol) edge.setSymbol(symbol);
+						edge.setInputFlatSpecies(speciesOfGraphML.get(sourceNodeId));
+						edge.setOutputFlatSpecies(speciesOfGraphML.get(targetNodeId));
+						graphMLEdges.add(edge);
+						log.debug("Done");
+					}
+				}
+			}
+		}
+		return graphMLEdges;
 	}
 }

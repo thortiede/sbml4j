@@ -18,9 +18,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.sbml4j.Exception.ConfigException;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,9 +35,9 @@ public interface GraphMLService {
 	ByteArrayOutputStream getGraphMLForFlatEdgesAndUnconnectedFlatSpecies(Iterable<FlatEdge> flatEdges,
 			Iterable<FlatSpecies> unconnectedSpecies, boolean directed);
 	
-	List<FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFileStream) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException;
+	Map<String, FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFileStream) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException;
 	
-	List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFileStream, List<FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException;
+	List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFileStream, Map<String, FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException ;
 	
 
 }
