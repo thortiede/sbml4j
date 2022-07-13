@@ -1,6 +1,7 @@
 package org.sbml4j.controller;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.stream.StreamSupport;
 import javax.validation.Valid;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.sbml4j.Exception.ConfigException;
 import org.sbml4j.api.GraphmlApi;
 import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.sbml4j.model.base.GraphEnum.FileNodeType;
@@ -29,9 +31,12 @@ import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.model.warehouse.Organism;
 import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.service.ConfigService;
+import org.sbml4j.service.FlatEdgeService;
+import org.sbml4j.service.FlatSpeciesService;
 import org.sbml4j.service.GraphMLService;
 import org.sbml4j.service.ProvenanceGraphService;
 import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.networks.NetworkService;
 import org.sbml4j.service.utility.FileCheckService;
 import org.sbml4j.service.warehouse.FileNodeService;
 import org.sbml4j.service.warehouse.MappingNodeService;
@@ -39,6 +44,7 @@ import org.sbml4j.service.warehouse.OrganismService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,6 +68,12 @@ public class GraphmlApiController implements GraphmlApi {
 	ProvenanceGraphService provenanceGraphService;
 	@Autowired
 	WarehouseGraphService warehouseGraphService;
+	@Autowired
+	FlatEdgeService flatEdgeService;
+	@Autowired
+	FlatSpeciesService flatSpeciesService;
+	@Autowired
+	NetworkService networkService;
 	
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 	
@@ -115,7 +127,7 @@ public class GraphmlApiController implements GraphmlApi {
 			allFileNamesSB.append(',');
 		}
 		String allFileNames = allFileNamesSB.substring(0, allFileNamesSB.lastIndexOf(","));
-		
+		List<NetworkInventoryItem> inventoryItems = new ArrayList<>(); 
 		for (MultipartFile file : files) {
 			filenum++;
 			countTotal++;
@@ -243,9 +255,21 @@ public class GraphmlApiController implements GraphmlApi {
 			
 			// create Network from GraphML
 			try {
-				List<FlatSpecies> networkSpecies = this.graphMLService.getFlatSpeciesForGraphML(file);
-				//List<FlatEdge> networkEdges = this.graphMLService.getFlatEdgesForGraphML(file, networkSpecies);
+				Map<String, FlatSpecies> networkSpecies = this.graphMLService.getFlatSpeciesForGraphML(file);
+				List<FlatEdge> networkEdges = this.graphMLService.getFlatEdgesForGraphML(file, networkSpecies);
 				
+				log.debug("Created Network components");
+				this.flatSpeciesService.save(networkSpecies.values(), 0);
+				this.flatEdgeService.save(networkEdges, 1);
+				this.networkService.connectContains(graphMLMappingNode, networkEdges, networkSpecies.values(), true);
+				// connect network to parent (if it exists)
+				if (hasParent) {
+					this.provenanceGraphService.connect(graphMLMappingNode, this.mappingNodeService.findByEntityUUID(parentUUIDString), ProvenanceGraphEdgeType.wasDerivedFrom);
+				}
+				this.networkService.updateMappingNodeMetadata(graphMLMappingNode);
+				
+				this.provenanceGraphService.connect(graphMLMappingNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+				inventoryItems.add(this.networkService.getNetworkInventoryItem(graphMLMappingNode.getEntityUUID()));
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -256,19 +280,14 @@ public class GraphmlApiController implements GraphmlApi {
 			} catch (SAXException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
-			
-			// connect network to parent (if it exists)
-			
-			
-			
+			} catch (ConfigException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
 		}
+			
 		
-		
-		
-		
-		
-		return ResponseEntity.badRequest().build();
+		return new ResponseEntity<List<NetworkInventoryItem>>(inventoryItems, HttpStatus.CREATED);
 	}
 
 }
