@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 import javax.validation.Valid;
 import javax.xml.parsers.ParserConfigurationException;
@@ -20,16 +19,13 @@ import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphEdgeType;
-import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
-import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphActivityNode;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.warehouse.FileNode;
 import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.model.warehouse.Organism;
-import org.sbml4j.model.warehouse.WarehouseGraphNode;
 import org.sbml4j.service.ConfigService;
 import org.sbml4j.service.FlatEdgeService;
 import org.sbml4j.service.FlatSpeciesService;
@@ -157,13 +153,14 @@ public class GraphmlApiController implements GraphmlApi {
 			// 3. Determine the name of the network
 			String createdNetworkname = null;
 			boolean hasParent = false;
+			MappingNode parentMappingNode = null;
 			String parentUUIDString = null;
 			if (parentUUID != null) {
 				hasParent = true;
 				parentUUIDString = parentUUID.toString();
 				paramsMap.put("UUID", parentUUIDString);
-				MappingNode mappingForUUID = this.mappingNodeService.findByEntityUUID(parentUUIDString);
-				String oldMappingName = mappingForUUID.getMappingName();
+				parentMappingNode = this.mappingNodeService.findByEntityUUID(parentUUIDString);
+				String oldMappingName = parentMappingNode.getMappingName();
 				if (prefixName && networkname != null) {
 					createdNetworkname = (networkname.endsWith("_") ? networkname : networkname + "_") + 
 							oldMappingName;
@@ -175,18 +172,9 @@ public class GraphmlApiController implements GraphmlApi {
 					createdNetworkname = networkname;
 				}
 				// Organism
-				Iterable<ProvenanceEntity> organisms = this.warehouseGraphService.findAllByWarehouseGraphEdgeTypeAndStartNode(WarehouseGraphEdgeType.FOR, parentUUIDString);
-				for (ProvenanceEntity organism : organisms) {
-					if (hasOrganism) {
-						log.warn("Multiple Organisms found for MappingNode with UUID " + parentUUIDString);
-					} else if (Organism.class.isInstance(organism)) {
-						org = (Organism) organism;
-						hasOrganism = true;
-					}
-				}
-				if (!hasOrganism) {
-					log.warn("Could not locate Organism for MappingNode with UUID " + parentUUIDString);
-					org = this.organismService.createOrganism("GraphML");
+				org = this.organismService.findOrganismForWarehouseGraphNode(parentUUIDString);
+				if (org != null) {
+					hasOrganism = true;
 				}
 				
 			} else {
@@ -198,9 +186,10 @@ public class GraphmlApiController implements GraphmlApi {
 					createdNetworkname = (prefixName ? "GraphML_network_" : "") + networkname +(suffixName ? "_GraphML_network" : "");
 				}
 				
+			}
+			if (!hasOrganism) {
 				// need new Organism for this GraphML File
 				org = this.organismService.createOrganism("GraphML");
-				
 			}
 			// have createdNetworkname
 			// have boolean if parent exists
@@ -227,7 +216,7 @@ public class GraphmlApiController implements GraphmlApi {
 			ProvenanceGraphActivityNode persistGraphActivityNode = this.provenanceGraphService.createProvenanceGraphActivityNode(activityNodeProvenanceProperties);
 			// 
 			this.provenanceGraphService.connect(graphMLFileNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
-
+			if (hasParent) this.provenanceGraphService.connect(persistGraphActivityNode, parentMappingNode, ProvenanceGraphEdgeType.used);
 			
 			// complete Provenance
 			paramsMap.put("user", user);
@@ -254,7 +243,7 @@ public class GraphmlApiController implements GraphmlApi {
 					createdNetworkname);
 			
 			// create Network from GraphML
-			try {
+			try {				
 				Map<String, FlatSpecies> networkSpecies = this.graphMLService.getFlatSpeciesForGraphML(file);
 				List<FlatEdge> networkEdges = this.graphMLService.getFlatEdgesForGraphML(file, networkSpecies);
 				
@@ -269,25 +258,47 @@ public class GraphmlApiController implements GraphmlApi {
 				this.networkService.updateMappingNodeMetadata(graphMLMappingNode);
 				
 				this.provenanceGraphService.connect(graphMLMappingNode, userAgentNode, ProvenanceGraphEdgeType.wasAttributedTo);
+				this.provenanceGraphService.connect(graphMLMappingNode, persistGraphActivityNode, ProvenanceGraphEdgeType.wasGeneratedBy);
 				inventoryItems.add(this.networkService.getNetworkInventoryItem(graphMLMappingNode.getEntityUUID()));
 				
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				countError++;
+				log.error("IOException while persisting GraphML: ", e);
 				e.printStackTrace();
+				errorFileNames.append(file.getOriginalFilename());
+				errorFileNames.append(", ");
 			} catch (ParserConfigurationException e) {
-				// TODO Auto-generated catch block
+				countError++;
+				log.error("ParserConfigurationException while persisting GraphML: ", e);
 				e.printStackTrace();
+				errorFileNames.append(file.getOriginalFilename());
+				errorFileNames.append(", ");
 			} catch (SAXException e) {
-				// TODO Auto-generated catch block
+				countError++;
+				log.error("SAXException while persisting GraphML: ", e);
 				e.printStackTrace();
+				errorFileNames.append(file.getOriginalFilename());
+				errorFileNames.append(", ");
 			} catch (ConfigException e) {
-				// TODO Auto-generated catch block
+				countError++;
+				log.error("ConfigException while persisting GraphML: ", e);
 				e.printStackTrace();
-			}			
+				errorFileNames.append(file.getOriginalFilename());
+				errorFileNames.append(", ");
+			}
 		}
-			
-		
-		return new ResponseEntity<List<NetworkInventoryItem>>(inventoryItems, HttpStatus.CREATED);
+		if (countError > 0) {
+			if (countTotal > countError) {
+				//ResponseEntity mixed = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not persist Model in file(s)" + errorFileNames.toString()).build();
+				ResponseEntity<List<NetworkInventoryItem>> m = new ResponseEntity<>(inventoryItems, HttpStatus.UNPROCESSABLE_ENTITY);
+				m.getHeaders().add("reason", "Could not create networks from file(s): " + errorFileNames.toString());
+				return m;
+			} else {
+				return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).header("reason", "Could not create networks from file(s): " + errorFileNames.toString()).build();
+			}
+		} else {
+			return new ResponseEntity<>(inventoryItems, HttpStatus.CREATED);
+		}
 	}
 
 }
