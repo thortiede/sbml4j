@@ -38,6 +38,12 @@ public interface GraphMLService {
 	Map<String, FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFileStream) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException;
 	
 	List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFileStream, Map<String, FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException ;
+
+	String getGraphIdFromGraphML(MultipartFile graphMLFile)
+			throws FileNotFoundException, IOException, ParserConfigurationException, SAXException;
+
+	boolean getIsNetworkDirectedFromGraphML(MultipartFile graphMLFile)
+			throws FileNotFoundException, IOException, ParserConfigurationException, SAXException;
 	
 
 }

@@ -409,6 +409,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 		edgesWithAnnotation.add(("\t\t</edge>\n").getBytes());
 	}
 
+	@Override
 	public boolean getIsNetworkDirectedFromGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
 		DocumentBuilderFactory factory =
 				DocumentBuilderFactory.newInstance();
@@ -446,6 +447,8 @@ public class GraphMLServiceImpl implements GraphMLService {
 		return false;
 	}
 	
+
+	@Override
 	public String getGraphIdFromGraphML(MultipartFile graphMLFile) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException {
 		DocumentBuilderFactory factory =
 				DocumentBuilderFactory.newInstance();
