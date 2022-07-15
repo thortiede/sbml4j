@@ -13,6 +13,32 @@
  */
 package org.sbml4j.api;
 
-public class TestApi {
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
+import org.sbml4j.repository.sbml.simple.SBMLSimpleReactionRepository;
+@Controller
+public class TestApi {
+	
+	@Autowired
+	SBMLSimpleReactionRepository sbmlSimpleReactionRepository;
+	
+	@GetMapping(value = "/reactions", produces = {"application/json"})
+	public ResponseEntity<Iterable<SBMLSimpleReaction>> getReactionsTest(@RequestParam(value = "pathwayUUID", required = true) String pathwayUUID) {
+		List<String> sboTerms = new ArrayList<String>();
+		sboTerms.add("SBO:0000252");
+		sboTerms.add("SBO:0000247");
+		Iterable<SBMLSimpleReaction> reactions = this.sbmlSimpleReactionRepository.findAllInPathwayWithPartnerSBOTerm(pathwayUUID, sboTerms);
+		return new ResponseEntity<Iterable<SBMLSimpleReaction>>(reactions, HttpStatus.OK);
+	}
 }

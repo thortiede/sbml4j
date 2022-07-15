@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
-import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

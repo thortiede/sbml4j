@@ -14,9 +14,19 @@
 package org.sbml4j.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.sbml4j.Exception.ConfigException;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
+import org.springframework.web.multipart.MultipartFile;
+import org.xml.sax.SAXException;
 
 public interface GraphMLService {
 
@@ -24,5 +34,16 @@ public interface GraphMLService {
 
 	ByteArrayOutputStream getGraphMLForFlatEdgesAndUnconnectedFlatSpecies(Iterable<FlatEdge> flatEdges,
 			Iterable<FlatSpecies> unconnectedSpecies, boolean directed);
+	
+	Map<String, FlatSpecies> getFlatSpeciesForGraphML(MultipartFile graphMLFileStream) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException;
+	
+	List<FlatEdge> getFlatEdgesForGraphML(MultipartFile graphMLFileStream, Map<String, FlatSpecies> speciesOfGraphML) throws FileNotFoundException, IOException, ParserConfigurationException, SAXException, ConfigException ;
+
+	String getGraphIdFromGraphML(MultipartFile graphMLFile)
+			throws FileNotFoundException, IOException, ParserConfigurationException, SAXException;
+
+	boolean getIsNetworkDirectedFromGraphML(MultipartFile graphMLFile)
+			throws FileNotFoundException, IOException, ParserConfigurationException, SAXException;
+	
 
 }

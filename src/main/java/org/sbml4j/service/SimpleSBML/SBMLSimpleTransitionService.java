@@ -17,7 +17,6 @@ import java.util.List;
 
 import org.sbml4j.model.base.GraphBaseEntity;
 import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
-import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.sbml4j.repository.sbml.simple.ext.qual.SBMLSimpleTransitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;

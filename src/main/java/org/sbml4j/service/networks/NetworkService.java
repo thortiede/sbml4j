@@ -1070,7 +1070,7 @@ public class NetworkService {
 	public Set<String> getNetworkNodeSymbols(Iterable<FlatSpecies> networkNodes) {
 		Set<String> networkNodeNames = new HashSet<>();
 		for (FlatSpecies node : networkNodes) {
-			networkNodeNames.add(node.getSymbol());
+			if (node.getSymbol() != null) networkNodeNames.add(node.getSymbol());
 		}
 		return networkNodeNames;
 	}
@@ -1101,7 +1101,7 @@ public class NetworkService {
 	public Set<String> getNetworkNodeTypes(Iterable<FlatSpecies> networkNodes) {
 		Set<String> nodeTypes = new HashSet<>();
 		for (FlatSpecies node : networkNodes) {
-			nodeTypes.add(node.getSboTerm());
+			if (node.getSboTerm()!= null ) nodeTypes.add(node.getSboTerm());
 		}
 		return nodeTypes;
 	}
@@ -1123,7 +1123,7 @@ public class NetworkService {
 	public Set<String> getNetworkNodeLabels(Iterable<FlatSpecies> networkNodes) {
 		Set<String> nodeLabels = new HashSet<>();
 		for (FlatSpecies node : networkNodes) {
-			nodeLabels.addAll(node.getLabels());
+			if (node.getLabels() != null && !node.getLabels().isEmpty()) nodeLabels.addAll(node.getLabels());
 		}
 		return nodeLabels;
 	}
@@ -1154,7 +1154,7 @@ public class NetworkService {
 	public Set<String> getNetworkRelationSymbols(Iterable<FlatEdge> networkRelations) {
 		Set<String> relationSymbols = new HashSet<>();
 		for (FlatEdge edge : networkRelations) {
-			relationSymbols.add(edge.getSymbol());
+			if (edge.getSymbol() != null) relationSymbols.add(edge.getSymbol());
 		}
 		return relationSymbols;
 	}
@@ -1176,7 +1176,7 @@ public class NetworkService {
 	public Set<String> getNetworkRelationTypes(Iterable<FlatEdge> networkRelations) {
 		Set<String> networkRelationTypes = new HashSet<>();
 		for (FlatEdge edge : networkRelations) {
-			networkRelationTypes.add(edge.getTypeString());
+			if (edge.getTypeString() != null) networkRelationTypes.add(edge.getTypeString());
 		}
 		return networkRelationTypes;
 	}
@@ -1240,6 +1240,21 @@ public class NetworkService {
 		return this.mappingNodeService.save(mappingNodeForFlatEdges, 0);
 	}
 
+	public void connectContains(MappingNode mappingNode, Iterable<FlatEdge> flatEdges,
+			Iterable<FlatSpecies> flatSpecies, boolean doCheck) {
+		// now connect the new entities to the MappingNode
+		if (flatEdges != null) {
+			connectContainsFlatEdgeSpecies(mappingNode, flatEdges);
+		}
+		// connect the unconnected species
+		if (flatSpecies != null) {
+			Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
+			while (newFlatSpeciesIterator.hasNext()) {
+				this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, doCheck);
+			}
+		}
+	}
+	
 	/**
 	 * Build a mapping name according to given options
 	 * @param nameOrPrefix The name or prefix to set as name
@@ -1265,17 +1280,7 @@ public class NetworkService {
 	 */
 	private void connectContains(MappingNode mappingNode, Iterable<FlatEdge> flatEdges,
 			Iterable<FlatSpecies> flatSpecies) {
-		// now connect the new entities to the MappingNode
-		if (flatEdges != null) {
-			connectContainsFlatEdgeSpecies(mappingNode, flatEdges);
-		}
-		// connect the unconnected species
-		if (flatSpecies != null) {
-			Iterator<FlatSpecies> newFlatSpeciesIterator = flatSpecies.iterator();
-			while (newFlatSpeciesIterator.hasNext()) {
-				this.warehouseGraphService.connect(mappingNode, newFlatSpeciesIterator.next(), WarehouseGraphEdgeType.CONTAINS, false);
-			}
-		}
+		this.connectContains(mappingNode, flatEdges, flatSpecies, false);
 	}
 
 	/**
