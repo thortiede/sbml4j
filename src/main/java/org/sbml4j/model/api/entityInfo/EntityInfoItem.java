@@ -6,7 +6,9 @@ import java.util.Objects;
 
 import javax.validation.Valid;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -16,6 +18,7 @@ import io.swagger.annotations.ApiModelProperty;
 @javax.annotation.
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2021-02-09T17:24:41.444924+01:00[Europe/Berlin]")
+@JsonInclude(Include.NON_NULL)
 public class EntityInfoItem {
   @JsonProperty("gene") private String gene;
 
