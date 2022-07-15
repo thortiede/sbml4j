@@ -48,6 +48,7 @@ import org.sbml4j.service.ProvenanceGraphService;
 import org.sbml4j.service.SBMLSimpleModelService;
 import org.sbml4j.service.UtilityService;
 import org.sbml4j.service.WarehouseGraphService;
+import org.sbml4j.service.SBML.EntityInfoService;
 import org.sbml4j.service.base.GraphBaseEntityService;
 import org.sbml4j.service.utility.FileCheckService;
 import org.sbml4j.service.warehouse.DatabaseNodeService;
@@ -75,6 +76,9 @@ public class SbmlApiController implements SbmlApi {
 	
 	@Autowired
 	DatabaseNodeService databaseNodeService;
+	
+	@Autowired
+	EntityInfoService entityInfoService;
 	
 	@Autowired
 	FileCheckService fileCheckService;
@@ -108,30 +112,49 @@ public class SbmlApiController implements SbmlApi {
 	
 	@Override
 	public ResponseEntity<List<EntityInfoItem>> getEntityInfo(@NotNull @Valid String geneSymbol) {
-		// TODO Auto-generated method stub
-		return SbmlApi.super.getEntityInfo(geneSymbol);
+		
+		//List<EntityInfoItem> entityInfoItemList = new ArrayList<>();
+		
+		return new ResponseEntity<List<EntityInfoItem>>(this.entityInfoService.getEntityInfo(geneSymbol), HttpStatus.OK);
 	}
 
 
 	@Override
 	public ResponseEntity<List<EntityInfoItem>> getEntityInfoBatch(@Valid List<String> requestBody) {
-		// TODO Auto-generated method stub
-		return SbmlApi.super.getEntityInfoBatch(requestBody);
+		return new ResponseEntity<List<EntityInfoItem>>(this.entityInfoService.batchGetEntityInfo(requestBody), HttpStatus.OK);
 	}
 
 
 	@Override
 	public ResponseEntity<List<IdItem>> getIdMap(@NotNull @Valid String symbol, @Valid String separator,
 			@Valid String idSystem) {
-		// TODO Auto-generated method stub
-		return SbmlApi.super.getIdMap(symbol, separator, idSystem);
+		List<IdItem> idMap = new ArrayList<>();
+		
+		if (separator == null) {
+			separator = ",";
+		} else {
+			separator = separator.trim();
+		}
+		String[] symbols = symbol.split(separator);
+		for (String splittedSymbol : symbols) {
+			idMap.addAll(this.entityInfoService.getIdMap(splittedSymbol, idSystem));
+		}
+		
+		
+		return new ResponseEntity<List<IdItem>>(idMap, HttpStatus.OK);
 	}
 
 
 	@Override
 	public ResponseEntity<List<IdItem>> getIdMapBatch(@Valid NodeList nodeList, @Valid String idSystem) {
-		// TODO Auto-generated method stub
-		return SbmlApi.super.getIdMapBatch(nodeList, idSystem);
+		
+		
+		List<IdItem> idMap = new ArrayList<>();
+		for (String symbol : nodeList.getGenes()) {
+			idMap.addAll(this.entityInfoService.getIdMap(symbol, idSystem));
+		}
+		
+		return new ResponseEntity<List<IdItem>>(idMap, HttpStatus.OK);
 	}
 
 
