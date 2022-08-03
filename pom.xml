@@ -4,9 +4,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.tts</groupId>
+	<groupId>org.sbml4j</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>0.1.8</version>
+	<version>1.0.6</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -23,8 +23,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<jsbml.version>1.4</jsbml.version>
+		<java.version>15</java.version>
+		<jsbml.version>1.6.1</jsbml.version>
 		<docker.image.prefix>thortiede</docker.image.prefix>
 		<springfox-version>3.0.0</springfox-version>
 		<!-- <spring.boot.starter.version>2.0.5.RELEASE</spring.boot.starter.version> -->
@@ -53,6 +53,16 @@
 		<dependency>
 			<groupId>org.sbml.jsbml.ext</groupId>
 			<artifactId>jsbml-qual</artifactId>
+			<version>${jsbml.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.sbml.jsbml.ext</groupId>
+			<artifactId>jsbml-fbc</artifactId>
+			<version>${jsbml.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.sbml.jsbml.ext</groupId>
+			<artifactId>jsbml-groups</artifactId>
 			<version>${jsbml.version}</version>
 		</dependency>
 		<dependency>
@@ -118,6 +128,33 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable -->
+		<dependency>
+		    <groupId>org.openapitools</groupId>
+		    <artifactId>jackson-databind-nullable</artifactId>
+		    <version>0.2.1</version>
+		</dependency>
+
+        
+		<!--OpenCSV dependencies -->        
+<!--         <dependency> -->
+<!--     		<groupId>com.opencsv</groupId> -->
+<!--     		<artifactId>opencsv</artifactId> -->
+<!--     		<version>4.1</version> -->
+<!-- 		</dependency> -->
+		<!-- https://mvnrepository.com/artifact/com.univocity/univocity-parsers -->
+		<dependency>
+		    <groupId>com.univocity</groupId>
+		    <artifactId>univocity-parsers</artifactId>
+		    <version>2.1.1</version>
+		</dependency>
+	<!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
+	<dependency>
+	    <groupId>commons-codec</groupId>
+	    <artifactId>commons-codec</artifactId>
+	  <!--   <version>1.15</version> -->
+	</dependency>
+	
 	</dependencies>
 
 	<build>
@@ -132,7 +169,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>0.1.8</tag>
+	                <tag>1.0.6</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->
