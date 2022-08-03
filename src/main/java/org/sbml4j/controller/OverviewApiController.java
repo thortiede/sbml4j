@@ -27,10 +27,12 @@ import org.sbml4j.config.OverviewNetworkConfig;
 import org.sbml4j.config.SBML4jConfig;
 import org.sbml4j.model.api.network.NetworkInventoryItem;
 import org.sbml4j.model.api.network.OverviewNetworkItem;
+import org.sbml4j.model.base.GraphEnum.Operation;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphActivityType;
 import org.sbml4j.model.base.GraphEnum.ProvenanceGraphAgentType;
 import org.sbml4j.model.flat.FlatEdge;
 import org.sbml4j.model.flat.FlatSpecies;
+import org.sbml4j.model.provenance.ProvenanceEntity;
 import org.sbml4j.model.provenance.ProvenanceGraphAgentNode;
 import org.sbml4j.model.warehouse.MappingNode;
 import org.sbml4j.service.ConfigService;
@@ -46,6 +48,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Controller for handling of VCF analysis tasks
@@ -88,7 +93,10 @@ public class OverviewApiController implements OverviewApi {
 	@Override
 	public ResponseEntity<NetworkInventoryItem> createOverviewNetwork(@Valid OverviewNetworkItem overviewNetworkItem, String user) {
 		
-		log.info("Serving POST /overview" +  (user != null ? " for user " + user : "") + " with overviewNetworkItem: " + overviewNetworkItem.toString());
+		Operation op = Operation.POST;
+		String endpoint = "/overview/";
+		
+		log.info("Serving " + op.getOperation() + " " + endpoint +  (user != null ? " for user " + user : "") + " with overviewNetworkItem: " + overviewNetworkItem.toString());
 		
 		// 1a. BaseNetworkUUID provided?
 		String networkEntityUUID;
@@ -254,6 +262,33 @@ public class OverviewApiController implements OverviewApi {
 			this.networkService.updateMappingNodeMetadata(overviewNetwork);
 			
 		}
+		
+		// 14. Add Provenance Information
+		// need the Activity
+		ProvenanceEntity lastActivity = this.provenanceGraphService.findLatestGraphActivityNodeForWarehouseEntity(overviewNetwork.getEntityUUID());
+		Map<String, Map<String, Object>> provenanceAnnotation = new HashMap<>();
+
+		Map<String, Object> paramsMap = new HashMap<>();
+		paramsMap.put("user", user);
+		provenanceAnnotation.put("params",  paramsMap);	
+		
+		Map<String, Object> endpointMap = new HashMap<>();
+		endpointMap.put("operation", op.getOperation());
+		endpointMap.put("endpoint", endpoint);
+		
+		provenanceAnnotation.put("endpoint",  endpointMap);
+				
+		try {
+			Map<String, Object> bodyMap = new HashMap<>();
+			String bodyString;
+			bodyString = new ObjectMapper().writeValueAsString(overviewNetworkItem);
+			bodyMap.put("body", bodyString);
+			provenanceAnnotation.put("body", bodyMap);
+		} catch (JsonProcessingException e) {
+			log.warn("Could not create body-json-string from overviewNetworkItem: " + overviewNetworkItem.toString());
+		}
+		
+		this.provenanceGraphService.addProvenanceAnnotationMap(lastActivity, provenanceAnnotation);
 		
 		log.info("Created network " + overviewNetwork.getMappingName() + ". Returning.");
 		// 10. Return the InventoryItem of the new Network
