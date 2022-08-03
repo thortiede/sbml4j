@@ -22,7 +22,6 @@ import org.sbml4j.model.api.pathway.PathwayInventoryItem;
 import org.sbml4j.model.base.GraphEnum.WarehouseGraphEdgeType;
 import org.sbml4j.model.full.SBMLReaction;
 import org.sbml4j.model.provenance.ProvenanceEntity;
-import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLCompartment;
 import org.sbml4j.model.sbml.SBMLSBaseEntity;
 import org.sbml4j.model.sbml.SBMLSpecies;
@@ -109,19 +108,7 @@ public class PathwayService {
 	public Iterable<String> getAllDistinctTransitionSboTermsOfPathway(String pathwayNodeEntityUUID) {
 		return this.pathwayNodeRepository.getAllDistinctTransitionSboTermsOfPathway(pathwayNodeEntityUUID);
 	}
-	
-	/**
-	 * Get all <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> for reactions in a pathway
-	 * 
-	 * @param pathwayUUID The UUID of the pathway to search for Reactions
-	 * @param nodeSBOTerms The SBOTerms of the nodes that should be included
-	 * @return Iterable of <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> containing the reactions of the pathway
-	 */
-	@Deprecated
-	public Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(UUID pathwayUUID, List<String> nodeSBOTerms) {
-		return this.pathwayNodeRepository.getAllMetabolicPathwayReturnTypes(pathwayUUID.toString(), nodeSBOTerms);
-	}
-	
+
 	
 	/**
 	 * Get a List of <a href="#{@link}">{@link PathwayNode}</a> that are connected to an <a href="#{@link}">{@link SBMLSBaseEntity}</a>

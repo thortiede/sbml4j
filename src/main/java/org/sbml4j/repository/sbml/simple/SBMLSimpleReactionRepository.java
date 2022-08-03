@@ -15,7 +15,6 @@ package org.sbml4j.repository.sbml.simple;
 
 import java.util.List;
 
-import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.springframework.data.neo4j.annotation.Query;
@@ -62,15 +61,6 @@ public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimple
 	+ "RETURN r")
 	Iterable<SBMLSimpleReaction> findAllReactionsForSpecies(String speciesEntityUUID);
 	
-	@Query("MATCH "
-			+ "(r:SBMLSimpleReaction)"
-			+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
-			+ "(s:SBMLSpecies) "
-			+ "WHERE r.entityUUID = $reactionEntityUUID "
-			+ "RETURN s as species, "
-			+ "type(rel) as typeOfRelation, "
-			+ "r as reaction")
-	Iterable<MetabolicPathwayReturnType> findAllSpeciesForReaction(String reactionEntityUUID);
 
 	@Query("MATCH "
 			+ " (p:PathwayNode)"

@@ -16,7 +16,6 @@ package org.sbml4j.service.SimpleSBML;
 import java.util.List;
 
 import org.sbml4j.model.base.GraphBaseEntity;
-import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.sbml4j.repository.sbml.simple.SBMLSimpleReactionRepository;
@@ -38,21 +37,12 @@ public class SBMLSimpleReactionService {
 	/**
 	 * Find all <a href="#{@link}">{@link SBMLSimpleReaction}</a> a <a href="#{@link}">{@link SBMLSpecies}</a> is part of
 	 * @param speciesEntityUUID The entityUUID of the <a href="#{@link}">{@link SBMLSpecies}</a> 
-	 * @return <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> Collection with the found <a href="#{@link}">{@link SBMLSimpleReactions}</a>
+	 * @return <a href="#{@link}">{@link SBMLSimpleReaction}</a> Collection with the found <a href="#{@link}">{@link SBMLSimpleReactions}</a>
 	 */
 	public Iterable<SBMLSimpleReaction> findAllReactionsForSpecies(String speciesEntityUUID) {
 		return this.sbmlSimpleReactionRepository.findAllReactionsForSpecies(speciesEntityUUID);
 	}
 	
-	/**
-	 * Find all <a href="#{@link}">{@link SBMLSpecies}</a> that are part of the <a href="#{@link}">{@link SBMLSimpleReaction}</a> with given entityUUID
-	 * @param reactionEntityUUID The entityUUID of the <a href="#{@link}">{@link SBMLSimpleReaction}</a>
-	 * @return <a href="#{@link}">{@link MetabolicPathwayReturnType}</a> Collection with the found <a href="#{@link}">{@link SBMLSpecies}</a>
-	 */
-	@Deprecated
-	public Iterable<MetabolicPathwayReturnType> findAllSpeciesForReaction(String reactionEntityUUID) {
-		return this.sbmlSimpleReactionRepository.findAllSpeciesForReaction(reactionEntityUUID);
-	}
 	
 	public Iterable<SBMLSpecies> findAllReactionPartnersOfType(String reactionEntityUUID, String partnerType) {
 		return this.sbmlSimpleReactionRepository.findAllReactionPartnersOfType(reactionEntityUUID, partnerType);

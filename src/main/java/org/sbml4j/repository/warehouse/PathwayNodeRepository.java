@@ -16,7 +16,6 @@ package org.sbml4j.repository.warehouse;
 import java.util.List;
 import java.util.Set;
 
-import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
 import org.sbml4j.model.warehouse.PathwayNode;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -182,32 +181,5 @@ public interface PathwayNodeRepository extends Neo4jRepository<PathwayNode, Long
 			+ "} "
 			+ "RETURN p")
 	List<PathwayNode> getPathwayNodesOfSBase(String sBaseEntityUUID);
-		
-	@Query("MATCH "
-			+ " (p:PathwayNode)"
-			+ "-[w:Warehouse]->"
-			+ "(r:SBMLSimpleReaction) "
-			+ "WHERE p.entityUUID = $pathwayUUID "
-			+ "AND w.warehouseGraphEdgeType=\"CONTAINS\" "
-			+ "WITH r "
-			+ "MATCH "
-			+ "(r)"
-			+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
-			+ "(s:SBMLSpecies) "
-			+ "WHERE s.sBaseSboTerm IN $nodeSBOTerms "
-			+ "WITH r, rel, s "
-			+ "MATCH "
-			+ "(s)"
-			+ "-[b:BQ]->"
-			+ "(e:ExternalResourceEntity) "
-			+ "WHERE b.type = \"BIOLOGICAL_QUALIFIER\" "
-			+ "AND b.qualifier IN [\"BQB_HAS_VERSION\", \"BQB_IS\", \"BQB_IS_ENCODED_BY\"] "
-			+ "RETURN e, "
-			+ "b, "
-			+ "s as species, "
-			+ "type(rel) as typeOfRelation, "
-			+ "r as reaction")
-	@Deprecated
-	Iterable<MetabolicPathwayReturnType> getAllMetabolicPathwayReturnTypes(String pathwayUUID,
-			List<String> nodeSBOTerms);
+	
 }
