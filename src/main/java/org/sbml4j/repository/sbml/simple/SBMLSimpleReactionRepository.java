@@ -16,6 +16,7 @@ package org.sbml4j.repository.sbml.simple;
 import java.util.List;
 
 import org.sbml4j.model.queryResult.MetabolicPathwayReturnType;
+import org.sbml4j.model.sbml.SBMLSpecies;
 import org.sbml4j.model.sbml.simple.SBMLSimpleReaction;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -25,16 +26,41 @@ public interface SBMLSimpleReactionRepository extends Neo4jRepository<SBMLSimple
 
 	// @unused
 	SBMLSimpleReaction findBysBaseName(String sBaseName, int depth);
+	/**
+	@Query("MATCH "
+	+ "(r)"
+	+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
+	+ "(s:SBMLSpecies) "
+	+ "WHERE s.entityUUID = $speciesEntityUUID "
+	+ "WITH r "
+	+ "MATCH "
+	+ "(r)"
+	+ "-[rp]->"
+	+ "(p:SBMLSpecies) "
+	+ "WHERE type(rp) in [IS_PRODUCT|IS_REACTANT|IS_CATALYST] " 
+	+ "RETURN r, rp, p")
+	Iterable<SBMLSimpleReaction> findAllReactionsForSpecies(String speciesEntityUUID);
+	
+	*/
+	
+	@Query("MATCH "
+			+ "(r)"
+			+ "-[rel]->"
+			+ "(s:SBMLSpecies) "
+			+ "WHERE r.entityUUID = $reactionEntityUUID "
+			+ "AND type(rel)=$partnerType "
+			+ "RETURN s")
+	
+	Iterable<SBMLSpecies> findAllReactionPartnersOfType(String reactionEntityUUID, String partnerType);
+	
 	
 	@Query("MATCH "
 	+ "(r)"
 	+ "-[rel:IS_PRODUCT|IS_REACTANT|IS_CATALYST]->"
 	+ "(s:SBMLSpecies) "
 	+ "WHERE s.entityUUID = $speciesEntityUUID "
-	+ "RETURN s as species, "
-	+ "type(rel) as typeOfRelation, "
-	+ "r as reaction")
-	Iterable<MetabolicPathwayReturnType> findAllReactionsForSpecies(String speciesEntityUUID);
+	+ "RETURN r")
+	Iterable<SBMLSimpleReaction> findAllReactionsForSpecies(String speciesEntityUUID);
 	
 	@Query("MATCH "
 			+ "(r:SBMLSimpleReaction)"
