@@ -3,7 +3,7 @@ package org.sbml4j.api;
  * --------------------------------------------------------------------------
  *                                 SBML4j
  * --------------------------------------------------------------------------
- * University of Tuebingen, 2020.
+ * University of Tuebingen, 2022.
  * 
  * This code is part of the SBML4j software package and subject to the terms
  * and conditions defined by its license (MIT License). For license details
