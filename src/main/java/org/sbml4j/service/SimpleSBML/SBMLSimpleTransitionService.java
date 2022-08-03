@@ -16,8 +16,10 @@ package org.sbml4j.service.SimpleSBML;
 import java.util.List;
 
 import org.sbml4j.model.base.GraphBaseEntity;
-import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
+import org.sbml4j.model.sbml.ext.qual.SBMLQualSpecies;
 import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
+import org.sbml4j.model.warehouse.PathwayNode;
+import org.sbml4j.model.warehouse.WarehouseGraphEdge;
 import org.sbml4j.repository.sbml.simple.ext.qual.SBMLSimpleTransitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,16 +36,7 @@ public class SBMLSimpleTransitionService {
 	@Autowired
 	SBMLSimpleTransitionRepository sbmlSimpleTransitionRepository;
 	
-	/**
-	 * Find all <a href="#{@link}">{@link SBMLSimpleTransitions}</a> a <a href="#{@link}">{@link SBMLSpecies}</a> is part of
-	 * @param speciesEntityUUID The entityUUID of a the <a href="#{@link}">{@link SBMLSpecies}</a> to find the transitions for
-	 * @return<a href="#{@link}">{@link NonMetabolicPathwayReturnType}</a> containing the Transitions
-	 */
-	@Deprecated
-	public Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID) {
-		return this.sbmlSimpleTransitionRepository.getTransitionsForSpecies(speciesEntityUUID);
-	}
-	
+
 	/**
 	 * Finds all <a href="#{@link}">{@link SBMLSimpleTransition}</a> entities that are connected to a <a href="#{@link}">{@link PathwayNode}</a>
 	 * with a "CONTAINS" - <a href="#{@link}">{@link WarehouseGraphEdge}</a> with the input and output <a href="#{@link}">{@link SBMLQualSpecies}</a>

@@ -15,7 +15,6 @@ package org.sbml4j.repository.sbml.simple.ext.qual;
 
 import java.util.List;
 
-import org.sbml4j.model.queryResult.NonMetabolicPathwayReturnType;
 import org.sbml4j.model.sbml.simple.ext.qual.SBMLSimpleTransition;
 import org.springframework.data.neo4j.annotation.Query;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
@@ -23,21 +22,6 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 public interface SBMLSimpleTransitionRepository extends Neo4jRepository<SBMLSimpleTransition, Long> {
 
 	SBMLSimpleTransition getByTransitionId(String transitionId, int depth);
-	
-	@Query(value="MATCH "
-			+ "(s1:SBMLSpecies)-[:IS]-(q1:SBMLQualSpecies)-[tr1:IS_INPUT]-"
-			+ "(t)"
-			+ "-[tr2:IS_OUTPUT ]-(q2:SBMLQualSpecies)-[:IS]-(s2:SBMLSpecies) "
-			+ "WHERE s1.entityUUID = $speciesEntityUUID "
-			+ "OR s2.entityUUID = $speciesEntityUUID "
-			+ "RETURN "
-			+ "s1 as inputSpecies,"
-			+ "t as transition, "
-			+ "s2 as outputSpecies"
-			)
-	@Deprecated
-	Iterable<NonMetabolicPathwayReturnType> getTransitionsForSpecies(String speciesEntityUUID);
-
 	
 	@Query(value = "MATCH "
 			+ "(p:PathwayNode)"
