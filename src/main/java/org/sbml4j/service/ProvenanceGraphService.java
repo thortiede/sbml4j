@@ -14,10 +14,12 @@
 package org.sbml4j.service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import org.sbml4j.model.api.ApiRequestItem;
 import org.sbml4j.model.api.ApiResponseItem;
@@ -382,6 +384,20 @@ public class ProvenanceGraphService {
 		return this.provenanceEntityRepository.findAllByProvenanceGraphEdgeTypeAndEndNode(edgetype, endNodeEntityUUID);
 	}
 
+	
+	/** 
+	 * Search through all {@link ProvenanceEntity}ies that are connected to the warehouseEntity with the provided UUID and return the
+	 * one entity that was generated last (by searching the createDate property)
+	 * @param warehouseEntityNodeEntityUUID The entityUUID of the WarehouseEntity connected to the ProvenanceGraphActivityNode
+	 * @return {@link ProvenanceEntity} that was created last and generated the 
+	 */
+	public ProvenanceEntity findLatestGraphActivityNodeForWarehouseEntity(String warehouseEntityNodeEntityUUID) {
+		// find latest activity for network and add the annotation to it
+		Iterable<ProvenanceEntity> activities = this.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, warehouseEntityNodeEntityUUID);
+		ProvenanceEntity lastActivity = StreamSupport.stream(activities.spliterator(), false).max(Comparator.comparing(ProvenanceEntity::getCreateDate)).get();
+		return lastActivity;
+	}
+	
 	/**
 	 * Retrieve {@link ProvenanceEntity} with given UUID
 	 * @param entityUUID The {@link String} containing the UUID of the entity to find

@@ -16,12 +16,10 @@ package org.sbml4j.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.StreamSupport;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -1024,9 +1022,8 @@ public class NetworksApiController implements NetworksApi {
 		provenanceAnnotationMap.put(name, requestBody);
 		
 		// find latest activity for network and add the annotation to it
-		Iterable<ProvenanceEntity> activities = this.provenanceGraphService.findAllByProvenanceGraphEdgeTypeAndStartNode(ProvenanceGraphEdgeType.wasGeneratedBy, uuid);
-		ProvenanceEntity lastActivity = StreamSupport.stream(activities.spliterator(), false).max(Comparator.comparing(ProvenanceEntity::getCreateDate)).get();
-		
+		ProvenanceEntity lastActivity = this.provenanceGraphService.findLatestGraphActivityNodeForWarehouseEntity(uuid);
+				
 		
 		if (!this.provenanceGraphService.addProvenanceAnnotationMap(lastActivity, provenanceAnnotationMap)) {
 			return ResponseEntity.badRequest().header("reason", "Unable to add provenance annotation to mapping").build(); // TODO: Give better reason
