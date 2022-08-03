@@ -14,7 +14,6 @@
 package org.sbml4j.service.SBML;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -287,48 +286,6 @@ public class EntityInfoService {
 					
 					
 				}
-				/**
-				 
-					for (MetabolicPathwayReturnType speciesOfReaction : this.sbmlSimpleReactionService.findAllSpeciesForReaction(reaction.getReaction().getEntityUUID())) {
-						ReactionInfoItem reactionInfoItem = null;
-						if (reactionMap.containsKey(speciesOfReaction.getReaction().getsBaseName())) {
-							reactionInfoItem = reactionMap.get(speciesOfReaction.getReaction().getsBaseName());
-						} else {
-							reactionInfoItem = new ReactionInfoItem().
-								name(speciesOfReaction.getReaction().getsBaseName()).
-								sboTerm(speciesOfReaction.getReaction().getsBaseSboTerm()).
-								type(this.utilityService.translateSBOString(speciesOfReaction.getReaction().getsBaseSboTerm())).
-								reversible(speciesOfReaction.getReaction().isReversible());
-						}
-						switch (speciesOfReaction.getTypeOfRelation()) {
-						case "IS_REACTANT":
-							reactionInfoItem.addReactantsItem(
-									new ReactionPartnerItem()
-										.name(speciesOfReaction.getSpecies().getsBaseName())
-										.sboTerm(speciesOfReaction.getSpecies().getsBaseSboTerm())
-										.type(this.utilityService.translateSBOString(speciesOfReaction.getSpecies().getsBaseSboTerm()))
-									);
-							break;
-						case "IS_PRODUCT":
-							reactionInfoItem.addProductsItem(
-									new ReactionPartnerItem()
-										.name(speciesOfReaction.getSpecies().getsBaseName())
-										.sboTerm(speciesOfReaction.getSpecies().getsBaseSboTerm())
-										.type(this.utilityService.translateSBOString(speciesOfReaction.getSpecies().getsBaseSboTerm()))
-									);
-							break;
-						case "IS_CATALYST":
-							reactionInfoItem.addCatalystsItem(
-									new ReactionPartnerItem()
-										.name(speciesOfReaction.getSpecies().getsBaseName())
-										.sboTerm(speciesOfReaction.getSpecies().getsBaseSboTerm())
-										.type(this.utilityService.translateSBOString(speciesOfReaction.getSpecies().getsBaseSboTerm()))
-									);
-							break;
-						}
-						reactionMap.put(reactionInfoItem.getName(), reactionInfoItem);
-					}
-				}*/
 				
 			}
 		
