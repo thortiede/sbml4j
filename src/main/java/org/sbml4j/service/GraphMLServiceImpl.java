@@ -569,7 +569,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 						NodeList nodeChildren = currentChild.getChildNodes();
 						for (int k = 0; k != nodeChildren.getLength(); k++) {
 							Node dataNode = nodeChildren.item(k);
-							if (dataNode.getNodeName().equals("data")) {
+							if (dataNode.getNodeName().equals("data") && dataNode.getFirstChild() != null) {
 								// this is an annotation
 								String speciesAnnotationName = nodeAnnotationMap.get(dataNode.getAttributes().getNamedItem("key").getNodeValue()).getLeft(); // name
 								
