@@ -79,7 +79,8 @@ public class GraphBaseEntityService {
 				if("integer".equals(annotationType)) {
 					// The neo4j database cannot handle the Java Type Integer.
 					// Those values need to be converted to Long
-					entity.addAnnotation(annotationName, Long.valueOf(((Integer) annotationValue).intValue()));
+					entity.addAnnotation(annotationName, Long.valueOf((String) annotationValue));
+					
 				} else {
 					entity.addAnnotation(annotationName, annotationValue);
 				}
