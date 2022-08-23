@@ -283,10 +283,7 @@ public class EntityInfoService {
 						}
 						reactionMap.put(reactionInfoItem.getName(), reactionInfoItem);
 					}
-					
-					
 				}
-				
 			}
 		
 			if (item.getRelations() == null) {
