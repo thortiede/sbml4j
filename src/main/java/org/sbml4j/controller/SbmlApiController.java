@@ -112,15 +112,31 @@ public class SbmlApiController implements SbmlApi {
 	
 	@Override
 	public ResponseEntity<List<EntityInfoItem>> getEntityInfo(@NotNull @Valid String geneSymbol) {
+		log.info("Serving GET /entityInfo for symbol(s): " + geneSymbol);
 		
-		//List<EntityInfoItem> entityInfoItemList = new ArrayList<>();
-		
-		return new ResponseEntity<List<EntityInfoItem>>(this.entityInfoService.getEntityInfo(geneSymbol), HttpStatus.OK);
+		List<EntityInfoItem> entityInfoItemList = new ArrayList<>();
+		if (geneSymbol.contains(",")){
+			String[] geneList = geneSymbol.split(",");
+			for (String gene : geneList) {
+				List<EntityInfoItem> item = this.entityInfoService.getEntityInfo(gene.trim());
+				if (!item.isEmpty()) {
+					entityInfoItemList.addAll(item);
+				}
+			}
+		} else {
+			List<EntityInfoItem> item = this.entityInfoService.getEntityInfo(geneSymbol.trim());
+			if (!item.isEmpty()) {
+				entityInfoItemList.addAll(item);
+			}
+		}
+		return new ResponseEntity<List<EntityInfoItem>>(entityInfoItemList, HttpStatus.OK);
 	}
 
 
 	@Override
 	public ResponseEntity<List<EntityInfoItem>> getEntityInfoBatch(@Valid List<String> requestBody) {
+		log.info("Serving POST /entityInfo for symbol(s): " + requestBody);
+		
 		return new ResponseEntity<List<EntityInfoItem>>(this.entityInfoService.batchGetEntityInfo(requestBody), HttpStatus.OK);
 	}
 
@@ -128,6 +144,9 @@ public class SbmlApiController implements SbmlApi {
 	@Override
 	public ResponseEntity<List<IdItem>> getIdMap(@NotNull @Valid String symbol, @Valid String separator,
 			@Valid String idSystem) {
+		
+		log.info("Serving GET /idMap for symbol(s): " + symbol + (separator != null ? " using separator " + separator : "") + (idSystem != null ? " for idSystem " + idSystem : ""));
+		
 		List<IdItem> idMap = new ArrayList<>();
 		
 		if (separator == null) {
@@ -137,7 +156,7 @@ public class SbmlApiController implements SbmlApi {
 		}
 		String[] symbols = symbol.split(separator);
 		for (String splittedSymbol : symbols) {
-			idMap.addAll(this.entityInfoService.getIdMap(splittedSymbol, idSystem));
+			idMap.addAll(this.entityInfoService.getIdMap(splittedSymbol.trim(), idSystem));
 		}
 		
 		
@@ -148,12 +167,12 @@ public class SbmlApiController implements SbmlApi {
 	@Override
 	public ResponseEntity<List<IdItem>> getIdMapBatch(@Valid NodeList nodeList, @Valid String idSystem) {
 		
+		log.info("Serving POST /idMap for symbol(s): " + nodeList.getGenes() + (idSystem != null ? " for idSystem " + idSystem : ""));
 		
 		List<IdItem> idMap = new ArrayList<>();
 		for (String symbol : nodeList.getGenes()) {
 			idMap.addAll(this.entityInfoService.getIdMap(symbol, idSystem));
 		}
-		
 		return new ResponseEntity<List<IdItem>>(idMap, HttpStatus.OK);
 	}
 
