@@ -69,7 +69,7 @@ public class IdItem {
     if (this.secondaryNames == null) {
       this.secondaryNames = new ArrayList<>();
     }
-    this.secondaryNames.add(secondaryNamesItem);
+    if (!this.secondaryNames.contains(secondaryNamesItem)) this.secondaryNames.add(secondaryNamesItem);
     return this;
   }
 
@@ -96,7 +96,7 @@ public class IdItem {
     if (this.qualifier == null) {
       this.qualifier = new ArrayList<>();
     }
-    this.qualifier.add(qualifierItem);
+    if (!this.qualifier.contains(qualifierItem)) this.qualifier.add(qualifierItem);
     return this;
   }
 
