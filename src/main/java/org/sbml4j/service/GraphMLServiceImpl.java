@@ -360,6 +360,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 		if (edgeAnnotationMap != null && edgeAnnotationMap.size() != 0) {
 			for (String annotationKey : edgeAnnotationMap.keySet()) {
 				if (hideModelUUIDs && annotationKey.toLowerCase().contains("uuid")) continue;
+				if (annotationKey.toLowerCase().equals("interaction")) continue;
 				String annotationType = edgeAnnotationTypeMap.get(annotationKey).toLowerCase();
 				switch (annotationType) {
 				case "string":
@@ -580,7 +581,20 @@ public class GraphMLServiceImpl implements GraphMLService {
 								} else if(isSetGraphMLSboTermKey && speciesAnnotationName.equals(this.configService.getGraphMLSboTermKey())) {
 									nodeFlatSpecies.setSboTerm(speciesAnnotationValue);
 								} else {
-									this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, speciesAnnotationName, speciesAnnotationType, speciesAnnotationValue, false);
+									//TODO: Here the type of the annotation has to be taken into consideration when creating the annotation
+									// If everything is a string, but denoted differently, then reading it later on is a problem
+									if (speciesAnnotationType.toLowerCase().contains("bool")) {
+										// let's consider this a boolean
+										this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, speciesAnnotationName, speciesAnnotationType, Boolean.parseBoolean(speciesAnnotationValue), false);										
+									} else if (speciesAnnotationType.toLowerCase().contains("double") ||
+										speciesAnnotationType.toLowerCase().contains("float") ||
+										speciesAnnotationType.toLowerCase().contains("integer")) {
+										this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, speciesAnnotationName, speciesAnnotationType, Long.parseLong(speciesAnnotationValue), false);										
+									} else {
+										// in all other cases, make it a string explicitly!
+										this.graphBaseEntityService.addAnnotation(nodeFlatSpecies, speciesAnnotationName, "string", speciesAnnotationValue, true);
+										
+									}	
 								}
 							}
 						}
@@ -694,8 +708,23 @@ public class GraphMLServiceImpl implements GraphMLService {
 						edge = this.flatEdgeService.createFlatEdge(hasSBOTerm ? sboTerm : "unknown");
 						this.graphBaseEntityService.setGraphBaseEntityProperties(edge);
 						for (String annotationName : annotationValuesMap.keySet()) {
-							this.graphBaseEntityService.addAnnotation(edge, annotationName, 
-									annotationValuesMap.get(annotationName).getLeft(), annotationValuesMap.get(annotationName).getRight(), true);
+							String edgeAnnotationType = annotationValuesMap.get(annotationName).getLeft();
+							String edgeAnnotationValue = annotationValuesMap.get(annotationName).getRight();
+							
+							//TODO: Here the type of the annotation has to be taken into consideration when creating the annotation
+							// If everything is a string, but denoted differently, then reading it later on is a problem
+							if (edgeAnnotationType.toLowerCase().contains("bool")) {
+								// let's consider this a boolean
+								this.graphBaseEntityService.addAnnotation(edge, annotationName, edgeAnnotationType, Boolean.parseBoolean(edgeAnnotationValue), false);										
+							} else if (edgeAnnotationType.toLowerCase().contains("double") ||
+									edgeAnnotationType.toLowerCase().contains("float") ||
+									edgeAnnotationType.toLowerCase().contains("integer")) {
+								this.graphBaseEntityService.addAnnotation(edge, annotationName, edgeAnnotationType, Long.parseLong(edgeAnnotationValue), false);										
+							} else {
+								// in all other cases, make it a string explicitly!
+								this.graphBaseEntityService.addAnnotation(edge, annotationName, "string", edgeAnnotationValue, true);
+								
+							}	
 						}
 						if (hasSymbol) edge.setSymbol(symbol);
 						edge.setInputFlatSpecies(speciesOfGraphML.get(sourceNodeId));
