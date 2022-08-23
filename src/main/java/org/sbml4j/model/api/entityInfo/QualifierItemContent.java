@@ -63,7 +63,7 @@ public class QualifierItemContent {
     if (this.values == null) {
       this.values = new ArrayList<>();
     }
-    this.values.add(valuesItem);
+    if (!this.values.contains(valuesItem)) this.values.add(valuesItem);
     return this;
   }
 

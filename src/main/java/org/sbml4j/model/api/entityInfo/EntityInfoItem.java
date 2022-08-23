@@ -109,7 +109,7 @@ public class EntityInfoItem {
     if (this.qualifier == null) {
       this.qualifier = new ArrayList<>();
     }
-    this.qualifier.add(qualifierItem);
+    if (!this.qualifier.contains(qualifierItem)) this.qualifier.add(qualifierItem);
     return this;
   }
 
@@ -196,7 +196,7 @@ public class EntityInfoItem {
     if (this.reactions == null) {
       this.reactions = new ArrayList<>();
     }
-    this.reactions.add(reactionsItem);
+    if (!this.reactions.contains(reactionsItem)) this.reactions.add(reactionsItem);
     return this;
   }
 
