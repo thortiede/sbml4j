@@ -264,7 +264,7 @@ public class GraphMLServiceImpl implements GraphMLService {
 	 */
 	private int buildNodeAnnotations(int nodeId, Map<String, String> nodeAnnotations,
 			Map<String, String> nodeSymbolIdMap, List<byte[]> nodesWithAnnotation, FlatSpecies node) {
-		
+		boolean annotateWithLinks = this.sbml4jConfig.getAnnotationConfigProperties().isAnnotateWithLinks();
 		Map<String, Object> nodeAnnotationMap = node.getAnnotation();
 		Map<String, String> nodeAnnotationTypeMap = node.getAnnotationType();
 		String speciesSymbol = node.getSymbol();
@@ -293,6 +293,11 @@ public class GraphMLServiceImpl implements GraphMLService {
 					switch (annotationType) {
 					case "string":
 						String nodeAnnotation = (String) nodeAnnotationMap.get(annotationKey);
+						if (nodeAnnotation.contains("identifiers.org") && annotateWithLinks) {
+							String[] splitted = nodeAnnotation.split("/");
+							nodeAnnotation = splitted[splitted.length-1];
+								
+						}
 						nodesWithAnnotation.add(String.format("\t\t\t<data key=\"v_%s\">%s</data>\n", annotationKey, nodeAnnotation).getBytes());
 						if (!nodeAnnotations.containsKey(annotationKey)) {
 							nodeAnnotations.put(annotationKey, annotationType);
@@ -351,6 +356,8 @@ public class GraphMLServiceImpl implements GraphMLService {
 			Map<String, String> nodeSymbolIdMap, List<byte[]> edgesWithAnnotation, String inputSpeciesSymbol, String outputSpeciesSymbol,
 			Map<String, Object> edgeAnnotationMap, Map<String, String> edgeAnnotationTypeMap, String edgeTypeString) {
 		
+		boolean annotateWithLinks = this.sbml4jConfig.getAnnotationConfigProperties().isAnnotateWithLinks();
+		
 		edgesWithAnnotation.add(String.format("\t\t<edge source=\"%s\" target=\"%s\">\n\t\t\t<data key=\"e_interaction\">%s</data>\n", nodeSymbolIdMap.get(inputSpeciesSymbol), nodeSymbolIdMap.get(outputSpeciesSymbol), edgeTypeString.toLowerCase()).getBytes());
 		if(!edgeAnnotations.containsKey("interaction")) {
 			edgeAnnotations.put("interaction", "String");
@@ -365,6 +372,11 @@ public class GraphMLServiceImpl implements GraphMLService {
 				switch (annotationType) {
 				case "string":
 					String edgeAnnotation = (String) edgeAnnotationMap.get(annotationKey);
+					if (edgeAnnotation.contains("identifiers.org") && annotateWithLinks) {
+						String[] splitted = edgeAnnotation.split("/");
+						edgeAnnotation = splitted[splitted.length-1];
+							
+					}
 					edgesWithAnnotation.add(String.format("\t\t\t<data key=\"e_%s\">%s</data>\n", annotationKey, edgeAnnotation).getBytes());
 					if (!edgeAnnotations.containsKey(annotationKey)) {
 						edgeAnnotations.put(annotationKey, annotationType);
