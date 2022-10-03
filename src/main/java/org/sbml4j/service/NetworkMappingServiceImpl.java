@@ -587,6 +587,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 									allFlatEdges.add(transitionFlatEdge);
 									if (inputFlatSpecies.getLabels().contains("Drug")) {
 										FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpecies);
+										relationTypes.add(targetsEdge.getTypeString());
+										relationSymbols.add(targetsEdge.getSymbol());
 										allFlatEdges.add(targetsEdge);
 									}
 								}
@@ -602,6 +604,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 										allFlatEdges.add(transitionFlatEdge);
 										if (inputFlatSpecies.getLabels().contains("Drug")) {
 											FlatEdge targetsEdge = createTargetsEdge(inputFlatSpecies, outputFlatSpeciesOfGroup);
+											relationTypes.add(targetsEdge.getTypeString());
+											relationSymbols.add(targetsEdge.getSymbol());
 											allFlatEdges.add(targetsEdge);
 										}
 									}
@@ -619,6 +623,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 									allFlatEdges.add(transitionFlatEdge);
 									if (inputFlatSpeciesOfGroup.getLabels().contains("Drug")) {
 										FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpecies);
+										relationTypes.add(targetsEdge.getTypeString());
+										relationSymbols.add(targetsEdge.getSymbol());
 										allFlatEdges.add(targetsEdge);
 									}
 								}
@@ -638,6 +644,8 @@ public class NetworkMappingServiceImpl implements NetworkMappingService {
 										allFlatEdges.add(transitionFlatEdge);
 										if (inputFlatSpeciesOfGroup.getLabels().contains("Drug") ) {
 											FlatEdge targetsEdge = createTargetsEdge(inputFlatSpeciesOfGroup, outputFlatSpeciesOfGroup);
+											relationTypes.add(targetsEdge.getTypeString());
+											relationSymbols.add(targetsEdge.getSymbol());
 											allFlatEdges.add(targetsEdge);
 										}
 									}
