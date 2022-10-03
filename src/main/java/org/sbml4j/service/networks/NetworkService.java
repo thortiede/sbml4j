@@ -505,6 +505,10 @@ public class NetworkService {
 		// Create the new <a href="#{@link}">{@link MappingNode}</a> and link it to parent, activity and agent
 		MappingNode newMapping = this.createMappingPre(user, parent, newMappingName, activityName, activityType,
 				mappingType);
+		
+		if (activityType.equals(ProvenanceGraphActivityType.filterNetwork)) {
+			return newMapping;
+		}
 		// Get all FlatSpecies of the network to copy
 		Iterable<FlatSpecies> unconnectedNetworkSpecies = this.flatSpeciesService.findAllUnconnectedSpeciesInNetwork(networkEntityUUID);
 		
