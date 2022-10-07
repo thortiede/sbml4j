@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +46,7 @@ public class CsvService implements RowProcessor {
 	Map<String, List< Map<String, String> > > geneToAnnotationMap;
 	
 	private int matchRowNum;
-	
+	private String matchingColumn;
 	private boolean isMatchingRowDetermined = false;
 	
 	/**
@@ -53,10 +55,10 @@ public class CsvService implements RowProcessor {
 	 * @return The HashMap containing the data mapped to the configured matching column
 	 * @throws IOException When the file is not readable
 	 */
-	public Map<String, List< Map<String, String> > > parseCsv(MultipartFile file) throws IOException {
+	public Map<String, List< Map<String, String> > > parseCsv(MultipartFile file, String matchingColumn) throws IOException {
 		// TODO:Funnel in the column number that holds the matching gene symbol
 		// Then use it in rowProcessed to match the correct column instead of 0
-		 
+		 this.matchingColumn = matchingColumn;
 		
 		logger.debug("Parsing file " + file.getOriginalFilename());
 		
@@ -84,7 +86,7 @@ public class CsvService implements RowProcessor {
 	
 	@Override
 	public void processStarted(ParsingContext context) {
-		logger.debug("Reached processStarted");
+		logger.debug("parsing process started");
 		geneToAnnotationMap = new HashMap<>();
 		// are there matching column names configured?
 		if (!this.configService.areMatchingColumnsConfigured()) {
@@ -98,17 +100,27 @@ public class CsvService implements RowProcessor {
 	@Override
 	public void rowProcessed(String[] row, ParsingContext context) {
 		if (!this.isMatchingRowDetermined) {
-			for (int i = 0; i!= context.headers().length; i++) {
-				if (this.configService.isInMatchingColums(context.headers()[i])) {
-					this.matchRowNum = i;
-					this.isMatchingRowDetermined = true;
-					break;
+			String[] headers = context.headers();
+			this.matchRowNum = Arrays.asList(headers).indexOf(this.matchingColumn);
+			if (this.matchRowNum == -1) {
+				logger.debug("Failed to find provided (or default) column " + this.matchingColumn + ". Trying configured columns.");
+				for (int i = 0; i!= headers.length; i++) {
+					
+					if (this.configService.isInMatchingColums(headers[i])) {
+						logger.debug("Using configured column " + headers[i] + " for matching row values.");
+						this.matchRowNum = i;
+						this.isMatchingRowDetermined = true;
+						break;
+					}
 				}
-			}
-			if (!this.isMatchingRowDetermined) {
-				// we could not find a column name matching any of the configured names
-				logger.warn("Unable to determine matching row. Falling back to first column");
-				this.matchRowNum = 0;
+				if (!this.isMatchingRowDetermined) {
+					// we could not find a column name matching any of the configured names
+					logger.warn("Unable to determine matching row. Falling back to first column");
+					this.matchRowNum = 0;
+					this.isMatchingRowDetermined = true;
+				}
+			} else {
+				logger.debug("Using provided column " + this.matchingColumn + " for matching values row values.");
 				this.isMatchingRowDetermined = true;
 			}
 		}
@@ -131,7 +143,7 @@ public class CsvService implements RowProcessor {
 
 	@Override
 	public void processEnded(ParsingContext context) {
-		logger.debug("Reached processEnded");
+		logger.debug("parsing process finished");
 				
 	}
 	

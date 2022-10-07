@@ -210,7 +210,7 @@ public class NetworksApiController implements NetworksApi {
 
 	@Override
 	public ResponseEntity<NetworkInventoryItem> addCsvDataToNetwork(UUID UUID, @NotNull @Valid String type, String user,
-			@Valid String networkname, @Valid Boolean prefixName, @Valid Boolean derive,
+			@Valid String networkname, @Valid Boolean prefixName, @Valid String match, @Valid Boolean derive,
 			@Valid List<MultipartFile> data) {
 		String uuid = UUID.toString();
 		Operation op = Operation.POST;
@@ -256,7 +256,7 @@ public class NetworksApiController implements NetworksApi {
 				bodyString.concat("\n}");
 			}
 			bodyString.concat("\n]");
-			newNetwork = this.networkService.addCsvDataToNetwork(user != null ? user.strip() : networkUser, data, type, uuid, networkname, prefixName, derive);
+			newNetwork = this.networkService.addCsvDataToNetwork(user != null ? user.strip() : networkUser, data, type, uuid, networkname, prefixName, match, derive);
 		} catch (NetworkAlreadyExistsException e) {
 			return ResponseEntity.badRequest()
 					.header("reason", e.getMessage())

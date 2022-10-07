@@ -201,6 +201,12 @@ public interface NetworksApi {
       @RequestParam(value = "prefixName", required = false,
                     defaultValue = "false") Boolean prefixName,
       @ApiParam(
+              value =
+                  "The column name to match to the symbol of the network nodes",
+              defaultValue = "gene") @Valid
+          @RequestParam(value = "match", required = false,
+                        defaultValue = "") String match,
+      @ApiParam(
           value =
               "Flag whether to derive a new network and add annotation to it (true) or add annotation to existing network without deriving subnetwork (false)",
           defaultValue = "true") @Valid

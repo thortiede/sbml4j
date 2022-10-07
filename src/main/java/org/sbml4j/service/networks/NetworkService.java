@@ -140,6 +140,7 @@ public class NetworkService {
 											String networkEntityUUID,
 											String networkname,
 											boolean prefixName,
+											String match,
 											boolean derive) throws NetworkAlreadyExistsException, IOException, NetworkDeletionException{
 		
 
@@ -149,7 +150,7 @@ public class NetworkService {
 		String annotatedNetworkEntityUUID = newNetwork.getEntityUUID();
 		for (MultipartFile file : data) {
 			log.debug("Processing file " + file.getOriginalFilename());
-			annotationMap = this.csvService.parseCsv(file); // can throw IOException
+			annotationMap = this.csvService.parseCsv(file, match); // can throw IOException
 			Map<String, FlatSpecies> annotatedSpecies = new HashMap<>();
 			for(String geneSymbol :annotationMap.keySet()) {
 				List<FlatSpecies> currentList = this.getFlatSpeciesOfSymbolInNetwork(annotatedNetworkEntityUUID, geneSymbol);
