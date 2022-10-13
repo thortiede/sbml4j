@@ -15,7 +15,6 @@ package org.sbml4j.model.api.provenance;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -23,8 +22,8 @@ import javax.validation.Valid;
 import org.sbml4j.model.api.ApiRequestItem;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.annotations.ApiModelProperty;
 
@@ -35,7 +34,7 @@ import io.swagger.annotations.ApiModelProperty;
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2022-04-02T23:09:46.842042+02:00[Europe/Berlin]")
 @JsonInclude(Include.NON_NULL)
-public class ActivityItem {
+public class ActivityItem extends ProvenanceApiItem {
   @JsonProperty("name") private String name;
 
   @JsonProperty("type") private String type;
@@ -49,9 +48,6 @@ public class ActivityItem {
   @JsonProperty("body")
   private ApiRequestItem body = null;
 
-  @JsonProperty("provenance")
-  @Valid
-  private List<Map<String, Object>> provenance = null;
 
   public ActivityItem name(String name) {
     this.name = name;
@@ -183,37 +179,7 @@ public class ActivityItem {
     this.body = body;
   }
 
-  public ActivityItem
-  provenance(List<Map<String, Object>> provenance) {
-    this.provenance = provenance;
-    return this;
-  }
-
-  public ActivityItem
-  addProvenanceItem(Map<String, Object> provenanceItem) {
-    if (this.provenance == null) {
-      this.provenance = new ArrayList<>();
-    }
-    this.provenance.add(provenanceItem);
-    return this;
-  }
-
-  /**
-   * Get provenance
-   * @return provenance
-   */
-  @ApiModelProperty(value = "")
-
-  @Valid
-
-  public List<Map<String, Object>> getProvenance() {
-    return provenance;
-  }
-
-  public void setProvenance(List<Map<String, Object>> provenance) {
-    this.provenance = provenance;
-  }
-
+  
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -228,15 +194,14 @@ public class ActivityItem {
         Objects.equals(this.operation, activityItem.operation) &&
         Objects.equals(this.endpoint, activityItem.endpoint) &&
         Objects.equals(this.params, activityItem.params) &&
-        Objects.equals(this.body, activityItem.body) &&
-        Objects.equals(this.provenance, activityItem.provenance);
+        Objects.equals(this.body, activityItem.body);
   }
 
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type, operation, endpoint, params, body,
-                        provenance);
+    return Objects.hash(name, type, operation, endpoint, params, body
+                        );
   }
 
 
@@ -253,9 +218,6 @@ public class ActivityItem {
     sb.append("    endpoint: ").append(toIndentedString(endpoint)).append("\n");
     sb.append("    params: ").append(toIndentedString(params)).append("\n");
     sb.append("    body: ").append(toIndentedString(body)).append("\n");
-    sb.append("    provenance: ")
-        .append(toIndentedString(provenance))
-        .append("\n");
     sb.append("}");
     return sb.toString();
   }

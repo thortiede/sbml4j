@@ -6,7 +6,7 @@
 
 	<groupId>org.sbml4j</groupId>
 	<artifactId>sbml4j</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 	<packaging>jar</packaging>
 
 	<name>sbml4j</name>
@@ -204,7 +204,7 @@
 	            <version>1.4.9</version>
 	            <configuration>
 	                <repository>${docker.image.prefix}/${project.artifactId}</repository>
-	                <tag>1.2.1</tag>
+	                <tag>1.2.2</tag>
 	            </configuration>
 	        </plugin>
 	        <!-- tag::unpack[] -->

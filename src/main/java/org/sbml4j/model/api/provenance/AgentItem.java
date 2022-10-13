@@ -28,7 +28,7 @@ import io.swagger.annotations.ApiModelProperty;
 Generated(value = "org.openapitools.codegen.languages.SpringCodegen",
           date = "2022-04-02T23:09:46.842042+02:00[Europe/Berlin]")
 @JsonInclude(Include.NON_NULL)
-public class AgentItem {
+public class AgentItem extends ProvenanceApiItem {
   @JsonProperty("name") private String name;
 
   @JsonProperty("type") private String type;
