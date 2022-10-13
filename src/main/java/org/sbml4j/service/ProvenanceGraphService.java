@@ -582,7 +582,26 @@ public class ProvenanceGraphService {
 				log.warn("Multiple ProvenanceEdges with type wasAttributedTo from entity with uuid: " + uuid);
 			}
 		}
+		//. 6 get additional provenance
+		List<Map<String, Object> > provenanceList = null;
 		
+		// follow the PROV_SUBELEMENT connections
+		Iterable<ProvenanceMetaDataNode> metaDataNodes = this.findAllProvenanceSubelements(uuid);
+		for (ProvenanceMetaDataNode metaDataNode : metaDataNodes) {
+			if (provenanceList == null) {
+				provenanceList = new ArrayList<>();
+			}
+			// process subelements along the PROV_SUBELEMENT edges
+			// here the list consists of Map<String, Object> elements
+			// where each entry is composed of the annotationName as the key and the contents of the Subelement as the Object, which is again a Map<String,Object>
+			// this has to be built recursively.
+			// the singular elements are found in the provenanceAnnotation Map
+			// the submaps need to be parsed through the subelements
+			provenanceList.add(this.createProvenanceListEntry(metaDataNode));
+		}
+		if (!(provenanceList == null || provenanceList.isEmpty())) {
+			item.setProvenance(provenanceList);
+		}
 		return item;
 	}
 	
